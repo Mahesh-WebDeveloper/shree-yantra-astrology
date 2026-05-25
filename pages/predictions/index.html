@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Predictions · Shree Yantra</title>
+  <link rel="stylesheet" href="../../assets/app-shell.css" />
+  <link rel="stylesheet" href="../../assets/sy-pages.css" />
+  <style>
+    .pred-hero {
+      margin-top: 14px;
+      padding: 18px;
+      text-align: center;
+    }
+    .pred-hero h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      margin: 4px 0 4px;
+    }
+    .pred-tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin: 14px 0 8px;
+    }
+    .pred-tabs button {
+      padding: 9px 6px;
+      border-radius: 999px;
+      background: rgba(10,10,28,0.7);
+      border: 1px solid rgba(201,150,46,0.3);
+      color: var(--sy-gold-2);
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+    }
+    .pred-tabs button.active {
+      background: linear-gradient(180deg, #fce8a8, #b87f1a);
+      color: #2a1c00;
+      border-color: transparent;
+    }
+    .zodiac-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .zod {
+      padding: 12px 8px;
+      border-radius: 14px;
+      background: rgba(10,10,28,0.6);
+      border: 1px solid rgba(201,150,46,0.3);
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 200ms, transform 200ms;
+    }
+    .zod:hover { border-color: var(--sy-gold-1); transform: translateY(-2px); }
+    .zod__glyph {
+      font-family: 'Noto Sans Symbols 2', serif;
+      font-size: 28px;
+      line-height: 1;
+      color: var(--sy-gold-1);
+      text-shadow: 0 0 12px rgba(233,184,80,0.4);
+    }
+    .zod__name {
+      margin-top: 6px;
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: var(--sy-text);
+    }
+    .zod__date {
+      margin-top: 2px;
+      font-size: 10.5px;
+      color: rgba(216,203,168,0.6);
+    }
+    .zod.is-mine {
+      border-color: var(--sy-gold-1);
+      box-shadow: 0 0 18px rgba(233,184,80,0.18);
+    }
+  </style>
+</head>
+<body>
+  <header class="sy-topbar">
+    <button class="sy-topbar__btn" data-sy-go="home" aria-label="Back">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    </button>
+    <div class="sy-topbar__title">Predictions</div>
+    <button class="sy-topbar__btn" data-menu-toggle aria-label="Menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </header>
+
+  <main class="sy-container">
+    <section class="sy-card pred-hero">
+      <div class="sy-zodiac-hero" style="width:160px;height:160px;">
+        <div class="sy-zodiac-hero__ring"></div>
+        <div class="sy-zodiac-hero__ring sy-zodiac-hero__ring--2"></div>
+        <div class="sy-zodiac-hero__ring sy-zodiac-hero__ring--3"></div>
+        <div class="sy-zodiac-hero__core">
+          <!-- Radiant Sun + Leo Lion (Leo's animal is the lion, ruled by the Sun) -->
+          <svg class="ph-core-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="phGold" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"  stop-color="#fff4cc"/>
+                <stop offset="55%" stop-color="#f6c64a"/>
+                <stop offset="100%" stop-color="#a17613"/>
+              </linearGradient>
+              <radialGradient id="phCore" cx="50%" cy="50%" r="50%">
+                <stop offset="0%"  stop-color="#fff4cc"/>
+                <stop offset="60%" stop-color="#e9b850"/>
+                <stop offset="100%" stop-color="#8a6418"/>
+              </radialGradient>
+              <filter id="phGlow" x="-30%" y="-30%" width="160%" height="160%">
+                <feGaussianBlur stdDeviation="1.4" result="b"/>
+                <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+
+            <!-- 8 sun rays (long + short) -->
+            <g stroke="url(#phGold)" stroke-linecap="round" filter="url(#phGlow)">
+              <g class="ph-rays">
+                <line x1="50" y1="4"  x2="50" y2="14" stroke-width="2.4"/>
+                <line x1="50" y1="86" x2="50" y2="96" stroke-width="2.4"/>
+                <line x1="4"  y1="50" x2="14" y2="50" stroke-width="2.4"/>
+                <line x1="86" y1="50" x2="96" y2="50" stroke-width="2.4"/>
+                <line x1="17" y1="17" x2="24" y2="24" stroke-width="2"/>
+                <line x1="76" y1="76" x2="83" y2="83" stroke-width="2"/>
+                <line x1="17" y1="83" x2="24" y2="76" stroke-width="2"/>
+                <line x1="76" y1="24" x2="83" y2="17" stroke-width="2"/>
+              </g>
+              <g class="ph-rays-short">
+                <line x1="50" y1="18" x2="50" y2="22" stroke-width="1.4" opacity=".7"/>
+                <line x1="50" y1="78" x2="50" y2="82" stroke-width="1.4" opacity=".7"/>
+                <line x1="18" y1="50" x2="22" y2="50" stroke-width="1.4" opacity=".7"/>
+                <line x1="78" y1="50" x2="82" y2="50" stroke-width="1.4" opacity=".7"/>
+              </g>
+            </g>
+
+            <!-- Sun disc -->
+            <circle cx="50" cy="50" r="28" fill="url(#phCore)" stroke="url(#phGold)" stroke-width="1.2" filter="url(#phGlow)"/>
+
+            <!-- ===== STYLISED LION (Leo) ===== -->
+            <g fill="#2a1c00" stroke="#2a1c00" stroke-linejoin="round">
+              <!-- Mane (sun-ray like petals around the face) -->
+              <g class="ph-mane">
+                <path d="M50 30
+                         L53 36 L58 33 L57 40 L64 39 L60 45
+                         L67 47 L60 51 L66 56 L58 56 L60 63
+                         L54 60 L52 67 L48 67 L46 60 L40 63
+                         L42 56 L34 56 L40 51 L33 47 L40 45
+                         L36 39 L43 40 L42 33 L47 36 Z"
+                      fill="#2a1c00" opacity="0.92"/>
+              </g>
+              <!-- Face plate -->
+              <circle cx="50" cy="50" r="11" fill="#2a1c00"/>
+              <!-- Inner highlight on face -->
+              <ellipse cx="50" cy="49" rx="9" ry="9" fill="#3a2300" opacity="0.6"/>
+
+              <!-- Ears -->
+              <circle cx="42" cy="42" r="2.6" fill="#2a1c00"/>
+              <circle cx="58" cy="42" r="2.6" fill="#2a1c00"/>
+
+              <!-- Eyes -->
+              <ellipse cx="46" cy="48" rx="1.6" ry="2.1" fill="#fff4cc" stroke="none"/>
+              <ellipse cx="54" cy="48" rx="1.6" ry="2.1" fill="#fff4cc" stroke="none"/>
+              <circle cx="46" cy="48.5" r="1.1" fill="#2a1c00" stroke="none"/>
+              <circle cx="54" cy="48.5" r="1.1" fill="#2a1c00" stroke="none"/>
+
+              <!-- Snout: nose triangle + mouth -->
+              <path d="M48 53.5 L52 53.5 L50 56 Z" fill="#fff4cc" stroke="none"/>
+              <path d="M50 56 L50 58 M50 58 Q48 59 47 58 M50 58 Q52 59 53 58"
+                    fill="none" stroke="#fff4cc" stroke-width="0.8" stroke-linecap="round"/>
+
+              <!-- Whiskers -->
+              <g stroke="#fff4cc" stroke-width="0.6" stroke-linecap="round" opacity=".85">
+                <line x1="44" y1="55" x2="40" y2="54.5"/>
+                <line x1="44" y1="56.5" x2="39.5" y2="57"/>
+                <line x1="56" y1="55" x2="60" y2="54.5"/>
+                <line x1="56" y1="56.5" x2="60.5" y2="57"/>
+              </g>
+            </g>
+          </svg>
+        </div>
+      </div>
+      <h2 class="sy-gold">Your Daily Cosmic Brief</h2>
+      <p class="sy-muted sy-small">Updated 24 May 2025 · Leo ♌</p>
+    </section>
+
+    <div class="pred-tabs">
+      <button class="active">DAILY</button>
+      <button>WEEKLY</button>
+      <button>MONTHLY</button>
+      <button>YEARLY</button>
+    </div>
+
+    <section class="sy-card">
+      <div class="sy-row sy-row--between" style="margin-bottom:10px;">
+        <strong class="sy-gold" style="font-family:'Cinzel',serif;letter-spacing:.1em;">TODAY · LEO</strong>
+        <span class="sy-pill">Lucky #7</span>
+      </div>
+      <p class="sy-small" style="line-height:1.55;color:var(--sy-text-soft);">
+        The Sun’s placement in your 5th house favours creativity. Avoid arguments
+        with elders before noon. Evening brings positive financial news. Wear
+        gold or yellow for added luck.
+      </p>
+      <button class="sy-btn sy-btn--ghost sy-mt-16" data-sy-go="daily-prediction">READ FULL PREDICTION ›</button>
+    </section>
+
+    <h3 class="sy-section-title">Pick Your Sign</h3>
+    <section class="sy-card sy-card--soft">
+      <div class="zodiac-grid">
+        <div class="zod"><div class="zod__glyph">♈</div><div class="zod__name">ARIES</div><div class="zod__date">Mar 21 – Apr 19</div></div>
+        <div class="zod"><div class="zod__glyph">♉</div><div class="zod__name">TAURUS</div><div class="zod__date">Apr 20 – May 20</div></div>
+        <div class="zod"><div class="zod__glyph">♊</div><div class="zod__name">GEMINI</div><div class="zod__date">May 21 – Jun 20</div></div>
+        <div class="zod"><div class="zod__glyph">♋</div><div class="zod__name">CANCER</div><div class="zod__date">Jun 21 – Jul 22</div></div>
+        <div class="zod is-mine"><div class="zod__glyph">♌</div><div class="zod__name">LEO</div><div class="zod__date">Jul 23 – Aug 22</div></div>
+        <div class="zod"><div class="zod__glyph">♍</div><div class="zod__name">VIRGO</div><div class="zod__date">Aug 23 – Sep 22</div></div>
+        <div class="zod"><div class="zod__glyph">♎</div><div class="zod__name">LIBRA</div><div class="zod__date">Sep 23 – Oct 22</div></div>
+        <div class="zod"><div class="zod__glyph">♏</div><div class="zod__name">SCORPIO</div><div class="zod__date">Oct 23 – Nov 21</div></div>
+        <div class="zod"><div class="zod__glyph">♐</div><div class="zod__name">SAGITTARIUS</div><div class="zod__date">Nov 22 – Dec 21</div></div>
+        <div class="zod"><div class="zod__glyph">♑</div><div class="zod__name">CAPRICORN</div><div class="zod__date">Dec 22 – Jan 19</div></div>
+        <div class="zod"><div class="zod__glyph">♒</div><div class="zod__name">AQUARIUS</div><div class="zod__date">Jan 20 – Feb 18</div></div>
+        <div class="zod"><div class="zod__glyph">♓</div><div class="zod__name">PISCES</div><div class="zod__date">Feb 19 – Mar 20</div></div>
+      </div>
+    </section>
+
+    <h3 class="sy-section-title">Deeper Insights</h3>
+    <section class="sy-card sy-card--soft">
+      <div class="sy-tile-list">
+        <button class="sy-tile" data-sy-go="daily-prediction">
+          <span class="sy-tile__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.4-7-11a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6.6-7 11-7 11z"/></svg></span>
+          <div class="sy-tile__body"><div class="sy-tile__title">Love Compatibility</div><div class="sy-tile__sub">Match your sign with your partner’s</div></div>
+          <svg class="sy-tile__arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <button class="sy-tile" data-sy-go="kundli">
+          <span class="sy-tile__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18"/><line x1="3" y1="3" x2="21" y2="21"/><line x1="21" y1="3" x2="3" y2="21"/></svg></span>
+          <div class="sy-tile__body"><div class="sy-tile__title">Kundli Analysis</div><div class="sy-tile__sub">Your full birth chart, decoded</div></div>
+          <svg class="sy-tile__arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <button class="sy-tile" data-sy-go="services">
+          <span class="sy-tile__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+          <div class="sy-tile__body"><div class="sy-tile__title">Talk to an Astrologer</div><div class="sy-tile__sub">Live consultation in 5 mins</div></div>
+          <svg class="sy-tile__arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <script src="../../assets/app-shell.js"></script>
+  <script>
+    // Tab toggle (visual only in prototype)
+    document.querySelectorAll('.pred-tabs button').forEach(function (b) {
+      b.addEventListener('click', function () {
+        document.querySelectorAll('.pred-tabs button').forEach(function (x) { x.classList.remove('active'); });
+        b.classList.add('active');
+      });
+    });
+    // Zodiac click → daily prediction
+    document.querySelectorAll('.zod').forEach(function (z) {
+      z.addEventListener('click', function () { location.href = '../daily-predication-page/index.html'; });
+    });
+  </script>
+</body>
+</html>

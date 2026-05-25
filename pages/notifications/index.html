@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notifications · Shree Yantra</title>
+  <link rel="stylesheet" href="../../assets/app-shell.css" />
+  <link rel="stylesheet" href="../../assets/sy-pages.css" />
+  <style>
+    .n-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .n-tabs button {
+      padding: 9px 6px;
+      border-radius: 999px;
+      background: rgba(10, 10, 28, 0.7);
+      border: 1px solid rgba(201, 150, 46, 0.3);
+      color: var(--sy-gold-2);
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+    }
+    .n-tabs button.active {
+      background: linear-gradient(180deg, #fce8a8, #b87f1a);
+      color: #2a1c00;
+      border-color: transparent;
+    }
+    .n-list { display: flex; flex-direction: column; gap: 10px; }
+    .n-row {
+      display: grid;
+      grid-template-columns: 40px 1fr auto;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(8, 8, 22, 0.6);
+      border: 1px solid rgba(201, 150, 46, 0.25);
+      cursor: pointer;
+    }
+    .n-row.unread { background: rgba(233, 184, 80, 0.06); border-color: rgba(201, 150, 46, 0.5); }
+    .n-row.unread::before {
+      content: "";
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--sy-gold-1);
+      margin-top: 8px;
+      grid-row: 1 / -1;
+      align-self: start;
+      display: inline-block;
+      position: absolute;
+    }
+    .n-icon {
+      width: 40px; height: 40px;
+      border-radius: 12px;
+      display: grid; place-items: center;
+      background: rgba(233, 184, 80, 0.12);
+      border: 1px solid rgba(201, 150, 46, 0.45);
+      color: var(--sy-gold-1);
+    }
+    .n-icon svg { width: 20px; height: 20px; }
+    .n-body { min-width: 0; }
+    .n-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 14.5px;
+      font-weight: 600;
+      color: var(--sy-text);
+    }
+    .n-msg { margin-top: 3px; font-size: 12.5px; line-height: 1.45; color: var(--sy-text-soft); }
+    .n-time { font-size: 10px; letter-spacing: 0.1em; color: rgba(216, 203, 168, 0.5); white-space: nowrap; }
+    .n-empty {
+      padding: 60px 20px;
+      text-align: center;
+      color: var(--sy-text-soft);
+    }
+    .n-empty svg { width: 44px; height: 44px; color: var(--sy-gold-2); opacity: 0.5; margin-bottom: 10px; }
+    .n-mark {
+      display: block;
+      margin-left: auto;
+      font-size: 11px;
+      color: var(--sy-gold-2);
+      background: transparent;
+      border: none;
+      padding: 4px 10px;
+      cursor: pointer;
+      letter-spacing: 0.08em;
+    }
+    .n-day {
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      color: var(--sy-gold-2);
+      margin: 18px 0 8px;
+    }
+  </style>
+</head>
+<body>
+  <header class="sy-topbar">
+    <button class="sy-topbar__btn" data-sy-go="home" aria-label="Back">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    </button>
+    <div class="sy-topbar__title">Notifications</div>
+    <button class="sy-topbar__btn" data-menu-toggle aria-label="Menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </header>
+
+  <main class="sy-container">
+    <div class="n-tabs" id="nTabs">
+      <button class="active" data-filter="all">ALL</button>
+      <button data-filter="predictions">PREDICTIONS</button>
+      <button data-filter="account">ACCOUNT</button>
+    </div>
+
+    <button class="n-mark" id="markAll">MARK ALL AS READ</button>
+
+    <div class="n-day">TODAY</div>
+    <div class="n-list" id="nList">
+      <div class="n-row unread" data-type="predictions" data-sy-go="daily-prediction">
+        <span class="n-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
+        <div class="n-body">
+          <div class="n-title">Today’s Prediction is Ready</div>
+          <div class="n-msg">Leo · A powerful day for finance &amp; relationships. Read your full prediction.</div>
+        </div>
+        <span class="n-time">2 min</span>
+      </div>
+      <div class="n-row unread" data-type="account" data-sy-go="manage-subscription">
+        <span class="n-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8l4 6 5-7 5 7 4-4-2 12H4z"/></svg></span>
+        <div class="n-body">
+          <div class="n-title">Premium Renews in 5 Days</div>
+          <div class="n-msg">Your ₹499 subscription will renew on 24 Jun via UPI · Google Pay.</div>
+        </div>
+        <span class="n-time">1 hr</span>
+      </div>
+      <div class="n-row" data-type="predictions">
+        <span class="n-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+        <div class="n-body">
+          <div class="n-title">Auspicious Time Alert</div>
+          <div class="n-msg">Brahma muhurta begins at 4:18 AM tomorrow — ideal for meditation.</div>
+        </div>
+        <span class="n-time">4 hr</span>
+      </div>
+    </div>
+
+    <div class="n-day">YESTERDAY</div>
+    <div class="n-list">
+      <div class="n-row" data-type="predictions" data-sy-go="kundli">
+        <span class="n-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18"/><line x1="3" y1="3" x2="21" y2="21"/><line x1="21" y1="3" x2="3" y2="21"/></svg></span>
+        <div class="n-body">
+          <div class="n-title">New Insight in Your Kundli</div>
+          <div class="n-msg">Jupiter Mahadasha activated · favourable period until Feb 2040.</div>
+        </div>
+        <span class="n-time">23 May</span>
+      </div>
+      <div class="n-row" data-type="account">
+        <span class="n-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+        <div class="n-body">
+          <div class="n-title">Pandit Suresh sent you a message</div>
+          <div class="n-msg">“Namaste Raj, your next consultation slot is confirmed for tomorrow…”</div>
+        </div>
+        <span class="n-time">23 May</span>
+      </div>
+    </div>
+
+    <div class="n-day">EARLIER</div>
+    <div class="n-list">
+      <div class="n-row" data-type="account">
+        <span class="n-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8l4 6 5-7 5 7 4-4-2 12H4z"/></svg></span>
+        <div class="n-body">
+          <div class="n-title">Welcome to Premium</div>
+          <div class="n-msg">Unlimited predictions, kundli analysis &amp; astrologer chats are now active.</div>
+        </div>
+        <span class="n-time">24 Apr</span>
+      </div>
+    </div>
+  </main>
+
+  <script src="../../assets/app-shell.js"></script>
+  <script>
+    document.querySelectorAll('#nTabs button').forEach(function (b) {
+      b.addEventListener('click', function () {
+        document.querySelectorAll('#nTabs button').forEach(function (x) { x.classList.remove('active'); });
+        b.classList.add('active');
+        var filter = b.getAttribute('data-filter');
+        document.querySelectorAll('.n-row').forEach(function (row) {
+          var show = filter === 'all' || row.getAttribute('data-type') === filter;
+          row.style.display = show ? '' : 'none';
+        });
+      });
+    });
+    document.getElementById('markAll').addEventListener('click', function () {
+      document.querySelectorAll('.n-row.unread').forEach(function (r) { r.classList.remove('unread'); });
+      SY.toast('All marked as read', 'success');
+    });
+  </script>
+</body>
+</html>

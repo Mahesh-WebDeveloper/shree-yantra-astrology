@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Divine Library - Shree Yantra</title>
+  <link rel="stylesheet" href="../../assets/app-shell.css" />
+  <link rel="stylesheet" href="../../assets/sy-pages.css" />
+  <style>
+    /* Premium Library Styles */
+    :root {
+      --card-bg: rgba(12, 12, 18, 0.85);
+      --card-border: rgba(220, 180, 80, 0.2);
+      --gold-text: #eecb7a;
+      --gold-dim: #9a7d3b;
+      --gold-glow: rgba(238, 203, 122, 0.4);
+    }
+    
+    body {
+      background: #000;
+      color: #fff;
+      font-family: 'Inter', -apple-system, sans-serif;
+    }
+    
+    .sy-container {
+      padding-top: 20px;
+    }
+
+    /* Redesigned Premium Header */
+    .sy-topbar {
+      background: #000 !important;
+      border-bottom: 1px solid rgba(220,180,80,0.15) !important;
+      padding: 10px 16px !important;
+      height: 60px !important;
+    }
+    .sy-brand-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .sy-brand-header h1 {
+      margin: 0;
+      font-family: 'Cinzel', serif;
+      font-size: 19px;
+      letter-spacing: 0.12em;
+      color: var(--gold-text);
+      font-weight: 700;
+    }
+    .sy-brand-header p {
+      margin: 2px 0 0;
+      font-size: 8px;
+      letter-spacing: 0.35em;
+      color: var(--gold-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    /* Hero Section */
+    .lib-hero {
+      text-align: center;
+      margin-bottom: 24px;
+      position: relative;
+    }
+    .lib-book-icon {
+      width: 140px;
+      height: 90px;
+      margin: 0 auto;
+      filter: drop-shadow(0 0 25px rgba(238, 203, 122, 0.4));
+    }
+    .lib-title-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .lib-title-wrap svg {
+      width: 18px;
+      height: 18px;
+      color: var(--gold-dim);
+    }
+    .lib-hero h2 {
+      margin: 0;
+      font-family: 'Cinzel', serif;
+      font-size: 24px;
+      letter-spacing: 0.08em;
+      color: var(--gold-text);
+    }
+    .lib-hero h3 {
+      margin: 6px 0 0;
+      font-size: 14px;
+      font-weight: 400;
+      color: #e0e0e0;
+      letter-spacing: 0.02em;
+    }
+    .lib-hero p {
+      margin: 8px 0 0;
+      font-size: 12px;
+      color: var(--gold-dim);
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      align-items: center;
+    }
+    .lib-hero p span {
+      font-size: 6px;
+    }
+
+    /* Categories Scroll */
+    .lib-cats-scroll {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding: 4px 18px 16px;
+      margin: 0 -18px 20px;
+      scrollbar-width: none;
+    }
+    .lib-cats-scroll::-webkit-scrollbar { display: none; }
+    
+    .lib-cat-card {
+      min-width: 76px;
+      height: 84px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(20,20,25,0.9), rgba(10,10,14,0.95));
+      border: 1px solid rgba(220,180,80,0.15);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px;
+      color: var(--gold-text);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-align: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .lib-cat-card svg {
+      width: 28px;
+      height: 28px;
+      opacity: 0.9;
+    }
+    .lib-cat-card.active {
+      background: linear-gradient(180deg, rgba(30,15,45,0.9), rgba(15,8,25,0.95));
+      border: 1.5px solid #bd5cff;
+      box-shadow: 0 0 15px rgba(189,92,255,0.3);
+      color: #df9aff;
+    }
+    .lib-cat-card.active svg {
+      color: #df9aff;
+      filter: drop-shadow(0 0 8px rgba(189,92,255,0.6));
+      opacity: 1;
+    }
+
+    /* Section Card Base */
+    .lib-section-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .lib-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .lib-section-header h4 {
+      margin: 0;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--gold-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .lib-section-header a {
+      font-size: 11px;
+      color: var(--gold-dim);
+      text-decoration: none;
+    }
+
+    /* Popular Mantras */
+    .lib-mantras-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .lib-mantra-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .lib-mantra-img {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, rgba(220,180,80,0.2), rgba(0,0,0,0.8));
+      border: 1px solid rgba(220,180,80,0.3);
+      display: grid;
+      place-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .lib-mantra-img svg {
+      width: 24px;
+      height: 24px;
+      color: var(--gold-text);
+      opacity: 0.8;
+      z-index: 1;
+    }
+    .lib-mantra-info {
+      flex: 1;
+    }
+    .lib-mantra-info h5 {
+      margin: 0 0 4px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: #fff;
+    }
+    .lib-mantra-info p {
+      margin: 0;
+      font-size: 11px;
+      color: #999;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .lib-mantra-info p svg { width: 10px; height: 10px; }
+    .lib-mantra-play {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid rgba(220,180,80,0.4);
+      display: grid;
+      place-items: center;
+      color: var(--gold-text);
+      background: rgba(0,0,0,0.3);
+    }
+    .lib-btn-outline {
+      width: 100%;
+      margin-top: 16px;
+      padding: 14px;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(220,180,80,0.3);
+      border-radius: 8px;
+      color: var(--gold-text);
+      font-size: 12px;
+      font-weight: 500;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Spiritual Boost */
+    .lib-boost-container {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    .lib-boost-cover {
+      width: 100px;
+      height: 140px;
+      border-radius: 8px;
+      border: 1px solid rgba(220,180,80,0.3);
+      background: radial-gradient(circle at top, #1c2b4d, #080f1e);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 16px;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .lib-boost-cover h5 {
+      margin: 0;
+      color: var(--gold-text);
+      font-family: 'Cinzel', serif;
+      font-size: 14px;
+      text-align: center;
+      line-height: 1.2;
+    }
+    .lib-boost-content h4 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--gold-text);
+    }
+    .lib-boost-content .sanskrit {
+      font-size: 15px;
+      color: #fff;
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+    .lib-boost-content .english {
+      font-size: 11px;
+      color: #aaa;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+    .lib-boost-content .ref {
+      font-size: 10px;
+      color: var(--gold-dim);
+      margin-bottom: 12px;
+    }
+    .lib-read-link {
+      color: var(--gold-text);
+      font-size: 12px;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid rgba(220,180,80,0.3);
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: rgba(0,0,0,0.3);
+    }
+
+    /* Continue Listening */
+    .lib-continue {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+    .lib-cont-cover {
+      width: 60px;
+      height: 60px;
+      border-radius: 8px;
+      background: radial-gradient(circle at top, #243555, #080f1e);
+      border: 1px solid rgba(220,180,80,0.2);
+      display: grid;
+      place-items: center;
+    }
+    .lib-cont-cover svg { width: 30px; height: 30px; color: var(--gold-dim); }
+    .lib-cont-info { flex: 1; }
+    .lib-cont-info h4 { margin: 0 0 4px; font-size: 13px; font-weight: 500; color: #fff; }
+    .lib-cont-info p { margin: 0 0 8px; font-size: 11px; color: #aaa; }
+    .lib-progress-track {
+      height: 3px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 2px;
+      margin-bottom: 6px;
+      position: relative;
+    }
+    .lib-progress-fill {
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 45%;
+      background: var(--gold-text);
+      border-radius: 2px;
+      box-shadow: 0 0 8px var(--gold-text);
+    }
+    .lib-progress-times {
+      display: flex;
+      justify-content: space-between;
+      font-size: 9px;
+      color: #888;
+    }
+    .lib-cont-play {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      border: 1px solid var(--gold-dim);
+      display: grid; place-items: center;
+      color: var(--gold-text);
+    }
+
+    /* Spiritual Music Mode */
+    .lib-music-mode-header {
+      margin-bottom: 12px;
+    }
+    .lib-music-mode-header h4 { margin: 0 0 4px; font-size: 12px; color: var(--gold-dim); text-transform: uppercase; letter-spacing: 0.08em; }
+    .lib-music-mode-header p { margin: 0; font-size: 11px; color: #999; }
+    
+    .lib-music-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .lib-music-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(10,10,14,0.8);
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .lib-music-item.purple { border-color: rgba(189,92,255,0.3); box-shadow: inset 0 0 20px rgba(189,92,255,0.08); }
+    .lib-music-item.gold { border-color: rgba(238,203,122,0.3); box-shadow: inset 0 0 20px rgba(238,203,122,0.08); }
+    .lib-music-item.green { border-color: rgba(122,240,94,0.3); box-shadow: inset 0 0 20px rgba(122,240,94,0.08); }
+    .lib-music-item.blue { border-color: rgba(100,180,255,0.3); box-shadow: inset 0 0 20px rgba(100,180,255,0.08); }
+    .lib-music-item.mixed { border: 1px dashed rgba(238,203,122,0.4); }
+
+    .lib-music-icon { width: 36px; height: 36px; display: grid; place-items: center; }
+    .lib-music-icon svg { width: 28px; height: 28px; }
+    .lib-music-item.purple .lib-music-icon { color: #bd5cff; }
+    .lib-music-item.gold .lib-music-icon { color: var(--gold-text); }
+    .lib-music-item.green .lib-music-icon { color: #7af05e; }
+    .lib-music-item.blue .lib-music-icon { color: #64b4ff; }
+    
+    .lib-music-info { flex: 1; }
+    .lib-music-info h5 { margin: 0 0 2px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+    .lib-music-item.purple h5 { color: #bd5cff; }
+    .lib-music-item.gold h5, .lib-music-item.mixed h5 { color: var(--gold-text); }
+    .lib-music-item.green h5 { color: #7af05e; }
+    .lib-music-item.blue h5 { color: #64b4ff; }
+    .lib-music-info p { margin: 0; font-size: 10px; color: #aaa; }
+    
+    .lib-music-action { width: 24px; display: grid; place-items: center; color: #888; }
+    .lib-music-item.purple .lib-music-action svg { color: #bd5cff; width: 18px; height: 18px; }
+
+    /* Explore Vedas */
+    .lib-vedas-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .lib-veda-card {
+      background: radial-gradient(circle at 50% 80%, rgba(220,180,80,0.1), rgba(10,10,14,0.9));
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px 12px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .lib-veda-card h5 { margin: 0 0 4px; font-size: 14px; color: #fff; font-weight: 500; }
+    .lib-veda-card p { margin: 0 0 12px; font-size: 10px; color: #999; }
+    .lib-veda-book-icon {
+      width: 70px; height: 50px;
+      color: var(--gold-text);
+      position: relative;
+    }
+    .lib-veda-book-icon svg { width: 100%; height: 100%; opacity: 0.8; }
+    .lib-veda-play-mini {
+      position: absolute;
+      bottom: -4px; right: -4px;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: var(--gold-text);
+      color: #000;
+      display: grid; place-items: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    }
+    .lib-veda-play-mini svg { width: 10px; height: 10px; opacity: 1; }
+
+    /* Premium Banner Bottom */
+    .lib-premium-banner {
+      background: radial-gradient(circle at 20% 50%, rgba(220,180,80,0.15), rgba(10,10,14,0.9));
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .lib-premium-banner::before {
+      content: '';
+      position: absolute;
+      left: -20px; top: -10px;
+      width: 120px; height: 140px;
+      background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40" stroke="rgba(238,203,122,0.15)" stroke-width="2" fill="none"/></svg>') center/contain no-repeat;
+      pointer-events: none;
+    }
+    .lib-premium-content { position: relative; z-index: 1; }
+    .lib-premium-content h4 { margin: 0 0 6px; font-family: 'Cinzel', serif; font-size: 16px; color: var(--gold-text); }
+    .lib-premium-content p { margin: 0; font-size: 12px; color: #aaa; line-height: 1.4; }
+    .lib-premium-btn {
+      background: linear-gradient(180deg, #fce8a8, #b87f1a);
+      color: #2a1c00;
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 15px rgba(238,203,122,0.25);
+    }
+
+  </style>
+</head>
+<body>
+  <!-- Header matched exactly to design -->
+  <header class="sy-topbar" style="display:flex; align-items:center; justify-content:space-between;">
+    <button class="sy-topbar__btn" data-sy-go="home" aria-label="Back">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="sy-brand-header">
+      <h1>SHREE YANTRA</h1>
+      <p>Astrology</p>
+    </div>
+    <button class="sy-topbar__btn" aria-label="Notifications" style="position:relative;">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--gold-text)" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+      <span style="position:absolute;top:4px;right:6px;width:12px;height:12px;background:#ff3b30;border-radius:50%;color:#fff;font-size:8px;display:grid;place-items:center;font-weight:bold; border: 1px solid #000;">3</span>
+    </button>
+  </header>
+
+  <main class="sy-container">
+    
+    <section class="lib-hero">
+      <div class="lib-book-icon">
+        <svg viewBox="0 0 160 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs><linearGradient id="libGold" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fce8a8"/><stop offset="0.6" stop-color="#e9b850"/><stop offset="1" stop-color="#a17613"/></linearGradient></defs>
+          <path d="M80 84c-19-18-40-19-66-13V22c27-7 49 1 66 18v44Z" fill="rgba(238,203,122,0.1)" stroke="url(#libGold)" stroke-width="2"/>
+          <path d="M80 84c19-18 40-19 66-13V22c-27-7-49 1-66 18v44Z" fill="rgba(238,203,122,0.1)" stroke="url(#libGold)" stroke-width="2"/>
+          <path d="M80 40v50M31 36c15-1 28 3 39 11M31 50c15-1 28 3 39 11M129 36c-15-1-28 3-39 11M129 50c-15-1-28 3-39 11" stroke="url(#libGold)" stroke-width="1.5" opacity=".7"/>
+          <text x="80" y="36" text-anchor="middle" font-family="serif" font-size="34" font-weight="bold" fill="url(#libGold)">ॐ</text>
+        </svg>
+      </div>
+      <div class="lib-title-wrap">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/></svg>
+        <h2>DIVINE LIBRARY</h2>
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/></svg>
+      </div>
+      <h3>Mantras, Scriptures & Vedic Wisdom</h3>
+      <p>Listen <span>•</span> Read <span>•</span> Learn <span>•</span> Grow</p>
+    </section>
+
+    <!-- Categories Horizontal Scroll -->
+    <div class="lib-cats-scroll">
+      <div class="lib-cat-card">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8" stroke-dasharray="2 3"/><circle cx="12" cy="4" r="2" fill="currentColor"/></svg>
+        MANTRAS
+      </div>
+      <div class="lib-cat-card">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5z"/><path d="M8 7h8"/></svg>
+        BHAGAVAD GITA
+      </div>
+      <div class="lib-cat-card">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3 5 21l7-4 7 4z"/><path d="M12 3v14"/></svg>
+        RAMAYAN
+      </div>
+      <div class="lib-cat-card">
+        <svg viewBox="0 0 24 24" fill="currentColor"><text x="50%" y="60%" text-anchor="middle" font-family="serif" font-size="18">ॐ</text></svg>
+        THE VEDAS
+      </div>
+      <div class="lib-cat-card">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        BHAJANS & AARTI
+      </div>
+      <div class="lib-cat-card">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        MY LIBRARY
+      </div>
+      <div class="lib-cat-card active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        SPIRITUAL<br>MUSIC
+      </div>
+    </div>
+
+    <!-- Spiritual Boost Card -->
+    <div class="lib-section-card">
+      <div class="lib-section-header" style="margin-bottom: 12px;">
+        <h4>TODAY'S SPIRITUAL BOOST</h4>
+      </div>
+      <div class="lib-boost-container">
+        <div class="lib-boost-cover">
+          <h5 style="margin-top: 10px;">Bhagavad<br>Gita</h5>
+          <div style="font-size:5px; color:#aaa; margin-top:4px;">TEACHINGS OF LORD KRISHNA</div>
+          <svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor" style="color:var(--gold-text); margin-top:10px;"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1"/><path d="M12 6v12M6 12h12" stroke="currentColor" stroke-width="1"/></svg>
+        </div>
+        <div class="lib-boost-content">
+          <h4>Today's Shloka</h4>
+          <div class="sanskrit">कर्मण्येवाधिकारस्ते मा फलेषु कदाचन ।</div>
+          <div class="english">Karmanye vadhikaraste ma phaleshu kadachana.</div>
+          <div class="ref">– Bhagavad Gita (2.47)</div>
+          <a href="#" class="lib-read-link">
+            Read Full Chapter
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Continue Listening -->
+    <div class="lib-section-card">
+      <div class="lib-section-header" style="margin-bottom: 12px;">
+        <h4>CONTINUE LISTENING</h4>
+        <a href="#">View All</a>
+      </div>
+      <div class="lib-continue">
+        <div class="lib-cont-cover">
+          <svg viewBox="0 0 24 24" fill="currentColor"><text x="50%" y="65%" text-anchor="middle" font-family="serif" font-size="16">ॐ</text></svg>
+        </div>
+        <div class="lib-cont-info">
+          <h4>Bhagavad Gita - Chapter 2</h4>
+          <p>Shloka 47 - 72</p>
+          <div class="lib-progress-track"><div class="lib-progress-fill"></div></div>
+          <div class="lib-progress-times"><span>12:45</span><span>28:36</span></div>
+        </div>
+        <div class="lib-cont-play">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Popular Mantras -->
+    <div class="lib-section-card">
+      <div class="lib-section-header">
+        <h4>POPULAR MANTRAS</h4>
+        <a href="#">View All</a>
+      </div>
+      <div class="lib-mantras-list">
+        <div class="lib-mantra-item">
+          <div class="lib-mantra-img">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+          </div>
+          <div class="lib-mantra-info">
+            <h5>Mahamrityunjaya Mantra</h5>
+            <p>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20M12 2a10 10 0 0 1 10 10M2 12a10 10 0 0 1 10-10"/></svg>
+              108 Times <span style="margin:0 4px;">|</span> <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><path d="M2 12v6h6l7 7V3l-7 7H2z"/><path d="M19 12h4M17 6l4-4M17 18l4 4" stroke="currentColor" stroke-width="2"/></svg>
+            </p>
+          </div>
+          <div class="lib-mantra-play"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
+        </div>
+        
+        <div class="lib-mantra-item">
+          <div class="lib-mantra-img">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/></svg>
+          </div>
+          <div class="lib-mantra-info">
+            <h5>Gayatri Mantra</h5>
+            <p>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20M12 2a10 10 0 0 1 10 10M2 12a10 10 0 0 1 10-10"/></svg>
+              108 Times <span style="margin:0 4px;">|</span> <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><path d="M2 12v6h6l7 7V3l-7 7H2z"/><path d="M19 12h4M17 6l4-4M17 18l4 4" stroke="currentColor" stroke-width="2"/></svg>
+            </p>
+          </div>
+          <div class="lib-mantra-play"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
+        </div>
+        
+        <div class="lib-mantra-item">
+          <div class="lib-mantra-img">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3 9h9l-7 5 3 9-8-6-8 6 3-9-7-5h9z"/></svg>
+          </div>
+          <div class="lib-mantra-info">
+            <h5>Hanuman Chalisa</h5>
+            <p>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20M12 2a10 10 0 0 1 10 10M2 12a10 10 0 0 1 10-10"/></svg>
+              1 Path <span style="margin:0 4px;">|</span> <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><path d="M2 12v6h6l7 7V3l-7 7H2z"/><path d="M19 12h4M17 6l4-4M17 18l4 4" stroke="currentColor" stroke-width="2"/></svg>
+            </p>
+          </div>
+          <div class="lib-mantra-play"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
+        </div>
+        
+        <div class="lib-mantra-item">
+          <div class="lib-mantra-img">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+          </div>
+          <div class="lib-mantra-info">
+            <h5>Om Namah Shivaya</h5>
+            <p>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20M12 2a10 10 0 0 1 10 10M2 12a10 10 0 0 1 10-10"/></svg>
+              108 Times <span style="margin:0 4px;">|</span> <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><path d="M2 12v6h6l7 7V3l-7 7H2z"/><path d="M19 12h4M17 6l4-4M17 18l4 4" stroke="currentColor" stroke-width="2"/></svg>
+            </p>
+          </div>
+          <div class="lib-mantra-play"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
+        </div>
+
+        <div class="lib-mantra-item">
+          <div class="lib-mantra-img">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/></svg>
+          </div>
+          <div class="lib-mantra-info">
+            <h5>Mahalakshmi Mantra</h5>
+            <p>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20M12 2a10 10 0 0 1 10 10M2 12a10 10 0 0 1 10-10"/></svg>
+              108 Times <span style="margin:0 4px;">|</span> <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><path d="M2 12v6h6l7 7V3l-7 7H2z"/><path d="M19 12h4M17 6l4-4M17 18l4 4" stroke="currentColor" stroke-width="2"/></svg>
+            </p>
+          </div>
+          <div class="lib-mantra-play"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
+        </div>
+      </div>
+      <button class="lib-btn-outline">
+        Explore More Mantras
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
+    </div>
+
+    <!-- Spiritual Music Mode -->
+    <div class="lib-section-card">
+      <div class="lib-music-mode-header">
+        <h4>SPIRITUAL MUSIC MODE</h4>
+        <p>Set the perfect atmosphere for your spiritual practice</p>
+      </div>
+      
+      <div class="lib-music-list">
+        <div class="lib-music-item purple">
+          <div class="lib-music-icon"><svg viewBox="0 0 24 24" fill="currentColor"><text x="50%" y="65%" text-anchor="middle" font-family="serif" font-size="22">ॐ</text></svg></div>
+          <div class="lib-music-info">
+            <h5>OM CHANTING</h5>
+            <p>Deep Om chanting for peace & healing</p>
+          </div>
+          <div class="lib-music-action">
+            <svg viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="10" width="3" height="10" rx="1"/><rect x="10.5" y="4" width="3" height="16" rx="1"/><rect x="17" y="14" width="3" height="6" rx="1"/></svg>
+          </div>
+        </div>
+        
+        <div class="lib-music-item gold">
+          <div class="lib-music-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 8h14M7 8v9a5 5 0 0 0 10 0V8M9 5h6"/><circle cx="12" cy="20" r="2" fill="currentColor"/></svg></div>
+          <div class="lib-music-info">
+            <h5>TEMPLE BELLS</h5>
+            <p>Sacred temple bells for positive energy</p>
+          </div>
+        </div>
+        
+        <div class="lib-music-item green">
+          <div class="lib-music-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 17L17 4l3 3L7 20H4zM14 7l3 3"/><circle cx="8" cy="16" r="1.5" fill="currentColor"/><circle cx="11" cy="13" r="1.5" fill="currentColor"/></svg></div>
+          <div class="lib-music-info">
+            <h5>FLUTE MUSIC</h5>
+            <p>Lord Krishna's flute for relaxation</p>
+          </div>
+        </div>
+        
+        <div class="lib-music-item blue">
+          <div class="lib-music-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 19v2M12 19v2M16 19v2M7 16a4 4 0 1 1 .8-7.9A5 5 0 0 1 17.7 10 3 3 0 0 1 17 16z"/></svg></div>
+          <div class="lib-music-info">
+            <h5>RAIN + MANTRA</h5>
+            <p>Rain sounds with mantra chanting</p>
+          </div>
+        </div>
+        
+        <div class="lib-music-item mixed">
+          <div class="lib-music-info">
+            <h5>MIX & MATCH</h5>
+            <p>Create your own spiritual ambience</p>
+          </div>
+          <div class="lib-music-action" style="width:30px; margin-right:10px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Explore Vedas -->
+    <div class="lib-section-card">
+      <div class="lib-section-header">
+        <h4>EXPLORE THE VEDAS</h4>
+        <a href="#">View All</a>
+      </div>
+      <div class="lib-vedas-grid">
+        <div class="lib-veda-card">
+          <h5>Rigveda</h5>
+          <p>हिंदी | English</p>
+          <div class="lib-veda-book-icon">
+            <svg viewBox="0 0 160 110" fill="none"><path d="M80 84c-19-18-40-19-66-13V22c27-7 49 1 66 18v44Z" fill="currentColor" opacity="0.3"/><path d="M80 84c19-18 40-19 66-13V22c-27-7-49 1-66 18v44Z" fill="currentColor" opacity="0.3"/><path d="M80 40v50M31 36c15-1 28 3 39 11M31 50c15-1 28 3 39 11M129 36c-15-1-28 3-39 11M129 50c-15-1-28 3-39 11" stroke="currentColor" stroke-width="3"/></svg>
+            <div class="lib-veda-play-mini"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
+          </div>
+        </div>
+        <div class="lib-veda-card">
+          <h5>Samaveda</h5>
+          <p>हिंदी | English</p>
+          <div class="lib-veda-book-icon">
+            <svg viewBox="0 0 160 110" fill="none"><path d="M80 84c-19-18-40-19-66-13V22c27-7 49 1 66 18v44Z" fill="currentColor" opacity="0.3"/><path d="M80 84c19-18 40-19 66-13V22c-27-7-49 1-66 18v44Z" fill="currentColor" opacity="0.3"/><path d="M80 40v50M31 36c15-1 28 3 39 11M31 50c15-1 28 3 39 11M129 36c-15-1-28 3-39 11M129 50c-15-1-28 3-39 11" stroke="currentColor" stroke-width="3"/></svg>
+            <div class="lib-veda-play-mini"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
+          </div>
+        </div>
+        <div class="lib-veda-card">
+          <h5>Yajurveda</h5>
+          <p>हिंदी | English</p>
+          <div class="lib-veda-book-icon">
+            <svg viewBox="0 0 160 110" fill="none"><path d="M80 84c-19-18-40-19-66-13V22c27-7 49 1 66 18v44Z" fill="currentColor" opacity="0.3"/><path d="M80 84c19-18 40-19 66-13V22c-27-7-49 1-66 18v44Z" fill="currentColor" opacity="0.3"/><path d="M80 40v50M31 36c15-1 28 3 39 11M31 50c15-1 28 3 39 11M129 36c-15-1-28 3-39 11M129 50c-15-1-28 3-39 11" stroke="currentColor" stroke-width="3"/></svg>
+            <div class="lib-veda-play-mini"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
+          </div>
+        </div>
+        <div class="lib-veda-card">
+          <h5>Atharvaveda</h5>
+          <p>हिंदी | English</p>
+          <div class="lib-veda-book-icon">
+            <svg viewBox="0 0 160 110" fill="none"><path d="M80 84c-19-18-40-19-66-13V22c27-7 49 1 66 18v44Z" fill="currentColor" opacity="0.3"/><path d="M80 84c19-18 40-19 66-13V22c-27-7-49 1-66 18v44Z" fill="currentColor" opacity="0.3"/><path d="M80 40v50M31 36c15-1 28 3 39 11M31 50c15-1 28 3 39 11M129 36c-15-1-28 3-39 11M129 50c-15-1-28 3-39 11" stroke="currentColor" stroke-width="3"/></svg>
+            <div class="lib-veda-play-mini"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Premium Banner -->
+    <div class="lib-premium-banner">
+      <div class="lib-premium-content">
+        <h4>Listen. Read. Understand. Live.</h4>
+        <p>Connect with divine knowledge<br>anytime, anywhere.</p>
+      </div>
+      <button class="lib-premium-btn">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M20.6 5.4c-2.4-2.4-6.3-2.4-8.7 0l-.9.9-.9-.9c-2.4-2.4-6.3-2.4-8.7 0-2.4 2.4-2.4 6.3 0 8.7l9.6 9.6 9.6-9.6c2.4-2.4 2.4-6.3 0-8.7z"/></svg>
+        Go Premium
+      </button>
+    </div>
+
+  </main>
+
+  <script src="../../assets/app-shell.js"></script>
+</body>
+</html>

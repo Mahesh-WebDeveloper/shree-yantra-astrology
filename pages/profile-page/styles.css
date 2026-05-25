@@ -1,0 +1,263 @@
+/* ============================================================
+   Profile page — uses shared cosmic backdrop + welcome-page card
+   style. No fixed phone frame, no separate width. Only this file
+   defines profile-specific component styles.
+   ============================================================ */
+
+/* HERO ------------------------------------------------------- */
+.profile-hero {
+  text-align: center;
+  padding: 22px 18px 18px;
+}
+.avatar-wrap {
+  position: relative;
+  width: 116px;
+  height: 116px;
+  margin: 0 auto 12px;
+}
+.avatar-ring {
+  width: 116px;
+  height: 116px;
+  border-radius: 50%;
+  padding: 4px;
+  background: linear-gradient(160deg, #fce8a8 0%, #e9b850 35%, #8a6418 65%, #c9962e 100%);
+  box-shadow:
+    0 0 0 6px rgba(233, 184, 80, 0.08),
+    0 0 28px rgba(233, 184, 80, 0.35);
+}
+.avatar-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, #1a1530 0%, #07071a 75%);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.avatar-inner svg {
+  width: 64px;
+  height: 64px;
+  color: var(--sy-gold-1);
+  margin: 0;
+  filter: drop-shadow(0 0 6px rgba(233, 184, 80, 0.35));
+}
+.avatar-edit {
+  position: absolute;
+  right: 4px;
+  bottom: 6px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #07071a;
+  border: 1.5px solid var(--sy-gold-1);
+  color: var(--sy-gold-1);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(233, 184, 80, 0.4);
+}
+.profile-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 4px 0 4px;
+  line-height: 1.15;
+}
+.profile-meta {
+  color: var(--sy-text-soft);
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+}
+.profile-premium {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fce8a8 0%, #e9b850 45%, #b87f1a 100%);
+  color: #2a1c00;
+  font-family: 'Cinzel', serif;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  box-shadow: 0 4px 14px rgba(233, 184, 80, 0.3);
+}
+
+/* QUICK STATS ----------------------------------------------- */
+.profile-stats {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.profile-stats > div {
+  padding: 10px 6px;
+  border-radius: 14px;
+  background: rgba(8, 8, 22, 0.55);
+  border: 1px solid rgba(201, 150, 46, 0.22);
+}
+.stat-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  font-weight: 700;
+  background: linear-gradient(180deg, #fce8a8 0%, #e9b850 45%, #b87f1a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1;
+}
+.stat-lbl {
+  margin-top: 4px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--sy-text-soft);
+  text-transform: uppercase;
+}
+
+/* INFO LIST ------------------------------------------------- */
+.info-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.info-list li {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 4px;
+  border-bottom: 1px solid rgba(201, 150, 46, 0.16);
+}
+.info-list li:last-child { border-bottom: none; }
+.info-body { display: flex; flex-direction: column; }
+.info-lbl {
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  color: var(--sy-gold-2);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.info-val {
+  color: var(--sy-text);
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+/* shared icon circle */
+.ic-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid rgba(201, 150, 46, 0.45);
+  background: rgba(8, 8, 22, 0.5);
+  display: grid;
+  place-items: center;
+  color: var(--sy-gold-1);
+}
+.ic-circle svg { width: 18px; height: 18px; }
+
+/* MENU LIST ------------------------------------------------- */
+.menu-card { padding: 6px 14px; }
+.menu-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.menu-list li {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 4px;
+  border-bottom: 1px solid rgba(201, 150, 46, 0.16);
+  cursor: pointer;
+}
+.menu-list li:last-child { border-bottom: none; }
+.menu-list li:hover { background: rgba(233, 184, 80, 0.05); }
+.menu-body { display: flex; flex-direction: column; min-width: 0; }
+.m-lbl {
+  color: var(--sy-text);
+  font-size: 14.5px;
+  font-weight: 600;
+  font-family: 'Playfair Display', serif;
+}
+.m-sub {
+  margin-top: 2px;
+  color: rgba(216, 203, 168, 0.65);
+  font-size: 11.5px;
+}
+.chev { width: 18px; height: 18px; color: var(--sy-gold-2); }
+
+/* iOS-style switch (premium feel) */
+.sy-switch {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  display: inline-block;
+}
+.sy-switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.sy-switch span {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: rgba(216, 203, 168, 0.25);
+  transition: background 220ms;
+}
+.sy-switch span::after {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  top: 3px;
+  left: 3px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 220ms;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+.sy-switch input:checked + span {
+  background: linear-gradient(90deg, #fce8a8, #b87f1a);
+}
+.sy-switch input:checked + span::after {
+  transform: translateX(18px);
+}
+
+/* LOGOUT --------------------------------------------------- */
+.logout {
+  width: 100%;
+  margin-top: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 100, 100, 0.4);
+  background: rgba(255, 80, 80, 0.05);
+  color: #ff8585;
+  font-family: 'Cinzel', serif;
+  font-size: 12.5px;
+  letter-spacing: 0.18em;
+  cursor: pointer;
+  font-weight: 700;
+}
+.logout:hover {
+  background: rgba(255, 80, 80, 0.1);
+  border-color: rgba(255, 100, 100, 0.7);
+}
+
+.profile-version {
+  margin: 18px 0 6px;
+  text-align: center;
+  font-size: 10px;
+  color: rgba(216, 203, 168, 0.45);
+  letter-spacing: 0.18em;
+}

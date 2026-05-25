@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manage Subscription · Shree Yantra</title>
+  <link rel="stylesheet" href="../../assets/app-shell.css" />
+  <link rel="stylesheet" href="../../assets/sy-pages.css" />
+  <style>
+    .ms-plan {
+      padding: 20px 18px;
+      text-align: center;
+    }
+    .ms-plan__crown {
+      width: 60px; height: 60px;
+      margin: 0 auto 10px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 30% 30%, rgba(252,232,168,0.55), rgba(0,0,0,0) 70%),
+        rgba(8,8,22,0.7);
+      color: #2a1c00;
+      background-image: linear-gradient(180deg, #fce8a8, #b87f1a);
+      box-shadow: 0 0 22px rgba(233, 184, 80, 0.35);
+    }
+    .ms-plan__crown svg { width: 30px; height: 30px; }
+    .ms-plan h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px;
+      margin: 4px 0 4px;
+    }
+    .ms-plan p {
+      color: var(--sy-text-soft);
+      font-size: 13px;
+      margin: 0;
+    }
+    .ms-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: rgba(74, 222, 128, 0.12);
+      color: #4ade80;
+      border: 1px solid rgba(74, 222, 128, 0.4);
+      margin-bottom: 10px;
+    }
+    .ms-status::before {
+      content: "";
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #4ade80;
+      box-shadow: 0 0 8px #4ade80;
+    }
+    .ms-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(201, 150, 46, 0.18);
+      font-size: 13.5px;
+    }
+    .ms-row:last-child { border-bottom: none; }
+    .ms-row span { color: var(--sy-text-soft); }
+    .ms-row b {
+      color: var(--sy-gold-1);
+      font-family: 'Cinzel', serif;
+      letter-spacing: 0.06em;
+      font-size: 13px;
+    }
+    .ms-perks {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .ms-perk {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px;
+      border-radius: 12px;
+      background: rgba(8, 8, 22, 0.55);
+      border: 1px solid rgba(201, 150, 46, 0.25);
+      font-size: 12px;
+      color: var(--sy-text-soft);
+    }
+    .ms-perk svg { width: 18px; height: 18px; flex: none; color: var(--sy-gold-1); }
+
+    .ms-plan-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(8, 8, 22, 0.6);
+      border: 1px solid rgba(201, 150, 46, 0.3);
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+    .ms-plan-card.is-current {
+      border-color: var(--sy-gold-1);
+      background: rgba(233, 184, 80, 0.08);
+    }
+    .ms-plan-card__info { flex: 1; }
+    .ms-plan-card__info strong {
+      display: block;
+      font-family: 'Playfair Display', serif;
+      font-size: 15px;
+      color: var(--sy-text);
+    }
+    .ms-plan-card__info small {
+      color: rgba(216, 203, 168, 0.65);
+      font-size: 11.5px;
+    }
+    .ms-plan-card__price {
+      font-family: 'Cinzel', serif;
+      color: var(--sy-gold-1);
+      font-size: 15px;
+      text-align: right;
+    }
+    .ms-plan-card__price small {
+      display: block;
+      font-size: 9.5px;
+      color: rgba(216, 203, 168, 0.6);
+      letter-spacing: 0.12em;
+    }
+    .ms-savings {
+      display: inline-block;
+      margin-top: 4px;
+      font-size: 9.5px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #fce8a8, #b87f1a);
+      color: #2a1c00;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+    .ms-history {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      font-size: 12.5px;
+      color: var(--sy-text-soft);
+      border-bottom: 1px solid rgba(201, 150, 46, 0.15);
+    }
+    .ms-history:last-child { border-bottom: none; }
+    .ms-history b { color: var(--sy-gold-1); font-family: 'Cinzel', serif; }
+    .ms-cancel {
+      display: block;
+      width: 100%;
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 999px;
+      background: transparent;
+      border: 1px solid rgba(220, 80, 80, 0.4);
+      color: #f99;
+      font-family: 'Cinzel', serif;
+      font-size: 12.5px;
+      letter-spacing: 0.12em;
+      cursor: pointer;
+    }
+    .ms-cancel:hover {
+      background: rgba(220, 80, 80, 0.08);
+      border-color: rgba(220, 80, 80, 0.7);
+    }
+  </style>
+</head>
+<body>
+  <header class="sy-topbar">
+    <button class="sy-topbar__btn" data-sy-go="profile" aria-label="Back">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    </button>
+    <div class="sy-topbar__title">Manage Plan</div>
+    <button class="sy-topbar__btn" data-menu-toggle aria-label="Menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </header>
+
+  <main class="sy-container">
+    <section class="sy-card ms-plan">
+      <div class="ms-plan__crown">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 7l4 4 5-7 5 7 4-4-2 12H5L3 7z"/></svg>
+      </div>
+      <div class="ms-status">ACTIVE</div>
+      <h2 class="sy-gold">Premium Astrology</h2>
+      <p>Renews automatically on 24 Jun 2025</p>
+    </section>
+
+    <section class="sy-card">
+      <h3 class="sy-gold" style="margin:0 0 4px;font-family:'Cinzel',serif;letter-spacing:.1em;font-size:13.5px;">BILLING DETAILS</h3>
+      <div class="ms-row"><span>Plan</span><b>Monthly</b></div>
+      <div class="ms-row"><span>Amount</span><b>₹499 / month</b></div>
+      <div class="ms-row"><span>Started On</span><b>24 Apr 2025</b></div>
+      <div class="ms-row"><span>Next Billing</span><b>24 Jun 2025</b></div>
+      <div class="ms-row"><span>Payment Method</span><b>UPI · Google Pay</b></div>
+    </section>
+
+    <section class="sy-card">
+      <h3 class="sy-gold" style="margin:0 0 10px;font-family:'Cinzel',serif;letter-spacing:.1em;font-size:13.5px;">YOUR PREMIUM PERKS</h3>
+      <div class="ms-perks">
+        <div class="ms-perk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Daily predictions</div>
+        <div class="ms-perk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18"/><line x1="3" y1="3" x2="21" y2="21"/><line x1="21" y1="3" x2="3" y2="21"/></svg>Full kundli analysis</div>
+        <div class="ms-perk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Unlimited chat</div>
+        <div class="ms-perk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C9 6 7 8 7 12a5 5 0 0 0 10 0c0-2-1-4-3-6-1 2-2 2-2 0z"/></svg>Personal remedies</div>
+        <div class="ms-perk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Auspicious timings</div>
+        <div class="ms-perk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3 1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8 1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Personalised dashboard</div>
+      </div>
+    </section>
+
+    <h3 class="sy-section-title">Change Plan</h3>
+
+    <div class="ms-plan-card is-current">
+      <div class="ms-plan-card__info">
+        <strong>Monthly</strong>
+        <small>Renews every month</small>
+      </div>
+      <div class="ms-plan-card__price">
+        ₹499<small>/MONTH</small>
+      </div>
+    </div>
+
+    <div class="ms-plan-card">
+      <div class="ms-plan-card__info">
+        <strong>Quarterly</strong>
+        <small>Renews every 3 months</small>
+        <span class="ms-savings">SAVE 15%</span>
+      </div>
+      <div class="ms-plan-card__price">
+        ₹1,299<small>/QUARTER</small>
+      </div>
+    </div>
+
+    <div class="ms-plan-card">
+      <div class="ms-plan-card__info">
+        <strong>Yearly</strong>
+        <small>Renews every year</small>
+        <span class="ms-savings">SAVE 33%</span>
+      </div>
+      <div class="ms-plan-card__price">
+        ₹3,999<small>/YEAR</small>
+      </div>
+    </div>
+
+    <section class="sy-card">
+      <h3 class="sy-gold" style="margin:0 0 8px;font-family:'Cinzel',serif;letter-spacing:.1em;font-size:13.5px;">PAYMENT HISTORY</h3>
+      <div class="ms-history"><span>24 May 2025 · UPI</span><b>₹499</b></div>
+      <div class="ms-history"><span>24 Apr 2025 · UPI</span><b>₹499</b></div>
+      <div class="ms-history"><span>24 Mar 2025 · Card</span><b>₹499</b></div>
+      <div class="ms-history"><span>24 Feb 2025 · Card</span><b>₹499</b></div>
+    </section>
+
+    <button class="ms-cancel" id="cancelBtn">
+      CANCEL SUBSCRIPTION
+    </button>
+  </main>
+
+  <script src="../../assets/app-shell.js"></script>
+  <script>
+    document.querySelectorAll('.ms-plan-card').forEach(function (el) {
+      el.addEventListener('click', function () {
+        if (el.classList.contains('is-current')) return;
+        var name = el.querySelector('strong').textContent;
+        var price = el.querySelector('.ms-plan-card__price').firstChild.textContent.trim();
+        SY.confirm({
+          title: 'Switch to ' + name + '?',
+          message: 'Your new ' + name.toLowerCase() + ' plan (' + price + ') will activate from the next billing cycle.',
+          confirmLabel: 'SWITCH PLAN',
+          cancelLabel: 'KEEP CURRENT'
+        }).then(function (ok) {
+          if (!ok) return;
+          document.querySelectorAll('.ms-plan-card').forEach(function (m) { m.classList.remove('is-current'); });
+          el.classList.add('is-current');
+          SY.toast('Plan switched to ' + name, 'success');
+        });
+      });
+    });
+    document.getElementById('cancelBtn').addEventListener('click', function () {
+      SY.confirm({
+        title: 'Cancel your subscription?',
+        message: 'You will keep premium access until your current billing cycle ends. After that, only free predictions will be available.',
+        confirmLabel: 'CANCEL ANYWAY',
+        cancelLabel: 'KEEP PREMIUM',
+        variant: 'danger'
+      }).then(function (ok) {
+        if (!ok) return;
+        SY.toast('Subscription will end on 24 Jun', 'error');
+        setTimeout(function () { location.href = '../profile-page/index.html'; }, 1000);
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1657 @@
+/* ============================================================
+   Shree Yantra — Shared App Shell
+   Global responsive helpers, side drawer, bottom navigation.
+   Loaded on every screen so the prototype feels like one app.
+   ============================================================ */
+
+:root {
+  --sy-gold-1: #f6d27a;
+  --sy-gold-2: #e9b850;
+  --sy-gold-3: #c9962e;
+  --sy-gold-4: #8a6418;
+  --sy-gold-soft: #fce8a8;
+  --sy-bg-deep: #03030c;
+  --sy-bg-mid: #0a0a1f;
+  --sy-text: #f3e7c4;
+  --sy-text-soft: #d8cba8;
+  --sy-shell-max: 480px;
+  --sy-bottom-nav-h: 68px;
+  --sy-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html, body {
+  background: var(--sy-bg-deep);
+}
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  /* Vertical scrolling is owned by html — do NOT set overflow:hidden here. */
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+/* Horizontal-overflow guard ONLY on body (and using `clip` where supported,
+   which doesn't create a new scroll container, so vertical scroll keeps
+   working on iOS Safari). */
+body {
+  overflow-x: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
+  position: relative;
+}
+
+/* ---- Unified body — Inter base, gold cosmic backdrop on every page ---- */
+body {
+  /* leave room for fixed bottom nav on every page */
+  padding-bottom: calc(var(--sy-bottom-nav-h) + var(--sy-safe-bottom) + 12px) !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
+  color: var(--sy-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img { max-width: 100%; height: auto; }
+
+/* =========================================================
+   UNIFIED FRAME WIDTH
+   Every page renders inside the same 480px mobile-first
+   centered frame. Overrides any per-page container width.
+   ========================================================= */
+.container,
+.app-shell,
+.phone,
+main.page > .container,
+.sy-container,
+.auth-shell,
+.reg-shell,
+.onb-shell,
+.splash-wrap {
+  max-width: var(--sy-shell-max) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+/* subscribenow keeps its own 460/520 max */
+
+/* Consistent horizontal padding for the frame body
+   (subscribenow keeps its own 22px) */
+.container,
+.app-shell,
+.phone,
+main.page > .container,
+.sy-container,
+.auth-shell,
+.reg-shell,
+.onb-shell {
+  padding-left: 18px !important;
+  padding-right: 18px !important;
+}
+
+/* =========================================================
+   UNIFIED CARD OUTLINE (welcome-page style)
+   Applied to every page EXCEPT subscribenow which keeps
+   its original manuscript-corner design.
+   ========================================================= */
+.gold-border-card,
+.sy-card,
+.card-border,
+.app-shell .hero-card,
+.app-shell .remedies-card,
+.app-shell .insights-card,
+.app-shell .note-card,
+.phone .card {
+  position: relative;
+  border: 1px solid transparent !important;
+  background: linear-gradient(180deg, rgba(15,15,42,0.92) 0%, rgba(8,8,24,0.92) 100%) !important;
+  background-clip: padding-box !important;
+  border-radius: 20px !important;
+  box-shadow: none !important;
+}
+.gold-border-card::before,
+.sy-card::before,
+.card-border::before,
+.app-shell .hero-card::before,
+.app-shell .remedies-card::before,
+.app-shell .insights-card::before,
+.app-shell .note-card::before,
+.phone .card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: 20px;
+  background: linear-gradient(160deg, #f6d27a 0%, #8a6418 35%, #4a3508 55%, #c9962e 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* =========================================================
+   UNIFIED HOVER / FOCUS EFFECTS
+   ========================================================= */
+button, a, .sy-tile, .feature-card, .list-row, .menu-list li, .nav-item,
+.sy-drawer__item, .sy-bottom-nav__item, .pay-method, .ship-options label,
+.zod, .astro-card, .r-card {
+  transition: transform 200ms ease, box-shadow 200ms ease, background 200ms ease, border-color 200ms ease, color 200ms ease;
+}
+button:focus-visible, a:focus-visible, [role="button"]:focus-visible {
+  outline: 2px solid rgba(233, 184, 80, 0.7);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+.sy-field:focus-within {
+  border-color: var(--sy-gold-1) !important;
+  box-shadow: 0 0 0 3px rgba(233, 184, 80, 0.15) !important;
+}
+
+/* Bottom nav — subtle lift on active tab */
+.sy-bottom-nav__item {
+  transform-origin: center bottom;
+}
+.sy-bottom-nav__item.active svg {
+  transform: scale(1.08) translateY(-1px);
+  transition: transform 220ms cubic-bezier(.2,.7,.2,1);
+}
+.sy-bottom-nav__item svg {
+  transition: transform 220ms cubic-bezier(.2,.7,.2,1);
+}
+
+/* Sticky topbars respect smooth-scroll anchor offsets */
+[id] { scroll-margin-top: 80px; }
+
+/* User-uploaded avatar image — fills any [data-sy-avatar] slot */
+[data-sy-avatar] { position: relative; }
+.sy-avatar-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  z-index: 2;
+}
+
+/* ============================================================
+   SIDE DRAWER (slide-in menu from hamburger)
+   ============================================================ */
+.sy-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 3, 10, 0.66);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+  z-index: 90;
+}
+.sy-drawer-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sy-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: min(86vw, 320px);
+  background: linear-gradient(180deg, #0a0a22 0%, #050511 100%);
+  border-right: 1px solid rgba(201, 150, 46, 0.35);
+  box-shadow: 4px 0 30px rgba(0, 0, 0, 0.6);
+  transform: translateX(-100%);
+  transition: transform 260ms cubic-bezier(.2,.7,.2,1);
+  z-index: 95;
+  display: flex;
+  flex-direction: column;
+  color: var(--sy-text);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.sy-drawer.open { transform: translateX(0); }
+
+.sy-drawer__head {
+  position: relative;
+  padding: 22px 20px 18px;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(233,184,80,0.18), transparent 60%),
+    linear-gradient(180deg, #0c0c24, transparent);
+  border-bottom: 1px solid rgba(201, 150, 46, 0.25);
+}
+.sy-drawer__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(201,150,46,0.3);
+  color: var(--sy-gold-1);
+  cursor: pointer;
+}
+.sy-drawer__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sy-drawer__logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #fce8a8, #8a6418 70%);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 0 18px rgba(233,184,80,0.35);
+  overflow: hidden;
+}
+.sy-drawer__logo svg {
+  width: 70%;
+  height: 70%;
+  display: block;
+}
+.sy-drawer__title {
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.16em;
+  font-size: 16px;
+  font-weight: 700;
+  background: linear-gradient(180deg, #fce8a8 0%, #e9b850 45%, #b87f1a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.sy-drawer__sub {
+  margin-top: 2px;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  color: var(--sy-gold-2);
+}
+.sy-drawer__user {
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--sy-text-soft);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sy-drawer__user-badge {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(201,150,46,0.5);
+  color: var(--sy-gold-1);
+  text-transform: uppercase;
+}
+
+.sy-drawer__list {
+  list-style: none;
+  margin: 0;
+  padding: 8px 0 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+.sy-drawer__item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  color: var(--sy-text);
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  border-left: 3px solid transparent;
+  transition: background 200ms, border-color 200ms;
+}
+.sy-drawer__item:hover,
+.sy-drawer__item:focus {
+  background: rgba(233, 184, 80, 0.08);
+  border-left-color: var(--sy-gold-2);
+}
+.sy-drawer__item.active {
+  background: rgba(233, 184, 80, 0.12);
+  border-left-color: var(--sy-gold-1);
+  color: var(--sy-gold-1);
+}
+.sy-drawer__item svg {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  color: var(--sy-gold-2);
+}
+
+.sy-drawer__divider {
+  height: 1px;
+  margin: 8px 20px;
+  background: linear-gradient(90deg, transparent, rgba(201,150,46,0.5), transparent);
+}
+.sy-drawer__foot {
+  padding: 14px 20px 20px;
+  font-size: 11px;
+  color: rgba(216, 203, 168, 0.6);
+  text-align: center;
+  letter-spacing: 0.12em;
+}
+
+/* ============================================================
+   SHARED BOTTOM NAV (always injected, always on top)
+   ============================================================ */
+.sy-bottom-nav {
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 999 !important;
+  padding-bottom: var(--sy-safe-bottom);
+  background: rgba(5, 5, 15, 0.95);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(201, 150, 46, 0.4);
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.65);
+  display: block !important;
+}
+.sy-bottom-nav__inner {
+  max-width: var(--sy-shell-max);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: center;
+  padding: 6px 4px;
+}
+.sy-bottom-nav__item {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #b58823;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 4px;
+  font-family: 'Cinzel', serif;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  position: relative;
+  transition: color 220ms;
+}
+.sy-bottom-nav__item svg {
+  width: 26px;
+  height: 26px;
+  display: block;
+}
+.sy-bottom-nav__item.active {
+  color: var(--sy-gold-1);
+}
+.sy-bottom-nav__item.active svg [fill="currentColor"],
+.sy-bottom-nav__item.active svg circle[fill="currentColor"] {
+  fill-opacity: 0.85;
+}
+.sy-bottom-nav__item.active svg {
+  filter: drop-shadow(0 0 6px rgba(233, 184, 80, 0.55));
+}
+.sy-bottom-nav__item.active::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 18%;
+  right: 18%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--sy-gold-2), transparent);
+  border-radius: 999px;
+}
+
+/* ============================================================
+   SHARED RESPONSIVE FIXES FOR EXISTING FIXED PAGES
+   ============================================================ */
+
+/* Welcome page: always render Explore Premium Features as a vertical
+   stack of consistent row cards (icon | title+desc | chevron) — the
+   480px shared frame is too narrow for the original 3-column grid. */
+.features-grid {
+  grid-template-columns: 1fr !important;
+  gap: 12px !important;
+}
+.feature-card {
+  min-height: 96px !important;
+  padding: 14px 16px !important;
+  display: grid !important;
+  grid-template-columns: 64px 1fr 32px !important;
+  grid-template-rows: auto auto !important;
+  grid-template-areas:
+    "icon title chev"
+    "icon desc  chev" !important;
+  column-gap: 14px !important;
+  row-gap: 2px !important;
+  align-items: center !important;
+  text-align: left !important;
+  overflow: hidden !important;
+}
+.feature-card .ring-border { grid-area: unset; }
+.feature-card .feature-icon {
+  grid-area: icon;
+  margin: 0 !important;
+  align-self: center;
+  justify-self: center;
+  width: 64px;
+  height: 64px;
+  display: grid !important;
+  place-items: center !important;
+}
+.feature-card .feature-icon svg {
+  width: 60px !important;
+  height: 60px !important;
+}
+.feature-card .feature-title {
+  grid-area: title;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  white-space: normal !important;
+  text-align: left !important;
+  line-height: 1.2 !important;
+  align-self: end;
+  margin: 0 !important;
+}
+.feature-card .feature-title br { display: none !important; }
+.feature-card .feature-desc {
+  grid-area: desc;
+  margin: 0 !important;
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+  text-align: left !important;
+  max-width: none !important;
+  align-self: start;
+  color: rgba(216, 203, 168, 0.75) !important;
+}
+.feature-card .chevron-circle {
+  grid-area: chev;
+  margin: 0 !important;
+  align-self: center;
+  justify-self: end;
+  width: 32px !important;
+  height: 32px !important;
+}
+
+/* Subscription banner cleanup */
+.subscription-banner {
+  flex-wrap: wrap !important;
+  row-gap: 12px;
+}
+.subscription-banner .sub-text { flex-basis: 100%; }
+.subscription-banner .crown-lg { flex: none; }
+.subscription-banner .gold-btn.small-btn { margin-left: auto; }
+
+/* Welcome top header — keep premium badge tidy */
+.top-header .premium-pill { padding: 5px 10px; }
+.premium-text { font-size: 10px; }
+
+/* =========================================================
+   GLOBAL RESPONSIVE HARDENING
+   ========================================================= */
+
+/* Minimum tap target (industry standard 44×44 px) */
+.sy-bottom-nav__item,
+.sy-topbar__btn,
+.sy-floating-menu,
+.sy-btn,
+.gold-btn,
+.menu-list li,
+.list-row,
+.sy-tile {
+  min-height: 44px;
+}
+
+/* Very small phones — Galaxy Fold, older iPhone SE width */
+@media (max-width: 360px) {
+  :root {
+    --sy-bottom-nav-h: 62px;
+  }
+  .container,
+  .app-shell,
+  .phone,
+  main.page > .container,
+  .sy-container,
+  .auth-shell,
+  .reg-shell,
+  .onb-shell {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+  .sy-bottom-nav__item {
+    font-size: 10px;
+    gap: 2px;
+  }
+  .sy-bottom-nav__item svg { width: 22px; height: 22px; }
+  .sy-topbar__title { font-size: 14px; letter-spacing: 0.1em; }
+  .sy-section-title { font-size: 16px; }
+  .profile-name { font-size: 22px !important; }
+  .ms-plan h2 { font-size: 22px !important; }
+}
+
+/* Welcome: keep its own bottom nav looking right on small screens */
+@media (max-width: 420px) {
+  .bottom-nav .nav-label { font-size: 10.5px; }
+  .bottom-nav .nav-item { padding: 8px 4px; }
+}
+
+/* Landscape phones — keep cosmic backdrop fixed without jank */
+@media (orientation: landscape) and (max-height: 500px) {
+  body { background-attachment: scroll !important; }
+}
+
+/* =========================================================
+   SUBSCRIPTION-ACTIVATED — normalize bright gold + check size
+   ========================================================= */
+body.sy-page-subscription-activated {
+  --gold-100: #fce8a8;
+  --gold-200: #fce8a8;
+  --gold-300: #f6d27a;
+  --gold-400: #e9b850;
+  --gold-500: #c9962e;
+  --gold-600: #8a6418;
+  --text: var(--sy-text);
+}
+body.sy-page-subscription-activated .badge--svg {
+  width: 130px !important;
+  height: 130px !important;
+}
+body.sy-page-subscription-activated .badge-glow {
+  width: 180px !important;
+  height: 180px !important;
+}
+body.sy-page-subscription-activated .page::before { opacity: 0.4 !important; }
+
+/* Inline-SVG decorative planets (replace missing PNGs) */
+body.sy-page-subscription-activated .planet {
+  display: block !important;
+  position: absolute;
+  pointer-events: none;
+  opacity: 0.55;
+}
+body.sy-page-subscription-activated .planet--saturn {
+  top: 80px; right: -60px;
+  width: 220px; height: auto;
+  transform: rotate(-14deg);
+}
+body.sy-page-subscription-activated .planet--mars {
+  bottom: 140px; left: -50px;
+  width: 150px; height: 150px;
+  opacity: 0.42;
+}
+
+/* Brand emblem (inline yantra, replaces missing shree-yantra.png) */
+body.sy-page-subscription-activated .brand__logo { display: none !important; }
+body.sy-page-subscription-activated .brand__emblem {
+  width: 70px; height: 70px;
+  margin: 0 auto 14px;
+  filter: drop-shadow(0 0 22px rgba(233, 184, 80, 0.32));
+}
+body.sy-page-subscription-activated .brand__emblem svg { width: 100%; height: 100%; display: block; }
+
+/* Activated badge — slow ring spin + draw-on check */
+body.sy-page-subscription-activated .sa-spin-slow {
+  transform-origin: 70px 70px;
+  animation: sa-spin 60s linear infinite;
+}
+@keyframes sa-spin { to { transform: rotate(360deg); } }
+
+body.sy-page-subscription-activated .sa-check {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: sa-check-draw 720ms cubic-bezier(.4,1.4,.4,1) 360ms forwards;
+}
+@keyframes sa-check-draw { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  body.sy-page-subscription-activated .sa-spin-slow { animation: none; }
+  body.sy-page-subscription-activated .sa-check { stroke-dashoffset: 0; animation: none; }
+}
+
+/* New: "PREMIUM · ACTIVE" pill above the headline */
+body.sy-page-subscription-activated .hl-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  margin-bottom: 8px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fce8a8, #b87f1a);
+  color: #2a1c00;
+  font-family: 'Cinzel', serif;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  box-shadow: 0 4px 18px rgba(233, 184, 80, 0.35);
+}
+
+/* New: premium perks row */
+body.sy-page-subscription-activated .perks {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 16px 0 18px;
+}
+body.sy-page-subscription-activated .perk {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 8px;
+  border-radius: 16px;
+  text-align: center;
+  font-size: 11px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--sy-text-soft);
+  background: rgba(8, 8, 22, 0.55);
+  border: 1px solid rgba(201, 150, 46, 0.3);
+}
+body.sy-page-subscription-activated .perk__ic {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: radial-gradient(circle at 30% 30%, rgba(252, 232, 168, 0.25), transparent 70%);
+  border: 1px solid rgba(201, 150, 46, 0.45);
+  color: var(--sy-gold-1);
+}
+body.sy-page-subscription-activated .perk__ic svg { width: 18px; height: 18px; }
+
+/* Row icons — more visual weight using the shared gold tokens */
+body.sy-page-subscription-activated .row__icon {
+  width: 36px; height: 36px;
+  border-radius: 12px;
+  display: grid; place-items: center;
+  color: var(--sy-gold-1);
+  background: radial-gradient(circle at 30% 30%, rgba(252, 232, 168, 0.18), transparent 70%);
+  border: 1px solid rgba(201, 150, 46, 0.4);
+}
+body.sy-page-subscription-activated .row__icon svg { width: 18px; height: 18px; }
+
+/* CTA buttons — refine icon slot + chevron */
+body.sy-page-subscription-activated .btn {
+  border-radius: 999px;
+  padding: 13px 18px;
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+  display: flex; align-items: center; gap: 10px;
+  width: 100%;
+  font-size: 12.5px;
+  min-height: 50px;
+}
+body.sy-page-subscription-activated .btn__icon {
+  width: 26px; height: 26px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+}
+body.sy-page-subscription-activated .btn__icon svg { width: 16px; height: 16px; }
+body.sy-page-subscription-activated .btn__label { flex: 1; text-align: center; }
+body.sy-page-subscription-activated .btn__chevron {
+  width: 22px; height: 22px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  opacity: .8;
+}
+body.sy-page-subscription-activated .btn__chevron svg { width: 12px; height: 12px; }
+body.sy-page-subscription-activated .btn--primary {
+  background: linear-gradient(180deg, #fce8a8 0%, #e9b850 45%, #b87f1a 100%) !important;
+  color: #2a1c00 !important;
+  box-shadow: 0 8px 26px rgba(233, 184, 80, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  border: none !important;
+}
+body.sy-page-subscription-activated .btn--primary .btn__icon {
+  background: rgba(42, 28, 0, 0.12);
+}
+body.sy-page-subscription-activated .btn--primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 34px rgba(233, 184, 80, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+body.sy-page-subscription-activated .btn--ghost {
+  background: rgba(10, 10, 28, 0.7) !important;
+  color: var(--sy-gold-1) !important;
+  border: 1px solid rgba(201, 150, 46, 0.5) !important;
+}
+body.sy-page-subscription-activated .btn--ghost:hover {
+  background: rgba(20, 20, 48, 0.75) !important;
+  border-color: var(--sy-gold-1) !important;
+}
+body.sy-page-subscription-activated .btn--ghost .btn__icon {
+  background: rgba(233, 184, 80, 0.08);
+}
+
+@media (max-width: 360px) {
+  body.sy-page-subscription-activated .perk { font-size: 10.5px; padding: 12px 4px; }
+  body.sy-page-subscription-activated .btn { font-size: 11.5px; letter-spacing: 0.14em; }
+}
+
+/* =========================================================
+   DAILY PREDICTION — full normalization
+   (was 1024px frame, 4rem Poppins, bright #ffd24d gold and
+    a thick 1.5px gold solid border on every card. Brought
+    fully into the shared design language: 480px frame,
+    Cinzel + Inter, shared gold tokens, hairline border.)
+   ========================================================= */
+
+/* Reset Daily Prediction's own color tokens to the shared palette */
+.app-shell, body:has(.app-shell) {
+  --bg: var(--sy-bg-deep);
+  --panel: rgba(15, 15, 42, 0.92);
+  --panel-strong: rgba(8, 8, 24, 0.92);
+  --gold: #f6d27a;
+  --gold-soft: #e9b850;
+  --gold-deep: #8a6418;
+  --line: rgba(201, 150, 46, 0.4);
+  --text: #f3e7c4;
+  --muted: #d8cba8;
+}
+
+/* Match the daily-prediction body background to the unified cosmic
+   backdrop used by every other page. */
+body.sy-page-daily-predication-page,
+body:has(.app-shell) {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(233,184,80,0.10) 0%, transparent 30%),
+    radial-gradient(circle at 85% 22%, rgba(233,184,80,0.08) 0%, transparent 30%),
+    radial-gradient(1px 1px at 12% 22%, rgba(255,240,200,0.85), transparent 60%),
+    radial-gradient(1px 1px at 30% 14%, rgba(255,255,255,0.65), transparent 60%),
+    radial-gradient(1px 1px at 70% 8%, rgba(255,240,200,0.65), transparent 60%),
+    radial-gradient(1px 1px at 92% 38%, rgba(255,255,255,0.7), transparent 60%),
+    radial-gradient(1px 1px at 18% 60%, rgba(255,240,200,0.65), transparent 60%),
+    radial-gradient(1px 1px at 88% 86%, rgba(255,240,200,0.7), transparent 60%),
+    linear-gradient(180deg, #050511 0%, #05061a 50%, #03030c 100%) !important;
+  background-attachment: fixed !important;
+}
+body.sy-page-daily-predication-page::before,
+body.sy-page-daily-predication-page::after,
+body:has(.app-shell)::before,
+body:has(.app-shell)::after {
+  display: none !important;
+}
+
+.app-shell {
+  padding-top: 14px !important;
+  padding-bottom: 14px !important;
+  font-family: 'Inter', sans-serif !important;
+  color: var(--sy-text) !important;
+}
+.app-shell * {
+  text-shadow: none !important;
+}
+
+.app-shell .topbar {
+  display: flex !important;
+  grid-template-columns: none !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  margin-bottom: 14px !important;
+  padding: 12px 14px !important;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(15,15,42,0.65), rgba(8,8,24,0.65));
+  border: 1px solid rgba(201, 150, 46, 0.3);
+}
+.app-shell .back-button {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 12px;
+  background: rgba(8,8,22,0.6);
+  border: 1px solid rgba(201,150,46,0.4);
+}
+.app-shell .back-button img {
+  width: 22px !important;
+  height: 22px !important;
+}
+/* The page title "Daily Prediction" wraps awkwardly in the centre of
+   a 320px-wide topbar — hide the title here. Page context is already
+   given by the big LEO header inside the hero card below. */
+.app-shell .title-wrap { display: none !important; }
+.app-shell .title-rule { display: none !important; }
+.app-shell .premium-button {
+  min-height: 40px !important;
+  padding: 8px 14px !important;
+  font-size: 12px !important;
+  font-family: 'Cinzel', serif !important;
+  letter-spacing: 0.08em !important;
+  border-radius: 12px !important;
+  gap: 6px !important;
+  border-width: 1px !important;
+}
+.app-shell .premium-button img {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+/* Hero card */
+.app-shell .hero-card {
+  min-height: 0 !important;
+  grid-template-columns: 1fr !important;
+  gap: 14px !important;
+  padding: 18px !important;
+}
+.app-shell .hero-card::after { display: none !important; }
+.app-shell .zodiac-wheel {
+  width: 160px !important;
+}
+.app-shell .zodiac-panel h2 {
+  font-family: 'Playfair Display', serif !important;
+  font-size: 32px !important;
+  margin: 6px 0 0 !important;
+  letter-spacing: 0.06em !important;
+  background: linear-gradient(180deg, #fce8a8 0%, #e9b850 45%, #b87f1a 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+}
+.app-shell .hindi {
+  font-size: 18px !important;
+  margin-top: 17px !important;
+  color: var(--sy-gold-1) !important;
+  font-family: 'Noto Sans Devanagari', sans-serif;
+}
+.app-shell .date-row,
+.app-shell .luck-strip {
+  color: var(--sy-gold-1) !important;
+}
+.app-shell .prediction-panel p,
+.app-shell .remedy-copy p,
+.app-shell .insight p,
+.app-shell .note-card p {
+  color: var(--sy-text-soft) !important;
+}
+.app-shell .remedy-copy h3,
+.app-shell .insight h3 {
+  background: linear-gradient(180deg, #fce8a8 0%, #e9b850 45%, #b87f1a 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+}
+.app-shell .insight-icon {
+  border-color: var(--sy-gold-2) !important;
+  background: rgba(8,8,22,0.7) !important;
+  color: var(--sy-gold-1) !important;
+}
+.app-shell .luck-strip {
+  border-color: rgba(201, 150, 46, 0.4) !important;
+  background: rgba(8,8,22,0.55) !important;
+}
+.app-shell .luck-strip i {
+  background: rgba(201, 150, 46, 0.4) !important;
+}
+.app-shell .note-card b {
+  color: var(--sy-gold-1) !important;
+}
+.app-shell .remedy {
+  background: rgba(8, 8, 22, 0.55) !important;
+  border: 1px solid rgba(201, 150, 46, 0.25) !important;
+  border-radius: 14px !important;
+}
+.app-shell .prediction-panel { padding-top: 4px !important; max-width: none !important; }
+.app-shell .date-row {
+  font-size: 13.5px !important;
+  gap: 8px !important;
+}
+.app-shell .date-row img { width: 18px !important; height: 18px !important; }
+.app-shell .mini-rule { width: 100% !important; margin: 10px 0 12px !important; height: 12px !important; }
+.app-shell .prediction-panel p {
+  max-width: none !important;
+  font-size: 13.5px !important;
+  line-height: 1.55 !important;
+}
+.app-shell .luck-strip {
+  min-height: 0 !important;
+  margin-top: 14px !important;
+  padding: 10px 14px !important;
+  gap: 10px !important;
+  font-size: 12.5px !important;
+  border-radius: 12px !important;
+  flex-wrap: wrap;
+}
+.app-shell .luck-strip img { width: 22px !important; height: 22px !important; }
+
+/* Section heading (Suggested Remedies / More Insights) */
+.app-shell .section-heading h2 {
+  font-family: 'Playfair Display', serif !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+}
+
+/* Remedies card */
+.app-shell .remedies-card,
+.app-shell .insights-card,
+.app-shell .note-card {
+  padding: 16px !important;
+  border-radius: 20px !important;
+  margin-top: 14px !important;
+}
+.app-shell .remedy {
+  min-height: 0 !important;
+  grid-template-columns: 64px 1fr !important;
+  gap: 12px !important;
+  padding: 10px !important;
+  border-radius: 14px !important;
+}
+.app-shell .remedy + .remedy { margin-top: 10px !important; }
+.app-shell .remedy-image {
+  width: 64px !important;
+  height: 64px !important;
+}
+.app-shell .lotus { display: none !important; }
+.app-shell .remedy-copy h3 {
+  font-family: 'Playfair Display', serif !important;
+  font-size: 14.5px !important;
+  margin-bottom: 4px !important;
+}
+.app-shell .remedy-copy p {
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+}
+
+/* Insights grid → 2 cols on mobile, looks balanced */
+.app-shell .insights-grid {
+  grid-template-columns: repeat(2, 1fr) !important;
+  row-gap: 10px !important;
+}
+.app-shell .insight {
+  min-height: 0 !important;
+  padding: 10px !important;
+}
+.app-shell .insight + .insight { border-left: 0 !important; }
+.app-shell .insight-icon {
+  width: 44px !important;
+  height: 44px !important;
+  border-width: 1.5px !important;
+}
+.app-shell .insight-icon img { width: 22px !important; height: 22px !important; }
+.app-shell .insight h3 {
+  font-family: 'Playfair Display', serif !important;
+  font-size: 13.5px !important;
+  margin-top: 4px !important;
+}
+.app-shell .insight p { font-size: 11.5px !important; margin-top: 4px !important; }
+
+/* Note card */
+.app-shell .note-card {
+  display: grid !important;
+  grid-template-columns: 32px 1fr !important;
+  gap: 12px !important;
+  padding: 14px !important;
+  border-radius: 14px !important;
+  align-items: center;
+}
+.app-shell .note-card > img { width: 22px !important; height: 22px !important; }
+.app-shell .note-card p { font-size: 12.5px !important; line-height: 1.5 !important; color: var(--sy-text-soft) !important; }
+.app-shell .note-art { display: none !important; }
+.app-shell .note-card .note-ic {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: grid; place-items: center;
+  color: var(--sy-gold-1);
+  background: rgba(233, 184, 80, 0.1);
+  border: 1px solid rgba(201, 150, 46, 0.4);
+}
+.app-shell .note-card .note-ic svg { width: 18px; height: 18px; }
+.app-shell .note-card b { color: var(--sy-gold-1) !important; }
+
+/* =========================================================
+   DAILY PREDICTION — new sections (zodiac SVG, mood meters,
+   timings, themed remedies & insights, share/save actions)
+   ========================================================= */
+.app-shell .dp-zodiac {
+  width: 160px; height: 160px;
+  margin: 0 auto 8px;
+  position: relative;
+}
+.app-shell .dp-zodiac svg { width: 100%; height: 100%; display: block; }
+.app-shell .dp-ring-spin       { transform-origin: 100px 100px; animation: dp-spin 60s linear infinite; }
+.app-shell .dp-ring-spin--rev  { animation-duration: 90s; animation-direction: reverse; }
+@keyframes dp-spin { to { transform: rotate(360deg); } }
+
+.app-shell .luck-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(8, 8, 22, 0.65);
+  border: 1px solid rgba(201, 150, 46, 0.4);
+  font-size: 12px !important;
+  color: var(--sy-text-soft);
+}
+.app-shell .luck-pill b   { color: var(--sy-gold-1); font-size: 13px; }
+.app-shell .luck-pill em  { color: var(--sy-gold-1); font-style: normal; font-weight: 600; letter-spacing: 0.04em; }
+.app-shell .luck-strip {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  margin-top: 14px !important;
+  min-height: 0 !important;
+}
+
+/* Section heading reused across sub-sections */
+.app-shell .dp-section-h {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 14px;
+}
+.app-shell .dp-section-h span {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201,150,46,0.5), transparent);
+}
+.app-shell .dp-section-h h2 {
+  margin: 0 !important;
+  font-family: 'Playfair Display', serif !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  white-space: nowrap;
+  background: linear-gradient(180deg, #fce8a8 0%, #e9b850 45%, #b87f1a 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+}
+
+/* Mood meters */
+.app-shell .dp-mood     { padding: 18px !important; margin-top: 14px !important; }
+.app-shell .dp-meters   { display: flex; flex-direction: column; gap: 12px; }
+.app-shell .dp-meter__head {
+  display: flex; align-items: center; gap: 8px;
+  font-family: 'Cinzel', serif;
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  color: var(--sy-gold-1);
+  margin-bottom: 6px;
+}
+.app-shell .dp-meter__ic {
+  width: 22px; height: 22px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: rgba(233,184,80,0.12);
+  border: 1px solid rgba(201,150,46,0.45);
+  color: var(--sy-gold-1);
+}
+.app-shell .dp-meter__ic svg { width: 12px; height: 12px; }
+.app-shell .dp-meter__lbl { flex: 1; }
+.app-shell .dp-meter__pct { font-weight: 700; }
+.app-shell .dp-meter__bar {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(201, 150, 46, 0.15);
+  overflow: hidden;
+}
+.app-shell .dp-meter__bar span {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #b87f1a, #fce8a8 70%, #e9b850);
+  transition: width 1100ms cubic-bezier(.2,.7,.2,1);
+  box-shadow: 0 0 12px rgba(233, 184, 80, 0.4);
+}
+.app-shell .sy-reveal.is-visible .dp-meter__bar span {
+  width: var(--w, 0%);
+}
+
+/* Auspicious timings grid */
+.app-shell .dp-timings   { padding: 18px !important; margin-top: 14px !important; }
+.app-shell .dp-time-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.app-shell .dp-time-grid > div {
+  padding: 12px 10px;
+  border-radius: 14px;
+  background: rgba(8, 8, 22, 0.55);
+  border: 1px solid rgba(201, 150, 46, 0.25);
+  text-align: center;
+  display: flex; flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.app-shell .dp-time-ic {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: radial-gradient(circle at 30% 30%, rgba(252,232,168,0.35), transparent 70%);
+  color: var(--sy-gold-1);
+}
+.app-shell .dp-time-ic svg { width: 18px; height: 18px; }
+.app-shell .dp-time-lbl {
+  font-family: 'Cinzel', serif;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  color: var(--sy-text-soft);
+}
+.app-shell .dp-time-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sy-gold-1);
+}
+.app-shell .dp-time-grid .is-good { border-color: rgba(110, 232, 135, 0.45); }
+.app-shell .dp-time-grid .is-good .dp-time-ic { color: #6ee887; background: radial-gradient(circle at 30% 30%, rgba(110,232,135,0.18), transparent 70%); }
+.app-shell .dp-time-grid .is-bad  { border-color: rgba(255, 130, 130, 0.4); }
+.app-shell .dp-time-grid .is-bad  .dp-time-ic { color: #ff8b8b; background: radial-gradient(circle at 30% 30%, rgba(255,120,120,0.18), transparent 70%); }
+
+/* Remedies — themed glyph cards */
+.app-shell .remedy {
+  display: grid !important;
+  grid-template-columns: 56px 1fr !important;
+  gap: 14px !important;
+  align-items: center;
+}
+.app-shell .remedy-glyph {
+  width: 56px; height: 56px;
+  border-radius: 14px;
+  display: grid; place-items: center;
+  color: var(--sy-gold-1);
+  background:
+    radial-gradient(circle at 30% 30%, rgba(252,232,168,0.18), transparent 70%),
+    rgba(8, 8, 22, 0.6);
+  border: 1px solid rgba(201, 150, 46, 0.45);
+}
+.app-shell .remedy-glyph svg { width: 30px; height: 30px; }
+.app-shell .remedy-image, .app-shell .lotus { display: none !important; }
+.app-shell .remedy-tag {
+  display: inline-block;
+  margin-top: 6px;
+  font-family: 'Cinzel', serif;
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  color: var(--sy-gold-2);
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(233, 184, 80, 0.08);
+  border: 1px solid rgba(201, 150, 46, 0.3);
+}
+
+/* tap-feedback for remedy + insight cards */
+.app-shell .dp-tap {
+  transition: transform 220ms cubic-bezier(.2,.7,.2,1), border-color 220ms;
+}
+.app-shell .dp-tap:hover {
+  transform: translateY(-2px);
+  border-color: rgba(245, 199, 86, 0.6) !important;
+}
+
+/* Insights — themed icons */
+.app-shell .insights-grid {
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+}
+.app-shell .insight {
+  padding: 14px 12px !important;
+  border-radius: 14px !important;
+  background: rgba(8, 8, 22, 0.55);
+  border: 1px solid rgba(201, 150, 46, 0.25) !important;
+}
+.app-shell .insight + .insight { border-left: 1px solid rgba(201, 150, 46, 0.25) !important; }
+.app-shell .insight-icon {
+  background: radial-gradient(circle at 30% 30%, rgba(252,232,168,0.25), transparent 70%) !important;
+  color: var(--sy-gold-1) !important;
+}
+.app-shell .insight-icon svg { width: 22px !important; height: 22px !important; color: var(--sy-gold-1); }
+
+/* Share/Save actions footer */
+.app-shell .dp-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+.app-shell .dp-action {
+  flex: 1;
+  min-height: 50px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 999px;
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: transform 200ms, box-shadow 200ms;
+}
+.app-shell .dp-action svg { width: 16px; height: 16px; }
+.app-shell .dp-action--primary {
+  background: linear-gradient(180deg, #fce8a8 0%, #e9b850 45%, #b87f1a 100%);
+  color: #2a1c00;
+  box-shadow: 0 6px 20px rgba(233, 184, 80, 0.28);
+}
+.app-shell .dp-action--primary:hover { transform: translateY(-1px); box-shadow: 0 10px 28px rgba(233, 184, 80, 0.35); }
+.app-shell .dp-action--ghost {
+  background: rgba(8, 8, 22, 0.65);
+  border: 1px solid rgba(201, 150, 46, 0.45);
+  color: var(--sy-gold-1);
+}
+.app-shell .dp-action--ghost.is-saved {
+  background: rgba(233, 184, 80, 0.12);
+  color: var(--sy-gold-soft);
+}
+.app-shell .dp-action--ghost.is-saved svg { fill: currentColor; }
+
+/* =========================================================
+   PROFILE PAGE — match frame + unify typography tokens
+   ========================================================= */
+.phone {
+  padding-top: 14px !important;
+  padding-bottom: 18px !important;
+}
+.phone .topbar { padding: 10px 0 !important; }
+.phone .page-title {
+  font-family: 'Cinzel', serif !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #fce8a8 0%, #e9b850 45%, #b87f1a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* =========================================================
+   SUBSCRIBENOW page — leave the original design untouched.
+   The shared body { padding-bottom: nav-h } handles bottom-nav
+   clearance. Two small fixes only:
+     • extra top padding so the brand isn't pinned to the edge
+       (status bar + the injected floating menu sit there)
+     • smaller swastik so the page breathes
+   ========================================================= */
+body.sy-page-subscribenow-page .sy-app {
+  padding-top: 64px !important;
+}
+body.sy-page-subscribenow-page .sy-swastik-wrap {
+  width: min(58vw, 220px);
+  margin: 4px auto 14px;
+}
+@media (min-width: 720px) {
+  body.sy-page-subscribenow-page .sy-swastik-wrap { width: 240px; }
+}
+/* Tuck the auto-injected floating menu out of the brand's way */
+body.sy-page-subscribenow-page .sy-floating-menu {
+  top: 16px;
+  left: 14px;
+}
+
+/* =========================================================
+   SUBSCRIPTION ACTIVATED — frame + spacing
+   ========================================================= */
+main.page > .container {
+  padding-top: 14px !important;
+  padding-bottom: 18px !important;
+}
+
+/* =========================================================
+   WELCOME page — bring the 600px frame down to 480px
+   so it lines up with every other screen.
+   ========================================================= */
+.container {
+  padding-top: 14px !important;
+  padding-bottom: 18px !important;
+}
+
+/* Hide any page-bundled legacy bottom nav — the shared shell nav
+   is the single source of truth across every screen. */
+body[data-sy-shell="true"] .bottom-nav-wrap,
+body[data-sy-shell="true"] .bottom-nav {
+  display: none !important;
+}
+
+/* Drawer-only "no scroll" body lock */
+body.sy-no-scroll {
+  overflow: hidden;
+}
+
+/* =========================================================
+   Horizontal scroll rows — keep the scroll, hide the thumb
+   (industry-standard mobile pattern; matches Instagram /
+   App Store category strips)
+   ========================================================= */
+.k-tabs,
+.pred-tabs,
+.n-tabs,
+.r-cat,
+.s-quick,
+.upi-grid {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.k-tabs::-webkit-scrollbar,
+.pred-tabs::-webkit-scrollbar,
+.n-tabs::-webkit-scrollbar,
+.r-cat::-webkit-scrollbar,
+.s-quick::-webkit-scrollbar,
+.upi-grid::-webkit-scrollbar {
+  display: none;
+}
+
+/* =========================================================
+   PAGE TRANSITION (subtle fade-in on each navigation)
+   Opacity-only — never transform body, otherwise it becomes
+   the containing block for fixed children (e.g. .sy-bg) and
+   they scroll instead of staying glued to the viewport.
+   ========================================================= */
+@keyframes sy-page-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+body[data-sy-shell="true"] {
+  animation: sy-page-in 220ms ease-out both;
+}
+
+/* =========================================================
+   SCROLL REVEAL — cards / sections fade + lift into view
+   Any element with class .sy-reveal animates the first time
+   it enters the viewport. Also auto-applied to common card
+   selectors so existing pages benefit without HTML edits.
+   ========================================================= */
+.sy-reveal,
+body[data-sy-shell="true"] .sy-card,
+body[data-sy-shell="true"] .gold-border-card,
+body[data-sy-shell="true"] .card-border,
+body[data-sy-shell="true"] .feature-card,
+body[data-sy-shell="true"] .r-card,
+body[data-sy-shell="true"] .astro-card,
+body[data-sy-shell="true"] .ms-plan-card,
+body[data-sy-shell="true"] .n-row,
+body[data-sy-shell="true"] .sy-tile {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 520ms cubic-bezier(.2,.7,.2,1),
+              transform 520ms cubic-bezier(.2,.7,.2,1);
+  will-change: opacity, transform;
+}
+.sy-reveal.is-visible,
+body[data-sy-shell="true"] .sy-card.is-visible,
+body[data-sy-shell="true"] .gold-border-card.is-visible,
+body[data-sy-shell="true"] .card-border.is-visible,
+body[data-sy-shell="true"] .feature-card.is-visible,
+body[data-sy-shell="true"] .r-card.is-visible,
+body[data-sy-shell="true"] .astro-card.is-visible,
+body[data-sy-shell="true"] .ms-plan-card.is-visible,
+body[data-sy-shell="true"] .n-row.is-visible,
+body[data-sy-shell="true"] .sy-tile.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sy-reveal,
+  body[data-sy-shell="true"] .sy-card,
+  body[data-sy-shell="true"] .gold-border-card,
+  body[data-sy-shell="true"] .card-border,
+  body[data-sy-shell="true"] .feature-card,
+  body[data-sy-shell="true"] .r-card,
+  body[data-sy-shell="true"] .astro-card,
+  body[data-sy-shell="true"] .ms-plan-card,
+  body[data-sy-shell="true"] .n-row,
+  body[data-sy-shell="true"] .sy-tile {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body[data-sy-shell="true"] { animation: none !important; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* =========================================================
+   INTERACTION FEEDBACK (active press on every tappable)
+   ========================================================= */
+button:not(:disabled):active,
+.sy-btn:not(:disabled):active,
+.sy-tile:active,
+.list-row:active,
+.menu-list li:active,
+.r-card:active,
+.astro-card:active,
+.pay-method:active,
+.ship-options label:active,
+.zod:active,
+.feature-card:active,
+.ms-plan-card:active,
+.sy-bottom-nav__item:active,
+.sy-drawer__item:active,
+.sy-topbar__btn:active,
+.sy-floating-menu:active {
+  transform: scale(0.97);
+}
+button, a, .sy-tile, .list-row, .menu-list li, .nav-item,
+.sy-bottom-nav__item, .sy-drawer__item, .pay-method,
+.ship-options label, .zod, .astro-card, .r-card,
+.feature-card, .ms-plan-card, .sy-topbar__btn, .sy-floating-menu {
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+/* =========================================================
+   TOAST — non-blocking notifications
+   ========================================================= */
+.sy-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--sy-bottom-nav-h) + 18px);
+  transform: translateX(-50%) translateY(8px);
+  background: rgba(8, 8, 22, 0.95);
+  border: 1px solid rgba(201, 150, 46, 0.45);
+  color: var(--sy-gold-1);
+  padding: 11px 18px;
+  border-radius: 999px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  z-index: 2000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease, transform 220ms ease;
+  max-width: 90vw;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+.sy-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.sy-toast.sy-toast--error  { color: #ff8585; border-color: rgba(255, 100, 100, 0.5); }
+.sy-toast.sy-toast--success { color: #6ee887; border-color: rgba(110, 232, 135, 0.45); }
+
+/* =========================================================
+   CONFIRM MODAL
+   ========================================================= */
+.sy-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+.sy-modal.open { opacity: 1; pointer-events: auto; }
+.sy-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 3, 10, 0.72);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.sy-modal__panel {
+  position: relative;
+  width: min(86vw, 380px);
+  margin: 24px;
+  padding: 22px 20px 18px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(15, 15, 42, 0.96), rgba(8, 8, 24, 0.96));
+  border: 1px solid transparent;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  transform: translateY(10px) scale(0.98);
+  transition: transform 220ms cubic-bezier(.2,.8,.25,1);
+  outline: none;
+}
+.sy-modal__panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: 22px;
+  background: linear-gradient(160deg, #f6d27a, #8a6418 50%, #c9962e);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+}
+.sy-modal.open .sy-modal__panel {
+  transform: translateY(0) scale(1);
+}
+.sy-modal__title {
+  margin: 0 0 8px;
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  font-weight: 700;
+  background: linear-gradient(180deg, #fce8a8, #b87f1a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.sy-modal__msg {
+  margin: 0 0 18px;
+  color: var(--sy-text-soft);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+.sy-modal__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.sy-modal__actions .sy-btn {
+  min-height: 46px;
+  padding: 10px;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+}
+.sy-btn--danger {
+  background: linear-gradient(180deg, #ff8585, #c33);
+  color: #fff;
+  border: none;
+}
+
+/* =========================================================
+   AUTOFILL — keep dark theme when Chrome/Edge/Safari autofills
+   inputs (otherwise they paint a white background + black text)
+   ========================================================= */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: var(--sy-text) !important;
+  -webkit-box-shadow: 0 0 0 1000px rgba(8, 8, 22, 0.85) inset !important;
+  box-shadow: 0 0 0 1000px rgba(8, 8, 22, 0.85) inset !important;
+  caret-color: var(--sy-gold-1) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  transition: background-color 9999s ease-in-out 0s !important;
+}
+/* Firefox autofill */
+input:autofill,
+textarea:autofill,
+select:autofill {
+  background-color: rgba(8, 8, 22, 0.85) !important;
+  color: var(--sy-text) !important;
+}
+
+/* =========================================================
+   FORM VALIDATION
+   ========================================================= */
+.sy-field.is-invalid {
+  border-color: rgba(255, 120, 120, 0.65) !important;
+  box-shadow: 0 0 0 3px rgba(255, 120, 120, 0.12) !important;
+}
+.sy-field.is-invalid svg { color: #ff8585 !important; }
+.sy-field__error {
+  display: none;
+  font-size: 11.5px;
+  color: #ff8585;
+  margin-top: 4px;
+  padding-left: 14px;
+}
+.sy-field.is-invalid .sy-field__error { display: block; }
+
+/* When pages have their own top bar without a menu button,
+   the shell injects a floating one — style it here. */
+.sy-floating-menu {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 50;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: rgba(8, 8, 22, 0.85);
+  border: 1px solid rgba(201, 150, 46, 0.45);
+  color: var(--sy-gold-1);
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.sy-floating-menu svg { width: 22px; height: 22px; }
+
+/* Sub page top bar (used by new pages) */
+.sy-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, rgba(5,5,15,0.92), rgba(5,5,15,0.7));
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(201, 150, 46, 0.25);
+}
+.sy-topbar__btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(201, 150, 46, 0.35);
+  color: var(--sy-gold-1);
+  cursor: pointer;
+}
+.sy-topbar__title {
+  flex: 1;
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.14em;
+  font-size: 16px;
+  text-align: center;
+  background: linear-gradient(180deg, #fce8a8 0%, #e9b850 45%, #b87f1a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-transform: uppercase;
+}

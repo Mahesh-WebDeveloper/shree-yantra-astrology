@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shree Yantra Astrology</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Playfair+Display:wght@400;500;600;700;800;900&family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Symbols+2&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="../../assets/app-shell.css" />
+</head>
+<body>
+  <div class="cosmic-bg app-root">
+    <!-- Background faint zodiac wheel on left -->
+    <div class="bg-glow-left"></div>
+    <svg class="bg-zodiac-left" width="560" height="560" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <linearGradient id="bgz" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#e9b850" />
+          <stop offset="100%" stop-color="#6b4d10" />
+        </linearGradient>
+      </defs>
+      <circle cx="100" cy="100" r="96" fill="none" stroke="url(#bgz)" stroke-width="0.6" />
+      <circle cx="100" cy="100" r="74" fill="none" stroke="url(#bgz)" stroke-width="0.5" />
+      <circle cx="100" cy="100" r="54" fill="none" stroke="url(#bgz)" stroke-width="0.5" />
+      <g id="bg-spokes"></g>
+      <g id="bg-glyphs"></g>
+    </svg>
+
+    <!-- Background planets on right and left bottom -->
+    <div class="planet planet-1"></div>
+    <div class="planet planet-2"></div>
+    <div class="planet planet-3"></div>
+
+    <!-- twinkling stars -->
+    <div id="stars"></div>
+
+    <!-- Phone-style container -->
+    <div class="container">
+      <!-- Top header row -->
+      <div class="top-header">
+        <button class="icon-btn menu-btn" aria-label="Menu">
+          <!-- Menu icon -->
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#f6d27a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+        <div class="spacer"></div>
+        <div class="premium-badge">
+          <!-- Crown -->
+          <svg class="crown" width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="cg1" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#fce8a8" />
+                <stop offset="100%" stop-color="#b87f1a" />
+              </linearGradient>
+            </defs>
+            <path d="M2 8 L6 14 L9 6 L12 14 L15 6 L18 14 L22 8 L20 18 H4 L2 8 Z" fill="url(#cg1)" stroke="url(#cg1)" stroke-width="0.6" stroke-linejoin="round" />
+            <circle cx="2" cy="8" r="1.2" fill="url(#cg1)" />
+            <circle cx="22" cy="8" r="1.2" fill="url(#cg1)" />
+            <circle cx="12" cy="14" r="1.2" fill="url(#cg1)" />
+          </svg>
+          <div class="gold-thin-border premium-pill">
+            <div class="premium-text gold-text">Premium<br />Member</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Logo -->
+      <div class="logo-block">
+        <!-- Shree Yantra SVG -->
+        <svg class="shree-yantra" width="92" height="92" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#fce8a8" />
+              <stop offset="50%" stop-color="#e9b850" />
+              <stop offset="100%" stop-color="#b87f1a" />
+            </linearGradient>
+          </defs>
+          <rect x="14" y="14" width="172" height="172" stroke="url(#gold)" stroke-width="2" fill="none" />
+          <rect x="20" y="20" width="160" height="160" stroke="url(#gold)" stroke-width="1" fill="none" opacity="0.7" />
+          <g stroke="url(#gold)" stroke-width="1.5">
+            <line x1="14" y1="20" x2="26" y2="20" /><line x1="20" y1="14" x2="20" y2="26" />
+            <line x1="174" y1="20" x2="186" y2="20" /><line x1="180" y1="14" x2="180" y2="26" />
+            <line x1="14" y1="180" x2="26" y2="180" /><line x1="20" y1="174" x2="20" y2="186" />
+            <line x1="174" y1="180" x2="186" y2="180" /><line x1="180" y1="174" x2="180" y2="186" />
+          </g>
+          <path d="M85 14 L100 2 L115 14" stroke="url(#gold)" stroke-width="2" fill="none" />
+          <path d="M85 186 L100 198 L115 186" stroke="url(#gold)" stroke-width="2" fill="none" />
+          <path d="M14 85 L2 100 L14 115" stroke="url(#gold)" stroke-width="2" fill="none" />
+          <path d="M186 85 L198 100 L186 115" stroke="url(#gold)" stroke-width="2" fill="none" />
+          <circle cx="100" cy="100" r="74" stroke="url(#gold)" stroke-width="1.2" fill="none" />
+          <g id="sy-petals"></g>
+          <circle cx="100" cy="100" r="60" stroke="url(#gold)" stroke-width="1.2" fill="none" />
+          <g stroke="url(#gold)" stroke-width="1.4" fill="none">
+            <polygon points="100,42 144,128 56,128" />
+            <polygon points="100,40 148,124 52,124" opacity="0.5" />
+            <polygon points="100,158 56,72 144,72" />
+            <polygon points="100,160 52,76 148,76" opacity="0.5" />
+            <polygon points="100,58 134,116 66,116" />
+            <polygon points="100,142 66,84 134,84" />
+            <polygon points="100,72 124,108 76,108" />
+            <polygon points="100,128 76,92 124,92" />
+          </g>
+          <circle cx="100" cy="100" r="3" fill="url(#gold)" />
+        </svg>
+
+        <h1 class="brand-title gold-text">SHREE&nbsp;YANTRA</h1>
+        <div class="brand-subtitle">
+          <!-- Ornament left -->
+          <svg class="ornament" width="60" height="14" viewBox="0 0 60 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="og1" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="transparent" />
+                <stop offset="60%" stop-color="#e9b850" />
+                <stop offset="100%" stop-color="#fce8a8" />
+              </linearGradient>
+            </defs>
+            <line x1="0" y1="7" x2="44" y2="7" stroke="url(#og1)" stroke-width="1.2" />
+            <path d="M44 7 L52 3 L52 11 Z" fill="#e9b850" />
+            <circle cx="56" cy="7" r="2.4" fill="none" stroke="#e9b850" stroke-width="1" />
+          </svg>
+          <span class="astrology-text gold-text">ASTROLOGY</span>
+          <svg class="ornament flip" width="60" height="14" viewBox="0 0 60 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <line x1="0" y1="7" x2="44" y2="7" stroke="url(#og1)" stroke-width="1.2" />
+            <path d="M44 7 L52 3 L52 11 Z" fill="#e9b850" />
+            <circle cx="56" cy="7" r="2.4" fill="none" stroke="#e9b850" stroke-width="1" />
+          </svg>
+        </div>
+      </div>
+
+      <!-- Welcome -->
+      <div class="welcome-block">
+        <h2 class="welcome-title gold-text">Welcome, <span data-sy-firstname>Raj</span> <span class="namaste">🙏</span></h2>
+        <p class="welcome-sub">Your Daily Horoscope</p>
+      </div>
+
+      <!-- Horoscope card -->
+      <div class="gold-border-card horoscope-card">
+        <div class="horoscope-row">
+          <div class="zodiac-wheel-wrap">
+            <!-- Zodiac wheel with Leo center -->
+            <svg width="120" height="120" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <defs>
+                <linearGradient id="zg" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#fce8a8" />
+                  <stop offset="60%" stop-color="#e9b850" />
+                  <stop offset="100%" stop-color="#a17613" />
+                </linearGradient>
+                <radialGradient id="zbg" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#0d0d28" />
+                  <stop offset="100%" stop-color="#03030c" />
+                </radialGradient>
+              </defs>
+              <circle cx="100" cy="100" r="96" fill="url(#zbg)" stroke="url(#zg)" stroke-width="1.5" />
+              <circle cx="100" cy="100" r="86" fill="none" stroke="url(#zg)" stroke-width="0.8" opacity="0.7" />
+              <circle cx="100" cy="100" r="58" fill="none" stroke="url(#zg)" stroke-width="0.8" opacity="0.7" />
+              <g id="zw-spokes"></g>
+              <g id="zw-glyphs"></g>
+              <text x="100" y="108" text-anchor="middle" dominant-baseline="central" font-size="80" font-family="'Noto Sans Symbols 2', serif" font-weight="400" fill="url(#zg)">♌&#xFE0E;</text>
+            </svg>
+          </div>
+          <div class="horoscope-text">
+            <div class="date-row">
+              <!-- Calendar icon -->
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e9b850" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <span class="date-text">Today, 24 May 2025</span>
+            </div>
+            <p class="horoscope-desc">
+              Today is a powerful day for you. Luck is in your favor. Stay positive and focus on your goals.
+              <br />
+              Good time for financial growth and relationships.
+            </p>
+          </div>
+        </div>
+        <div class="horoscope-btn-row">
+          <button class="gold-btn">
+            <span>Read Full Prediction</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f6d27a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Section title -->
+      <div class="section-title">
+        <svg class="ornament" width="60" height="14" viewBox="0 0 60 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <line x1="0" y1="7" x2="44" y2="7" stroke="url(#og1)" stroke-width="1.2" />
+          <path d="M44 7 L52 3 L52 11 Z" fill="#e9b850" />
+          <circle cx="56" cy="7" r="2.4" fill="none" stroke="#e9b850" stroke-width="1" />
+        </svg>
+        <h3 class="section-heading gold-text">Explore Premium Features</h3>
+        <svg class="ornament flip" width="60" height="14" viewBox="0 0 60 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <line x1="0" y1="7" x2="44" y2="7" stroke="url(#og1)" stroke-width="1.2" />
+          <path d="M44 7 L52 3 L52 11 Z" fill="#e9b850" />
+          <circle cx="56" cy="7" r="2.4" fill="none" stroke="#e9b850" stroke-width="1" />
+        </svg>
+      </div>
+
+      <!-- Feature cards grid -->
+      <div class="features-grid">
+        <!-- Daily Prediction -->
+        <div class="feature-card feature-tint-purple">
+          <div class="ring-border"></div>
+          <div class="feature-icon">
+            <svg width="120" height="120" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <defs>
+                <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#fce8a8" />
+                  <stop offset="60%" stop-color="#e9b850" />
+                  <stop offset="100%" stop-color="#a17613" />
+                </linearGradient>
+              </defs>
+              <circle cx="100" cy="100" r="96" fill="none" stroke="url(#sg)" stroke-width="1.5" />
+              <circle cx="100" cy="100" r="80" fill="none" stroke="url(#sg)" stroke-width="0.8" opacity="0.7" />
+              <circle cx="100" cy="100" r="56" fill="none" stroke="url(#sg)" stroke-width="0.8" opacity="0.7" />
+              <g id="sun-spokes"></g>
+              <g id="sun-glyphs"></g>
+              <g id="sun-center"></g>
+            </svg>
+          </div>
+          <h3 class="feature-title gold-text">Daily<br />Prediction</h3>
+          <p class="feature-desc">Get your daily horoscope and astrological insights</p>
+          <button class="chevron-circle">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f6d27a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Kundli -->
+        <div class="feature-card feature-tint-blue">
+          <div class="ring-border"></div>
+          <div class="feature-icon">
+            <svg width="120" height="120" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <defs>
+                <linearGradient id="kg" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#fce8a8" />
+                  <stop offset="60%" stop-color="#e9b850" />
+                  <stop offset="100%" stop-color="#a17613" />
+                </linearGradient>
+              </defs>
+              <rect x="20" y="20" width="160" height="160" stroke="url(#kg)" stroke-width="1.8" fill="none" />
+              <line x1="20" y1="20" x2="180" y2="180" stroke="url(#kg)" stroke-width="1.4" />
+              <line x1="180" y1="20" x2="20" y2="180" stroke="url(#kg)" stroke-width="1.4" />
+              <line x1="100" y1="20" x2="180" y2="100" stroke="url(#kg)" stroke-width="1.4" />
+              <line x1="180" y1="100" x2="100" y2="180" stroke="url(#kg)" stroke-width="1.4" />
+              <line x1="100" y1="180" x2="20" y2="100" stroke="url(#kg)" stroke-width="1.4" />
+              <line x1="20" y1="100" x2="100" y2="20" stroke="url(#kg)" stroke-width="1.4" />
+              <g font-family="'Cinzel', serif" font-weight="600" font-size="11" fill="url(#kg)" text-anchor="middle">
+                <text x="100" y="53">1</text>
+                <text x="60" y="63">2</text>
+                <text x="50" y="103">3</text>
+                <text x="60" y="143">4</text>
+                <text x="100" y="155">5</text>
+                <text x="140" y="143">6</text>
+                <text x="150" y="103">7</text>
+                <text x="140" y="63">8</text>
+                <text x="100" y="103">9</text>
+                <text x="80" y="88">10</text>
+                <text x="120" y="88">11</text>
+                <text x="100" y="121">12</text>
+              </g>
+            </svg>
+          </div>
+          <h3 class="feature-title gold-text">Kundli / Birth Chart</h3>
+          <p class="feature-desc">View your detailed birth chart and planetary positions</p>
+          <button class="chevron-circle">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f6d27a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Remedies / Diya -->
+        <div class="feature-card feature-tint-green">
+          <div class="ring-border"></div>
+          <div class="feature-icon">
+            <svg width="110" height="110" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <defs>
+                <linearGradient id="dg" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#fce8a8" />
+                  <stop offset="60%" stop-color="#e9b850" />
+                  <stop offset="100%" stop-color="#a17613" />
+                </linearGradient>
+                <radialGradient id="flame" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#fff4c2" />
+                  <stop offset="50%" stop-color="#e9b850" />
+                  <stop offset="100%" stop-color="#a17613" />
+                </radialGradient>
+              </defs>
+              <path d="M100 30 C 88 60, 88 78, 100 96 C 112 78, 112 60, 100 30 Z" fill="url(#flame)" stroke="url(#dg)" stroke-width="1.2" />
+              <line x1="100" y1="96" x2="100" y2="110" stroke="url(#dg)" stroke-width="2" />
+              <path d="M40 120 Q 100 90, 160 120 Q 150 160, 100 168 Q 50 160, 40 120 Z" fill="none" stroke="url(#dg)" stroke-width="2" />
+              <path d="M52 124 Q 100 102, 148 124" fill="none" stroke="url(#dg)" stroke-width="1" opacity="0.7" />
+            </svg>
+          </div>
+          <h3 class="feature-title gold-text">Remedies / Upay</h3>
+          <p class="feature-desc">Powerful remedies to improve your life and remove obstacles</p>
+          <button class="chevron-circle">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f6d27a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Prediction summary banner -->
+      <div class="gold-border-card prediction-banner">
+        <div class="prediction-orb" aria-hidden="true">
+          <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="pbGold" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#fce8a8" />
+                <stop offset="60%" stop-color="#e9b850" />
+                <stop offset="100%" stop-color="#a17613" />
+              </linearGradient>
+            </defs>
+            <circle cx="36" cy="36" r="31" fill="none" stroke="url(#pbGold)" stroke-width="1.3" />
+            <circle cx="36" cy="36" r="21" fill="none" stroke="url(#pbGold)" stroke-width="1" opacity=".65" />
+            <path d="M36 12l5.2 15.4h16.2L44.3 37l5.1 15.4L36 43l-13.4 9.4L27.7 37 14.6 27.4h16.2z" fill="url(#pbGold)" opacity=".9" />
+          </svg>
+        </div>
+        <div class="prediction-copy">
+          <div class="prediction-kicker">Today's Prediction</div>
+          <div class="prediction-title gold-text">Luck is strong after sunset</div>
+          <div class="prediction-meta">
+            <span>Lucky #7</span>
+            <span>Gold</span>
+            <span>04:12 PM good time</span>
+          </div>
+          <p>Focus on money decisions and important calls in the evening. Keep speech calm before noon.</p>
+        </div>
+        <button class="gold-btn small-btn prediction-link" data-sy-go="daily-prediction">
+          View Details
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f6d27a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
+
+      <!-- List items -->
+      <div class="gold-border-card list-card">
+        <button class="list-row">
+          <div class="list-left">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e9b850" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span class="list-label">My Profile</span>
+          </div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e9b850" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+        <button class="list-row">
+          <div class="list-left">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e9b850" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect>
+              <line x1="2" y1="10" x2="22" y2="10"></line>
+            </svg>
+            <span class="list-label">Manage Subscription</span>
+          </div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e9b850" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+        <button class="list-row">
+          <div class="list-left">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e9b850" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span class="list-label">Logout</span>
+          </div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e9b850" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="bottom-nav-wrap">
+      <div class="bottom-nav">
+        <button class="nav-item active">
+          <span class="nav-indicator"></span>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span class="nav-label">Home</span>
+        </button>
+        <button class="nav-item">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+          <span class="nav-label">Choghadiya</span>
+        </button>
+        <button class="nav-item">
+          <div class="nav-sun-wrap">
+            <svg width="26" height="26" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <defs>
+                <linearGradient id="navSg" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#fce8a8" />
+                  <stop offset="60%" stop-color="#e9b850" />
+                  <stop offset="100%" stop-color="#a17613" />
+                </linearGradient>
+              </defs>
+              <circle cx="100" cy="100" r="96" fill="none" stroke="url(#navSg)" stroke-width="3" />
+              <circle cx="100" cy="100" r="20" fill="url(#navSg)" />
+              <g id="nav-sun-rays"></g>
+            </svg>
+          </div>
+          <span class="nav-label">Kundli</span>
+        </button>
+        <button class="nav-item">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"></path>
+            <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"></path>
+            <path d="M12 17.5V22"></path>
+          </svg>
+          <span class="nav-label">Library</span>
+        </button>
+        <button class="nav-item">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"></circle>
+            <circle cx="12" cy="10" r="3"></circle>
+            <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"></path>
+          </svg>
+          <span class="nav-label">Profile</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script src="../../assets/app-shell.js"></script>
+</body>
+</html>

@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Choghadiya - Shree Yantra</title>
+  <link rel="stylesheet" href="../../assets/app-shell.css" />
+  <link rel="stylesheet" href="../../assets/sy-pages.css" />
+  <style>
+    /* Premium Choghadiya Styles */
+    :root {
+      --bg-dark: #020205;
+      --card-bg: rgba(12, 12, 18, 0.85);
+      --card-border: rgba(220, 180, 80, 0.2);
+      --gold-text: #eecb7a;
+      --gold-dim: #9a7d3b;
+      --green-glow: #32cd32;
+      --red-glow: #ff4444;
+      --blue-glow: #4499ff;
+      --orange-glow: #ff9900;
+    }
+    
+    body {
+      background: var(--bg-dark);
+      color: #fff;
+      font-family: 'Inter', -apple-system, sans-serif;
+    }
+    
+    .sy-container {
+      padding-top: 16px;
+    }
+
+    /* Header matching Library */
+    .sy-topbar {
+      background: var(--bg-dark) !important;
+      border-bottom: 1px solid rgba(220,180,80,0.15) !important;
+      padding: 10px 16px !important;
+      height: 60px !important;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .sy-brand-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .sy-brand-header h1 {
+      margin: 0;
+      font-family: 'Cinzel', serif;
+      font-size: 19px;
+      letter-spacing: 0.12em;
+      color: var(--gold-text);
+      font-weight: 700;
+    }
+    .sy-brand-header p {
+      margin: 2px 0 0;
+      font-size: 8px;
+      letter-spacing: 0.35em;
+      color: var(--gold-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    /* Title Area */
+    .cg-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .cg-title {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .cg-title svg {
+      width: 16px;
+      height: 16px;
+      color: var(--gold-text);
+      filter: drop-shadow(0 0 5px var(--gold-text));
+    }
+    .cg-title h2 {
+      margin: 0;
+      font-family: 'Cinzel', serif;
+      font-size: 22px;
+      letter-spacing: 0.08em;
+      color: var(--gold-text);
+      font-weight: 700;
+    }
+    .cg-subtitle {
+      margin: 6px 0 16px;
+      font-size: 13px;
+      color: #aaa;
+    }
+    .cg-date-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 8px 16px;
+      border-radius: 30px;
+      font-size: 12px;
+      color: #eee;
+      backdrop-filter: blur(4px);
+    }
+    .cg-date-pill svg { width: 14px; height: 14px; color: var(--gold-text); }
+
+    /* Active Card */
+    .cg-active-card {
+      background: radial-gradient(circle at 30% 50%, rgba(220,180,80,0.15), rgba(10,10,14,0.95));
+      border: 1px solid rgba(220,180,80,0.3);
+      border-radius: 20px;
+      padding: 20px 16px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(220,180,80,0.05);
+    }
+    
+    .cg-yantra {
+      width: 80px;
+      height: 80px;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .cg-yantra::before {
+      content: '';
+      position: absolute;
+      inset: -15px;
+      background: radial-gradient(circle, rgba(238,203,122,0.4), transparent 70%);
+      border-radius: 50%;
+      z-index: 0;
+      animation: pulse 3s infinite alternate;
+    }
+    @keyframes pulse { from { opacity: 0.5; } to { opacity: 1; } }
+    .cg-yantra svg {
+      width: 100%; height: 100%;
+      position: relative; z-index: 1;
+      filter: drop-shadow(0 0 10px rgba(238,203,122,0.8));
+    }
+    
+    .cg-active-info { flex: 1; }
+    .cg-active-info h4 { margin: 0 0 4px; font-size: 10px; color: var(--gold-dim); text-transform: uppercase; letter-spacing: 0.1em; }
+    .cg-active-name {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 6px;
+    }
+    .cg-active-name span {
+      font-size: 26px; font-weight: 700; color: var(--green-glow);
+      text-shadow: 0 0 15px rgba(50,205,50,0.5);
+      line-height: 1;
+    }
+    .cg-active-name svg { width: 18px; height: 18px; color: var(--green-glow); }
+    .cg-active-time {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(0,0,0,0.4); border: 1px solid rgba(220,180,80,0.2);
+      padding: 4px 10px; border-radius: 12px;
+      font-size: 11px; color: var(--gold-text);
+      margin-bottom: 8px;
+    }
+    .cg-active-desc { margin: 0; font-size: 10px; color: #aaa; line-height: 1.4; }
+
+    .cg-timer {
+      width: 70px; height: 70px;
+      border-radius: 50%;
+      background: conic-gradient(var(--green-glow) 0% 75%, rgba(255,255,255,0.1) 75% 100%);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      position: relative; flex-shrink: 0;
+    }
+    .cg-timer::after {
+      content: ''; position: absolute; inset: 4px;
+      background: #08080c; border-radius: 50%; z-index: 1;
+    }
+    .cg-timer-inner {
+      position: relative; z-index: 2; text-align: center;
+    }
+    .cg-timer-inner b { display: block; font-size: 11px; color: #fff; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .cg-timer-inner span { display: block; font-size: 8px; color: #aaa; margin-top: 2px; }
+
+    /* Section Headers */
+    .cg-section-header {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 16px;
+    }
+    .cg-section-header svg { width: 16px; height: 16px; color: var(--gold-dim); }
+    .cg-section-header h3 { margin: 0; font-size: 13px; color: var(--gold-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; }
+
+    /* Today's List */
+    .cg-list-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 12px;
+      margin-bottom: 24px;
+    }
+    .cg-list { display: flex; flex-direction: column; gap: 8px; }
+    .cg-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px; border-radius: 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .cg-row.active {
+      background: linear-gradient(90deg, rgba(50,205,50,0.15), rgba(10,10,14,0.8));
+      border: 1px solid rgba(50,205,50,0.4);
+      box-shadow: inset 0 0 20px rgba(50,205,50,0.1);
+    }
+    
+    .cg-num {
+      width: 20px; height: 20px; border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      display: grid; place-items: center;
+      font-size: 10px; color: #ccc; flex-shrink: 0;
+    }
+    .cg-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      display: grid; place-items: center; flex-shrink: 0;
+    }
+    .cg-icon svg { width: 20px; height: 20px; }
+    .cg-icon.c-green { background: rgba(50,205,50,0.15); color: var(--green-glow); }
+    .cg-icon.c-blue { background: rgba(68,153,255,0.15); color: var(--blue-glow); }
+    .cg-icon.c-orange { background: rgba(255,153,0,0.15); color: var(--orange-glow); }
+    .cg-icon.c-red { background: rgba(255,68,68,0.15); color: var(--red-glow); }
+    
+    .cg-row-info { flex: 1; }
+    .cg-row-info h4 { margin: 0 0 2px; font-size: 13px; font-weight: 600; color: #fff; }
+    .cg-row-info p { margin: 0; font-size: 11px; color: #999; }
+    
+    .cg-tag { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; text-align: right; }
+    .cg-tag.c-green { color: var(--green-glow); }
+    .cg-tag.c-orange { color: var(--orange-glow); }
+    .cg-tag.c-red { color: var(--red-glow); }
+
+    .cg-location { text-align: center; font-size: 10px; color: #777; margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+
+    /* Activities Grid */
+    .cg-activity-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px;
+    }
+    .cg-act-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 16px 8px;
+      display: flex; flex-direction: column; align-items: center; text-align: center;
+    }
+    .cg-act-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: grid; place-items: center; margin-bottom: 12px;
+    }
+    .cg-act-icon svg { width: 24px; height: 24px; }
+    .cg-act-icon.c-green { background: radial-gradient(circle, rgba(50,205,50,0.2), transparent); color: var(--green-glow); border: 1px solid rgba(50,205,50,0.2); }
+    .cg-act-icon.c-purple { background: radial-gradient(circle, rgba(189,92,255,0.2), transparent); color: #bd5cff; border: 1px solid rgba(189,92,255,0.2); }
+    .cg-act-icon.c-gold { background: radial-gradient(circle, rgba(238,203,122,0.2), transparent); color: var(--gold-text); border: 1px solid rgba(238,203,122,0.2); }
+    .cg-act-icon.c-blue { background: radial-gradient(circle, rgba(68,153,255,0.2), transparent); color: var(--blue-glow); border: 1px solid rgba(68,153,255,0.2); }
+    
+    .cg-act-card h5 { margin: 0 0 6px; font-size: 10px; color: #ddd; font-weight: 500; line-height: 1.3; height: 26px; }
+    .cg-act-card span { font-size: 9px; font-weight: 600; }
+    
+    /* Special Message */
+    .cg-special {
+      background: radial-gradient(circle at 80% 50%, rgba(220,180,80,0.2), rgba(10,10,14,0.9));
+      border: 1px solid rgba(220,180,80,0.3);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .cg-special-content { flex: 1; }
+    .cg-special-content h4 { margin: 0 0 6px; font-size: 11px; color: var(--gold-dim); text-transform: uppercase; letter-spacing: 0.08em; }
+    .cg-special-content p { margin: 0; font-size: 12px; color: #ccc; line-height: 1.5; }
+    .cg-special-content b { color: var(--green-glow); }
+    .cg-special-icon {
+      width: 60px; height: 60px;
+      display: grid; place-items: center;
+      background: radial-gradient(circle, rgba(238,203,122,0.3), transparent 70%);
+      border-radius: 50%;
+    }
+    .cg-special-icon svg { width: 36px; height: 36px; color: var(--gold-text); filter: drop-shadow(0 0 10px rgba(238,203,122,0.6)); }
+
+    /* Upcoming */
+    .cg-upcoming-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 30px;
+    }
+    .cg-up-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 16px 8px;
+      text-align: center;
+    }
+    .cg-up-icon {
+      width: 32px; height: 32px; margin: 0 auto 10px;
+      border-radius: 50%; display: grid; place-items: center;
+    }
+    .cg-up-icon svg { width: 16px; height: 16px; }
+    .cg-up-icon.c-gold { background: rgba(238,203,122,0.15); color: var(--gold-text); }
+    .cg-up-icon.c-none { color: var(--gold-text); }
+    
+    .cg-up-card h5 { margin: 0 0 4px; font-size: 12px; font-weight: 600; color: #fff; }
+    .cg-up-card p { margin: 0 0 6px; font-size: 9px; color: #aaa; }
+    .cg-up-card span { font-size: 8px; color: var(--green-glow); font-weight: 500; }
+
+    @media (max-width: 380px) {
+      .cg-active-card { flex-direction: column; text-align: center; }
+      .cg-active-name { justify-content: center; }
+      .cg-activity-grid { grid-template-columns: repeat(2, 1fr); }
+      .cg-upcoming-grid { grid-template-columns: 1fr; }
+      .cg-up-card { display: flex; align-items: center; text-align: left; gap: 12px; padding: 12px; }
+      .cg-up-icon { margin: 0; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header matched exactly to design -->
+  <header class="sy-topbar">
+    <button class="sy-topbar__btn" data-sy-go="home" aria-label="Back">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="sy-brand-header">
+      <h1>SHREE YANTRA</h1>
+      <p>Astrology</p>
+    </div>
+    <button class="sy-topbar__btn" aria-label="Notifications" style="position:relative;">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--gold-text)" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+      <span style="position:absolute;top:4px;right:6px;width:12px;height:12px;background:#ff3b30;border-radius:50%;color:#fff;font-size:8px;display:grid;place-items:center;font-weight:bold; border: 1px solid #000;">3</span>
+    </button>
+  </header>
+
+  <main class="sy-container">
+    
+    <div class="cg-header">
+      <div class="cg-title">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/></svg>
+        <h2>CHOGHADIYA</h2>
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/></svg>
+      </div>
+      <p class="cg-subtitle">Know Today's Auspicious & Inauspicious Timings</p>
+      
+      <div class="cg-date-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        21 May 2025, Wednesday
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </div>
+    </div>
+
+    <!-- Active Card -->
+    <div class="cg-active-card">
+      <div class="cg-yantra">
+        <svg viewBox="0 0 120 120" fill="none">
+          <defs><linearGradient id="cgGold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fce8a8"/><stop offset="0.5" stop-color="#e9b850"/><stop offset="1" stop-color="#a17613"/></linearGradient></defs>
+          <circle cx="60" cy="60" r="56" stroke="url(#cgGold)" stroke-width="1.5" stroke-dasharray="2 4"/>
+          <circle cx="60" cy="60" r="48" stroke="url(#cgGold)" stroke-width="1"/>
+          <circle cx="60" cy="60" r="32" stroke="url(#cgGold)" stroke-width="1" opacity="0.6"/>
+          <path d="M60 12 L96 78 H24 Z" stroke="url(#cgGold)" stroke-width="1.5"/>
+          <path d="M60 108 L24 42 H96 Z" stroke="url(#cgGold)" stroke-width="1.5"/>
+          <path d="M60 28 L80 64 H40 Z" stroke="url(#cgGold)" stroke-width="1"/>
+          <path d="M60 92 L40 56 H80 Z" stroke="url(#cgGold)" stroke-width="1"/>
+          <circle cx="60" cy="60" r="4" fill="url(#cgGold)"/>
+        </svg>
+      </div>
+      <div class="cg-active-info">
+        <h4>Currently Active</h4>
+        <div class="cg-active-name">
+          <span>LABH</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+        <div class="cg-active-time">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          04:12 PM - 05:38 PM
+        </div>
+        <p class="cg-active-desc">Good time for business, financial transactions, deals and purchases.</p>
+      </div>
+      <div class="cg-timer">
+        <div class="cg-timer-inner">
+          <b>01:26:45</b>
+          <span>HRS</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today's List -->
+    <div class="cg-section-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <h3>Today's Choghadiya</h3>
+    </div>
+    
+    <div class="cg-list-card">
+      <div class="cg-list">
+        <div class="cg-row">
+          <div class="cg-num">1</div>
+          <div class="cg-icon c-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          <div class="cg-row-info"><h4>AMRIT</h4><p>05:28 AM - 06:54 AM</p></div>
+          <div class="cg-tag c-green">Auspicious</div>
+        </div>
+        <div class="cg-row">
+          <div class="cg-num">2</div>
+          <div class="cg-icon c-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+          <div class="cg-row-info"><h4>SHUBH</h4><p>06:54 AM - 08:20 AM</p></div>
+          <div class="cg-tag c-green">Auspicious</div>
+        </div>
+        <div class="cg-row">
+          <div class="cg-num">3</div>
+          <div class="cg-icon c-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+          <div class="cg-row-info"><h4>LABH</h4><p>08:20 AM - 09:46 AM</p></div>
+          <div class="cg-tag c-green">Auspicious</div>
+        </div>
+        <div class="cg-row">
+          <div class="cg-num">4</div>
+          <div class="cg-icon c-orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5.5 8.5C5.5 8.5 7.5 10.5 12 10.5C16.5 10.5 18.5 8.5 18.5 8.5"/><path d="M12 10.5V21"/><path d="M9 21H15"/><circle cx="12" cy="5" r="2"/></svg></div>
+          <div class="cg-row-info"><h4>CHAR</h4><p>09:46 AM - 11:12 AM</p></div>
+          <div class="cg-tag c-orange">Neutral</div>
+        </div>
+        <div class="cg-row">
+          <div class="cg-num">5</div>
+          <div class="cg-icon c-red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+          <div class="cg-row-info"><h4>UDVEG</h4><p>11:12 AM - 12:38 PM</p></div>
+          <div class="cg-tag c-red">Inauspicious</div>
+        </div>
+        <div class="cg-row">
+          <div class="cg-num">6</div>
+          <div class="cg-icon c-red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
+          <div class="cg-row-info"><h4>KAAL</h4><p>12:38 PM - 02:04 PM</p></div>
+          <div class="cg-tag c-red">Inauspicious</div>
+        </div>
+        <div class="cg-row">
+          <div class="cg-num">7</div>
+          <div class="cg-icon c-red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+          <div class="cg-row-info"><h4>ROG</h4><p>02:04 PM - 03:30 PM</p></div>
+          <div class="cg-tag c-red">Inauspicious</div>
+        </div>
+        <div class="cg-row active">
+          <div class="cg-num">8</div>
+          <div class="cg-icon c-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+          <div class="cg-row-info"><h4>LABH (VARTMAN)</h4><p>04:12 PM - 05:38 PM</p></div>
+          <div class="cg-tag c-green">Auspicious</div>
+        </div>
+      </div>
+      <div class="cg-location">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Timings are based on your location (Jaipur, Rajasthan)
+      </div>
+    </div>
+
+    <!-- Activities Grid -->
+    <div class="cg-section-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      <h3>Which Choghadiya is best for which activity?</h3>
+    </div>
+    
+    <div class="cg-activity-grid">
+      <div class="cg-act-card">
+        <div class="cg-act-icon c-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
+        <h5>Business / Deal Signing</h5>
+        <span class="c-green">LABH / AMRIT</span>
+      </div>
+      <div class="cg-act-card">
+        <div class="cg-act-icon c-purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
+        <h5>Buying New Items</h5>
+        <span class="c-green">SHUBH / LABH</span>
+      </div>
+      <div class="cg-act-card">
+        <div class="cg-act-icon c-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></div>
+        <h5>Gold / Jewelry Purchase</h5>
+        <span class="c-green">AMRIT</span>
+      </div>
+      
+      <div class="cg-act-card">
+        <div class="cg-act-icon c-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a2 2 0 0 0-1.6-.8H8a2 2 0 0 0-2 2v2.4"/><circle cx="6.5" cy="16.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></svg></div>
+        <h5>Vehicle Purchase</h5>
+        <span class="c-green">SHUBH</span>
+      </div>
+      <div class="cg-act-card">
+        <div class="cg-act-icon c-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+        <h5>Money Transfer</h5>
+        <span class="c-green">LABH</span>
+      </div>
+      <div class="cg-act-card">
+        <div class="cg-act-icon c-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></div>
+        <h5>Travel / Journey</h5>
+        <span style="color:var(--gold-text)">CHAR</span>
+      </div>
+      
+      <div class="cg-act-card">
+        <div class="cg-act-icon c-purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
+        <h5>Social Media Posting</h5>
+        <span style="color:var(--gold-text)">CHAR</span>
+      </div>
+      <div class="cg-act-card">
+        <div class="cg-act-icon c-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <h5>Interview / Meeting</h5>
+        <span class="c-green">SHUBH</span>
+      </div>
+      <div class="cg-act-card">
+        <div class="cg-act-icon c-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <h5>Worship / Prayer</h5>
+        <span class="c-green">AMRIT</span>
+      </div>
+    </div>
+
+    <!-- Special Message -->
+    <div class="cg-special">
+      <div class="cg-special-content">
+        <h4>TODAY'S SPECIAL MESSAGE</h4>
+        <p>From 04:12 PM to 05:38 PM is <b>Labh Choghadiya</b>. It is an excellent time for business, financial transactions and buying valuable items.</p>
+      </div>
+      <div class="cg-special-icon">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C12 2 8 8 8 12C8 14.2091 9.79086 16 12 16C14.2091 16 16 14.2091 16 12C16 8 12 2 12 2Z"/><path d="M4 16C4 18.2091 7.58172 20 12 20C16.4183 20 20 18.2091 20 16"/><path d="M2 16H22" stroke="currentColor" stroke-width="2"/></svg>
+      </div>
+    </div>
+
+    <!-- Upcoming -->
+    <div class="cg-title" style="margin-bottom:16px;">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/></svg>
+      <h2 style="font-size:14px; font-family:'Inter', sans-serif; letter-spacing:0.1em; font-weight:600;">UPCOMING AUSPICIOUS TIMINGS</h2>
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/></svg>
+    </div>
+    
+    <div class="cg-upcoming-grid">
+      <div class="cg-up-card">
+        <div class="cg-up-icon c-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg></div>
+        <h5>AMRIT</h5>
+        <p>07:10 PM - 08:36 PM</p>
+        <span>VERY AUSPICIOUS TIME</span>
+      </div>
+      <div class="cg-up-card" style="border-color: rgba(50,205,50,0.4); box-shadow: inset 0 0 15px rgba(50,205,50,0.1);">
+        <div class="cg-up-icon c-none"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+        <h5>SHUBH</h5>
+        <p>08:36 PM - 10:02 PM</p>
+        <span>GOOD FOR IMPORTANT TASKS</span>
+      </div>
+      <div class="cg-up-card">
+        <div class="cg-up-icon c-gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+        <h5>LABH</h5>
+        <p>10:02 PM - 11:28 PM</p>
+        <span>GOOD FOR MONEY RELATED WORK</span>
+      </div>
+    </div>
+    
+  </main>
+
+  <script src="../../assets/app-shell.js"></script>
+</body>
+</html>

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Profile · Shree Yantra</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="../../assets/app-shell.css" />
+  <link rel="stylesheet" href="../../assets/sy-pages.css" />
+</head>
+<body>
+  <header class="sy-topbar">
+    <button class="sy-topbar__btn" data-sy-go="home" aria-label="Back">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    </button>
+    <div class="sy-topbar__title">My Profile</div>
+    <button class="sy-topbar__btn" data-menu-toggle aria-label="Menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </header>
+
+  <main class="sy-container">
+    <!-- Hero: avatar + name + premium badge -->
+    <section class="sy-card profile-hero">
+      <div class="avatar-wrap">
+        <div class="avatar-ring">
+          <div class="avatar-inner" data-sy-avatar>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <circle cx="12" cy="8" r="4.2"/>
+              <path d="M3.6 21c.7-4.4 4.3-7 8.4-7s7.7 2.6 8.4 7z"/>
+            </svg>
+          </div>
+        </div>
+        <button class="avatar-edit" id="avatarPickBtn" aria-label="Change avatar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 7h4l2-3h6l2 3h4v13H3z"/><circle cx="12" cy="13" r="4"/>
+          </svg>
+        </button>
+        <input type="file" id="avatarFile" accept="image/*" hidden>
+      </div>
+      <h2 class="profile-name sy-gold" data-sy-username>Raj Kumar</h2>
+      <div class="profile-meta">Leo ♌ · Member since Mar 2024</div>
+      <div class="profile-premium">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M2 8l4 6 5-7 5 7 4-4-2 12H4z"/></svg>
+        PREMIUM MEMBER
+      </div>
+
+      <!-- quick stats -->
+      <div class="profile-stats">
+        <div>
+          <div class="stat-num">28</div>
+          <div class="stat-lbl">Predictions</div>
+        </div>
+        <div>
+          <div class="stat-num">04</div>
+          <div class="stat-lbl">Consults</div>
+        </div>
+        <div>
+          <div class="stat-num">62</div>
+          <div class="stat-lbl">Premium Days</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Birth details -->
+    <h3 class="sy-section-title">My Information</h3>
+    <section class="sy-card">
+      <ul class="info-list">
+        <li>
+          <span class="ic-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c.7-4.4 4-7 8-7s7.3 2.6 8 7"/></svg>
+          </span>
+          <div class="info-body">
+            <span class="info-lbl">Full Name</span>
+            <span class="info-val">Raj Kumar</span>
+          </div>
+        </li>
+        <li>
+          <span class="ic-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          </span>
+          <div class="info-body">
+            <span class="info-lbl">Date of Birth</span>
+            <span class="info-val">01 Jan 2000</span>
+          </div>
+        </li>
+        <li>
+          <span class="ic-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </span>
+          <div class="info-body">
+            <span class="info-lbl">Time of Birth</span>
+            <span class="info-val">06:42 AM</span>
+          </div>
+        </li>
+        <li>
+          <span class="ic-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </span>
+          <div class="info-body">
+            <span class="info-lbl">Place of Birth</span>
+            <span class="info-val">Jaipur, Rajasthan</span>
+          </div>
+        </li>
+        <li>
+          <span class="ic-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><polyline points="4 4 12 13 20 4"/></svg>
+          </span>
+          <div class="info-body">
+            <span class="info-lbl">Email</span>
+            <span class="info-val">raj.kumar@cosmos.com</span>
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Account / settings menu -->
+    <h3 class="sy-section-title">Account</h3>
+    <section class="sy-card menu-card">
+      <ul class="menu-list">
+        <li data-sy-go="edit-profile">
+          <span class="ic-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4z"/></svg>
+          </span>
+          <div class="menu-body">
+            <span class="m-lbl">Edit Profile</span>
+            <span class="m-sub">Update your details &amp; birth info</span>
+          </div>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </li>
+        <li data-sy-go="notifications">
+          <span class="ic-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          </span>
+          <div class="menu-body">
+            <span class="m-lbl">Notifications</span>
+            <span class="m-sub">Predictions &amp; account alerts</span>
+          </div>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </li>
+        <li data-sy-go="manage-subscription">
+          <span class="ic-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8l4 6 5-7 5 7 4-4-2 12H4z"/></svg>
+          </span>
+          <div class="menu-body">
+            <span class="m-lbl">Manage Subscription</span>
+            <span class="m-sub">Premium · Next billing 24 Jun</span>
+          </div>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </li>
+        <li data-sy-go="services">
+          <span class="ic-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </span>
+          <div class="menu-body">
+            <span class="m-lbl">Consultation History</span>
+            <span class="m-sub">Past chats with astrologers</span>
+          </div>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </li>
+      </ul>
+    </section>
+
+    <h3 class="sy-section-title">Preferences</h3>
+    <section class="sy-card menu-card">
+      <ul class="menu-list">
+        <li>
+          <span class="ic-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          </span>
+          <div class="menu-body">
+            <span class="m-lbl">Notifications</span>
+            <span class="m-sub">Daily predictions &amp; reminders</span>
+          </div>
+          <label class="sy-switch">
+            <input type="checkbox" checked />
+            <span></span>
+          </label>
+        </li>
+        <li>
+          <span class="ic-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a14 14 0 0 1 0 20M12 2a14 14 0 0 0 0 20"/></svg>
+          </span>
+          <div class="menu-body">
+            <span class="m-lbl">Language</span>
+            <span class="m-sub">English</span>
+          </div>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </li>
+        <li>
+          <span class="ic-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          </span>
+          <div class="menu-body">
+            <span class="m-lbl">Privacy &amp; Security</span>
+            <span class="m-sub">Password, data, account</span>
+          </div>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </li>
+        <li data-sy-go="help">
+          <span class="ic-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2-3 4"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </span>
+          <div class="menu-body">
+            <span class="m-lbl">Help &amp; Support</span>
+            <span class="m-sub">FAQ, contact, feedback</span>
+          </div>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </li>
+      </ul>
+    </section>
+
+    <button class="logout" data-sy-go="signin">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span>LOGOUT</span>
+    </button>
+
+    <p class="profile-version">SHREE YANTRA · ASTROLOGY v1.0.0</p>
+  </main>
+
+  <script src="../../assets/app-shell.js"></script>
+  <script>
+    (function () {
+      var btn = document.getElementById('avatarPickBtn');
+      var input = document.getElementById('avatarFile');
+      btn.addEventListener('click', function () { input.click(); });
+
+      // Long-press / right-click on avatar → offer to remove
+      var slot = document.querySelector('[data-sy-avatar]');
+      slot.addEventListener('contextmenu', function (e) {
+        if (!SY.getUser().avatar) return;
+        e.preventDefault();
+        SY.confirm({
+          title: 'Remove profile photo?',
+          message: 'Your default avatar will be shown instead.',
+          confirmLabel: 'REMOVE',
+          cancelLabel: 'KEEP',
+          variant: 'danger'
+        }).then(function (ok) {
+          if (!ok) return;
+          SY.setUser({ avatar: null });
+          SY.paintAvatar();
+          SY.toast('Photo removed', 'success');
+        });
+      });
+
+      input.addEventListener('change', function (e) {
+        var file = e.target.files && e.target.files[0];
+        if (!file) return;
+        if (!/^image\//.test(file.type)) {
+          SY.toast('Please choose an image file', 'error');
+          return;
+        }
+        if (file.size > 4 * 1024 * 1024) {
+          SY.toast('Image must be under 4 MB', 'error');
+          return;
+        }
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+          // Downscale to ≤ 512 px so localStorage stays small
+          var img = new Image();
+          img.onload = function () {
+            var max = 512;
+            var w = img.width, h = img.height;
+            if (w > h && w > max)      { h = h * max / w; w = max; }
+            else if (h > max)          { w = w * max / h; h = max; }
+            var cv = document.createElement('canvas');
+            cv.width = w; cv.height = h;
+            var ctx = cv.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            var data;
+            try { data = cv.toDataURL('image/jpeg', 0.86); }
+            catch (_) { data = ev.target.result; }
+            try {
+              SY.setUser({ avatar: data });
+              SY.paintAvatar();
+              SY.toast('Profile photo updated', 'success');
+            } catch (err) {
+              SY.toast('Image too large for storage', 'error');
+            }
+          };
+          img.onerror = function () { SY.toast('Could not read this image', 'error'); };
+          img.src = ev.target.result;
+        };
+        reader.onerror = function () { SY.toast('Failed to read file', 'error'); };
+        reader.readAsDataURL(file);
+        input.value = '';
+      });
+    })();
+  </script>
+</body>
+</html>

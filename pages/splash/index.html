@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#03030c" />
+  <title>Shree Yantra · Loading</title>
+  <link rel="stylesheet" href="../../assets/app-shell.css" />
+  <link rel="stylesheet" href="../../assets/sy-pages.css" />
+  <style>
+    body {
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+    }
+    .splash-wrap {
+      position: relative;
+      text-align: center;
+      padding: 24px;
+      max-width: 360px;
+    }
+    .splash-logo {
+      width: 140px;
+      height: 140px;
+      margin: 0 auto 18px;
+      position: relative;
+    }
+    .splash-logo .glyph {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-family: 'Cinzel', serif;
+      font-weight: 800;
+      font-size: 56px;
+      color: var(--sy-gold-1);
+      background: radial-gradient(circle at 30% 30%, rgba(252,232,168,0.55), rgba(184,127,26,0.0) 70%);
+      text-shadow: 0 0 18px rgba(233,184,80,0.6);
+      animation: sy-pulse 3.2s ease-in-out infinite;
+    }
+    .splash-logo .ring {
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 1px solid rgba(201, 150, 46, 0.55);
+      animation: sy-rotate-slow 16s linear infinite;
+    }
+    .splash-logo .ring--2 {
+      inset: 6px;
+      border-color: rgba(201, 150, 46, 0.3);
+      animation-duration: 28s;
+      animation-direction: reverse;
+    }
+    .splash-title {
+      font-family: 'Cinzel', serif;
+      font-size: 28px;
+      letter-spacing: 0.22em;
+      font-weight: 800;
+      margin: 0;
+    }
+    .splash-sub {
+      font-family: 'Cinzel', serif;
+      letter-spacing: 0.5em;
+      font-size: 11px;
+      color: var(--sy-gold-2);
+      margin: 6px 0 0;
+    }
+    .splash-tag {
+      margin: 18px auto 0;
+      max-width: 280px;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 16px;
+      color: var(--sy-text-soft);
+      font-style: italic;
+    }
+    .splash-progress {
+      margin: 26px auto 0;
+      width: 220px;
+      height: 4px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(201, 150, 46, 0.15);
+    }
+    .splash-progress span {
+      display: block;
+      width: 25%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, var(--sy-gold-1), transparent);
+      animation: splash-load 1.6s ease-in-out infinite;
+    }
+    @keyframes splash-load {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(420%); }
+    }
+    .splash-foot {
+      margin-top: 24px;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      color: rgba(216, 203, 168, 0.55);
+    }
+  </style>
+</head>
+<body>
+  <div class="splash-wrap">
+    <div class="splash-logo">
+      <div class="ring"></div>
+      <div class="ring ring--2"></div>
+      <div class="glyph">ॐ</div>
+    </div>
+    <h1 class="splash-title sy-gold">SHREE YANTRA</h1>
+    <p class="splash-sub">ASTROLOGY</p>
+    <p class="splash-tag">“Aligning your path with the cosmos…”</p>
+    <div class="splash-progress"><span></span></div>
+    <p class="splash-foot">PREPARING DIVINE EXPERIENCE</p>
+  </div>
+  <script src="../../assets/app-shell.js"></script>
+  <script>
+    // Fade body out before navigating, so the splash → onboarding
+    // hand-off feels seamless instead of jumping cold.
+    setTimeout(function () {
+      document.body.style.transition = 'opacity 240ms ease';
+      document.body.style.opacity = '0';
+      setTimeout(function () {
+        location.href = "../onboarding/index.html";
+      }, 240);
+    }, 1700);
+  </script>
+</body>
+</html>

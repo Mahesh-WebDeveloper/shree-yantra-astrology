@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#04081a" />
+    <meta name="description" content="Shree Yantra Astrology — Divine Vedic Guidance" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="../../assets/app-shell.css" />
+    <title>Shree Yantra Astrology — Divine Vedic Guidance</title>
+  </head>
+  <body>
+    <main class="sy-app">
+      <div class="sy-bg" aria-hidden="true">
+        <img src="assets/bg_zodiac.png" alt="" />
+      </div>
+
+      <header class="sy-hero">
+        <h1 class="sy-brand">
+          <span class="sy-brand-main">SHREE YANTRA</span>
+          <span class="sy-brand-divider">
+            <span class="sy-dash"></span>
+            <span class="sy-brand-sub">ASTROLOGY</span>
+            <span class="sy-dash"></span>
+          </span>
+        </h1>
+
+        <div class="sy-swastik-wrap">
+          <img src="assets/swastik.png" alt="Auspicious Swastik symbol" class="sy-swastik" />
+        </div>
+
+        <p class="sy-tagline">
+          Discover the path of Divine Guidance<br />
+          with Ancient Vedic Wisdom
+        </p>
+        <div class="sy-ornament" aria-hidden="true">
+          <span class="sy-orn-line"></span>
+          <i class="fa-solid fa-gem"></i>
+          <span class="sy-orn-line"></span>
+        </div>
+      </header>
+
+      <section class="sy-panel" aria-label="Birth details">
+        <span class="sy-corner sy-corner-tl" aria-hidden="true"></span>
+        <span class="sy-corner sy-corner-tr" aria-hidden="true"></span>
+        <span class="sy-corner sy-corner-bl" aria-hidden="true"></span>
+        <span class="sy-corner sy-corner-br" aria-hidden="true"></span>
+
+        <form class="sy-form" onsubmit="return handleSubmit(event)" novalidate>
+          <label class="sy-field">
+            <i class="fa-solid fa-user sy-field-icon"></i>
+            <div class="sy-field-body">
+              <span class="sy-field-label">Full Name</span>
+              <input
+                type="text"
+                name="fullName"
+                placeholder="Enter your name"
+                autocomplete="name"
+              />
+            </div>
+          </label>
+
+          <label class="sy-field">
+            <i class="fa-solid fa-calendar-days sy-field-icon"></i>
+            <div class="sy-field-body">
+              <span class="sy-field-label">Date of Birth</span>
+              <input
+                id="sy-dob"
+                type="text"
+                name="dob"
+                placeholder="DD / MM / YYYY"
+                onfocus="this.type='date'"
+                onblur="if(!this.value)this.type='text'"
+              />
+            </div>
+            <i
+              class="fa-solid fa-chevron-down sy-field-chevron"
+              role="button"
+              aria-label="Open calendar"
+              onclick="syOpenDob(event)"
+            ></i>
+          </label>
+
+          <label class="sy-field">
+            <i class="fa-solid fa-location-dot sy-field-icon"></i>
+            <div class="sy-field-body">
+              <span class="sy-field-label">Place of Birth</span>
+              <input
+                type="text"
+                name="place"
+                placeholder="Enter your place of birth"
+              />
+            </div>
+          </label>
+
+          <button type="submit" class="sy-cta">
+            <i class="fa-solid fa-crown"></i>
+            <span>SUBSCRIBE NOW</span>
+            <i class="fa-solid fa-arrow-right sy-cta-arrow"></i>
+          </button>
+
+          <p class="sy-cta-note">
+            <i class="fa-solid fa-sparkles sy-cta-note-icon"></i>
+            Unlock Premium Predictions &amp; Remedies
+            <i class="fa-solid fa-sparkles sy-cta-note-icon"></i>
+          </p>
+        </form>
+      </section>
+
+      <section class="sy-badges" aria-label="Trust indicators">
+        <span class="sy-corner sy-corner-tl" aria-hidden="true"></span>
+        <span class="sy-corner sy-corner-tr" aria-hidden="true"></span>
+        <span class="sy-corner sy-corner-bl" aria-hidden="true"></span>
+        <span class="sy-corner sy-corner-br" aria-hidden="true"></span>
+
+        <article class="sy-badge">
+          <span class="sy-badge-icon"><i class="fa-solid fa-shield-halved"></i></span>
+          <h3>100% Secure</h3>
+          <p>Your data is safe<br />with us</p>
+        </article>
+        <article class="sy-badge">
+          <span class="sy-badge-icon"><i class="fa-solid fa-star"></i></span>
+          <h3>Accurate Prediction</h3>
+          <p>Based on Vedic<br />Astrology</p>
+        </article>
+        <article class="sy-badge">
+          <span class="sy-badge-icon"><i class="fa-solid fa-award"></i></span>
+          <h3>Premium Support</h3>
+          <p>Dedicated support<br />for you</p>
+        </article>
+      </section>
+    </main>
+
+    <script>
+      function syOpenDob(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var input = document.getElementById('sy-dob');
+        if (!input) return;
+        input.type = 'date';
+        setTimeout(function () {
+          input.focus();
+          try {
+            if (typeof input.showPicker === 'function') input.showPicker();
+          } catch (err) { /* showPicker may throw if not user-triggered */ }
+        }, 0);
+      }
+
+      function handleSubmit(e) {
+        e.preventDefault();
+        var form = e.target;
+        var fullName = form.fullName.value.trim();
+        var dob = form.dob.value.trim();
+        var place = form.place.value.trim();
+        if (!fullName || !dob || !place) {
+          alert("Please fill in your Name, Date of Birth and Place of Birth to continue.");
+          return false;
+        }
+        alert("🙏 Namaste " + fullName + "!\n\nYour Vedic Kundli is being prepared.\n\nDOB: " + dob + "\nPlace: " + place);
+        return false;
+      }
+    </script>
+    <script src="../../assets/app-shell.js"></script>
+  </body>
+</html>

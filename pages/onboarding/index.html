@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#03030c" />
+  <title>Shree Yantra · Welcome</title>
+  <link rel="stylesheet" href="../../assets/app-shell.css" />
+  <link rel="stylesheet" href="../../assets/sy-pages.css" />
+  <style>
+    .onb-shell {
+      max-width: var(--sy-shell-max);
+      margin: 0 auto;
+      min-height: calc(100vh - var(--sy-bottom-nav-h));
+      padding: 22px 18px 22px;
+      display: flex;
+      flex-direction: column;
+    }
+    .onb-skip {
+      align-self: flex-end;
+      font-size: 11.5px;
+      letter-spacing: 0.16em;
+      color: var(--sy-gold-2);
+      text-decoration: none;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(201, 150, 46, 0.3);
+      cursor: pointer;
+      background: rgba(8, 8, 22, 0.5);
+    }
+
+    /* ===== swipeable carousel ===== */
+    .onb-stage {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 18px 0 12px;
+      overflow: hidden;
+      position: relative;
+      touch-action: pan-y;
+    }
+    .onb-track {
+      display: flex;
+      width: 100%;
+      transition: transform 360ms cubic-bezier(.2,.8,.25,1);
+      will-change: transform;
+    }
+    .onb-track.is-dragging { transition: none; }
+    .onb-slide {
+      flex: 0 0 100%;
+      padding: 0 6px;
+      text-align: center;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+    .onb-art {
+      width: 200px;
+      height: 200px;
+      margin: 0 auto 22px;
+      position: relative;
+      display: grid;
+      place-items: center;
+    }
+    .onb-art .ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 1px solid rgba(201, 150, 46, 0.45);
+      animation: sy-rotate-slow 40s linear infinite;
+    }
+    .onb-art .ring--2 {
+      inset: 18px;
+      border-color: rgba(201, 150, 46, 0.28);
+      animation-direction: reverse;
+      animation-duration: 60s;
+    }
+    .onb-art .ring--3 {
+      inset: 36px;
+      border-color: rgba(201, 150, 46, 0.18);
+      border-style: dashed;
+      animation-duration: 80s;
+    }
+    .onb-art .glyph {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 30% 30%, rgba(252,232,168,0.45), rgba(0,0,0,0) 70%),
+        rgba(8, 8, 22, 0.7);
+      border: 1px solid rgba(201, 150, 46, 0.4);
+      color: var(--sy-gold-1);
+      box-shadow: 0 0 28px rgba(233, 184, 80, 0.35), inset 0 0 18px rgba(233, 184, 80, 0.08);
+    }
+    .onb-art .glyph svg {
+      width: 56px;
+      height: 56px;
+      filter: drop-shadow(0 0 10px rgba(233, 184, 80, 0.5));
+    }
+    .onb-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(22px, 6vw, 26px);
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      margin: 0 0 10px;
+      background: linear-gradient(180deg, #fce8a8 0%, #e9b850 45%, #b87f1a 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .onb-sub {
+      max-width: 320px;
+      margin: 0 auto;
+      color: var(--sy-text-soft);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .onb-dots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin: 10px 0 18px;
+    }
+    .onb-hint {
+      text-align: center;
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      color: rgba(216, 203, 168, 0.55);
+      letter-spacing: 0.22em;
+      margin: 20px 0 0;
+    }
+    .onb-dots button {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      border: none;
+      padding: 0;
+      background: rgba(201, 150, 46, 0.32);
+      cursor: pointer;
+      transition: background 200ms, width 240ms, border-radius 240ms;
+    }
+    .onb-dots button.active {
+      width: 22px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #fce8a8, #b87f1a);
+    }
+
+    .onb-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .onb-actions .sy-btn { min-height: 50px; }
+  </style>
+</head>
+<body>
+  <div class="onb-shell">
+    <button class="onb-skip" id="skipBtn">SKIP ›</button>
+
+    <div class="onb-stage" id="stage">
+      <div class="onb-track" id="track">
+        <div class="onb-slide">
+          <div class="onb-art">
+            <div class="ring"></div>
+            <div class="ring ring--2"></div>
+            <div class="ring ring--3"></div>
+            <div class="glyph">
+              <!-- 8-point star inside ring (cosmic compass) -->
+              <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="32" cy="32" r="22"/>
+                <path d="M32 6v52M6 32h52M14.5 14.5l35 35M49.5 14.5l-35 35"/>
+                <circle cx="32" cy="32" r="6" fill="currentColor" opacity="0.25"/>
+              </svg>
+            </div>
+          </div>
+          <h2 class="onb-title">Discover Your Cosmic Path</h2>
+          <p class="onb-sub">Personalised Vedic horoscopes, kundli analysis and ancient remedies — all guided by your stars.</p>
+        </div>
+        <div class="onb-slide">
+          <div class="onb-art">
+            <div class="ring"></div>
+            <div class="ring ring--2"></div>
+            <div class="ring ring--3"></div>
+            <div class="glyph">
+              <!-- crescent moon + stars -->
+              <svg viewBox="0 0 64 64" fill="currentColor">
+                <path d="M44 12a22 22 0 1 0 8 22 16 16 0 0 1-8-22z"/>
+                <circle cx="14" cy="14" r="1.4"/>
+                <circle cx="50" cy="50" r="1.6"/>
+                <circle cx="18" cy="46" r="1.2"/>
+              </svg>
+            </div>
+          </div>
+          <h2 class="onb-title">Daily Divine Guidance</h2>
+          <p class="onb-sub">Wake up to predictions tailored to your moon sign, dasha period and planetary transits.</p>
+        </div>
+        <div class="onb-slide">
+          <div class="onb-art">
+            <div class="ring"></div>
+            <div class="ring ring--2"></div>
+            <div class="ring ring--3"></div>
+            <div class="glyph">
+              <!-- crown -->
+              <svg viewBox="0 0 64 64" fill="currentColor">
+                <path d="M6 20l10 14 16-22 16 22 10-14-6 32H12z"/>
+                <circle cx="6" cy="20" r="3"/>
+                <circle cx="58" cy="20" r="3"/>
+                <circle cx="32" cy="12" r="3"/>
+              </svg>
+            </div>
+          </div>
+          <h2 class="onb-title">Unlock Premium Wisdom</h2>
+          <p class="onb-sub">Talk to certified astrologers, get personalised remedies and unlimited live consultations.</p>
+        </div>
+      </div>
+    </div>
+
+    <p class="onb-hint">‹ SWIPE TO EXPLORE ›</p>
+
+    <div class="onb-dots" id="dots">
+      <button class="active" aria-label="Slide 1"></button>
+      <button aria-label="Slide 2"></button>
+      <button aria-label="Slide 3"></button>
+    </div>
+
+    <div class="onb-actions">
+      <button class="sy-btn sy-btn--primary" id="nextBtn">CONTINUE</button>
+      <button class="sy-btn sy-btn--ghost" data-sy-go="signin">I ALREADY HAVE AN ACCOUNT</button>
+    </div>
+  </div>
+
+  <script src="../../assets/app-shell.js"></script>
+  <script>
+    (function () {
+      var stage = document.getElementById('stage');
+      var track = document.getElementById('track');
+      var dots  = document.getElementById('dots').children;
+      var nextBtn = document.getElementById('nextBtn');
+      var skipBtn = document.getElementById('skipBtn');
+      var total = 3;
+      var index = 0;
+
+      function setIndex(i, animate) {
+        index = Math.max(0, Math.min(total - 1, i));
+        track.classList.toggle('is-dragging', !animate);
+        track.style.transform = 'translateX(' + (-index * 100) + '%)';
+        for (var k = 0; k < dots.length; k++) dots[k].classList.toggle('active', k === index);
+        nextBtn.textContent = index === total - 1 ? 'GET STARTED' : 'CONTINUE';
+      }
+
+      nextBtn.addEventListener('click', function () {
+        if (index === total - 1) { location.href = '../signin/index.html'; return; }
+        setIndex(index + 1, true);
+      });
+      skipBtn.addEventListener('click', function () {
+        location.href = '../signin/index.html';
+      });
+      for (var k = 0; k < dots.length; k++) {
+        (function (k) {
+          dots[k].addEventListener('click', function () { setIndex(k, true); });
+        })(k);
+      }
+
+      // ============ touch / pointer swipe ============
+      var startX = 0;
+      var startY = 0;
+      var dx = 0;
+      var dragging = false;
+      var stageWidth = 1;
+
+      function down(e) {
+        var p = (e.touches ? e.touches[0] : e);
+        startX = p.clientX;
+        startY = p.clientY;
+        dx = 0;
+        dragging = true;
+        stageWidth = stage.getBoundingClientRect().width || 1;
+        track.classList.add('is-dragging');
+      }
+      function move(e) {
+        if (!dragging) return;
+        var p = (e.touches ? e.touches[0] : e);
+        dx = p.clientX - startX;
+        var dy = p.clientY - startY;
+        // ignore mostly-vertical movement
+        if (Math.abs(dy) > Math.abs(dx) && Math.abs(dx) < 8) return;
+        // rubber-band at edges
+        var damped = dx;
+        if ((index === 0 && dx > 0) || (index === total - 1 && dx < 0)) damped = dx * 0.35;
+        track.style.transform = 'translateX(calc(' + (-index * 100) + '% + ' + damped + 'px))';
+        if (e.cancelable) e.preventDefault();
+      }
+      function up() {
+        if (!dragging) return;
+        dragging = false;
+        var threshold = Math.max(40, stageWidth * 0.15);
+        if (dx <= -threshold && index < total - 1) setIndex(index + 1, true);
+        else if (dx >= threshold && index > 0) setIndex(index - 1, true);
+        else setIndex(index, true);
+        dx = 0;
+      }
+
+      stage.addEventListener('touchstart', down, { passive: true });
+      stage.addEventListener('touchmove',  move, { passive: false });
+      stage.addEventListener('touchend',   up);
+      stage.addEventListener('touchcancel', up);
+
+      // mouse drag for desktop testing
+      stage.addEventListener('mousedown', function (e) { down(e); e.preventDefault(); });
+      window.addEventListener('mousemove', move);
+      window.addEventListener('mouseup', up);
+
+      // keyboard arrow keys
+      window.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowRight') setIndex(index + 1, true);
+        else if (e.key === 'ArrowLeft') setIndex(index - 1, true);
+      });
+
+      setIndex(0, false);
+      requestAnimationFrame(function () { track.classList.remove('is-dragging'); });
+    })();
+  </script>
+</body>
+</html>
