@@ -202,6 +202,22 @@
   // ============================================================
   // DRAWER
   // ============================================================
+  // Current language (persisted in localStorage)
+  var LANG_KEY = 'sy.lang';
+  function getLang() {
+    try { return localStorage.getItem(LANG_KEY) || 'en'; } catch (_) { return 'en'; }
+  }
+  function setLang(lang) {
+    try { localStorage.setItem(LANG_KEY, lang); } catch (_) {}
+    document.documentElement.setAttribute('lang', lang);
+    // refresh active state on drawer language buttons
+    document.querySelectorAll('.sy-drawer__lang-btn').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-lang') === lang);
+    });
+  }
+  window.SY.getLang = getLang;
+  window.SY.setLang = setLang;
+
   var drawerHTML =
     '<div class="sy-drawer-backdrop" data-sy-drawer-close></div>' +
     '<aside class="sy-drawer" role="dialog" aria-label="Menu">' +
@@ -226,6 +242,16 @@
           '</div>' +
         '</div>' +
         '<div class="sy-drawer__user">Namaste, <span data-sy-firstname>Raj</span> <span class="sy-drawer__user-badge">Premium</span></div>' +
+      '</div>' +
+      '<div class="sy-drawer__lang" role="group" aria-label="Language">' +
+        '<div class="sy-drawer__lang-label">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>' +
+          '<span>Language / भाषा</span>' +
+        '</div>' +
+        '<div class="sy-drawer__lang-row">' +
+          '<button class="sy-drawer__lang-btn" data-lang="en" type="button"><span class="lang-glyph">EN</span> English</button>' +
+          '<button class="sy-drawer__lang-btn" data-lang="hi" type="button"><span class="lang-glyph">हि</span> हिंदी</button>' +
+        '</div>' +
       '</div>' +
       '<ul class="sy-drawer__list">' +
         drawerItem('home',              'Home',                iconHome()) +
@@ -417,6 +443,25 @@
       while (wrap.firstChild) document.body.appendChild(wrap.firstChild);
     }
 
+    // Industry-standard header normalization:
+    // Every <header class="sy-topbar"> right-side menu button → notification bell.
+    // Drawer remains accessible from the hamburger on top-level pages
+    // + the edge-swipe gesture on touch.
+    normalizeHeaders();
+
+    // Apply persisted language to the drawer buttons + wire toggle
+    setLang(getLang());
+    document.querySelectorAll('.sy-drawer__lang-btn').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var lang = btn.getAttribute('data-lang');
+        if (lang === getLang()) return;
+        setLang(lang);
+        toast(lang === 'hi' ? 'भाषा बदली: हिंदी' : 'Language: English', 'success');
+      });
+    });
+
     // Bottom nav: ALWAYS inject the shared shell nav so every page
     // shares the exact same nav (the welcome-page bundles its own
     // legacy nav which is hidden by CSS).
@@ -521,6 +566,9 @@
       if (e.key === 'Escape') closeDrawer();
     });
 
+    // Edge-swipe to open the drawer (industry-standard gesture)
+    bindEdgeSwipe();
+
     // Scroll reveal — fade cards/sections in as they enter the viewport.
     // Skip on prefers-reduced-motion (CSS already shows them immediately).
     var prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -563,6 +611,88 @@
         });
       });
     }
+  }
+
+  // ============================================================
+  // HEADER NORMALIZATION
+  // Replace inconsistent right-side header button with a unified
+  // notification bell + badge. Don't touch pages that already use
+  // a bell (library, choghadiya) or pages without sy-topbar.
+  // ============================================================
+  function bellSVG() {
+    return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+             '<path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>' +
+             '<path d="M13.7 21a2 2 0 0 1-3.4 0"/>' +
+           '</svg>';
+  }
+  function bellButtonHTML(badge) {
+    var b = badge && badge > 0 ? '<span class="sy-topbar__badge">' + badge + '</span>' : '';
+    return '<button class="sy-topbar__btn sy-topbar__bell" data-sy-go="notifications" aria-label="Notifications" type="button">' + bellSVG() + b + '</button>';
+  }
+
+  function normalizeHeaders() {
+    var badge = 3; // demo unread count
+
+    // ---- Standard <header class="sy-topbar"> pages ----
+    document.querySelectorAll('header.sy-topbar').forEach(function (hdr) {
+      // Right side: replace any menu hamburger with a notification bell.
+      // Skip pages that already have a bell hardcoded (library, choghadiya).
+      var hasBell = !!hdr.querySelector('[aria-label="Notifications"]');
+      if (hasBell) return;
+      var menuBtn = hdr.querySelector('[data-menu-toggle], [aria-label="Menu"]');
+      if (menuBtn) {
+        var bell = document.createElement('div');
+        bell.innerHTML = bellButtonHTML(currentFolder === 'notifications' ? 0 : badge);
+        menuBtn.replaceWith(bell.firstChild);
+      }
+    });
+
+    // ---- Welcome-page top-header: add the bell next to the crown ----
+    var topHeader = document.querySelector('.top-header');
+    if (topHeader && !topHeader.querySelector('[aria-label="Notifications"]')) {
+      var premium = topHeader.querySelector('.premium-badge, .premium-crown-btn');
+      var bellEl = document.createElement('button');
+      bellEl.className = 'bell-btn sy-topbar__bell';
+      bellEl.setAttribute('aria-label', 'Notifications');
+      bellEl.setAttribute('data-sy-go', 'notifications');
+      bellEl.setAttribute('type', 'button');
+      bellEl.innerHTML = bellSVG() + '<span class="sy-topbar__badge">' + badge + '</span>';
+      if (premium) topHeader.insertBefore(bellEl, premium);
+      else topHeader.appendChild(bellEl);
+    }
+  }
+
+  // ============================================================
+  // EDGE-SWIPE: drag from the left edge to open the drawer.
+  // Industry-standard Material Design gesture; lets users reach
+  // the drawer from sub-pages where the hamburger isn't in view.
+  // ============================================================
+  function bindEdgeSwipe() {
+    var EDGE = 22;          // px from left edge to start
+    var THRESHOLD = 60;     // px drag distance to trigger
+    var startX = null, startY = null, tracking = false;
+    document.addEventListener('touchstart', function (e) {
+      if (!e.touches || !e.touches.length) return;
+      var t = e.touches[0];
+      if (t.clientX <= EDGE) {
+        startX = t.clientX; startY = t.clientY; tracking = true;
+      }
+    }, { passive: true });
+    document.addEventListener('touchmove', function (e) {
+      if (!tracking) return;
+      var t = e.touches[0];
+      var dx = t.clientX - startX;
+      var dy = t.clientY - startY;
+      // Cancel if mostly vertical
+      if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 16) tracking = false;
+    }, { passive: true });
+    document.addEventListener('touchend', function (e) {
+      if (!tracking) return;
+      tracking = false;
+      var t = (e.changedTouches && e.changedTouches[0]) || null;
+      if (!t) return;
+      if (t.clientX - startX > THRESHOLD) openDrawer();
+    }, { passive: true });
   }
 
   // ============================================================

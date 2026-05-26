@@ -496,7 +496,7 @@
 <body>
   <!-- Header matched exactly to design -->
   <header class="sy-topbar" style="display:flex; align-items:center; justify-content:space-between;">
-    <button class="sy-topbar__btn" data-sy-go="home" aria-label="Back">
+    <button class="sy-topbar__btn" data-menu-toggle aria-label="Menu">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
     <div class="sy-brand-header">
@@ -719,7 +719,43 @@
         </div>
         
         <div class="lib-music-item green">
-          <div class="lib-music-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 17L17 4l3 3L7 20H4zM14 7l3 3"/><circle cx="8" cy="16" r="1.5" fill="currentColor"/><circle cx="11" cy="13" r="1.5" fill="currentColor"/></svg></div>
+          <div class="lib-music-icon has-image" aria-hidden="true">
+            <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="flGold" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#fce8a8"/>
+                  <stop offset="100%" stop-color="#8a6418"/>
+                </linearGradient>
+                <linearGradient id="flFeather" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#7af0a8"/>
+                  <stop offset="60%" stop-color="#3aaeff"/>
+                  <stop offset="100%" stop-color="#9a4bff"/>
+                </linearGradient>
+              </defs>
+              <!-- Krishna head silhouette -->
+              <ellipse cx="22" cy="20" rx="9" ry="11" fill="#1a0a40"/>
+              <!-- Crown -->
+              <path d="M14 15c0-5 4-9 8-9s8 4 8 9v2H14z" fill="url(#flGold)"/>
+              <!-- Peacock feather -->
+              <g transform="translate(22 5)">
+                <path d="M0 0 C-2 -3 -3 -7 -2 -10 C0 -8 2 -5 3 -2 Z" fill="url(#flFeather)"/>
+                <ellipse cx="0" cy="-8" rx="1.6" ry="2.4" fill="#9a4bff"/>
+                <circle cx="0" cy="-8" r="0.7" fill="#fce8a8"/>
+              </g>
+              <!-- Tilak -->
+              <path d="M21 14 L22 11 L23 14 L22 18 Z" fill="url(#flGold)"/>
+              <!-- Body -->
+              <path d="M14 31 Q22 35 30 31 L32 42 L12 42 Z" fill="#1a0a40"/>
+              <!-- Flute -->
+              <g transform="translate(22 32) rotate(25)">
+                <rect x="-16" y="-1.3" width="32" height="2.6" rx="1.3" fill="url(#flGold)"/>
+                <circle cx="-10" cy="0" r="0.5" fill="#1a0a40"/>
+                <circle cx="-4" cy="0" r="0.5" fill="#1a0a40"/>
+                <circle cx="2" cy="0" r="0.5" fill="#1a0a40"/>
+                <circle cx="8" cy="0" r="0.5" fill="#1a0a40"/>
+              </g>
+            </svg>
+          </div>
           <div class="lib-music-info">
             <h5>FLUTE MUSIC</h5>
             <p>Lord Krishna's flute for relaxation</p>
@@ -788,8 +824,76 @@
       </div>
     </div>
 
-    <!-- Premium Banner -->
+    <!-- Premium Banner with Lord Krishna iconography -->
     <div class="lib-premium-banner">
+      <div class="lib-krishna-art" aria-hidden="true">
+        <svg viewBox="0 0 160 180" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="kfeather" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#7af0a8"/>
+              <stop offset="40%" stop-color="#3aaeff"/>
+              <stop offset="100%" stop-color="#9a4bff"/>
+            </linearGradient>
+            <linearGradient id="kgold" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#fce8a8"/>
+              <stop offset="55%" stop-color="#e9b850"/>
+              <stop offset="100%" stop-color="#8a6418"/>
+            </linearGradient>
+            <radialGradient id="khalo" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="rgba(252,232,168,0.55)"/>
+              <stop offset="100%" stop-color="rgba(252,232,168,0)"/>
+            </radialGradient>
+          </defs>
+          <!-- Divine halo -->
+          <circle cx="80" cy="60" r="58" fill="url(#khalo)"/>
+          <!-- Krishna's silhouette: head + crown + body -->
+          <g>
+            <!-- Crown / mukut base -->
+            <path d="M58 36c0-12 10-22 22-22s22 10 22 22v4H58z" fill="url(#kgold)" opacity="0.95"/>
+            <!-- Peacock feather standing on the crown -->
+            <g transform="translate(80 8)">
+              <path d="M0 0 C-4 -8 -8 -18 -6 -28 C-2 -22 4 -16 8 -8 C6 -4 4 -2 0 0Z" fill="url(#kfeather)"/>
+              <ellipse cx="-1" cy="-22" rx="4" ry="6" fill="#9a4bff"/>
+              <ellipse cx="-1" cy="-22" rx="2.4" ry="3.6" fill="#fce8a8"/>
+              <circle cx="-1" cy="-22" r="1.3" fill="#1a0a40"/>
+              <path d="M-2 0 q-4 -2 -6 -4" stroke="url(#kfeather)" stroke-width="1.2" fill="none"/>
+              <path d="M2 0 q4 -2 6 -4" stroke="url(#kfeather)" stroke-width="1.2" fill="none"/>
+            </g>
+            <!-- Crown peak -->
+            <path d="M70 40 L80 30 L90 40 Z" fill="url(#kgold)"/>
+            <!-- Face / head -->
+            <ellipse cx="80" cy="62" rx="20" ry="24" fill="#2b1860"/>
+            <!-- Tilak on forehead -->
+            <path d="M77 50 L80 44 L83 50 L80 58 Z" fill="url(#kgold)"/>
+            <!-- Earrings -->
+            <circle cx="60" cy="64" r="2.4" fill="url(#kgold)"/>
+            <circle cx="100" cy="64" r="2.4" fill="url(#kgold)"/>
+            <!-- Neck + body shoulder -->
+            <path d="M68 84 Q80 90 92 84 L100 100 Q80 110 60 100 Z" fill="#2b1860"/>
+            <!-- Necklace -->
+            <path d="M70 90 Q80 96 90 90" stroke="url(#kgold)" stroke-width="1.5" fill="none"/>
+            <!-- Flute (bansuri) held diagonally -->
+            <g transform="translate(80 100) rotate(28)">
+              <rect x="-46" y="-3" width="92" height="6" rx="3" fill="url(#kgold)"/>
+              <rect x="-46" y="-3" width="92" height="6" rx="3" fill="rgba(0,0,0,0.18)"/>
+              <circle cx="-30" cy="0" r="1.2" fill="#1a0a40"/>
+              <circle cx="-18" cy="0" r="1.2" fill="#1a0a40"/>
+              <circle cx="-6" cy="0" r="1.2" fill="#1a0a40"/>
+              <circle cx="6" cy="0" r="1.2" fill="#1a0a40"/>
+              <circle cx="18" cy="0" r="1.2" fill="#1a0a40"/>
+              <circle cx="30" cy="0" r="1.2" fill="#1a0a40"/>
+              <rect x="40" y="-4" width="6" height="8" rx="1" fill="#8a6418"/>
+            </g>
+          </g>
+          <!-- Decorative stars -->
+          <g fill="url(#kgold)" opacity="0.7">
+            <circle cx="20" cy="20" r="1.2"/>
+            <circle cx="140" cy="40" r="1.5"/>
+            <circle cx="135" cy="120" r="1"/>
+            <circle cx="14" cy="100" r="1.2"/>
+          </g>
+        </svg>
+      </div>
       <div class="lib-premium-content">
         <h4>Listen. Read. Understand. Live.</h4>
         <p>Connect with divine knowledge<br>anytime, anywhere.</p>
