@@ -13,11 +13,38 @@ const Settings = require('../models/Settings');
 const Kundli = require('../models/Kundli');
 const { resolveLocation } = require('./location.service');
 const eph = require('../utils/localEphemeris');
+const { computeVimshottari } = require('../utils/vimshottari');
 const { fetchT } = require('../utils/httpFetch');
 
 const PLANETS = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'];
 const SIGN_ORDER = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
 const SIGN_INDEX = SIGN_ORDER.reduce((acc, sign, i) => { acc[sign] = i; return acc; }, {});
+
+// Local-ephemeris planet object in VedAstro's shape — FALLBACK jab VedAstro flaky ho.
+// (sign/longitude/nakshatra/retro local; house ascendant se; navamsa D9; combust Sun-sep se.)
+const COMBUST_ORB = { Moon: 12, Mars: 17, Mercury: 14, Jupiter: 11, Venus: 10, Saturn: 15 };
+function buildLocalPlanet(lp, ascSignIdx, sunLon) {
+  const signIdx = SIGN_INDEX[lp.sign];
+  const house = (ascSignIdx != null && signIdx != null) ? ((signIdx - ascSignIdx + 12) % 12) + 1 : null;
+  let isCombust = false;
+  const orb = COMBUST_ORB[lp.planet];
+  if (orb && sunLon != null) {
+    const sep = Math.abs((((lp.nirayanaLongitude - sunLon) % 360) + 540) % 360 - 180); // 0..180
+    isCombust = sep < orb;
+  }
+  return {
+    planet: lp.planet,
+    sign: lp.sign,
+    degreeInSign: eph.dms(lp.nirayanaLongitude % 30),
+    nirayanaLongitude: lp.nirayanaLongitude,
+    nakshatra: { Name: lp.nakshatra, Pada: lp.pada },
+    house: house != null ? `House${house}` : null,
+    navamsaSign: eph.navamsaSign(lp.nirayanaLongitude),
+    isRetrograde: lp.isRetrograde,
+    isCombust,
+    source: 'local',
+  };
+}
 
 // ── Insight ke liye classical data (sign traits + planet strengths) ──
 const SIGN_TRAIT = {
@@ -78,22 +105,35 @@ function computeInsights({ ascendant, moonSign, planets, yogas, doshas }) {
 }
 
 async function vedastroHeaders() {
-  const settings = await Settings.getGlobal();
+  let dbTier = 'free';
+  try { dbTier = (await Settings.getGlobal()).vedastroTier; } catch (_) { /* DB down → env decides */ }
+  // env VEDASTRO_TIER=paid forces paid even if the DB singleton still says 'free'
+  // (DB tier is $setOnInsert only, so a pre-existing doc won't auto-upgrade).
+  const tier = (env.vedastro.tier === 'paid' || dbTier === 'paid') ? 'paid' : 'free';
   const headers = { Accept: 'application/json', 'Content-Type': 'application/json' };
-  if (settings.vedastroTier === 'paid' && env.vedastro.apiKey) {
+  if (tier === 'paid' && env.vedastro.apiKey) {
     headers['x-api-key'] = env.vedastro.apiKey;
   }
-  return { headers, tier: settings.vedastroTier };
+  return { headers, tier };
 }
 
+// ── VedAstro circuit breaker ────────────────────────────────────────────────
+// VedAstro hamara PRIMARY source hai. Agar wo down/suspend/timeout ho, hum kuch
+// der ke liye use skip karke seedhe LOCAL ephemeris fallback use karte hain —
+// taaki har request 15s VedAstro-timeout ka wait na kare (app fast rahe).
+let _vedastroCoolUntil = 0;
+function vedastroHealthy() { return Date.now() >= _vedastroCoolUntil; }
+function tripVedastro(ms = 60000) { _vedastroCoolUntil = Date.now() + ms; }
+function clearVedastroCooldown() { _vedastroCoolUntil = 0; }
+
 // generic POST caller — koi bhi VedAstro calculator
-async function vedastroPost(path, body) {
+async function vedastroPost(path, body, timeoutMs = 15000) {
   const { headers } = await vedastroHeaders();
   const res = await fetchT(`${env.vedastro.baseUrl}${path}`, {
     method: 'POST',
     headers,
     body: JSON.stringify(body),
-  }, 15000);
+  }, timeoutMs);
   if (!res.ok) {
     const txt = await res.text().catch(() => '');
     const err = new Error(`VedAstro ${res.status}: ${txt.slice(0, 200)}`);
@@ -163,7 +203,7 @@ async function getKundli(input) {
   const location = { Name: place || 'Birth Place', Latitude: Number(lat), Longitude: Number(lng) };
 
   // 2) Har planet ka data parallel me (per-planet SingleCall = distinct sahi data)
-  const planets = await Promise.all(
+  let planets = await Promise.all(
     PLANETS.map(async (p) => {
       const body = {
         PlanetName: { Name: p },
@@ -208,7 +248,34 @@ async function getKundli(input) {
       ascendantDegreeInSign = parsed.degreeInSign;
       ascendantLongitude = parsed.nirayanaLongitude;
     }
-  } catch (e) { /* ascendant optional — chart phir bhi chalega */ }
+  } catch (e) { /* ascendant optional — neeche local fallback bhar dega */ }
+
+  // ── LOCAL FALLBACK (VedAstro down/flaky se chart adhoora na rahe) ──
+  // Ascendant aur jo bhi planets fail hue, unhe local ephemeris se bhar do
+  // (signs VedAstro se exact-match validated). Aise charts CACHE nahi hote —
+  // taaki agli baar VedAstro healthy ho to authoritative chart dobara bane.
+  const tzMin = eph.parseTzMin(tz);
+  const [bd, bm, by] = dob.split('-').map(Number);
+  const [bh, bmin] = tob.split(':').map(Number);
+  const birthDate = new Date(Date.UTC(by, bm - 1, bd, bh, bmin, 0) - tzMin * 60000);
+  let ascSource = 'vedastro';
+  if (!ascendant) {
+    const la = eph.localAscendant(birthDate, lat, lng);
+    ascendant = la.sign; ascendantDegreeInSign = la.degreeInSign; ascendantLongitude = la.longitude;
+    ascSource = 'local';
+  }
+  const ascSignIdx = ascendant != null ? SIGN_INDEX[ascendant] : null;
+  if (planets.some((p) => !p.sign || p.error)) {
+    const sunP = planets.find((p) => p.planet === 'Sun' && p.nirayanaLongitude != null);
+    const sunLon = sunP ? Number(sunP.nirayanaLongitude) : ((eph.localPlanet('Sun', birthDate) || {}).nirayanaLongitude);
+    planets = planets.map((p) => {
+      if (p.sign && !p.error) return p;
+      const lp = eph.localPlanet(p.planet, birthDate);
+      return lp ? buildLocalPlanet(lp, ascSignIdx, sunLon) : p;
+    });
+  }
+  const usedLocal = ascSource === 'local' || planets.some((p) => p.source === 'local');
+
   const moon = planets.find((p) => p.planet === 'Moon');
   const moonSign = moon ? moon.sign : null;
 
@@ -254,10 +321,15 @@ async function getKundli(input) {
   const insights = computeInsights({ ascendant, moonSign, planets, yogas, doshas });
   const data = { ayanamsa: ayan, location, time: stdTime, ascendant, ascendantDegreeInSign, ascendantLongitude, moonSign, doshas, yogas, insights, planets };
 
-  // 3) Sirf tab cache karo jab sab planets ka sign aaya ho (partial fail cache mat karo)
+  // 3) Cache rules: sab planet signs hone chahiye AUR koi local fallback use na hua ho.
+  //    (local-fallback chart accurate hai par authoritative nahi — isliye persist nahi
+  //    karte; agli request par VedAstro healthy hone par asli chart ban jaayega.)
   const ok = planets.every((p) => p.sign && !p.error);
   if (!ok) {
     return { cached: false, saved: false, note: 'Some planet positions failed — result not cached.', input, data };
+  }
+  if (usedLocal) {
+    return { cached: false, saved: false, source: 'local-fallback', note: 'Computed via local-ephemeris fallback (VedAstro unavailable) — not cached.', input, data };
   }
   const saved = await Kundli.create({ cacheKey, input, data });
   return { cached: false, saved: true, ...saved.toObject() };
@@ -266,39 +338,45 @@ async function getKundli(input) {
 // ── Vimshottari Dasha (current + upcoming Mahadashas) ──
 const pad2 = (n) => (n < 10 ? '0' : '') + n;
 async function getDasha(input) {
-  let { lat, lng, dob, tob, tz, place } = input;
-  if ((lat == null || lng == null) && place) {
-    const geo = await geocode(place);
-    lat = geo.lat;
-    lng = geo.lng;
-  }
-  if (lat == null || lng == null) throw Object.assign(new Error('lat/lng ya place chahiye'), { status: 400 });
-
+  const { dob, tob, tz } = input;
+  if (!dob || !tob) throw Object.assign(new Error('dob (DD-MM-YYYY) aur tob (HH:MM) chahiye'), { status: 400 });
   const ayan = env.vedastro.ayanamsa;
-  const location = { Name: place || 'Birth Place', Latitude: Number(lat), Longitude: Number(lng) };
-  const birthStd = `${tob} ${dob.replace(/-/g, '/')} ${tz}`;
 
-  // ab se aage 60 saal — current + upcoming mahadashas
+  // DASHA = classical Vimshottari, computed LOCALLY (instant + exact). VedAstro ka
+  // DasaAtRange endpoint 60-saal scan karta hai → consistently 22-29s (paid par bhi),
+  // app ke liye unusably slow. Vimshottari deterministic hai aur iska EKMATRA input
+  // Moon ki sidereal longitude hai — jo VedAstro se exact-match validated hai. Yaani
+  // result bilkul wahi, bas reliable + turant. (Ye global breaker ko trip NAHI karta,
+  // taaki kundli/gochar/transit waale fast VedAstro calls primary bane rahein.)
+  return { ayanamsa: ayan, source: 'local-vimshottari', ...localDasha({ dob, tob, tz: tz || '+05:30' }) };
+}
+
+// Classical Vimshottari mahadasha from Moon's sidereal longitude (local ephemeris).
+// VedAstro DasaAtRange ka EXACT-same result (Moon longitude validated match) — instant.
+function localDasha({ dob, tob, tz }) {
+  const [dd, mm, yy] = dob.split('-').map(Number);
+  const [hh, mi] = tob.split(':').map(Number);
+  const tzMin = eph.parseTzMin(tz);
+  const birthDate = new Date(Date.UTC(yy, mm - 1, dd, hh, mi, 0) - tzMin * 60000);
+  const moon = eph.localPlanet('Moon', birthDate);
+  const moonLon = moon ? moon.nirayanaLongitude : 0;
+  const NAK_ARC = 360 / 27;
+  const nakIdx = Math.floor(moonLon / NAK_ARC) % 27;
+  const fraction = (moonLon % NAK_ARC) / NAK_ARC;
   const now = new Date();
-  const startStd = `00:00 ${pad2(now.getDate())}/${pad2(now.getMonth() + 1)}/${now.getFullYear()} ${tz}`;
-  const endStd = `00:00 ${pad2(now.getDate())}/${pad2(now.getMonth() + 1)}/${now.getFullYear() + 60} ${tz}`;
-
-  const json = await vedastroPost('/Calculate/DasaAtRange', {
-    birthTime: { StdTime: birthStd, Location: location },
-    startTime: { StdTime: startStd, Location: location },
-    endTime: { StdTime: endStd, Location: location },
-    levels: 1,
-    precisionHours: 720,
-    Ayanamsa: ayan,
-  });
-  const m = (json && json.Payload && json.Payload.DasaAtRange) || {};
-  const dasha = Object.values(m).map((v) => ({
-    lord: v.Lord,
-    start: v.Start,         // "00:00 18/06/2026 +05:30"
-    end: v.End,
-    durationText: v.DurationText,
-  }));
-  return { ayanamsa: ayan, dasha };
+  const vim = computeVimshottari(nakIdx + 1, fraction, birthDate, now);
+  const MS_YEAR = 365.2425 * 86400000;
+  const fmt = (d) => `00:00 ${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()} ${tz}`;
+  // current + future mahadashas (VedAstro "ab se aage 60 saal" jaisa)
+  const dasha = vim.periods
+    .filter((p) => !p.past)
+    .map((p) => ({
+      lord: p.lord,
+      start: fmt(new Date(birthDate.getTime() + p.fromAge * MS_YEAR)),
+      end: fmt(new Date(birthDate.getTime() + p.toAge * MS_YEAR)),
+      durationText: `${Math.round(p.years * 100) / 100} years`,
+    }));
+  return { dasha };
 }
 
 // ── Yogas (HoroscopePredictions me se Tag "Yoga" wale classic yogas) ──
@@ -954,20 +1032,31 @@ async function getGochar(input) {
   const ckey = `${dstr}|${now.getHours()}|${lat},${lng}`;
   let raw = TRANSIT_CACHE.get(ckey);
   if (!raw) {
-    raw = await Promise.all(PLANETS.map(async (p) => {
-      try {
-        const json = await vedastroPost('/Calculate/AllPlanetData', {
-          PlanetName: { Name: p }, Time: { StdTime: nowStd, Location: location }, Ayanamsa: ayan,
-        });
-        const d = (json && json.Payload && json.Payload.AllPlanetData) || {};
-        return {
-          planet: p,
-          sign: d.PlanetRasiD1Sign && d.PlanetRasiD1Sign.Name,
-          nakshatra: (d.PlanetConstellation && d.PlanetConstellation.Name) || null,
-          isRetrograde: d.IsPlanetRetrograde,
-        };
-      } catch (e) { return { planet: p, error: e.message }; }
-    }));
+    // PRIMARY: VedAstro (authoritative). FALLBACK: local ephemeris (astronomy-engine,
+    // sign/nakshatra/retro — VedAstro se exact match validated). Circuit breaker se
+    // VedAstro down hone par seedhe local use hota hai (app slow nahi hota).
+    const fetchOne = async (p) => {
+      if (vedastroHealthy()) {
+        try {
+          // 6s tight timeout: VedAstro slow ho to fast local fallback (sign exact-match).
+          const json = await vedastroPost('/Calculate/AllPlanetData', {
+            PlanetName: { Name: p }, Time: { StdTime: nowStd, Location: location }, Ayanamsa: ayan,
+          }, 6000);
+          const d = (json && json.Payload && json.Payload.AllPlanetData) || {};
+          const sign = d.PlanetRasiD1Sign && d.PlanetRasiD1Sign.Name;
+          if (sign) {
+            clearVedastroCooldown();
+            return { planet: p, sign, nakshatra: (d.PlanetConstellation && d.PlanetConstellation.Name) || null, isRetrograde: d.IsPlanetRetrograde, source: 'vedastro' };
+          }
+          throw new Error('empty');
+        } catch (e) { tripVedastro(); /* → local fallback */ }
+      }
+      const lp = eph.localPlanet(p, now);
+      return lp
+        ? { planet: p, sign: lp.sign, nakshatra: lp.nakshatra, isRetrograde: lp.isRetrograde, source: 'local' }
+        : { planet: p, error: 'unavailable' };
+    };
+    raw = await Promise.all(PLANETS.map(fetchOne));
     if (raw.every((t) => t.sign)) TRANSIT_CACHE.set(ckey, raw);
   }
 
@@ -1000,4 +1089,4 @@ async function getGochar(input) {
   return { date: dstr, ayanamsa: ayan, natalMoonSign, natalAsc, sadeSati, transits };
 }
 
-module.exports = { getKundli, getDasha, getYoga, getChoghadiya, getSunTimes, getPanchang, getGochar, vedastroPost };
+module.exports = { getKundli, getDasha, getYoga, getChoghadiya, getSunTimes, getPanchang, getGochar, vedastroPost, vedastroHealthy, tripVedastro, clearVedastroCooldown };

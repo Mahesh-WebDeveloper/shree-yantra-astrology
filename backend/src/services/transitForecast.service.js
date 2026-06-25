@@ -1,6 +1,7 @@
 // Saal-dar-saal Gochar-fal (Year-by-year transit forecast) — slow planets (Shani/Guru) relative
 // to natal Moon → Sade Sati / Dhaiya / Jupiter gochar, year-wise. Chart + transits = VedAstro (Lahiri).
-const { getKundli, vedastroPost } = require('./vedastro.service');
+const { getKundli, vedastroPost, vedastroHealthy, tripVedastro, clearVedastroCooldown } = require('./vedastro.service');
+const eph = require('../utils/localEphemeris');
 const ai = require('./ai.service');
 const env = require('../config/env');
 
@@ -10,19 +11,21 @@ const SIGN_IDX = SIGN_ORDER.reduce((a, s, i) => { a[s] = i; return a; }, {});
 const houseFrom = (signName, moonIdx) => { const si = SIGN_IDX[signName]; return (si == null || moonIdx == null) ? null : (((si - moonIdx) % 12) + 12) % 12 + 1; };
 const JUP_GOOD = [2, 5, 7, 9, 11];
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-// rate-limit-resilient: retry on empty/throttle
-async function planetSignAt(planet, std, location, ayan) {
-  for (let attempt = 0; attempt < 3; attempt++) {
+// PRIMARY: VedAstro (authoritative). FALLBACK: local ephemeris (astronomy-engine,
+// sign exact-match validated vs VedAstro). Circuit breaker se VedAstro down hone par
+// seedhe local — koi 1400ms retry-sleep nahi (paid tier me throttle hi nahi hota).
+async function planetSignAt(planet, std, location, ayan, dateForLocal) {
+  if (vedastroHealthy()) {
     try {
-      const json = await vedastroPost('/Calculate/AllPlanetData', { PlanetName: { Name: planet }, Time: { StdTime: std, Location: location }, Ayanamsa: ayan });
+      // 6s tight timeout: slow VedAstro ho to fast local fallback (sign exact-match).
+      const json = await vedastroPost('/Calculate/AllPlanetData', { PlanetName: { Name: planet }, Time: { StdTime: std, Location: location }, Ayanamsa: ayan }, 6000);
       const d = (json && json.Payload && json.Payload.AllPlanetData) || {};
       const sign = d.PlanetRasiD1Sign && d.PlanetRasiD1Sign.Name;
-      if (sign) return sign;
-    } catch (e) { /* 429/throttle → wait + retry */ }
-    await sleep(1400 * (attempt + 1));
+      if (sign) { clearVedastroCooldown(); return sign; }
+    } catch (e) { tripVedastro(); /* → local fallback */ }
   }
-  return null;
+  const lp = dateForLocal ? eph.localPlanet(planet, dateForLocal) : null;
+  return lp ? lp.sign : null;
 }
 
 async function getTransitForecast(input) {
@@ -43,12 +46,19 @@ async function getTransitForecast(input) {
   const fromY = Number(input.fromYear) || (nowY - 1);
   const toY = Number(input.toYear) || (nowY + 7); // ~9 saal default (free-tier calls bounded)
 
-  const years = [];
-  for (let y = fromY; y <= toY; y++) {
+  // Saare saal PARALLEL (paid VedAstro unlimited; local fallback bhi instant) →
+  // pehle ye 5-9 saal × 2 planet sequentially chalte the (~24s). Ab ~1-2s.
+  const tzMin = eph.parseTzMin(tz);
+  const yearNums = [];
+  for (let y = fromY; y <= toY; y++) yearNums.push(y);
+  const built = await Promise.all(yearNums.map(async (y) => {
     const std = `12:00 01/07/${y} ${tz}`;
-    const sat = await planetSignAt('Saturn', std, location, ayan);
-    const jup = await planetSignAt('Jupiter', std, location, ayan);
-    if (!sat && !jup) continue; // dono fail → year skip (undefined mat dikhao)
+    const dLocal = new Date(Date.UTC(y, 6, 1, 12, 0, 0) - tzMin * 60000); // 01 Jul y, 12:00 local → UTC
+    const [sat, jup] = await Promise.all([
+      planetSignAt('Saturn', std, location, ayan, dLocal),
+      planetSignAt('Jupiter', std, location, ayan, dLocal),
+    ]);
+    if (!sat && !jup) return null; // dono fail → year skip (undefined mat dikhao)
     const satH = houseFrom(sat, moonIdx);
     const jupH = houseFrom(jup, moonIdx);
     let shani = { sign: sat, signHi: sat != null ? SIGN_HI[SIGN_IDX[sat]] : null, houseFromMoon: satH, event: null, eventHi: null, kind: 'neutral' };
@@ -60,8 +70,9 @@ async function getTransitForecast(input) {
       event: JUP_GOOD.includes(jupH) ? 'Favorable Jupiter transit' : null,
       eventHi: JUP_GOOD.includes(jupH) ? 'गुरु का शुभ गोचर' : null,
     };
-    years.push({ year: y, current: y === nowY, shani, guru });
-  }
+    return { year: y, current: y === nowY, shani, guru };
+  }));
+  const years = built.filter(Boolean);
 
   // AI: overall summary + per notable-year note (grounded on the deterministic events)
   let explanation = null;
@@ -75,7 +86,7 @@ async function getTransitForecast(input) {
     years.forEach((yr) => { yr.note = byYear[yr.year] || null; });
   }
 
-  return { moonSign, fromYear: fromY, toYear: toY, currentYear: nowY, years, summary: explanation ? explanation.summary : null, source: 'VedAstro (Lahiri) transits + classical Chandra-gochar' };
+  return { moonSign, fromYear: fromY, toYear: toY, currentYear: nowY, years, summary: explanation ? explanation.summary : null, source: 'VedAstro (Lahiri) transits, local-ephemeris fallback + classical Chandra-gochar' };
 }
 
 module.exports = { getTransitForecast };

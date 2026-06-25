@@ -35,6 +35,53 @@ function siderealLon(body, date) {
   return norm360(tropicalLon(body, date) - lahiriAyanamsa(date));
 }
 
+// ── Full planet/node support (FALLBACK for VedAstro when it's unavailable) ──
+const SIGNS = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
+const NAKSHATRAS = ['Ashwini', 'Bharani', 'Krittika', 'Rohini', 'Mrigashira', 'Ardra', 'Punarvasu', 'Pushya', 'Ashlesha', 'Magha', 'Purva Phalguni', 'Uttara Phalguni', 'Hasta', 'Chitra', 'Swati', 'Vishakha', 'Anuradha', 'Jyeshtha', 'Mula', 'Purva Ashadha', 'Uttara Ashadha', 'Shravana', 'Dhanishta', 'Shatabhisha', 'Purva Bhadrapada', 'Uttara Bhadrapada', 'Revati'];
+
+// Tropical (of-date) geocentric ecliptic longitude for Sun/Moon/planets + mean lunar nodes (Rahu/Ketu).
+function bodyTropicalLon(name, date) {
+  if (name === 'Sun') return Astronomy.SunPosition(Astronomy.MakeTime(date)).elon;
+  if (name === 'Moon') return Astronomy.EclipticGeoMoon(Astronomy.MakeTime(date)).lon;
+  if (name === 'Rahu' || name === 'Ketu') {
+    // Mean ascending lunar node (Meeus): standard Vedic Rahu; Ketu = +180°.
+    const T = Astronomy.MakeTime(date).tt / 36525; // Julian centuries (TT) from J2000
+    const om = norm360(125.04452 - 1934.136261 * T + 0.0020708 * T * T + (T * T * T) / 450000);
+    return name === 'Rahu' ? om : norm360(om + 180);
+  }
+  const body = Astronomy.Body[name];
+  if (!body) return null;
+  return Astronomy.Ecliptic(Astronomy.GeoVector(body, date, true)).elon; // aberration-corrected
+}
+
+// Local sidereal (Lahiri) snapshot of a planet: sign + nakshatra(+pada) + retrograde.
+// Validated to match VedAstro D1 sign exactly across Sun..Saturn.
+function localPlanet(name, date) {
+  const trop = bodyTropicalLon(name, date);
+  if (trop == null || !Number.isFinite(trop)) return null;
+  const lon = norm360(trop - lahiriAyanamsa(date));
+  const nakSpan = 360 / 27;
+  const nakIdx = Math.floor(lon / nakSpan);
+  const pada = Math.floor((lon % nakSpan) / (nakSpan / 4)) + 1;
+  let isRetrograde = false;
+  if (name === 'Rahu' || name === 'Ketu') {
+    isRetrograde = true; // nodes are always retrograde
+  } else if (name !== 'Sun' && name !== 'Moon') {
+    const trop2 = bodyTropicalLon(name, new Date(date.getTime() + 6 * 3600 * 1000));
+    let diff = trop2 - trop;
+    if (diff > 180) diff -= 360; if (diff < -180) diff += 360;
+    isRetrograde = diff < 0;
+  }
+  return {
+    planet: name,
+    sign: SIGNS[Math.floor(lon / 30)],
+    nakshatra: NAKSHATRAS[nakIdx],
+    pada,
+    isRetrograde,
+    nirayanaLongitude: lon,
+  };
+}
+
 // Parse a "+05:30" / "-04:00" style offset to minutes.
 function parseTzMin(tz) {
   const m = String(tz || '+05:30').match(/([+-])(\d{1,2}):?(\d{2})/);
@@ -62,4 +109,30 @@ function riseSetMinutes(bodyName, civilDate, lat, lng, tzMin, direction) {
   return (ev.date.getTime() - mid.getTime()) / 60000;
 }
 
-module.exports = { norm360, lahiriAyanamsa, siderealLon, parseTzMin, localMidnightUTC, riseSetMinutes };
+// Sidereal (Lahiri) Ascendant / Lagna — sign + longitude. Formula validated to match
+// VedAstro AllHouseRasiSigns House1 exactly across multiple births.
+//   asc_tropical = atan2( cos(RAMC), -(sin(RAMC)·cosε + tanφ·sinε) )
+function localAscendant(date, lat, lng) {
+  const t = Astronomy.MakeTime(date);
+  const ramc = norm360(Astronomy.SiderealTime(t) * 15 + Number(lng)); // RA of MC = local apparent sidereal time (deg)
+  const T = t.tt / 36525;
+  const eps = 23.439291 - 0.0130042 * T; // mean obliquity (deg) — sufficient for sign/degree
+  const d2r = Math.PI / 180, r2d = 180 / Math.PI;
+  const rr = ramc * d2r, e = eps * d2r, phi = Number(lat) * d2r;
+  const tropAsc = norm360(Math.atan2(Math.cos(rr), -(Math.sin(rr) * Math.cos(e) + Math.tan(phi) * Math.sin(e))) * r2d);
+  const lon = norm360(tropAsc - lahiriAyanamsa(date));
+  return { sign: SIGNS[Math.floor(lon / 30)], longitude: lon, degreeInSign: lon % 30 };
+}
+
+// Navamsa (D9) sign from a sidereal longitude (continuous 3°20' scheme).
+function navamsaSign(lon) { return SIGNS[Math.floor(norm360(lon) / (10 / 3)) % 12]; }
+
+// Degrees → "D:M:S" string (matches VedAstro DegreeMinuteSecond display).
+function dms(deg) {
+  const d = Math.floor(deg);
+  const mf = (deg - d) * 60; const m = Math.floor(mf);
+  const s = Math.round((mf - m) * 60);
+  return `${d}:${m}:${s}`;
+}
+
+module.exports = { norm360, lahiriAyanamsa, siderealLon, parseTzMin, localMidnightUTC, riseSetMinutes, localPlanet, bodyTropicalLon, localAscendant, navamsaSign, dms, SIGNS, NAKSHATRAS };

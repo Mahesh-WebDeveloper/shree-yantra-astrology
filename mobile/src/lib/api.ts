@@ -13,9 +13,9 @@ export const API_BASE = (process.env.EXPO_PUBLIC_API_URL || (__DEV__ ? DEV_API :
 
 // every network call gets a hard timeout so a hung backend never spins a loader forever
 const REQUEST_TIMEOUT_MS = 15000;
-async function fetchT(url: string, options: RequestInit = {}): Promise<Response> {
+async function fetchT(url: string, options: RequestInit = {}, timeoutMs: number = REQUEST_TIMEOUT_MS): Promise<Response> {
   const ctrl = new AbortController();
-  const id = setTimeout(() => ctrl.abort(), REQUEST_TIMEOUT_MS);
+  const id = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     return await fetch(url, { ...options, signal: ctrl.signal });
   } catch (e: any) {
@@ -109,12 +109,12 @@ async function parseError(res: Response): Promise<string> {
   return `Backend ${res.status}: ${txt.slice(0, 120)}`;
 }
 
-async function post<T>(path: string, body: any, method: 'POST' | 'PUT' | 'PATCH' = 'POST'): Promise<T> {
+async function post<T>(path: string, body: any, method: 'POST' | 'PUT' | 'PATCH' = 'POST', timeoutMs?: number): Promise<T> {
   const res = await fetchT(`${API_BASE}${path}`, {
     method,
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(body),
-  });
+  }, timeoutMs);
   if (!res.ok) throw new Error(await parseError(res));
   return res.json();
 }
@@ -926,7 +926,9 @@ export interface BrihatKundliResponse {
   roadmap: { key: string; title: string; status: string }[];
   errors?: Record<string, string | null>;
 }
-export const getBrihatKundli = (input: KundliInput) => post<BrihatKundliResponse>('/api/brihat-kundli', { ...input, lang: apiLang });
+// Brihat = heaviest aggregator (kundli + 8 sub-reports). Longer timeout so it never
+// false-times-out while the backend assembles the full report.
+export const getBrihatKundli = (input: KundliInput) => post<BrihatKundliResponse>('/api/brihat-kundli', { ...input, lang: apiLang }, 'POST', 45000);
 
 // ── endpoints ──
 export const getKundli = (input: KundliInput) => post<KundliResponse>('/api/kundli', input);
