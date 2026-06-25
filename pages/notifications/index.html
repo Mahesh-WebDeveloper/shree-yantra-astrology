@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="../../assets/theme-init.js"></script>
   <title>Notifications · Shree Yantra</title>
   <link rel="stylesheet" href="../../assets/app-shell.css" />
   <link rel="stylesheet" href="../../assets/sy-pages.css" />
@@ -16,7 +17,7 @@
     .n-tabs button {
       padding: 9px 6px;
       border-radius: 999px;
-      background: rgba(10, 10, 28, 0.7);
+      background: rgba(0,0,0, 0.7);
       border: 1px solid rgba(201, 150, 46, 0.3);
       color: var(--sy-gold-2);
       font-family: 'Cinzel', serif;
@@ -37,22 +38,11 @@
       align-items: flex-start;
       padding: 14px;
       border-radius: 16px;
-      background: rgba(8, 8, 22, 0.6);
+      background: rgba(0,0,0, 0.6);
       border: 1px solid rgba(201, 150, 46, 0.25);
       cursor: pointer;
     }
     .n-row.unread { background: rgba(233, 184, 80, 0.06); border-color: rgba(201, 150, 46, 0.5); }
-    .n-row.unread::before {
-      content: "";
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--sy-gold-1);
-      margin-top: 8px;
-      grid-row: 1 / -1;
-      align-self: start;
-      display: inline-block;
-      position: absolute;
-    }
     .n-icon {
       width: 40px; height: 40px;
       border-radius: 12px;
@@ -70,7 +60,7 @@
       color: var(--sy-text);
     }
     .n-msg { margin-top: 3px; font-size: 12.5px; line-height: 1.45; color: var(--sy-text-soft); }
-    .n-time { font-size: 10px; letter-spacing: 0.1em; color: rgba(216, 203, 168, 0.5); white-space: nowrap; }
+    .n-time { font-size: 10px; letter-spacing: 0.1em; color: rgba(216, 203, 168, 0.65); white-space: nowrap; }
     .n-empty {
       padding: 60px 20px;
       text-align: center;
@@ -131,7 +121,7 @@
         <span class="n-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8l4 6 5-7 5 7 4-4-2 12H4z"/></svg></span>
         <div class="n-body">
           <div class="n-title">Premium Renews in 5 Days</div>
-          <div class="n-msg">Your ₹499 subscription will renew on 24 Jun via UPI · Google Pay.</div>
+          <div class="n-msg">Your premium subscription will renew on 24 Jun. Tap to manage your plan.</div>
         </div>
         <span class="n-time">1 hr</span>
       </div>

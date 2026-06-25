@@ -1,0 +1,64 @@
+{
+  "expo": {
+    "name": "Shree Yantra",
+    "slug": "shree-yantra",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "shreeyantra",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": false,
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
+    "assetBundlePatterns": [
+      "assets/**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.shreeyantra.astrology"
+    },
+    "android": {
+      "package": "com.shreeyantra.astrology",
+      "usesCleartextTraffic": true,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#000000"
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
+    },
+    "plugins": [
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#000000",
+          "image": "./assets/splash.png",
+          "imageWidth": 200
+        }
+      ],
+      "expo-asset",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Shree Yantra to access your photos to set a profile picture.",
+          "cameraPermission": "Allow Shree Yantra to access your camera to take a profile picture."
+        }
+      ],
+      "expo-audio",
+      "@react-native-community/datetimepicker",
+      "expo-sharing"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "9b966b0c-f9bf-404f-a82b-c7566494b28b"
+      }
+    },
+    "owner": "maheshwebdev"
+  }
+}

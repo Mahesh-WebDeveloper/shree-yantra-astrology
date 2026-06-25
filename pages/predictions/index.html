@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="../../assets/theme-init.js"></script>
   <title>Predictions · Shree Yantra</title>
   <link rel="stylesheet" href="../../assets/app-shell.css" />
   <link rel="stylesheet" href="../../assets/sy-pages.css" />
@@ -26,7 +27,7 @@
     .pred-tabs button {
       padding: 9px 6px;
       border-radius: 999px;
-      background: rgba(10,10,28,0.7);
+      background: rgba(0,0,0,0.7);
       border: 1px solid rgba(201,150,46,0.3);
       color: var(--sy-gold-2);
       font-family: 'Cinzel', serif;
@@ -48,7 +49,7 @@
     .zod {
       padding: 12px 8px;
       border-radius: 14px;
-      background: rgba(10,10,28,0.6);
+      background: rgba(0,0,0,0.6);
       border: 1px solid rgba(201,150,46,0.3);
       text-align: center;
       cursor: pointer;
@@ -72,7 +73,7 @@
     .zod__date {
       margin-top: 2px;
       font-size: 10.5px;
-      color: rgba(216,203,168,0.6);
+      color: rgba(216,203,168,0.82);
     }
     .zod.is-mine {
       border-color: var(--sy-gold-1);
@@ -184,26 +185,27 @@
         </div>
       </div>
       <h2 class="sy-gold">Your Daily Cosmic Brief</h2>
-      <p class="sy-muted sy-small">Updated 24 May 2025 · Leo ♌</p>
+      <p class="sy-muted sy-small" id="predHeroSub">Updated 24 May 2025 · Leo ♌</p>
     </section>
 
     <div class="pred-tabs">
-      <button class="active">DAILY</button>
-      <button>WEEKLY</button>
-      <button>MONTHLY</button>
-      <button>YEARLY</button>
+      <button class="active" data-period="daily">DAILY</button>
+      <button data-period="weekly">WEEKLY</button>
+      <button data-period="monthly">MONTHLY</button>
+      <button data-period="yearly">YEARLY</button>
     </div>
 
-    <section class="sy-card">
+    <section class="sy-card" id="predBrief">
       <div class="sy-row sy-row--between" style="margin-bottom:10px;">
-        <strong class="sy-gold" style="font-family:'Cinzel',serif;letter-spacing:.1em;">TODAY · LEO</strong>
-        <span class="sy-pill">Lucky #7</span>
+        <strong class="sy-gold" id="predBriefLabel" style="font-family:'Cinzel',serif;letter-spacing:.1em;">TODAY · LEO ♌</strong>
+        <span class="sy-pill" id="predBriefLucky">Lucky #7</span>
       </div>
-      <p class="sy-small" style="line-height:1.55;color:var(--sy-text-soft);">
+      <p class="sy-small" id="predBriefText" style="line-height:1.55;color:var(--sy-text-soft);">
         The Sun’s placement in your 5th house favours creativity. Avoid arguments
         with elders before noon. Evening brings positive financial news. Wear
         gold or yellow for added luck.
       </p>
+      <div class="sy-row" id="predBriefMeta" style="gap:8px;flex-wrap:wrap;margin-top:12px;"></div>
       <button class="sy-btn sy-btn--ghost sy-mt-16" data-sy-go="daily-prediction">READ FULL PREDICTION ›</button>
     </section>
 
@@ -238,9 +240,9 @@
           <div class="sy-tile__body"><div class="sy-tile__title">Kundli Analysis</div><div class="sy-tile__sub">Your full birth chart, decoded</div></div>
           <svg class="sy-tile__arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
-        <button class="sy-tile" data-sy-go="services">
-          <span class="sy-tile__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
-          <div class="sy-tile__body"><div class="sy-tile__title">Talk to an Astrologer</div><div class="sy-tile__sub">Live consultation in 5 mins</div></div>
+        <button class="sy-tile" data-sy-go="library">
+          <span class="sy-tile__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5z"/><path d="M8 6h8"/></svg></span>
+          <div class="sy-tile__body"><div class="sy-tile__title">Divine Library</div><div class="sy-tile__sub">Mantras, scriptures and music</div></div>
           <svg class="sy-tile__arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
       </div>
@@ -249,17 +251,162 @@
 
   <script src="../../assets/app-shell.js"></script>
   <script>
-    // Tab toggle (visual only in prototype)
+  (function () {
+    /* ── Sign data ─────────────────────────────────────────── */
+    var SIGNS = [
+      { key:'aries',       name:'Aries',       glyph:'♈', el:'Fire',  house:'1st' },
+      { key:'taurus',      name:'Taurus',      glyph:'♉', el:'Earth', house:'2nd' },
+      { key:'gemini',      name:'Gemini',      glyph:'♊', el:'Air',   house:'3rd' },
+      { key:'cancer',      name:'Cancer',      glyph:'♋', el:'Water', house:'4th' },
+      { key:'leo',         name:'Leo',         glyph:'♌', el:'Fire',  house:'5th' },
+      { key:'virgo',       name:'Virgo',       glyph:'♍', el:'Earth', house:'6th' },
+      { key:'libra',       name:'Libra',       glyph:'♎', el:'Air',   house:'7th' },
+      { key:'scorpio',     name:'Scorpio',     glyph:'♏', el:'Water', house:'8th' },
+      { key:'sagittarius', name:'Sagittarius', glyph:'♐', el:'Fire',  house:'9th' },
+      { key:'capricorn',   name:'Capricorn',   glyph:'♑', el:'Earth', house:'10th' },
+      { key:'aquarius',    name:'Aquarius',    glyph:'♒', el:'Air',   house:'11th' },
+      { key:'pisces',      name:'Pisces',      glyph:'♓', el:'Water', house:'12th' }
+    ];
+
+    /* Curated fragments — composed deterministically so each
+       sign × period reads uniquely but stays stable through the day. */
+    var OPEN = [
+      'The Sun’s placement in your {house} house favours creativity.',
+      'A harmonious Moon lifts your mood and softens old tensions.',
+      'Mercury sharpens your words — communication flows with ease.',
+      'Venus blesses relationships and matters of comfort and beauty.',
+      'Mars fuels your drive; channel the energy into focused work.',
+      'Jupiter widens your horizons — a fortunate window opens.',
+      'Saturn rewards patience; steady effort pays off now.',
+      'A grounding {el} energy keeps you centred through the day.'
+    ];
+    var MID = [
+      'Avoid arguments with elders before noon.',
+      'A pending matter at work finally moves forward.',
+      'Health stays strong — but do not skip rest.',
+      'An old friend or contact reaches out with good news.',
+      'Money decisions taken now bear long-term fruit.',
+      'Travel or a short journey brings unexpected joy.',
+      'Trust your intuition over others’ opinions today.',
+      'A creative idea deserves to be written down.'
+    ];
+    var CLOSE = [
+      'Evening brings positive financial news.',
+      'Family time restores your inner balance.',
+      'A small act of charity multiplies your fortune.',
+      'Chanting or meditation amplifies today’s good energy.',
+      'Wear your lucky colour for an added edge.',
+      'Conclude the day with gratitude for steady wins.'
+    ];
+    var COLORS = ['Gold','Saffron','Emerald Green','Royal Blue','Crimson','Ivory White','Deep Maroon','Turquoise'];
+    var PERIOD_LABEL = { daily:'TODAY', weekly:'THIS WEEK', monthly:'THIS MONTH', yearly:'THIS YEAR' };
+    var PERIOD_UPDATED = { daily:'Today', weekly:'This week', monthly:'This month', yearly:'This year' };
+    var PERIOD_IDX = { daily:0, weekly:1, monthly:2, yearly:3 };
+
+    function dayOfYear(d) {
+      return Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000);
+    }
+    function pick(arr, seed) { return arr[Math.abs(seed) % arr.length]; }
+
+    function predictionFor(sign, period) {
+      var doy = dayOfYear(new Date());
+      var si = SIGNS.indexOf(sign);
+      var pi = PERIOD_IDX[period];
+      var base = si * 13 + doy + pi * 31;
+      var text = pick(OPEN, base)
+                   .replace('{house}', sign.house).replace('{el}', sign.el)
+               + ' ' + pick(MID, base + 5)
+               + ' ' + pick(CLOSE, base + 11);
+      var lucky = (Math.abs(base * 7 + 3) % 9) + 1;
+      var color = pick(COLORS, base + 2);
+      var moods = ['Energetic','Calm','Focused','Joyful','Reflective','Confident'];
+      var mood = pick(moods, base + 4);
+      return { text: text, lucky: lucky, color: color, mood: mood };
+    }
+
+    /* ── State ─────────────────────────────────────────────── */
+    var LS_KEY = 'sy.pred.sign';
+    function loadSign() {
+      try { var k = localStorage.getItem(LS_KEY); } catch (_) {}
+      var found = SIGNS.filter(function (s) { return s.key === k; })[0];
+      return found || SIGNS[4]; // default Leo
+    }
+    var current = loadSign();
+    var period = 'daily';
+
+    /* ── DOM ───────────────────────────────────────────────── */
+    var heroSub   = document.getElementById('predHeroSub');
+    var briefLbl  = document.getElementById('predBriefLabel');
+    var briefLucky= document.getElementById('predBriefLucky');
+    var briefText = document.getElementById('predBriefText');
+    var briefMeta = document.getElementById('predBriefMeta');
+    var briefCard = document.getElementById('predBrief');
+    var zods      = Array.prototype.slice.call(document.querySelectorAll('.zod'));
+
+    function fmtDate(d) {
+      var M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return d.getDate() + ' ' + M[d.getMonth()] + ' ' + d.getFullYear();
+    }
+
+    function render() {
+      var p = predictionFor(current, period);
+      heroSub.textContent = PERIOD_UPDATED[period] + ', ' + fmtDate(new Date()) + ' · ' + current.name + ' ' + current.glyph;
+      briefLbl.textContent = PERIOD_LABEL[period] + ' · ' + current.name.toUpperCase() + ' ' + current.glyph;
+      briefLucky.textContent = 'Lucky #' + p.lucky;
+      briefText.textContent = p.text;
+      briefMeta.innerHTML =
+        '<span class="sy-pill">Colour · ' + p.color + '</span>' +
+        '<span class="sy-pill">Mood · ' + p.mood + '</span>' +
+        '<span class="sy-pill">' + current.el + ' Sign</span>';
+      // reflect active sign in the grid
+      zods.forEach(function (z) {
+        z.classList.toggle('is-mine', z.getAttribute('data-key') === current.key);
+      });
+    }
+
+    /* ── Tabs (period switch) ─────────────────────────────── */
     document.querySelectorAll('.pred-tabs button').forEach(function (b) {
       b.addEventListener('click', function () {
         document.querySelectorAll('.pred-tabs button').forEach(function (x) { x.classList.remove('active'); });
         b.classList.add('active');
+        period = b.getAttribute('data-period') || 'daily';
+        render();
+        if (window.SY && SY.toast) SY.toast(PERIOD_LABEL[period].replace('THIS ', '') + ' · ' + current.name, 'success');
       });
     });
-    // Zodiac click → daily prediction
-    document.querySelectorAll('.zod').forEach(function (z) {
-      z.addEventListener('click', function () { location.href = '../daily-predication-page/index.html'; });
+
+    /* ── Zodiac grid (sign select) ────────────────────────── */
+    zods.forEach(function (z) {
+      var nm = (z.querySelector('.zod__name') || {}).textContent || '';
+      var sign = SIGNS.filter(function (s) { return s.name.toUpperCase() === nm.trim().toUpperCase(); })[0];
+      if (sign) z.setAttribute('data-key', sign.key);
+      z.setAttribute('role', 'button');
+      z.setAttribute('tabindex', '0');
+      function choose() {
+        if (!sign) return;
+        current = sign;
+        try { localStorage.setItem(LS_KEY, sign.key); } catch (_) {}
+        if (window.SY && SY.setUser) SY.setUser({ sign: sign.key });
+        render();
+        briefCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (window.SY && SY.toast) SY.toast(sign.name + ' ' + sign.glyph + ' selected', 'success');
+      }
+      z.addEventListener('click', choose);
+      z.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose(); }
+      });
     });
+
+    /* ── Read full prediction carries the chosen sign ─────── */
+    var readBtn = document.querySelector('[data-sy-go="daily-prediction"]');
+    if (readBtn) {
+      readBtn.addEventListener('click', function () {
+        try { localStorage.setItem(LS_KEY, current.key); } catch (_) {}
+      });
+    }
+
+    render(); // initial paint (live date, persisted sign)
+  })();
   </script>
 </body>
 </html>

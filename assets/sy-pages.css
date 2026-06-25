@@ -27,9 +27,9 @@ body {
   font-family: 'Inter', system-ui, sans-serif;
   color: var(--sy-text);
   background:
-    radial-gradient(circle at 12% 8%, rgba(233,184,80,0.10) 0%, transparent 30%),
-    radial-gradient(circle at 88% 18%, rgba(233,184,80,0.08) 0%, transparent 30%),
-    radial-gradient(circle at 10% 90%, rgba(255,210,120,0.06) 0%, transparent 35%),
+    radial-gradient(circle at 12% 8%, rgba(233,184,80,0.04) 0%, transparent 28%),
+    radial-gradient(circle at 88% 18%, rgba(233,184,80,0.03) 0%, transparent 28%),
+    radial-gradient(circle at 10% 90%, rgba(255,210,120,0.025) 0%, transparent 32%),
     radial-gradient(1px 1px at 12% 22%, rgba(255,240,200,0.85), transparent 60%),
     radial-gradient(1px 1px at 30% 14%, rgba(255,255,255,0.65), transparent 60%),
     radial-gradient(1px 1px at 70% 8%,  rgba(255,240,200,0.65), transparent 60%),
@@ -38,7 +38,7 @@ body {
     radial-gradient(1px 1px at 64% 72%, rgba(255,255,255,0.5), transparent 60%),
     radial-gradient(1px 1px at 88% 86%, rgba(255,240,200,0.7), transparent 60%),
     radial-gradient(1px 1px at 6% 40%,  rgba(255,255,255,0.55), transparent 60%),
-    linear-gradient(180deg, #050511 0%, #05061a 50%, #03030c 100%);
+    #000;   /* deep black base */
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
@@ -53,20 +53,28 @@ a { color: var(--sy-gold-1); }
 }
 
 /* ---------- Gold text ---------- */
+/* Full warm gradient — reserve for primary headings / brand wordmarks */
 .sy-gold {
   background: linear-gradient(180deg, #fce8a8 0%, #e9b850 45%, #b87f1a 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+/* Solid gold — section headings, eyebrow labels, accents */
+.sy-gold-solid { color: var(--sy-gold-1); }
+/* Muted gold — captions, metadata, dimmer accents */
+.sy-gold-muted { color: var(--sy-gold-3); }
 
 /* ---------- Cards with hairline gold border ---------- */
 .sy-card {
   position: relative;
-  background: linear-gradient(180deg, rgba(15,15,42,0.92) 0%, rgba(8,8,24,0.92) 100%);
+  background:
+    radial-gradient(circle at 20% 0%, rgba(252,232,168,0.07), transparent 38%),
+    linear-gradient(180deg, rgba(0,0,0,0.94) 0%, rgba(0,0,0,0.96) 100%);
   border-radius: 20px;
   padding: 18px;
   margin: 0 0 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.30), inset 0 1px 0 rgba(252,232,168,0.05);
 }
 .sy-card::before {
   content: "";
@@ -82,7 +90,7 @@ a { color: var(--sy-gold-1); }
   pointer-events: none;
 }
 .sy-card--soft {
-  background: linear-gradient(180deg, rgba(20,20,46,0.55) 0%, rgba(10,10,28,0.55) 100%);
+  background: linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.55) 100%);
 }
 .sy-card--row {
   display: flex;
@@ -158,36 +166,112 @@ a { color: var(--sy-gold-1); }
 
 /* ---------- Buttons ---------- */
 .sy-btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   width: 100%;
-  min-height: 50px;
-  padding: 12px 22px;
+  /* Lock the height so no flex/grid parent can stretch it */
+  min-height: 52px;
+  max-height: none;
+  height: auto;
+  padding: 13px 24px;
   border-radius: 999px;
   font-family: 'Cinzel', serif;
   font-weight: 700;
-  letter-spacing: 0.12em;
-  font-size: 14px;
+  letter-spacing: 0.14em;
+  font-size: 13.5px;
   text-transform: uppercase;
   cursor: pointer;
   border: none;
   text-decoration: none;
-  transition: transform 200ms, box-shadow 200ms;
+  isolation: isolate;
+  overflow: hidden;
+  box-sizing: border-box;
+  /* Never let the button grow/shrink inside flex/grid containers */
+  flex-shrink: 0;
+  flex-grow: 0;
+  align-self: auto;
+  /* Never inherit height or min-height from a parent */
+  -webkit-tap-highlight-color: transparent;
+  /* Cinzel letters must stay on one line — never break */
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
+  transition:
+    transform var(--sy-dur-base, 220ms) var(--sy-ease-out, ease),
+    box-shadow var(--sy-dur-base, 220ms) ease,
+    filter var(--sy-dur-base, 220ms) ease;
+}
+.sy-btn:focus-visible {
+  outline: 2px solid rgba(252, 232, 168, 0.7);
+  outline-offset: 3px;
 }
 .sy-btn--primary {
   background: linear-gradient(180deg, #fce8a8 0%, #e9b850 45%, #b87f1a 100%);
   color: #2a1c00;
-  box-shadow: 0 6px 20px rgba(233, 184, 80, 0.28);
+  box-shadow:
+    0 6px 20px rgba(233, 184, 80, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -1px 0 rgba(74, 53, 8, 0.35);
 }
-.sy-btn--primary:hover { transform: translateY(-1px); box-shadow: 0 10px 28px rgba(233, 184, 80, 0.35); }
+/* Subtle moving sheen across the primary CTA on hover */
+.sy-btn--primary::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.45) 50%,
+    transparent 65%
+  );
+  transform: translateX(-110%);
+  transition: transform 700ms cubic-bezier(.2, .7, .2, 1);
+  pointer-events: none;
+  z-index: 0;
+}
+.sy-btn--primary > * { position: relative; z-index: 1; }
+.sy-btn--primary:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 12px 30px rgba(233, 184, 80, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -1px 0 rgba(74, 53, 8, 0.35);
+  filter: brightness(1.04);
+}
+.sy-btn--primary:hover::before { transform: translateX(110%); }
+.sy-btn--primary:active {
+  transform: translateY(0) scale(0.985);
+  box-shadow:
+    0 4px 12px rgba(233, 184, 80, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.30),
+    inset 0 -1px 0 rgba(74, 53, 8, 0.35);
+}
 .sy-btn--ghost {
-  background: rgba(10, 10, 28, 0.6);
+  background: rgba(0,0,0, 0.6);
   color: var(--sy-gold-1);
   border: 1px solid rgba(201, 150, 46, 0.5);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
-.sy-btn--ghost:hover { background: rgba(20, 20, 48, 0.7); }
+.sy-btn--ghost:hover {
+  background: rgba(0,0,0, 0.78);
+  border-color: rgba(233, 184, 80, 0.75);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  transform: translateY(-1px);
+}
+.sy-btn--ghost:active {
+  transform: translateY(0) scale(0.985);
+}
+.sy-btn:disabled,
+.sy-btn[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+  filter: grayscale(0.2);
+  pointer-events: none;
+}
 
 .sy-btn-row { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
 
@@ -200,39 +284,80 @@ a { color: var(--sy-gold-1); }
   gap: 12px;
   padding: 12px 14px;
   border-radius: 14px;
-  background: rgba(10, 10, 28, 0.7);
+  background: rgba(0,0,0, 0.7);
   border: 1px solid rgba(201, 150, 46, 0.35);
+  transition:
+    border-color var(--sy-dur-base, 220ms) ease,
+    box-shadow var(--sy-dur-base, 220ms) ease,
+    background var(--sy-dur-base, 220ms) ease;
+}
+@media (hover: hover) {
+  .sy-field:hover:not(:focus-within) {
+    border-color: rgba(246, 210, 122, 0.55);
+    background: rgba(0,0,0, 0.72);
+  }
 }
 .sy-field:focus-within {
   border-color: var(--sy-gold-1);
-  box-shadow: 0 0 0 3px rgba(233, 184, 80, 0.12);
+  background: rgba(0,0,0, 0.78);
+  box-shadow:
+    0 0 0 3px rgba(233, 184, 80, 0.16),
+    0 6px 18px rgba(0, 0, 0, 0.32);
 }
-.sy-field svg { width: 20px; height: 20px; color: var(--sy-gold-2); flex: none; }
+.sy-field.is-invalid {
+  border-color: rgba(245, 100, 100, 0.65);
+  background: rgba(36, 12, 18, 0.55);
+}
+.sy-field.is-invalid:focus-within {
+  box-shadow: 0 0 0 3px rgba(245, 100, 100, 0.18);
+}
+.sy-field svg {
+  width: 20px;
+  height: 20px;
+  color: var(--sy-gold-2);
+  flex: none;
+  transition: color var(--sy-dur-base, 220ms) ease, transform var(--sy-dur-base, 220ms) ease;
+}
+.sy-field:focus-within svg {
+  color: var(--sy-gold-1);
+  transform: scale(1.04);
+}
 .sy-field__body { flex: 1; min-width: 0; }
 .sy-field__label {
   display: block;
-  font-size: 11px;
-  letter-spacing: 0.18em;
+  font-size: 10.5px;
+  letter-spacing: 0.20em;
   color: var(--sy-gold-2);
   text-transform: uppercase;
   font-weight: 600;
+  transition: color var(--sy-dur-base, 220ms) ease;
 }
+.sy-field:focus-within .sy-field__label { color: var(--sy-gold-1); }
 .sy-field input,
 .sy-field select,
 .sy-field textarea {
   width: 100%;
-  margin-top: 2px;
+  margin-top: 3px;
   background: transparent;
   border: none;
   outline: none;
   color: var(--sy-text);
   font-family: 'Inter', sans-serif;
   font-size: 15px;
+  letter-spacing: 0.01em;
 }
-.sy-field input::placeholder { color: rgba(216, 203, 168, 0.5); }
+.sy-field input::placeholder { color: rgba(216, 203, 168, 0.42); }
 .sy-field select {
   appearance: none;
   -webkit-appearance: none;
+  cursor: pointer;
+}
+.sy-field__error {
+  display: block;
+  margin-top: 6px;
+  font-size: 11.5px;
+  color: #ff9d9d;
+  letter-spacing: 0.02em;
 }
 
 /* ---------- Pill / tag ---------- */
@@ -247,7 +372,7 @@ a { color: var(--sy-gold-1); }
   border-radius: 999px;
   border: 1px solid rgba(201, 150, 46, 0.5);
   color: var(--sy-gold-1);
-  background: rgba(8, 8, 22, 0.6);
+  background: rgba(0,0,0, 0.6);
 }
 .sy-pill--solid {
   background: linear-gradient(180deg, #fce8a8, #b87f1a);
@@ -284,7 +409,7 @@ a { color: var(--sy-gold-1); }
   font-size: 12px;
   font-weight: 700;
   color: var(--sy-gold-1);
-  background: rgba(8, 8, 22, 0.7);
+  background: rgba(0,0,0, 0.7);
   border: 1px solid rgba(201, 150, 46, 0.5);
 }
 .sy-steps__dot.is-active {
@@ -307,7 +432,7 @@ a { color: var(--sy-gold-1); }
   gap: 14px;
   padding: 14px;
   border-radius: 16px;
-  background: rgba(10,10,28,0.7);
+  background: rgba(0,0,0,0.7);
   border: 1px solid rgba(201,150,46,0.3);
   cursor: pointer;
   transition: border-color 200ms, transform 200ms;
@@ -419,7 +544,7 @@ a { color: var(--sy-gold-1); }
   left: 50%;
   bottom: calc(var(--sy-bottom-nav-h) + 18px);
   transform: translateX(-50%);
-  background: rgba(8, 8, 22, 0.95);
+  background: rgba(0,0,0, 0.95);
   border: 1px solid rgba(201, 150, 46, 0.45);
   color: var(--sy-gold-1);
   padding: 10px 16px;
@@ -434,4 +559,202 @@ a { color: var(--sy-gold-1); }
 .sy-toast.show {
   opacity: 1;
   transform: translateX(-50%) translateY(-4px);
+}
+
+/* =========================================================
+   PREMIUM PAGE POLISH — additional refinements for all
+   sy-pages.css-powered pages (onboarding, signin, kundli…)
+   ========================================================= */
+
+/* Tighter, more elegant brand stack */
+.sy-brand-stack {
+  padding: 24px 16px 12px !important;
+}
+.sy-brand-stack__name {
+  font-size: 26px !important;
+  letter-spacing: 0.20em !important;
+}
+.sy-brand-stack__sub {
+  font-size: 11px !important;
+  letter-spacing: 0.38em !important;
+}
+.sy-brand-stack__logo {
+  width: 88px !important;
+  height: 88px !important;
+  box-shadow: 0 0 40px rgba(233,184,80,0.24), 0 0 0 1px rgba(201,150,46,0.4) !important;
+}
+
+/* Tile — slightly more polished */
+.sy-tile {
+  background:
+    radial-gradient(circle at 20% 0%, rgba(252,232,168,0.07), transparent 42%),
+    rgba(0,0,0,0.8) !important;
+  transition: border-color 220ms ease, transform 220ms cubic-bezier(.2,.7,.2,1), box-shadow 220ms ease !important;
+}
+@media (hover: hover) and (pointer: fine) {
+  .sy-tile:hover {
+    border-color: rgba(246,210,122,0.55) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.38), 0 0 18px rgba(233,184,80,0.12) !important;
+  }
+}
+
+/* Section title — slightly smaller and more refined */
+.sy-section-title {
+  font-size: 17px !important;
+}
+
+/* Form field — slightly deeper background */
+.sy-field {
+  background: rgba(0,0,0,0.78) !important;
+  border-color: rgba(201,150,46,0.30) !important;
+}
+.sy-field:focus-within {
+  background: rgba(0,0,0,0.88) !important;
+  box-shadow: 0 0 0 3px rgba(233,184,80,0.14), 0 6px 20px rgba(0,0,0,0.30) !important;
+}
+
+/* Pill label */
+.sy-pill {
+  font-size: 10.5px !important;
+  letter-spacing: 0.18em !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.24);
+}
+
+/* Steps — bigger active dot */
+.sy-steps__dot.is-active {
+  box-shadow: 0 0 18px rgba(233,184,80,0.55) !important;
+  transform: scale(1.08);
+}
+
+/* Stable CTAs: prevent hover/tap from changing button height or pill shape. */
+.sy-btn {
+  height: 52px !important;
+  min-height: 52px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  border-radius: 999px !important;
+  transform-origin: center center;
+  white-space: nowrap;
+}
+@media (hover: none), (pointer: coarse) {
+  .sy-btn:hover,
+  .sy-btn--primary:hover,
+  .sy-btn--ghost:hover {
+    transform: none !important;
+    filter: none !important;
+  }
+}
+
+/* =========================================================
+   LIGHT THEME SUPPORT FOR SY PAGES
+   This file loads after app-shell.css on most prototype screens,
+   so these focused overrides keep forms/cards readable in light mode.
+   ========================================================= */
+body[data-sy-theme="light"] {
+  color-scheme: light;
+  color: var(--sy-text, #2c2113) !important;
+  background:
+    radial-gradient(circle at 18% 5%, rgba(255, 222, 141, 0.30) 0%, transparent 30%),
+    radial-gradient(circle at 88% 18%, rgba(242, 180, 91, 0.14) 0%, transparent 28%),
+    linear-gradient(180deg, #fffaf0 0%, #fffdf8 52%, #f7ecd9 100%) !important;
+}
+body[data-sy-theme="light"] .sy-container,
+body[data-sy-theme="light"] .auth-shell,
+body[data-sy-theme="light"] .reg-shell,
+body[data-sy-theme="light"] .onb-shell,
+body[data-sy-theme="light"] .splash-wrap {
+  color: var(--sy-text, #2c2113) !important;
+}
+body[data-sy-theme="light"] .sy-card,
+body[data-sy-theme="light"] .sy-card--soft,
+body[data-sy-theme="light"] .sy-tile,
+body[data-sy-theme="light"] .astro-card,
+body[data-sy-theme="light"] .r-card,
+body[data-sy-theme="light"] .ms-plan-card,
+body[data-sy-theme="light"] .n-row,
+body[data-sy-theme="light"] .pay-card,
+body[data-sy-theme="light"] .pay-summary,
+body[data-sy-theme="light"] .pay-method {
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 226, 154, 0.24), transparent 36%),
+    linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,253,247,0.95)) !important;
+  border-color: rgba(176, 115, 22, 0.24) !important;
+  color: var(--sy-text, #2c2113) !important;
+  box-shadow: 0 14px 34px rgba(92, 63, 18, 0.12), inset 0 1px 0 rgba(255,255,255,0.86) !important;
+}
+body[data-sy-theme="light"] .sy-card::before {
+  background: linear-gradient(160deg, #efd37b 0%, #bd8521 34%, #f8ecd0 56%, #a66f12 100%) !important;
+}
+body[data-sy-theme="light"] h1,
+body[data-sy-theme="light"] h2,
+body[data-sy-theme="light"] h3,
+body[data-sy-theme="light"] h4,
+body[data-sy-theme="light"] h5,
+body[data-sy-theme="light"] .sy-tile__title {
+  color: var(--sy-text, #2c2113) !important;
+  text-shadow: none !important;
+}
+body[data-sy-theme="light"] .sy-gold,
+body[data-sy-theme="light"] .sy-brand-stack__name {
+  background: linear-gradient(180deg, #6f4b10 0%, #c89023 48%, #8a5d12 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+  filter: none !important;
+}
+body[data-sy-theme="light"] p,
+body[data-sy-theme="light"] .sy-tile__sub,
+body[data-sy-theme="light"] .sy-muted,
+body[data-sy-theme="light"] .sy-brand-stack__sub {
+  color: var(--sy-text-soft, #6d5b38) !important;
+}
+body[data-sy-theme="light"] a,
+body[data-sy-theme="light"] .sy-gold-solid,
+body[data-sy-theme="light"] .sy-gold-muted {
+  color: var(--sy-gold-1, #a86f12) !important;
+}
+body[data-sy-theme="light"] .sy-brand-stack__logo,
+body[data-sy-theme="light"] .sy-zodiac-hero__core {
+  background: radial-gradient(circle at 30% 30%, #fff7df 0%, #fffdf7 72%) !important;
+  border-color: rgba(176, 115, 22, 0.34) !important;
+  color: var(--sy-gold-1, #a86f12) !important;
+  box-shadow: 0 14px 32px rgba(92, 63, 18, 0.12) !important;
+}
+body[data-sy-theme="light"] .sy-zodiac-hero__ring {
+  border-color: rgba(176, 115, 22, 0.34) !important;
+}
+body[data-sy-theme="light"] .sy-btn--primary {
+  background: linear-gradient(180deg, #f4dfa1 0%, #d7a23b 48%, #a86f12 100%) !important;
+  color: #2b2113 !important;
+  box-shadow: 0 10px 22px rgba(168, 111, 18, 0.18), inset 0 1px 0 rgba(255,255,255,0.48) !important;
+}
+body[data-sy-theme="light"] .sy-btn--ghost {
+  background: #fffdf7 !important;
+  border-color: rgba(176, 115, 22, 0.26) !important;
+  color: var(--sy-gold-1, #a86f12) !important;
+}
+body[data-sy-theme="light"] .sy-field {
+  background: rgba(255,255,255,0.96) !important;
+  border-color: rgba(176, 115, 22, 0.26) !important;
+}
+body[data-sy-theme="light"] .sy-field label,
+body[data-sy-theme="light"] .sy-field svg {
+  color: var(--sy-gold-1, #a86f12) !important;
+}
+body[data-sy-theme="light"] .sy-field input,
+body[data-sy-theme="light"] .sy-field select,
+body[data-sy-theme="light"] .sy-field textarea {
+  color: var(--sy-text, #2c2113) !important;
+}
+body[data-sy-theme="light"] .sy-field input::placeholder,
+body[data-sy-theme="light"] .sy-field textarea::placeholder {
+  color: rgba(109, 91, 56, 0.58) !important;
+}
+body[data-sy-theme="light"] .sy-pill,
+body[data-sy-theme="light"] .sy-drawer__user-badge {
+  background: rgba(255, 235, 181, 0.72) !important;
+  border-color: rgba(176, 115, 22, 0.26) !important;
+  color: var(--sy-gold-1, #a86f12) !important;
 }

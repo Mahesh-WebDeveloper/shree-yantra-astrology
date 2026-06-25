@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../../assets/theme-init.js"></script>
+  <title>Bhagavad Gita · Reading Mode</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Playfair+Display:wght@600;700&family=Noto+Serif+Devanagari:wght@500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper-1: #f6ecd4;     /* lit parchment */
+      --paper-2: #ecdcbb;     /* shadowed parchment */
+      --ink:     #3a2c18;     /* deep brown ink */
+      --ink-soft:#5c4a30;
+      --gold:    #9a7320;
+      --gold-bright:#b8861f;
+      --rule:    rgba(154,115,32,0.32);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      /* dark app backdrop so the paper floats like a real page */
+      background:
+        radial-gradient(120% 60% at 50% -10%, rgba(214,176,92,0.10), transparent 55%),
+        #0a0810;
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      padding: 18px 14px 40px;
+    }
+
+    /* ── The paper sheet ───────────────────────────── */
+    .scripture {
+      max-width: 720px;
+      margin: 0 auto;
+      position: relative;
+      background:
+        /* soft aging blooms */
+        radial-gradient(circle at 12% 8%, rgba(180,140,60,0.10), transparent 30%),
+        radial-gradient(circle at 88% 92%, rgba(150,110,40,0.12), transparent 32%),
+        radial-gradient(circle at 70% 20%, rgba(120,90,30,0.05), transparent 25%),
+        linear-gradient(155deg, var(--paper-1) 0%, var(--paper-2) 100%);
+      border-radius: 6px;
+      padding: 34px 26px 30px;
+      box-shadow:
+        0 1px 0 rgba(255,255,255,0.5) inset,
+        0 30px 60px rgba(0,0,0,0.55),
+        0 6px 18px rgba(0,0,0,0.4);
+    }
+    /* fine fibre texture */
+    .scripture::before {
+      content: "";
+      position: absolute; inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      opacity: 0.5;
+      background-image:
+        repeating-linear-gradient(90deg, rgba(120,90,40,0.025) 0 2px, transparent 2px 4px),
+        repeating-linear-gradient(0deg, rgba(120,90,40,0.02) 0 3px, transparent 3px 6px);
+      mix-blend-mode: multiply;
+    }
+    /* aged vignette + decorative inner frame */
+    .scripture::after {
+      content: "";
+      position: absolute; inset: 12px;
+      border: 1px solid var(--rule);
+      border-radius: 3px;
+      pointer-events: none;
+      box-shadow: inset 0 0 60px rgba(120,80,20,0.10);
+    }
+    .scripture > * { position: relative; z-index: 1; }
+
+    /* ── Header ───────────────────────────────────── */
+    .sb-om {
+      text-align: center;
+      font-family: 'Noto Serif Devanagari', serif;
+      font-size: 40px;
+      line-height: 1;
+      color: var(--gold-bright);
+      text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+      margin-bottom: 6px;
+    }
+    .sb-rule {
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; margin: 8px auto 18px; max-width: 280px;
+    }
+    .sb-rule::before, .sb-rule::after {
+      content: ""; height: 1px; flex: 1;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+    .sb-rule span { color: var(--gold); font-size: 12px; }
+    h1 {
+      text-align: center;
+      font-family: 'Cinzel', serif;
+      font-size: 27px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--ink);
+      margin: 0 0 4px;
+    }
+    .sb-sub {
+      text-align: center;
+      font-family: 'Cinzel', serif;
+      font-size: 12px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin: 0 0 26px;
+    }
+
+    /* ── Shloka cartouche ─────────────────────────── */
+    .sb-shloka {
+      position: relative;
+      margin: 0 0 26px;
+      padding: 22px 20px;
+      text-align: center;
+      border-radius: 4px;
+      border: 1px solid var(--rule);
+      background:
+        linear-gradient(180deg, rgba(255,250,235,0.6), rgba(236,220,187,0.35));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+    }
+    /* corner flourishes */
+    .sb-shloka span.cnr {
+      position: absolute; width: 12px; height: 12px;
+      border: 1.5px solid var(--gold); opacity: 0.6;
+    }
+    .sb-shloka span.tl { top: 6px; left: 6px; border-right: 0; border-bottom: 0; }
+    .sb-shloka span.tr { top: 6px; right: 6px; border-left: 0; border-bottom: 0; }
+    .sb-shloka span.bl { bottom: 6px; left: 6px; border-right: 0; border-top: 0; }
+    .sb-shloka span.br { bottom: 6px; right: 6px; border-left: 0; border-top: 0; }
+    .sb-sanskrit {
+      font-family: 'Noto Serif Devanagari', serif;
+      font-size: 21px;
+      font-weight: 600;
+      line-height: 1.9;
+      color: #2a1d0c;
+    }
+    .sb-translit {
+      margin-top: 12px;
+      font-style: italic;
+      font-size: 16px;
+      color: var(--ink-soft);
+    }
+    .sb-verse-no {
+      display: inline-block;
+      margin-top: 12px;
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      color: var(--gold);
+      border-top: 1px solid var(--rule);
+      padding-top: 8px;
+    }
+
+    /* ── Body text ────────────────────────────────── */
+    .sb-label {
+      font-family: 'Cinzel', serif;
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin: 24px 0 8px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .sb-label::after {
+      content: ""; flex: 1; height: 1px;
+      background: linear-gradient(90deg, var(--rule), transparent);
+    }
+    p {
+      font-size: 18px;
+      line-height: 1.7;
+      color: var(--ink);
+      margin: 0 0 16px;
+      text-align: justify;
+    }
+    /* illuminated drop-cap on the first commentary paragraph */
+    .sb-dropcap::first-letter {
+      float: left;
+      font-family: 'Playfair Display', serif;
+      font-size: 58px;
+      line-height: 0.82;
+      font-weight: 700;
+      padding: 4px 10px 0 0;
+      color: var(--gold-bright);
+      text-shadow: 0 1px 0 rgba(255,255,255,0.6);
+    }
+
+    /* ── Footer ───────────────────────────────────── */
+    .sb-foot {
+      margin-top: 30px;
+      text-align: center;
+    }
+    .sb-lotus {
+      color: var(--gold);
+      font-size: 18px;
+      letter-spacing: 0.3em;
+      opacity: 0.8;
+    }
+    .sb-page {
+      margin-top: 8px;
+      font-family: 'Cinzel', serif;
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      color: var(--ink-soft);
+    }
+
+    @media (max-width: 480px) {
+      .scripture { padding: 28px 18px 24px; }
+      h1 { font-size: 23px; }
+      .sb-sanskrit { font-size: 18px; line-height: 1.8; }
+      p { font-size: 16.5px; }
+      .sb-dropcap::first-letter { font-size: 48px; }
+    }
+  </style>
+</head>
+<body>
+  <article class="scripture">
+    <div class="sb-om">ॐ</div>
+    <div class="sb-rule"><span>✦</span></div>
+    <h1>Bhagavad Gītā</h1>
+    <p class="sb-sub">Chapter 2 · Sānkhya Yoga</p>
+
+    <div class="sb-shloka">
+      <span class="cnr tl"></span><span class="cnr tr"></span>
+      <span class="cnr bl"></span><span class="cnr br"></span>
+      <div class="sb-sanskrit">
+        कर्मण्येवाधिकारस्ते मा फलेषु कदाचन ।<br>
+        मा कर्मफलहेतुर्भूर्मा ते सङ्गोऽस्त्वकर्मणि ॥
+      </div>
+      <div class="sb-translit">
+        karmaṇy-evādhikāras te mā phaleṣu kadācana<br>
+        mā karma-phala-hetur bhūr mā te saṅgo 'stv akarmaṇi
+      </div>
+      <div class="sb-verse-no">VERSE 2.47</div>
+    </div>
+
+    <div class="sb-label">Translation</div>
+    <p>
+      You have a right to perform your prescribed duty, but you are not
+      entitled to the fruits of your actions. Never consider yourself the
+      cause of the results of your activities, and never be attached to
+      not doing your duty.
+    </p>
+
+    <div class="sb-label">Commentary</div>
+    <p class="sb-dropcap">
+      This śloka is the heart of Karma Yoga — the path of selfless action.
+      Lord Krishna counsels Arjuna to act with full devotion yet release all
+      anxiety about the outcome. When the mind is freed from the craving for
+      results, action becomes pure, focus becomes absolute, and the heart
+      grows steady amid success and failure alike.
+    </p>
+    <p>
+      In the light of jyotiṣa, the planets reveal our inherited tendencies and
+      karmic rhythms — but it is through conscious, dedicated effort that we
+      move gracefully through them. Liberation is not the absence of action;
+      it is the transformation of our relationship to it. Do your dharma, offer
+      the fruit to the Divine, and walk without fear.
+    </p>
+
+    <div class="sb-foot">
+      <div class="sb-lotus">۞ ✦ ۞</div>
+      <div class="sb-page">— Page 1 —</div>
+    </div>
+  </article>
+</body>
+</html>

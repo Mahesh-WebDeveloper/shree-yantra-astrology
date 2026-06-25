@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="../../assets/theme-init.js"></script>
     <meta name="theme-color" content="#04081a" />
     <meta name="description" content="Shree Yantra Astrology — Divine Vedic Guidance" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -166,7 +167,18 @@
           alert("Please fill in your Name, Date of Birth and Place of Birth to continue.");
           return false;
         }
-        alert("🙏 Namaste " + fullName + "!\n\nYour Vedic Kundli is being prepared.\n\nDOB: " + dob + "\nPlace: " + place);
+        if (window.SY) {
+          SY.setUser({
+            name: fullName,
+            firstName: fullName.split(' ')[0],
+            dob: dob,
+            place: place
+          });
+          SY.toast('Birth details saved', 'success');
+          setTimeout(function () { SY.go('payment'); }, 350);
+        } else {
+          location.href = '../payment/index.html';
+        }
         return false;
       }
     </script>

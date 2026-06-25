@@ -3,17 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="../../assets/theme-init.js"></script>
   <title>Choghadiya - Shree Yantra</title>
   <link rel="stylesheet" href="../../assets/app-shell.css" />
   <link rel="stylesheet" href="../../assets/sy-pages.css" />
   <style>
     /* Premium Choghadiya Styles */
     :root {
-      --bg-dark: #020205;
-      --card-bg: rgba(12, 12, 18, 0.85);
+      --bg-dark: #000000;
+      --card-bg: rgba(0,0,0, 0.85);
       --card-border: rgba(220, 180, 80, 0.2);
-      --gold-text: #eecb7a;
-      --gold-dim: #9a7d3b;
+      --gold-text: #e6c277;   /* unified readable gold (matches Library/app) */
+      --gold-dim: #b89a5b;    /* lifted for legibility (was #9a7d3b) */
       --green-glow: #32cd32;
       --red-glow: #ff4444;
       --blue-glow: #4499ff;
@@ -22,45 +23,26 @@
     
     body {
       background: var(--bg-dark);
-      color: #fff;
+      color: #efe6d2;
       font-family: 'Inter', -apple-system, sans-serif;
+    }
+    /* Unified cosmic starfield so this page matches the rest of the app
+       (sits behind content, alongside the shell's nebula ::before). */
+    body::after {
+      content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      background-image:
+        radial-gradient(1px 1px at 12% 22%, rgba(255,240,200,0.7), transparent 60%),
+        radial-gradient(1px 1px at 30% 14%, rgba(255,255,255,0.55), transparent 60%),
+        radial-gradient(1px 1px at 70% 8%,  rgba(255,240,200,0.55), transparent 60%),
+        radial-gradient(1px 1px at 92% 38%, rgba(255,255,255,0.55), transparent 60%),
+        radial-gradient(1px 1px at 18% 60%, rgba(255,240,200,0.5),  transparent 60%),
+        radial-gradient(1px 1px at 64% 72%, rgba(255,255,255,0.45), transparent 60%),
+        radial-gradient(1px 1px at 88% 86%, rgba(255,240,200,0.55), transparent 60%),
+        radial-gradient(1px 1px at 6%  40%, rgba(255,255,255,0.45), transparent 60%);
     }
     
     .sy-container {
       padding-top: 16px;
-    }
-
-    /* Header matching Library */
-    .sy-topbar {
-      background: var(--bg-dark) !important;
-      border-bottom: 1px solid rgba(220,180,80,0.15) !important;
-      padding: 10px 16px !important;
-      height: 60px !important;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .sy-brand-header {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    .sy-brand-header h1 {
-      margin: 0;
-      font-family: 'Cinzel', serif;
-      font-size: 19px;
-      letter-spacing: 0.12em;
-      color: var(--gold-text);
-      font-weight: 700;
-    }
-    .sy-brand-header p {
-      margin: 2px 0 0;
-      font-size: 8px;
-      letter-spacing: 0.35em;
-      color: var(--gold-dim);
-      font-weight: 600;
-      text-transform: uppercase;
     }
 
     /* Title Area */
@@ -98,30 +80,233 @@
       align-items: center;
       gap: 8px;
       background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.1);
+      border: 1px solid rgba(238,203,122,0.25);
       padding: 8px 16px;
       border-radius: 30px;
       font-size: 12px;
       color: #eee;
       backdrop-filter: blur(4px);
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: background 200ms ease, border-color 200ms ease, transform 200ms ease, box-shadow 200ms ease;
+      -webkit-tap-highlight-color: transparent;
     }
+    .cg-date-pill:hover {
+      background: rgba(238,203,122,0.15);
+      border-color: rgba(238,203,122,0.55);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.4), 0 0 14px rgba(238,203,122,0.18);
+    }
+    .cg-date-pill:active { transform: scale(0.97); }
+    .cg-date-pill[aria-expanded="true"] {
+      background: rgba(238,203,122,0.18);
+      border-color: rgba(238,203,122,0.6);
+    }
+    .cg-date-pill[aria-expanded="true"] .cg-chev { transform: rotate(180deg); }
     .cg-date-pill svg { width: 14px; height: 14px; color: var(--gold-text); }
+    .cg-chev { transition: transform 220ms ease; }
+
+    /* Calendar popup */
+    .cg-cal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 3, 10, 0.66);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 900;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 200ms ease;
+    }
+    .cg-cal-backdrop.open { opacity: 1; pointer-events: auto; }
+
+    .cg-cal {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -46%) scale(0.96);
+      width: min(90vw, 340px);
+      background: linear-gradient(180deg, rgba(0,0,0,0.98), rgba(0,0,0,0.99));
+      border: 1px solid transparent;
+      border-radius: 20px;
+      padding: 16px 14px 18px;
+      z-index: 901;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(252,232,168,0.08);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 200ms ease, transform 220ms cubic-bezier(.2,.8,.25,1);
+    }
+    .cg-cal::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      padding: 1px;
+      border-radius: 20px;
+      background: linear-gradient(160deg, #f6d27a, #8a6418 50%, #c9962e);
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+              mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+              mask-composite: exclude;
+      pointer-events: none;
+    }
+    .cg-cal.open {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .cg-cal__head {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 4px 12px;
+    }
+    .cg-cal__title {
+      flex: 1;
+      text-align: center;
+      font-family: 'Cinzel', serif;
+      font-size: 14px;
+      letter-spacing: 0.12em;
+      color: var(--gold-text);
+      text-transform: uppercase;
+    }
+    .cg-cal__nav {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: rgba(238,203,122,0.08);
+      border: 1px solid rgba(238,203,122,0.35);
+      color: var(--gold-text);
+      cursor: pointer;
+      transition: background 180ms ease, transform 160ms ease;
+    }
+    .cg-cal__nav:hover { background: rgba(238,203,122,0.22); }
+    .cg-cal__nav:active { transform: scale(0.92); }
+    .cg-cal__nav svg { width: 14px; height: 14px; pointer-events: none; }
+
+    .cg-cal__dow {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      margin-bottom: 6px;
+    }
+    .cg-cal__dow span {
+      text-align: center;
+      font-family: 'Cinzel', serif;
+      font-size: 9.5px;
+      letter-spacing: 0.1em;
+      color: var(--gold-dim);
+      padding: 4px 0;
+    }
+
+    .cg-cal__grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+    .cg-cal__day {
+      aspect-ratio: 1 / 1;
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      font-weight: 500;
+      color: #eee;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: background 180ms ease, border-color 180ms ease, color 180ms ease, transform 160ms ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .cg-cal__day.muted { color: #555; }
+    .cg-cal__day:hover { background: rgba(238,203,122,0.12); border-color: rgba(238,203,122,0.35); }
+    .cg-cal__day:active { transform: scale(0.92); }
+    .cg-cal__day.today {
+      color: var(--gold-text);
+      border-color: rgba(238,203,122,0.55);
+      font-weight: 700;
+    }
+    .cg-cal__day.selected {
+      background: linear-gradient(180deg, #fce8a8, #b87f1a);
+      color: #2a1c00;
+      border-color: transparent;
+      font-weight: 700;
+      box-shadow: 0 4px 14px rgba(238,203,122,0.35);
+    }
+
+    .cg-cal__foot {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(238,203,122,0.15);
+    }
+    .cg-cal__btn {
+      flex: 1;
+      min-height: 38px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-family: 'Cinzel', serif;
+      letter-spacing: 0.12em;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid rgba(238,203,122,0.4);
+      background: rgba(0,0,0,0.5);
+      color: var(--gold-text);
+      transition: background 180ms ease, transform 160ms ease;
+    }
+    .cg-cal__btn:active { transform: scale(0.96); transition-duration: 80ms; }
+    /* Only the ghost (TODAY) button gets the translucent-gold hover */
+    @media (hover: hover) and (pointer: fine) {
+      .cg-cal__btn:not(.cg-cal__btn--primary):hover {
+        background: rgba(238,203,122,0.12);
+        border-color: rgba(238,203,122,0.65);
+      }
+    }
+    .cg-cal__btn--primary {
+      background: linear-gradient(180deg, #fce8a8, #e9b850 45%, #b87f1a);
+      color: #2a1c00;
+      border-color: transparent;
+      box-shadow: 0 6px 18px rgba(238,203,122,0.30), inset 0 1px 0 rgba(255,255,255,0.4);
+    }
+    /* Keep the gold gradient on hover — just brighten + lift (was being
+       overwritten by the base :hover background, which looked broken) */
+    @media (hover: hover) and (pointer: fine) {
+      .cg-cal__btn--primary:hover {
+        filter: brightness(1.06);
+        box-shadow: 0 9px 24px rgba(238,203,122,0.45), inset 0 1px 0 rgba(255,255,255,0.45);
+        transform: translateY(-1px);
+      }
+    }
 
     /* Active Card */
     .cg-active-card {
-      background: radial-gradient(circle at 30% 50%, rgba(220,180,80,0.15), rgba(10,10,14,0.95));
+      background: radial-gradient(circle at 30% 50%, rgba(220,180,80,0.15), rgba(0,0,0,0.95));
       border: 1px solid rgba(220,180,80,0.3);
       border-radius: 20px;
-      padding: 20px 16px;
+      padding: 20px 18px;
       margin-bottom: 24px;
       display: flex;
       align-items: center;
       gap: 16px;
       position: relative;
       overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(220,180,80,0.05);
+      box-shadow:
+        0 18px 40px rgba(0,0,0,0.55),
+        inset 0 1px 0 rgba(252,232,168,0.10),
+        inset 0 -1px 0 rgba(0,0,0,0.40);
     }
-    
+    .cg-active-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 12%; right: 12%; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(252,232,168,0.55), transparent);
+      pointer-events: none;
+    }
+
     .cg-yantra {
       width: 80px;
       height: 80px;
@@ -144,18 +329,38 @@
       filter: drop-shadow(0 0 10px rgba(238,203,122,0.8));
     }
     
-    .cg-active-info { flex: 1; }
-    .cg-active-info h4 { margin: 0 0 4px; font-size: 10px; color: var(--gold-dim); text-transform: uppercase; letter-spacing: 0.1em; }
+    /* nature accent — set per active choghadiya (good / neutral / bad) */
+    .cg-active-card { --cg-accent: var(--green-glow); }
+    .cg-active-card.nature-neutral { --cg-accent: var(--orange-glow); }
+    .cg-active-card.nature-bad     { --cg-accent: var(--red-glow); }
+
+    .cg-active-info { flex: 1; min-width: 0; }
+    .cg-active-info h4 {
+      display: inline-flex; align-items: center; gap: 7px;
+      margin: 0 0 6px; font-size: 10px; color: var(--gold-dim);
+      text-transform: uppercase; letter-spacing: 0.14em; font-weight: 600;
+    }
+    .cg-active-info h4::before {
+      content: '';
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--cg-accent);
+      box-shadow: 0 0 8px var(--cg-accent);
+      animation: cg-pulse-dot 1.6s ease-in-out infinite;
+    }
+    @keyframes cg-pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
     .cg-active-name {
       display: flex; align-items: center; gap: 8px;
       margin-bottom: 6px;
     }
     .cg-active-name span {
-      font-size: 26px; font-weight: 700; color: var(--green-glow);
-      text-shadow: 0 0 15px rgba(50,205,50,0.5);
+      font-size: 26px; font-weight: 700; color: var(--cg-accent);
+      text-shadow: 0 0 15px var(--cg-accent);
       line-height: 1;
     }
-    .cg-active-name svg { width: 18px; height: 18px; color: var(--green-glow); }
+    .cg-active-name svg { width: 18px; height: 18px; color: var(--cg-accent); }
     .cg-active-time {
       display: inline-flex; align-items: center; gap: 6px;
       background: rgba(0,0,0,0.4); border: 1px solid rgba(220,180,80,0.2);
@@ -180,7 +385,7 @@
       position: relative; z-index: 2; text-align: center;
     }
     .cg-timer-inner b { display: block; font-size: 11px; color: #fff; font-weight: 700; font-variant-numeric: tabular-nums; }
-    .cg-timer-inner span { display: block; font-size: 8px; color: #aaa; margin-top: 2px; }
+    .cg-timer-inner span { display: block; font-size: 9px; color: #c4c4c4; margin-top: 2px; letter-spacing: 0.04em; }
 
     /* Section Headers */
     .cg-section-header {
@@ -206,7 +411,7 @@
       border: 1px solid rgba(255,255,255,0.05);
     }
     .cg-row.active {
-      background: linear-gradient(90deg, rgba(50,205,50,0.15), rgba(10,10,14,0.8));
+      background: linear-gradient(90deg, rgba(50,205,50,0.15), rgba(0,0,0,0.8));
       border: 1px solid rgba(50,205,50,0.4);
       box-shadow: inset 0 0 20px rgba(50,205,50,0.1);
     }
@@ -264,7 +469,7 @@
     
     /* Special Message */
     .cg-special {
-      background: radial-gradient(circle at 80% 50%, rgba(220,180,80,0.2), rgba(10,10,14,0.9));
+      background: radial-gradient(circle at 80% 50%, rgba(220,180,80,0.2), rgba(0,0,0,0.9));
       border: 1px solid rgba(220,180,80,0.3);
       border-radius: 16px;
       padding: 20px;
@@ -278,59 +483,155 @@
     .cg-special-content p { margin: 0; font-size: 12px; color: #ccc; line-height: 1.5; }
     .cg-special-content b { color: var(--green-glow); }
     .cg-special-icon {
-      width: 60px; height: 60px;
+      width: 64px; height: 64px;
       display: grid; place-items: center;
-      background: radial-gradient(circle, rgba(238,203,122,0.3), transparent 70%);
+      background: radial-gradient(circle at 50% 65%, rgba(255,170,40,0.28), transparent 70%);
       border-radius: 50%;
+      flex-shrink: 0;
     }
-    .cg-special-icon svg { width: 36px; height: 36px; color: var(--gold-text); filter: drop-shadow(0 0 10px rgba(238,203,122,0.6)); }
+    .cg-special-icon svg { width: 52px; height: 52px; }
+    /* gently flickering flame */
+    .cg-diya-flame {
+      transform-origin: 32px 36px;
+      animation: cg-flame 2.4s ease-in-out infinite;
+    }
+    @keyframes cg-flame {
+      0%, 100% { transform: scale(1) rotate(-1.5deg); opacity: 0.95; }
+      50%      { transform: scale(1.08) rotate(1.5deg); opacity: 1; }
+    }
+    @media (prefers-reduced-motion: reduce) { .cg-diya-flame { animation: none; } }
 
     /* Upcoming */
     .cg-upcoming-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 30px;
+      display: grid;
+      /* auto-fit so the row always fills the width with no overflow, and
+         gracefully drops to fewer columns on very narrow phones. Also
+         handles 1–3 cards (the engine may surface fewer) without odd gaps. */
+      grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+      gap: 10px;
+      margin-bottom: 30px;
     }
     .cg-up-card {
-      background: var(--card-bg);
+      position: relative;
+      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015));
       border: 1px solid var(--card-border);
-      border-radius: 14px;
-      padding: 16px 8px;
+      border-radius: 16px;
+      padding: 18px 10px 15px;
       text-align: center;
+      overflow: hidden;
+      transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+    }
+    /* soft gold accent line along the top edge */
+    .cg-up-card::before {
+      content: ""; position: absolute; top: 0; left: 18%; right: 18%; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold-text), transparent);
+      opacity: .55;
+    }
+    @media (hover: hover) {
+      .cg-up-card:hover {
+        transform: translateY(-3px);
+        border-color: rgba(238,203,122,0.55);
+        box-shadow: 0 10px 24px rgba(0,0,0,0.32);
+      }
     }
     .cg-up-icon {
-      width: 32px; height: 32px; margin: 0 auto 10px;
+      width: 40px; height: 40px; margin: 0 auto 10px;
       border-radius: 50%; display: grid; place-items: center;
+      background: radial-gradient(circle at 50% 38%, rgba(238,203,122,0.22), rgba(238,203,122,0.05));
+      border: 1px solid rgba(238,203,122,0.32);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
     }
-    .cg-up-icon svg { width: 16px; height: 16px; }
-    .cg-up-icon.c-gold { background: rgba(238,203,122,0.15); color: var(--gold-text); }
+    .cg-up-icon svg { width: 18px; height: 18px; }
+    .cg-up-icon.c-gold,
     .cg-up-icon.c-none { color: var(--gold-text); }
-    
-    .cg-up-card h5 { margin: 0 0 4px; font-size: 12px; font-weight: 600; color: #fff; }
-    .cg-up-card p { margin: 0 0 6px; font-size: 9px; color: #aaa; }
-    .cg-up-card span { font-size: 8px; color: var(--green-glow); font-weight: 500; }
 
-    @media (max-width: 380px) {
-      .cg-active-card { flex-direction: column; text-align: center; }
-      .cg-active-name { justify-content: center; }
+    .cg-up-card h5 { margin: 0 0 5px; font-size: 13px; font-weight: 700; letter-spacing: .06em; color: var(--gold-text); }
+    .cg-up-card p { margin: 0 0 7px; font-size: 10px; color: #d8c9a4; font-variant-numeric: tabular-nums; }
+    .cg-up-card span { display: inline-block; font-size: 9px; color: var(--green-glow); font-weight: 700; letter-spacing: 0.04em; line-height: 1.3; }
+
+    /* Mobile — polished, responsive Active Card layout */
+    @media (max-width: 480px) {
+      .cg-active-card {
+        display: grid;
+        grid-template-columns: 64px 1fr auto;
+        grid-template-areas:
+          "label  label  timer"
+          "yantra name   timer"
+          "yantra time   timer"
+          "desc   desc   desc";
+        column-gap: 14px;
+        row-gap: 2px;
+        padding: 16px 16px 14px;
+        align-items: center;
+      }
+      .cg-yantra { grid-area: yantra; width: 64px; height: 64px; align-self: center; }
+      .cg-yantra::before { inset: -10px; }
+      .cg-active-info { display: contents; }
+      .cg-active-info h4 { grid-area: label; align-self: end; margin: 0 0 2px; }
+      .cg-active-name { grid-area: name; margin: 0; }
+      .cg-active-name span { font-size: 24px; }
+      .cg-active-name svg { width: 16px; height: 16px; }
+      .cg-active-time {
+        grid-area: time;
+        align-self: start;
+        margin: 6px 0 0;
+        padding: 4px 9px;
+        font-size: 10.5px;
+        white-space: nowrap;
+      }
+      .cg-active-desc {
+        grid-area: desc;
+        margin: 12px 0 0;
+        padding-top: 12px;
+        border-top: 1px solid rgba(238,203,122,0.18);
+        font-size: 11px;
+        line-height: 1.5;
+        color: #b8b8b8;
+      }
+      .cg-timer { grid-area: timer; width: 60px; height: 60px; align-self: center; }
+      .cg-timer-inner b { font-size: 10px; }
+      .cg-timer-inner span { font-size: 7.5px; }
+
       .cg-activity-grid { grid-template-columns: repeat(2, 1fr); }
-      .cg-upcoming-grid { grid-template-columns: 1fr; }
-      .cg-up-card { display: flex; align-items: center; text-align: left; gap: 12px; padding: 12px; }
-      .cg-up-icon { margin: 0; }
+      /* upcoming grid stays an auto-fit row of vertical cards (handled in the
+         base rule) — the old 1-col + flex-row override squished icon/name/time
+         /label onto one line and overflowed, so it is intentionally removed. */
+      .cg-up-card { padding: 14px 8px 12px; }
+    }
+
+    @media (max-width: 360px) {
+      .cg-active-card {
+        grid-template-columns: 56px 1fr auto;
+        column-gap: 12px;
+        padding: 14px 14px 12px;
+      }
+      .cg-yantra { width: 56px; height: 56px; }
+      .cg-active-name span { font-size: 22px; }
+      .cg-active-time { font-size: 10px; padding: 3px 8px; }
+      .cg-timer { width: 54px; height: 54px; }
     }
   </style>
 </head>
 <body>
   <!-- Header matched exactly to design -->
   <header class="sy-topbar">
-    <button class="sy-topbar__btn" data-menu-toggle aria-label="Menu">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    <button class="sy-topbar__btn" data-menu-toggle aria-label="Menu" type="button">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="6"  x2="21" y2="6"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
     </button>
     <div class="sy-brand-header">
       <h1>SHREE YANTRA</h1>
       <p>Astrology</p>
     </div>
-    <button class="sy-topbar__btn" aria-label="Notifications" style="position:relative;">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--gold-text)" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-      <span style="position:absolute;top:4px;right:6px;width:12px;height:12px;background:#ff3b30;border-radius:50%;color:#fff;font-size:8px;display:grid;place-items:center;font-weight:bold; border: 1px solid #000;">3</span>
+    <button class="sy-topbar__btn sy-topbar__bell" data-sy-go="notifications" aria-label="Notifications" type="button">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.7 21a2 2 0 0 1-3.4 0"/>
+      </svg>
+      <span class="sy-topbar__badge">3</span>
     </button>
   </header>
 
@@ -344,11 +645,11 @@
       </div>
       <p class="cg-subtitle">Know Today's Auspicious & Inauspicious Timings</p>
       
-      <div class="cg-date-pill">
+      <button class="cg-date-pill" id="cgDatePill" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="Pick a date">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        21 May 2025, Wednesday
-        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-      </div>
+        <span id="cgDateText">21 May 2025, Wednesday</span>
+        <svg class="cg-chev" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </button>
     </div>
 
     <!-- Active Card -->
@@ -512,7 +813,48 @@
         <p>From 04:12 PM to 05:38 PM is <b>Labh Choghadiya</b>. It is an excellent time for business, financial transactions and buying valuable items.</p>
       </div>
       <div class="cg-special-icon">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C12 2 8 8 8 12C8 14.2091 9.79086 16 12 16C14.2091 16 16 14.2091 16 12C16 8 12 2 12 2Z"/><path d="M4 16C4 18.2091 7.58172 20 12 20C16.4183 20 20 18.2091 20 16"/><path d="M2 16H22" stroke="currentColor" stroke-width="2"/></svg>
+        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <radialGradient id="cgFlameG" cx="50%" cy="68%" r="62%">
+              <stop offset="0%" stop-color="#fff7d6"/>
+              <stop offset="42%" stop-color="#ffcf4a"/>
+              <stop offset="100%" stop-color="#ff6a00"/>
+            </radialGradient>
+            <linearGradient id="cgBowlG" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#fce8a8"/>
+              <stop offset="45%" stop-color="#e9b850"/>
+              <stop offset="100%" stop-color="#7e5a14"/>
+            </linearGradient>
+            <linearGradient id="cgOilG" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#c69e3a"/>
+              <stop offset="50%" stop-color="#f6d585"/>
+              <stop offset="100%" stop-color="#c69e3a"/>
+            </linearGradient>
+            <radialGradient id="cgHaloG" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="rgba(255,180,60,0.55)"/>
+              <stop offset="100%" stop-color="rgba(255,180,60,0)"/>
+            </radialGradient>
+          </defs>
+          <!-- warm halo behind the flame -->
+          <circle cx="32" cy="23" r="21" fill="url(#cgHaloG)"/>
+          <!-- flame: clean teardrop, bright white-hot core -->
+          <g class="cg-diya-flame">
+            <path d="M32 6C37.5 15 42 20.5 42 28a10 10 0 0 1-20 0c0-7.5 4.5-13 10-22Z" fill="url(#cgFlameG)"/>
+            <path d="M32 16c3 5.5 5.5 9 5.5 12.5a5.5 5.5 0 0 1-11 0c0-3.5 2.5-7 5.5-12.5Z" fill="#fff7d6"/>
+            <ellipse cx="32" cy="30" rx="2.3" ry="3.6" fill="#ffffff"/>
+          </g>
+          <!-- wick -->
+          <rect x="31" y="33" width="2" height="6" rx="1" fill="#5e3f10"/>
+          <!-- golden oil surface -->
+          <ellipse cx="32" cy="40.5" rx="20.5" ry="4" fill="url(#cgOilG)"/>
+          <!-- graceful earthen diya bowl -->
+          <path d="M11.5 40.5C13 49.5 21.5 54.5 32 54.5s19-5 20.5-14c-6.5 2.9-13.3 3.9-20.5 3.9s-14-1-20.5-3.9Z"
+                fill="url(#cgBowlG)" stroke="#6e4e12" stroke-width="0.6"/>
+          <!-- rim highlight -->
+          <path d="M13 40.6C19 43 25.4 44 32 44s13-1 19-3.4" fill="none" stroke="#fff3c8" stroke-width="1.3" stroke-linecap="round" opacity="0.75"/>
+          <!-- base foot -->
+          <path d="M27 54.2h10l-1.6 4h-6.8z" fill="url(#cgBowlG)" stroke="#6e4e12" stroke-width="0.4"/>
+        </svg>
       </div>
     </div>
 
@@ -547,5 +889,337 @@
   </main>
 
   <script src="../../assets/app-shell.js"></script>
+  <script>
+    (function () {
+      var pill = document.getElementById('cgDatePill');
+      var dateText = document.getElementById('cgDateText');
+      if (!pill || !dateText) return;
+
+      var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      var DOW    = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+      var WDAYS  = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+      var today = stripTime(new Date());
+      var selected = new Date(today);
+      var viewYear  = selected.getFullYear();
+      var viewMonth = selected.getMonth();
+
+      function stripTime(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+      function sameDay(a, b) { return a && b && a.getTime() === b.getTime(); }
+      function formatLabel(d) {
+        return d.getDate() + ' ' + MONTHS[d.getMonth()].substring(0, 3) + ' ' + d.getFullYear() + ', ' + WDAYS[d.getDay()];
+      }
+
+      function paintLabel() { dateText.textContent = formatLabel(selected); }
+      paintLabel();
+
+      /* ════════════════════════════════════════════════════════
+         CHOGHADIYA ENGINE — real, date-aware, live
+         Day (sunrise→sunset) and night (sunset→next sunrise) are
+         each split into 8 equal periods. The choghadiya names rotate
+         by weekday (vaar) using the traditional tables.
+         ════════════════════════════════════════════════════════ */
+      // Sunrise / sunset for the locale shown (Jaipur ~ demo values).
+      var SUNRISE = { h: 5, m: 28 };
+      var SUNSET  = { h: 18, m: 54 };
+
+      var DAY_ORDER   = ['Udveg','Char','Labh','Amrit','Kaal','Shubh','Rog'];
+      var NIGHT_ORDER = ['Shubh','Amrit','Char','Rog','Kaal','Labh','Udveg'];
+      // first daytime / night choghadiya by weekday (0=Sun … 6=Sat)
+      var DAY_START   = ['Udveg','Amrit','Rog','Labh','Shubh','Char','Kaal'];
+      var NIGHT_START = ['Shubh','Char','Kaal','Udveg','Amrit','Rog','Labh'];
+
+      var META = {
+        Amrit: { nature:'good',    tag:'Auspicious',   color:'green',  hex:'#32cd32', desc:'The most auspicious time — ideal for any sacred or important work.' },
+        Shubh: { nature:'good',    tag:'Auspicious',   color:'green',  hex:'#32cd32', desc:'Excellent for ceremonies, new beginnings and auspicious tasks.' },
+        Labh:  { nature:'good',    tag:'Auspicious',   color:'blue',   hex:'#4499ff', desc:'Good time for business, financial transactions, deals and purchases.' },
+        Char:  { nature:'neutral', tag:'Neutral',      color:'orange', hex:'#ff9900', desc:'Movable time — favourable for travel, journeys and quick errands.' },
+        Udveg: { nature:'bad',     tag:'Inauspicious', color:'red',    hex:'#ff4444', desc:'Best avoided for new work — suited only to routine tasks.' },
+        Kaal:  { nature:'bad',     tag:'Inauspicious', color:'red',    hex:'#ff4444', desc:'Inauspicious period — postpone important beginnings.' },
+        Rog:   { nature:'bad',     tag:'Inauspicious', color:'red',    hex:'#ff4444', desc:'Linked to conflict & illness — avoid key activities.' }
+      };
+      var ICON = {
+        Amrit: '<path d="M12 2s6 7 6 12a6 6 0 0 1-12 0c0-5 6-12 6-12z"/>',
+        Shubh: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+        Labh:  '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+        Char:  '<path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/>',
+        Udveg: '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+        Kaal:  '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>',
+        Rog:   '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>'
+      };
+
+      function at(date, t) { return new Date(date.getFullYear(), date.getMonth(), date.getDate(), t.h, t.m, 0, 0); }
+      function addDays(d, n) { return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n); }
+      function pad2(n) { return (n < 10 ? '0' : '') + n; }
+      function fmtTime(d) {
+        var h = d.getHours(), m = d.getMinutes(), ap = h < 12 ? 'AM' : 'PM';
+        var hh = h % 12; if (hh === 0) hh = 12;
+        return pad2(hh) + ':' + pad2(m) + ' ' + ap;
+      }
+
+      // Build all 16 periods (8 day + 8 night) for a given date.
+      function buildPeriods(date) {
+        var dow = date.getDay();
+        var sr = at(date, SUNRISE), ss = at(date, SUNSET), nsr = at(addDays(date, 1), SUNRISE);
+        var dayLen = (ss - sr) / 8, nightLen = (nsr - ss) / 8;
+        var list = [];
+        var di = DAY_ORDER.indexOf(DAY_START[dow]);
+        for (var i = 0; i < 8; i++) {
+          var nm = DAY_ORDER[(di + i) % 7];
+          list.push({ name: nm, phase: 'day', start: new Date(sr.getTime() + i * dayLen), end: new Date(sr.getTime() + (i + 1) * dayLen) });
+        }
+        var ni = NIGHT_ORDER.indexOf(NIGHT_START[dow]);
+        for (var j = 0; j < 8; j++) {
+          var nn = NIGHT_ORDER[(ni + j) % 7];
+          list.push({ name: nn, phase: 'night', start: new Date(ss.getTime() + j * nightLen), end: new Date(ss.getTime() + (j + 1) * nightLen) });
+        }
+        return list;
+      }
+
+      function svgIcon(name) {
+        return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + (ICON[name] || ICON.Amrit) + '</svg>';
+      }
+
+      var heading = (function () {
+        var hs = document.querySelectorAll('.cg-section-header h3');
+        for (var i = 0; i < hs.length; i++) if (/choghadiya/i.test(hs[i].textContent)) return hs[i];
+        return hs[0];
+      })();
+      var listEl    = document.querySelector('.cg-list');
+      var card      = document.querySelector('.cg-active-card');
+      var cardH4    = document.querySelector('.cg-active-info h4');
+      var nameEl    = document.querySelector('.cg-active-name span');
+      var timeEl    = document.querySelector('.cg-active-time');
+      var descEl    = document.querySelector('.cg-active-desc');
+      var timerVal  = document.querySelector('.cg-timer-inner b');
+      var timerLbl  = document.querySelector('.cg-timer-inner span');
+      var timerRing = document.querySelector('.cg-timer');
+      var specialP  = document.querySelector('.cg-special-content p');
+      var upGrid    = document.querySelector('.cg-upcoming-grid');
+      var clockSvg  = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+
+      var periods = [];
+      var tickHandle = null;
+
+      function renderList(active) {
+        var html = '';
+        for (var i = 0; i < 8; i++) {            // daytime list (matches design)
+          var p = periods[i], m = META[p.name];
+          var isAct = active && active === p;
+          html +=
+            '<div class="cg-row' + (isAct ? ' active' : '') + '">' +
+              '<div class="cg-num">' + (i + 1) + '</div>' +
+              '<div class="cg-icon c-' + m.color + '">' + svgIcon(p.name) + '</div>' +
+              '<div class="cg-row-info"><h4>' + p.name.toUpperCase() + (isAct ? ' (VARTMAN)' : '') + '</h4>' +
+                '<p>' + fmtTime(p.start) + ' - ' + fmtTime(p.end) + '</p></div>' +
+              '<div class="cg-tag c-' + m.color + '">' + m.tag + '</div>' +
+            '</div>';
+        }
+        listEl.innerHTML = html;
+      }
+
+      function setCardNature(meta) {
+        card.classList.remove('nature-neutral', 'nature-bad');
+        if (meta.nature === 'neutral') card.classList.add('nature-neutral');
+        else if (meta.nature === 'bad') card.classList.add('nature-bad');
+      }
+
+      function renderActive(active, isToday) {
+        var p = active, m = META[p.name];
+        setCardNature(m);
+        cardH4.textContent = isToday ? 'Currently Active' : 'Day Begins With';
+        nameEl.textContent = p.name.toUpperCase();
+        timeEl.innerHTML = clockSvg + ' ' + fmtTime(p.start) + ' - ' + fmtTime(p.end);
+        descEl.textContent = m.desc;
+      }
+
+      function renderUpcoming(now, isToday) {
+        // next 3 auspicious (good) periods from now (today) or from day start
+        var pool = periods.filter(function (p) { return META[p.name].nature === 'good' && (!isToday || p.end > now); });
+        pool = pool.slice(0, 3);
+        if (!pool.length) pool = periods.filter(function (p) { return META[p.name].nature === 'good'; }).slice(0, 3);
+        var blurbs = { Amrit: 'VERY AUSPICIOUS TIME', Shubh: 'GOOD FOR IMPORTANT TASKS', Labh: 'GOOD FOR MONEY RELATED WORK' };
+        upGrid.innerHTML = pool.map(function (p) {
+          var m = META[p.name];
+          var hl = p.name === 'Amrit' ? ' style="border-color: rgba(50,205,50,0.4); box-shadow: inset 0 0 15px rgba(50,205,50,0.1);"' : '';
+          return '<div class="cg-up-card"' + hl + '>' +
+            '<div class="cg-up-icon c-gold">' + svgIcon(p.name) + '</div>' +
+            '<h5>' + p.name.toUpperCase() + '</h5>' +
+            '<p>' + fmtTime(p.start) + ' - ' + fmtTime(p.end) + '</p>' +
+            '<span>' + (blurbs[p.name] || 'AUSPICIOUS') + '</span>' +
+          '</div>';
+        }).join('');
+      }
+
+      function tickTimer(active, isToday) {
+        if (!isToday || !active) return;
+        var now = new Date();
+        if (now >= active.end || now < active.start) { renderForDate(selected); return; } // rolled over → recompute
+        var leftMs = active.end - now;
+        var totalMs = active.end - active.start;
+        var s = Math.floor(leftMs / 1000);
+        var hh = Math.floor(s / 3600), mm = Math.floor((s % 3600) / 60), ss = s % 60;
+        timerVal.textContent = pad2(hh) + ':' + pad2(mm) + ':' + pad2(ss);
+        timerLbl.textContent = 'LEFT';
+        var pct = (1 - leftMs / totalMs) * 100;
+        timerRing.style.background = 'conic-gradient(' + META[active.name].hex + ' 0% ' + pct.toFixed(1) + '%, rgba(255,255,255,0.1) ' + pct.toFixed(1) + '% 100%)';
+      }
+
+      function renderForDate(date) {
+        if (tickHandle) { clearInterval(tickHandle); tickHandle = null; }
+        periods = buildPeriods(date);
+        var isToday = sameDay(date, today);
+        var now = new Date();
+
+        // find the period containing "now" (only meaningful for today)
+        var active = null;
+        if (isToday) {
+          for (var i = 0; i < periods.length; i++) {
+            if (now >= periods[i].start && now < periods[i].end) { active = periods[i]; break; }
+          }
+        }
+        // for other dates (or pre-sunrise today) highlight the first auspicious daytime period
+        var highlight = active;
+        if (!highlight) {
+          for (var k = 0; k < 8; k++) { if (META[periods[k].name].nature === 'good') { highlight = periods[k]; break; } }
+          if (!highlight) highlight = periods[0];
+        }
+
+        heading.textContent = isToday ? "Today's Choghadiya" : ('Choghadiya · ' + date.getDate() + ' ' + MONTHS[date.getMonth()].substring(0, 3));
+        renderList(active);
+        renderActive(highlight, isToday && !!active);
+
+        var m = META[highlight.name];
+        if (isToday && active) {
+          tickTimer(active, true);
+          tickHandle = setInterval(function () { tickTimer(active, true); }, 1000);
+          specialP.innerHTML = 'From ' + fmtTime(active.start) + ' to ' + fmtTime(active.end) + ' is <b>' + active.name + ' Choghadiya</b>. ' + m.desc;
+        } else {
+          // static (non-today) — show the highlighted period's duration, no countdown
+          var durMs = highlight.end - highlight.start;
+          var dm = Math.floor(durMs / 60000);
+          timerVal.textContent = pad2(Math.floor(dm / 60)) + ':' + pad2(dm % 60);
+          timerLbl.textContent = 'DURATION';
+          timerRing.style.background = 'conic-gradient(' + m.hex + ' 0% 100%, rgba(255,255,255,0.1) 100% 100%)';
+          specialP.innerHTML = 'On this day, <b>' + highlight.name + '</b> runs ' + fmtTime(highlight.start) + ' - ' + fmtTime(highlight.end) + '. ' + m.desc;
+        }
+        renderUpcoming(now, isToday);
+      }
+
+      renderForDate(selected);   // initial paint for today
+
+      var backdrop = document.createElement('div');
+      backdrop.className = 'cg-cal-backdrop';
+      var cal = document.createElement('div');
+      cal.className = 'cg-cal';
+      cal.setAttribute('role', 'dialog');
+      cal.setAttribute('aria-modal', 'true');
+      cal.setAttribute('aria-label', 'Choose date');
+      cal.innerHTML =
+        '<div class="cg-cal__head">' +
+          '<button class="cg-cal__nav" type="button" data-cal-prev aria-label="Previous month">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>' +
+          '</button>' +
+          '<div class="cg-cal__title" data-cal-title></div>' +
+          '<button class="cg-cal__nav" type="button" data-cal-next aria-label="Next month">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>' +
+          '</button>' +
+        '</div>' +
+        '<div class="cg-cal__dow">' + DOW.map(function (d) { return '<span>' + d + '</span>'; }).join('') + '</div>' +
+        '<div class="cg-cal__grid" data-cal-grid></div>' +
+        '<div class="cg-cal__foot">' +
+          '<button class="cg-cal__btn" type="button" data-cal-today>TODAY</button>' +
+          '<button class="cg-cal__btn cg-cal__btn--primary" type="button" data-cal-confirm>CONFIRM</button>' +
+        '</div>';
+      document.body.appendChild(backdrop);
+      document.body.appendChild(cal);
+
+      var titleEl   = cal.querySelector('[data-cal-title]');
+      var gridEl    = cal.querySelector('[data-cal-grid]');
+      var prevBtn   = cal.querySelector('[data-cal-prev]');
+      var nextBtn   = cal.querySelector('[data-cal-next]');
+      var todayBtn  = cal.querySelector('[data-cal-today]');
+      var confirmBtn = cal.querySelector('[data-cal-confirm]');
+
+      function render() {
+        titleEl.textContent = MONTHS[viewMonth] + ' ' + viewYear;
+        var first = new Date(viewYear, viewMonth, 1);
+        var startWeekDay = first.getDay();
+        var daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+        var prevMonthDays = new Date(viewYear, viewMonth, 0).getDate();
+        var html = '';
+        for (var i = startWeekDay - 1; i >= 0; i--) {
+          html += '<button class="cg-cal__day muted" type="button" disabled>' + (prevMonthDays - i) + '</button>';
+        }
+        for (var d = 1; d <= daysInMonth; d++) {
+          var cur = new Date(viewYear, viewMonth, d);
+          var cls = 'cg-cal__day';
+          if (sameDay(cur, today))    cls += ' today';
+          if (sameDay(cur, selected)) cls += ' selected';
+          html += '<button class="' + cls + '" type="button" data-day="' + d + '">' + d + '</button>';
+        }
+        var totalCells = startWeekDay + daysInMonth;
+        var trailing = (7 - (totalCells % 7)) % 7;
+        for (var t = 1; t <= trailing; t++) {
+          html += '<button class="cg-cal__day muted" type="button" disabled>' + t + '</button>';
+        }
+        gridEl.innerHTML = html;
+      }
+
+      function open() {
+        viewYear = selected.getFullYear();
+        viewMonth = selected.getMonth();
+        render();
+        backdrop.classList.add('open');
+        cal.classList.add('open');
+        pill.setAttribute('aria-expanded', 'true');
+        document.body.classList.add('sy-no-scroll');
+      }
+      function close() {
+        backdrop.classList.remove('open');
+        cal.classList.remove('open');
+        pill.setAttribute('aria-expanded', 'false');
+        document.body.classList.remove('sy-no-scroll');
+      }
+
+      pill.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (cal.classList.contains('open')) close(); else open();
+      });
+      backdrop.addEventListener('click', close);
+      prevBtn.addEventListener('click', function () {
+        viewMonth--;
+        if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+        render();
+      });
+      nextBtn.addEventListener('click', function () {
+        viewMonth++;
+        if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+        render();
+      });
+      todayBtn.addEventListener('click', function () {
+        selected = new Date(today);
+        viewYear = selected.getFullYear();
+        viewMonth = selected.getMonth();
+        render();
+      });
+      confirmBtn.addEventListener('click', function () {
+        paintLabel();
+        renderForDate(selected);     // recompute choghadiya for the chosen date
+        close();
+        if (window.SY && SY.toast) SY.toast('Showing ' + formatLabel(selected), 'success');
+      });
+      gridEl.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-day]');
+        if (!btn) return;
+        var d = parseInt(btn.getAttribute('data-day'), 10);
+        selected = new Date(viewYear, viewMonth, d);
+        render();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && cal.classList.contains('open')) close();
+      });
+    })();
+  </script>
 </body>
 </html>

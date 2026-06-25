@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="../../assets/theme-init.js"></script>
   <title>Sign In · Shree Yantra</title>
   <link rel="stylesheet" href="../../assets/app-shell.css" />
   <link rel="stylesheet" href="../../assets/sy-pages.css" />
@@ -27,7 +28,7 @@
       border-radius: 12px;
       border: 1px solid rgba(201,150,46,0.4);
       color: var(--sy-gold-1);
-      background: rgba(8,8,22,0.6);
+      background: rgba(0,0,0,0.6);
       cursor: pointer;
     }
     .auth-hero {
@@ -73,7 +74,7 @@
       gap: 8px;
       padding: 12px;
       border-radius: 12px;
-      background: rgba(10, 10, 28, 0.7);
+      background: rgba(0,0,0, 0.7);
       border: 1px solid rgba(201,150,46,0.35);
       color: var(--sy-text);
       font-size: 13.5px;
@@ -82,12 +83,13 @@
     }
     .social-btn:hover { border-color: var(--sy-gold-1); }
     .auth-foot {
-      margin-top: 22px;
+      margin: 22px 0 10px;
       text-align: center;
       font-size: 13px;
       color: var(--sy-text-soft);
     }
     .auth-foot a { color: var(--sy-gold-1); text-decoration: none; font-weight: 600; }
+    .auth-create { margin-top: 0; }
     .row-between { display: flex; justify-content: space-between; align-items: center; }
     .row-between a { color: var(--sy-gold-2); font-size: 12.5px; }
   </style>
@@ -171,9 +173,8 @@
       </button>
     </div>
 
-    <p class="auth-foot">
-      New to Shree Yantra? <a data-sy-go="register">Create Account</a>
-    </p>
+    <p class="auth-foot">New to Shree Yantra?</p>
+    <button type="button" class="sy-btn sy-btn--ghost auth-create" data-sy-go="register">Create Account</button>
   </div>
 
   <script src="../../assets/app-shell.js"></script>

@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="../../assets/theme-init.js"></script>
   <title>My Profile · Shree Yantra</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -75,7 +76,7 @@
           </span>
           <div class="info-body">
             <span class="info-lbl">Full Name</span>
-            <span class="info-val">Raj Kumar</span>
+            <span class="info-val" data-sy-username>Raj Kumar</span>
           </div>
         </li>
         <li>
@@ -111,7 +112,7 @@
           </span>
           <div class="info-body">
             <span class="info-lbl">Email</span>
-            <span class="info-val">raj.kumar@cosmos.com</span>
+            <span class="info-val" id="profileEmail">raj.kumar@cosmos.com</span>
           </div>
         </li>
       </ul>
@@ -151,13 +152,13 @@
           </div>
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
         </li>
-        <li data-sy-go="services">
+        <li data-sy-go="library">
           <span class="ic-circle">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           </span>
           <div class="menu-body">
-            <span class="m-lbl">Consultation History</span>
-            <span class="m-sub">Past chats with astrologers</span>
+            <span class="m-lbl">Saved Library</span>
+            <span class="m-sub">Books, mantras and listening history</span>
           </div>
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
         </li>
@@ -224,6 +225,13 @@
   <script src="../../assets/app-shell.js"></script>
   <script>
     (function () {
+      // Reflect the signed-in user's email (app-shell already fills [data-sy-username])
+      var u = (window.SY && SY.getUser) ? SY.getUser() : {};
+      if (u.id && /@/.test(u.id)) {
+        var em = document.getElementById('profileEmail');
+        if (em) em.textContent = u.id;
+      }
+
       var btn = document.getElementById('avatarPickBtn');
       var input = document.getElementById('avatarFile');
       btn.addEventListener('click', function () { input.click(); });

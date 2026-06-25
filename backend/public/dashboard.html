@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Shree Yantra — Admin Dashboard</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, sans-serif; background:#0f0f17; color:#eee;
+         display:flex; min-height:100vh; align-items:center; justify-content:center; margin:0; }
+  .card { background:#17171f; border:1px solid #c9a04a55; border-radius:16px; padding:28px 32px;
+          width:380px; box-shadow:0 12px 40px #0008; }
+  h1 { font-size:18px; margin:0 0 4px; color:#e9c873; }
+  p.sub { margin:0 0 18px; color:#999; font-size:13px; }
+  .row { display:flex; align-items:center; justify-content:space-between; padding:16px 0;
+         border-top:1px solid #ffffff14; }
+  .label b { display:block; font-size:14px; }
+  .label small { color:#888; font-size:12px; }
+  .right { display:flex; align-items:center; gap:12px; }
+  .switch { position:relative; width:58px; height:30px; flex:none; }
+  .switch input { display:none; }
+  .slider { position:absolute; inset:0; background:#444; border-radius:999px; cursor:pointer; transition:.2s; }
+  .slider:before { content:''; position:absolute; width:24px; height:24px; left:3px; top:3px;
+                   background:#fff; border-radius:50%; transition:.2s; }
+  input:checked + .slider { background:#1f8f4f; }
+  input:checked + .slider:before { transform:translateX(28px); }
+  .pill { font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; letter-spacing:.5px; }
+  .free { background:#2a5da855; color:#9cc4ff; }
+  .paid { background:#1f8f4f55; color:#9af0c0; }
+  .msg { margin-top:16px; font-size:13px; min-height:18px; }
+  .err { color:#ff8585; } .ok { color:#9af0c0; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>⚙️ Shree Yantra — Admin</h1>
+    <p class="sub">VedAstro data source control</p>
+
+    <div class="row">
+      <div class="label">
+        <b>VedAstro Tier</b>
+        <small id="hint">Free = 15 req/min (no key)</small>
+      </div>
+      <div class="right">
+        <span class="pill free" id="pill">FREE</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle" />
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="msg" id="msg"></div>
+  </div>
+
+<script>
+  const API = location.origin + '/api/settings';
+  const toggle = document.getElementById('toggle');
+  const pill = document.getElementById('pill');
+  const msg = document.getElementById('msg');
+  const hint = document.getElementById('hint');
+
+  function render(tier, hasKey) {
+    const paid = tier === 'paid';
+    toggle.checked = paid;
+    pill.textContent = paid ? 'PAID' : 'FREE';
+    pill.className = 'pill ' + (paid ? 'paid' : 'free');
+    hint.textContent = paid
+      ? 'Paid = unlimited ($1/mo, API key)'
+      : (hasKey ? 'Free = 15 req/min — key set hai, kabhi bhi paid karo'
+                : 'Free = 15 req/min (no key). Paid ke liye .env me key daalo.');
+  }
+
+  async function load() {
+    try {
+      const d = await (await fetch(API)).json();
+      render(d.vedastroTier, d.hasApiKey);
+    } catch (e) { msg.innerHTML = '<span class="err">Server band hai? ' + e.message + '</span>'; }
+  }
+
+  toggle.addEventListener('change', async () => {
+    const tier = toggle.checked ? 'paid' : 'free';
+    msg.textContent = 'Switching…';
+    try {
+      const r = await fetch(API, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vedastroTier: tier }),
+      });
+      const d = await r.json();
+      if (!r.ok) { msg.innerHTML = '<span class="err">' + d.error + '</span>'; return load(); }
+      render(d.vedastroTier);
+      msg.innerHTML = '<span class="ok">✓ ' + d.message + '</span>';
+    } catch (e) { msg.innerHTML = '<span class="err">' + e.message + '</span>'; }
+  });
+
+  load();
+</script>
+</body>
+</html>

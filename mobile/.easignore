@@ -1,0 +1,14 @@
+# EAS upload ignore list. When this file exists EAS uses it INSTEAD of
+# .gitignore — so `dist/` (the bundled web app, gitignored) IS uploaded here,
+# because plugins/withWebDist.js copies it into the native assets at prebuild.
+node_modules/
+.expo/
+ios/
+android/
+.metro-health-check*
+.DS_Store
+*.log
+npm-debug.*
+yarn-error.*
+.env*.local
+# dist/ is intentionally NOT ignored.

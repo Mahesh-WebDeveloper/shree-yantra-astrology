@@ -1,0 +1,53 @@
+# ── Secrets / env (NEVER commit) ──────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.keystore
+*.jks
+saurabh-hermes-office
+
+# ── Dependencies ──────────────────────────────────────────────
+node_modules/
+
+# ── Expo / React Native ───────────────────────────────────────
+.expo/
+mobile/dist/
+mobile/web-build/
+mobile/expo-env.d.ts
+.metro-health-check*
+
+# ── Native build outputs (regenerated; keep source only) ──────
+android/build/
+android/app/build/
+android/.gradle/
+android/.cxx/
+android/local.properties
+ios/build/
+ios/Pods/
+*.apk
+*.aab
+
+# ── Admin / Vite build ────────────────────────────────────────
+dist/
+dist-ssr/
+*.local
+
+# ── Backend runtime ───────────────────────────────────────────
+backend/uploads/
+
+# ── Logs ──────────────────────────────────────────────────────
+*.log
+logs/
+npm-debug.*
+yarn-error.*
+pnpm-debug.*
+
+# ── OS / Editor ───────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.sw?

@@ -69,7 +69,7 @@ All bottom-nav buttons and the top-bar hamburger work on every screen.
 - `pages/services` — Live astrologer consultations (chat / call)
 - `pages/manage-subscription` — Current plan, plan switcher, billing history, cancel
 - `pages/help` — FAQ + contact support
-
+ 
 ## Responsive notes
 
 - Mobile-first; the app shell targets a 480 px content frame and expands

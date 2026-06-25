@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="../../assets/theme-init.js"></script>
   <title>Kundli · Shree Yantra</title>
   <link rel="stylesheet" href="../../assets/app-shell.css" />
   <link rel="stylesheet" href="../../assets/sy-pages.css" />
@@ -26,7 +27,7 @@
     .k-meta div {
       padding: 8px 6px;
       border-radius: 10px;
-      background: rgba(8,8,22,0.6);
+      background: rgba(0,0,0,0.6);
       border: 1px solid rgba(201,150,46,0.25);
     }
     .k-meta div b { display: block; color: var(--sy-gold-1); font-size: 10px; letter-spacing: 0.12em; }
@@ -54,7 +55,7 @@
       flex: none;
       padding: 9px 14px;
       border-radius: 999px;
-      background: rgba(10,10,28,0.7);
+      background: rgba(0,0,0,0.7);
       border: 1px solid rgba(201,150,46,0.3);
       color: var(--sy-gold-2);
       font-family: 'Cinzel', serif;
@@ -89,7 +90,9 @@
       flex: none;
     }
     .planet-info { flex: 1; margin-left: 10px; }
-    .planet-info small { display: block; color: rgba(216,203,168,0.6); font-size: 11px; }
+    .planet-info small { display: block; color: rgba(216,203,168,0.82); font-size: 11px; }
+    @keyframes kFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) { [data-k] { animation: none !important; } }
   </style>
 </head>
 <body>
@@ -106,7 +109,7 @@
   <main class="sy-container">
     <section class="sy-card k-hero">
       <span class="sy-pill">YOUR BIRTH CHART</span>
-      <h2 class="sy-gold">Raj Kumar</h2>
+      <h2 class="sy-gold" data-sy-username>Raj Kumar</h2>
       <p class="sy-muted sy-small">Leo Ascendant · Moon in Cancer</p>
       <div class="k-meta">
         <div><b>DOB</b> 01 Jan 2000</div>
@@ -157,14 +160,14 @@
     </section>
 
     <div class="k-tabs">
-      <button class="active">OVERVIEW</button>
-      <button>PLANETS</button>
-      <button>DASHA</button>
-      <button>YOGA</button>
-      <button>DOSHA</button>
+      <button class="active" data-tab="overview">OVERVIEW</button>
+      <button data-tab="planets">PLANETS</button>
+      <button data-tab="dasha">DASHA</button>
+      <button data-tab="yoga">YOGA</button>
+      <button data-tab="dosha">DOSHA</button>
     </div>
 
-    <section class="sy-card">
+    <section class="sy-card" data-k="overview">
       <h3 class="sy-gold" style="margin:0 0 8px;font-family:'Cinzel',serif;letter-spacing:.1em;font-size:14px;">KEY INSIGHTS</h3>
       <p class="sy-small" style="color:var(--sy-text-soft);line-height:1.55;">
         With Sun rising in your 1st house, you radiate natural leadership. Jupiter in
@@ -173,7 +176,7 @@
       </p>
     </section>
 
-    <section class="sy-card">
+    <section class="sy-card" data-k="overview planets">
       <h3 class="sy-gold" style="margin:0 0 8px;font-family:'Cinzel',serif;letter-spacing:.1em;font-size:14px;">PLANETARY POSITIONS</h3>
       <div class="planet-row">
         <span class="planet-glyph">☉</span>
@@ -202,7 +205,7 @@
       </div>
     </section>
 
-    <section class="sy-card">
+    <section class="sy-card" data-k="overview dasha">
       <h3 class="sy-gold" style="margin:0 0 8px;font-family:'Cinzel',serif;letter-spacing:.1em;font-size:14px;">CURRENT DASHA</h3>
       <div class="sy-row sy-row--between">
         <div>
@@ -213,6 +216,31 @@
       </div>
     </section>
 
+    <!-- Dasha timeline (DASHA tab) -->
+    <section class="sy-card" data-k="dasha">
+      <h3 class="sy-gold" style="margin:0 0 10px;font-family:'Cinzel',serif;letter-spacing:.1em;font-size:14px;">VIMSHOTTARI TIMELINE</h3>
+      <div class="planet-row"><span class="planet-glyph">♃</span><div class="planet-info"><b>JUPITER</b><small>Mar 2024 – Feb 2040 · running now</small></div><span class="sy-pill sy-pill--solid">Active</span></div>
+      <div class="planet-row"><span class="planet-glyph">♄</span><div class="planet-info"><b>SATURN</b><small>Feb 2040 – Feb 2059</small></div><span class="sy-pill">Upcoming</span></div>
+      <div class="planet-row"><span class="planet-glyph">☿</span><div class="planet-info"><b>MERCURY</b><small>Feb 2059 – Feb 2076</small></div><span class="sy-pill">Upcoming</span></div>
+      <div class="planet-row"><span class="planet-glyph">☵</span><div class="planet-info"><b>KETU</b><small>Feb 2076 – Feb 2083</small></div><span class="sy-pill">Upcoming</span></div>
+    </section>
+
+    <!-- Yogas (YOGA tab) -->
+    <section class="sy-card" data-k="yoga">
+      <h3 class="sy-gold" style="margin:0 0 10px;font-family:'Cinzel',serif;letter-spacing:.1em;font-size:14px;">AUSPICIOUS YOGAS</h3>
+      <div class="planet-row"><span class="planet-glyph">✦</span><div class="planet-info"><b>Gajakesari Yoga</b><small>Jupiter–Moon angle · wisdom &amp; respect</small></div><span class="sy-pill sy-pill--solid">Strong</span></div>
+      <div class="planet-row"><span class="planet-glyph">☀</span><div class="planet-info"><b>Budhaditya Yoga</b><small>Sun–Mercury · sharp intellect</small></div><span class="sy-pill">Present</span></div>
+      <div class="planet-row"><span class="planet-glyph">♚</span><div class="planet-info"><b>Raja Yoga</b><small>5th–9th lords · rise in status</small></div><span class="sy-pill">Forming</span></div>
+    </section>
+
+    <!-- Doshas (DOSHA tab) -->
+    <section class="sy-card" data-k="dosha">
+      <h3 class="sy-gold" style="margin:0 0 10px;font-family:'Cinzel',serif;letter-spacing:.1em;font-size:14px;">DOSHA CHECK</h3>
+      <div class="planet-row"><span class="planet-glyph">♂</span><div class="planet-info"><b>Mangal Dosha</b><small>Mars in 3rd · mild effect</small></div><span class="sy-pill">Low</span></div>
+      <div class="planet-row"><span class="planet-glyph">☊</span><div class="planet-info"><b>Kaal Sarp Dosha</b><small>Not formed in your chart</small></div><span class="sy-pill sy-pill--solid">Clear</span></div>
+      <div class="planet-row"><span class="planet-glyph">♄</span><div class="planet-info"><b>Sade Sati</b><small>Begins ~2027 · prepare remedies</small></div><span class="sy-pill">Watch</span></div>
+    </section>
+
     <button class="sy-btn sy-btn--primary" data-sy-go="subscribenow">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2 8l4 6 5-7 5 7 4-4-2 12H4z"/></svg>
       UNLOCK FULL ANALYSIS
@@ -221,12 +249,45 @@
 
   <script src="../../assets/app-shell.js"></script>
   <script>
-    document.querySelectorAll('.k-tabs button').forEach(function (b) {
+  (function () {
+    var tabs = Array.prototype.slice.call(document.querySelectorAll('.k-tabs button'));
+    var sections = Array.prototype.slice.call(document.querySelectorAll('[data-k]'));
+
+    function showTab(tab) {
+      sections.forEach(function (sec) {
+        var inTab = (sec.getAttribute('data-k') || '').split(/\s+/).indexOf(tab) !== -1;
+        sec.style.display = inTab ? '' : 'none';
+        if (inTab) {
+          sec.style.animation = 'none';
+          // restart a gentle fade so the switch feels responsive
+          void sec.offsetWidth;
+          sec.style.animation = 'kFade 320ms cubic-bezier(.2,.7,.2,1)';
+        }
+      });
+    }
+
+    tabs.forEach(function (b) {
       b.addEventListener('click', function () {
-        document.querySelectorAll('.k-tabs button').forEach(function (x) { x.classList.remove('active'); });
+        tabs.forEach(function (x) { x.classList.remove('active'); });
         b.classList.add('active');
+        showTab(b.getAttribute('data-tab') || 'overview');
+        if (window.SY && SY.toast) SY.toast(b.textContent.trim(), 'success');
       });
     });
+
+    // keyboard arrow navigation across tabs
+    tabs.forEach(function (b, i) {
+      b.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+          e.preventDefault();
+          var n = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+          n.focus(); n.click();
+        }
+      });
+    });
+
+    showTab('overview');   // initial
+  })();
   </script>
 </body>
 </html>

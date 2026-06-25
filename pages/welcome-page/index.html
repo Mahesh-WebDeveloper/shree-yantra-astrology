@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#03030c" />
+  <script src="../../assets/theme-init.js"></script>
   <title>Shree Yantra Astrology</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -36,37 +38,34 @@
     <!-- twinkling stars -->
     <div id="stars"></div>
 
-    <!-- Phone-style container -->
-    <div class="container">
-      <!-- Top header row -->
-      <div class="top-header">
-        <button type="button" class="icon-btn menu-btn" data-menu-toggle aria-label="Menu">
-          <!-- Menu icon -->
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#f6d27a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
+    <!-- Unified app header -->
+    <header class="sy-topbar">
+        <button class="sy-topbar__btn" data-menu-toggle aria-label="Menu" type="button">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
           </svg>
         </button>
-        <div class="spacer"></div>
-        <button type="button" class="premium-badge premium-crown-btn" data-sy-go="manage-subscription" aria-label="Premium plan">
-          <svg class="crown" width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <defs>
-              <linearGradient id="cg1" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#fce8a8" />
-                <stop offset="100%" stop-color="#b87f1a" />
-              </linearGradient>
-            </defs>
-            <path d="M2 8 L6 14 L9 6 L12 14 L15 6 L18 14 L22 8 L20 18 H4 L2 8 Z" fill="url(#cg1)" stroke="url(#cg1)" stroke-width="0.6" stroke-linejoin="round" />
-            <circle cx="2" cy="8" r="1.2" fill="url(#cg1)" />
-            <circle cx="22" cy="8" r="1.2" fill="url(#cg1)" />
-            <circle cx="12" cy="14" r="1.2" fill="url(#cg1)" />
-          </svg>
-        </button>
-      </div>
 
-      <!-- Logo -->
-      <div class="logo-block">
+        <div class="sy-brand-header">
+          <h1>SHREE YANTRA</h1>
+          <p>Astrology</p>
+        </div>
+
+        <button class="sy-topbar__btn sy-topbar__bell" data-sy-go="notifications" aria-label="Notifications" type="button">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.7 21a2 2 0 0 1-3.4 0"/>
+          </svg>
+          <span class="sy-topbar__badge">3</span>
+        </button>
+      </header>
+
+      <!-- Phone-style container -->
+      <div class="container" style="padding-top: 4px;">
+        <!-- Logo -->
+        <div class="logo-block">
         <!-- Shree Yantra SVG -->
         <svg class="shree-yantra" width="92" height="92" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <defs>
@@ -130,13 +129,20 @@
 
       <!-- Welcome -->
       <div class="welcome-block">
-        <h2 class="welcome-title gold-text">Welcome, <span data-sy-firstname>Raj</span> <span class="namaste">🙏</span></h2>
-        <p class="welcome-sub">Your Daily Horoscope</p>
+        <div class="welcome-text">
+          <h2 class="welcome-title gold-text">Welcome, <span data-sy-firstname>Raj</span> <span class="namaste">🙏</span></h2>
+          <p class="welcome-sub">Your Daily Horoscope</p>
+        </div>
+        <div class="welcome-zodiac-badge" aria-hidden="true">
+          <div class="wz-icon">♌</div>
+          <span class="wz-label">Leo</span>
+        </div>
       </div>
 
       <!-- Horoscope card -->
       <div class="gold-border-card horoscope-card">
-        <div class="horoscope-row">
+        <div class="horoscope-card-inner" style="padding: 24px 24px 12px;">
+          <div class="horoscope-row">
           <div class="zodiac-wheel-wrap">
             <!-- Zodiac wheel with Leo center -->
             <svg width="120" height="120" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -147,8 +153,8 @@
                   <stop offset="100%" stop-color="#a17613" />
                 </linearGradient>
                 <radialGradient id="zbg" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stop-color="#0d0d28" />
-                  <stop offset="100%" stop-color="#03030c" />
+                  <stop offset="0%" stop-color="var(--zw-bg-inner, #0d0d28)" />
+                  <stop offset="100%" stop-color="var(--zw-bg-outer, #03030c)" />
                 </radialGradient>
               </defs>
               <circle cx="100" cy="100" r="96" fill="url(#zbg)" stroke="url(#zg)" stroke-width="1.5" />
@@ -176,6 +182,7 @@
               Good time for financial growth and relationships.
             </p>
           </div>
+        </div>
         </div>
         <div class="horoscope-btn-row">
           <button class="gold-btn">
@@ -224,7 +231,7 @@
               <g id="sun-center"></g>
             </svg>
           </div>
-          <h3 class="feature-title gold-text">Daily<br />Prediction</h3>
+          <h3 class="feature-title gold-text">Daily Prediction</h3>
           <p class="feature-desc">Get your daily horoscope and astrological insights</p>
           <button class="chevron-circle">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f6d27a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -277,7 +284,7 @@
           </button>
         </div>
 
-        <!-- Remedies / Diya -->
+        <!-- Choghadiya / Muhurat -->
         <div class="feature-card feature-tint-green">
           <div class="ring-border"></div>
           <div class="feature-icon">
@@ -300,8 +307,8 @@
               <path d="M52 124 Q 100 102, 148 124" fill="none" stroke="url(#dg)" stroke-width="1" opacity="0.7" />
             </svg>
           </div>
-          <h3 class="feature-title gold-text">Remedies / Upay</h3>
-          <p class="feature-desc">Powerful remedies to improve your life and remove obstacles</p>
+          <h3 class="feature-title gold-text">Choghadiya Muhurat</h3>
+          <p class="feature-desc">Find auspicious timings for important work and decisions</p>
           <button class="chevron-circle">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f6d27a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <polyline points="9 18 15 12 9 6"></polyline>

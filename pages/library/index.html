@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="../../assets/theme-init.js"></script>
   <title>Divine Library - Shree Yantra</title>
   <link rel="stylesheet" href="../../assets/app-shell.css" />
   <link rel="stylesheet" href="../../assets/sy-pages.css" />
   <style>
     /* Premium Library Styles */
     :root {
-      --card-bg: rgba(12, 12, 18, 0.85);
+      --card-bg: rgba(0,0,0, 0.85);
       --card-border: rgba(220, 180, 80, 0.2);
       --gold-text: #eecb7a;
       --gold-dim: #9a7d3b;
@@ -18,42 +19,33 @@
     
     body {
       background: #000;
-      color: #fff;
+      color: #efe6d2;
       font-family: 'Inter', -apple-system, sans-serif;
     }
-    
-    .sy-container {
-      padding-top: 20px;
+    /* Unified cosmic starfield so Library matches the rest of the app. */
+    body::after {
+      content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      background-image:
+        radial-gradient(1px 1px at 12% 22%, rgba(255,240,200,0.7), transparent 60%),
+        radial-gradient(1px 1px at 30% 14%, rgba(255,255,255,0.55), transparent 60%),
+        radial-gradient(1px 1px at 70% 8%,  rgba(255,240,200,0.55), transparent 60%),
+        radial-gradient(1px 1px at 92% 38%, rgba(255,255,255,0.55), transparent 60%),
+        radial-gradient(1px 1px at 18% 60%, rgba(255,240,200,0.5),  transparent 60%),
+        radial-gradient(1px 1px at 64% 72%, rgba(255,255,255,0.45), transparent 60%),
+        radial-gradient(1px 1px at 88% 86%, rgba(255,240,200,0.55), transparent 60%),
+        radial-gradient(1px 1px at 6%  40%, rgba(255,255,255,0.45), transparent 60%);
     }
 
-    /* Redesigned Premium Header */
-    .sy-topbar {
-      background: #000 !important;
-      border-bottom: 1px solid rgba(220,180,80,0.15) !important;
-      padding: 10px 16px !important;
-      height: 60px !important;
+    .sy-container {
+      padding-top: 20px;
+      /* clearance so the last card never sits under the bottom nav */
+      padding-bottom: 24px;
     }
-    .sy-brand-header {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    .sy-brand-header h1 {
-      margin: 0;
-      font-family: 'Cinzel', serif;
-      font-size: 19px;
-      letter-spacing: 0.12em;
-      color: var(--gold-text);
-      font-weight: 700;
-    }
-    .sy-brand-header p {
-      margin: 2px 0 0;
-      font-size: 8px;
-      letter-spacing: 0.35em;
-      color: var(--gold-dim);
-      font-weight: 600;
-      text-transform: uppercase;
+    /* When the now-playing bar is visible, add extra space so it never
+       overlaps the last section (Explore the Vedas). Driven by a body
+       class (works in every browser, not just :has-capable ones). */
+    body.lib-nowbar-open .sy-container {
+      padding-bottom: 104px;
     }
 
     /* Hero Section */
@@ -62,11 +54,41 @@
       margin-bottom: 24px;
       position: relative;
     }
+
+    /* Stack: OM badge on top, book below — no overlap */
+    .lib-hero-icons {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;           /* borders touch, no gap, no overlap */
+      margin: 0 auto;
+    }
+
+    /* OM — bare glyph, zero gap to book */
+    .lib-om-badge {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      margin-bottom: -16px; /* pull the book up flush under the glyph */
+      line-height: 1;
+    }
+    .lib-om-badge span {
+      background: linear-gradient(180deg, #fce8a8 0%, #e9b850 50%, #a17613 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-family: 'Noto Sans Devanagari', serif;
+      font-size: 36px;
+      line-height: 1;
+      display: block;
+      margin-bottom: 0;
+      filter: drop-shadow(0 0 10px rgba(238,203,122,0.60));
+    }
+
     .lib-book-icon {
       width: 140px;
       height: 90px;
-      margin: 0 auto;
-      filter: drop-shadow(0 0 25px rgba(238, 203, 122, 0.4));
+      filter: drop-shadow(0 0 22px rgba(238, 203, 122, 0.45));
     }
     .lib-title-wrap {
       display: flex;
@@ -122,7 +144,7 @@
       min-width: 76px;
       height: 84px;
       border-radius: 14px;
-      background: linear-gradient(180deg, rgba(20,20,25,0.9), rgba(10,10,14,0.95));
+      background: linear-gradient(180deg, rgba(20,20,25,0.9), rgba(0,0,0,0.95));
       border: 1px solid rgba(220,180,80,0.15);
       display: flex;
       flex-direction: column;
@@ -266,26 +288,68 @@
       align-items: center;
     }
     .lib-boost-cover {
-      width: 100px;
-      height: 140px;
-      border-radius: 8px;
-      border: 1px solid rgba(220,180,80,0.3);
-      background: radial-gradient(circle at top, #1c2b4d, #080f1e);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      width: 104px;
+      height: 146px;
+      border-radius: 5px 9px 9px 5px;
+      flex-shrink: 0;
+      position: relative;
+      /* rich indigo→navy Gita cover with a warm top glow */
+      background:
+        radial-gradient(circle at 50% 18%, rgba(120,90,220,0.30), transparent 60%),
+        linear-gradient(160deg, #2a2f6b 0%, #161a44 55%, #0a0c24 100%);
+      border: 1px solid rgba(220,180,80,0.40);
+      box-shadow:
+        0 10px 22px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,0.16),
+        inset 3px 0 0 rgba(0,0,0,0.30);     /* spine shadow */
+      overflow: hidden;
+    }
+    /* spine highlight strip */
+    .lib-boost-cover::before {
+      content: '';
+      position: absolute;
+      left: 5px; top: 8px; bottom: 8px;
+      width: 2px; border-radius: 2px;
+      background: linear-gradient(180deg, transparent, rgba(255,255,255,0.5), transparent);
+      z-index: 2;
+    }
+    /* inset gold double-rule frame */
+    .bc-frame {
+      position: absolute;
+      inset: 8px 8px 8px 12px;
+      border: 1px solid rgba(238,203,122,0.55);
+      border-radius: 4px;
+      box-shadow: inset 0 0 0 3px rgba(238,203,122,0.12);
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding-top: 16px;
-      flex-shrink: 0;
-      position: relative;
-    }
-    .lib-boost-cover h5 {
-      margin: 0;
-      color: var(--gold-text);
-      font-family: 'Cinzel', serif;
-      font-size: 14px;
+      justify-content: space-between;
+      padding: 10px 6px;
       text-align: center;
-      line-height: 1.2;
+    }
+    .bc-om {
+      font-family: 'Noto Sans Devanagari', serif;
+      font-size: 20px; line-height: 1;
+      color: #fff7d6;
+      text-shadow: 0 0 8px rgba(238,203,122,0.6);
+    }
+    .bc-title-hi {
+      font-family: 'Noto Sans Devanagari', serif;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.3;
+      color: var(--gold-text);
+    }
+    .bc-chakra {
+      width: 40px; height: 40px;
+      color: rgba(238,203,122,0.92);
+      filter: drop-shadow(0 0 6px rgba(238,203,122,0.45));
+    }
+    .bc-title-en {
+      font-family: 'Cinzel', serif;
+      font-size: 7.5px;
+      letter-spacing: 0.16em;
+      color: rgba(238,203,122,0.78);
     }
     .lib-boost-content h4 {
       margin: 0 0 8px;
@@ -389,7 +453,7 @@
       gap: 14px;
       padding: 12px;
       border-radius: 12px;
-      background: rgba(10,10,14,0.8);
+      background: rgba(0,0,0,0.8);
       border: 1px solid rgba(255,255,255,0.05);
     }
     .lib-music-item.purple { border-color: rgba(189,92,255,0.3); box-shadow: inset 0 0 20px rgba(189,92,255,0.08); }
@@ -423,7 +487,7 @@
       gap: 12px;
     }
     .lib-veda-card {
-      background: radial-gradient(circle at 50% 80%, rgba(220,180,80,0.1), rgba(10,10,14,0.9));
+      background: radial-gradient(circle at 50% 80%, rgba(220,180,80,0.1), rgba(0,0,0,0.9));
       border: 1px solid var(--card-border);
       border-radius: 12px;
       padding: 16px 12px;
@@ -432,94 +496,857 @@
       flex-direction: column;
       align-items: center;
     }
-    .lib-veda-card h5 { margin: 0 0 4px; font-size: 14px; color: #fff; font-weight: 500; }
-    .lib-veda-card p { margin: 0 0 12px; font-size: 10px; color: #999; }
-    .lib-veda-book-icon {
-      width: 70px; height: 50px;
-      color: var(--gold-text);
-      position: relative;
-    }
-    .lib-veda-book-icon svg { width: 100%; height: 100%; opacity: 0.8; }
-    .lib-veda-play-mini {
-      position: absolute;
-      bottom: -4px; right: -4px;
-      width: 20px; height: 20px;
-      border-radius: 50%;
-      background: var(--gold-text);
-      color: #000;
-      display: grid; place-items: center;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-    }
-    .lib-veda-play-mini svg { width: 10px; height: 10px; opacity: 1; }
+    .lib-veda-card h5 { margin: 10px 0 2px; font-size: 14px; color: #f0e8d0; font-weight: 600; }
+    .lib-veda-card p { margin: 0; font-size: 10px; color: rgba(200,180,120,0.6); font-family: 'Cinzel', serif; letter-spacing: 0.04em; }
 
-    /* Premium Banner Bottom */
-    .lib-premium-banner {
-      background: radial-gradient(circle at 20% 50%, rgba(220,180,80,0.15), rgba(10,10,14,0.9));
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 20px;
+    /* ── Book cover (upright, colored spine, gold frame) ── */
+    .lib-veda-cover {
+      position: relative;
+      width: 62px;
+      height: 84px;
+      border-radius: 5px 8px 8px 5px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
-      position: relative;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      color: #fff;
+      box-shadow:
+        0 8px 18px rgba(0,0,0,0.55),
+        inset 0 1px 0 rgba(255,255,255,0.18),
+        inset 2px 0 0 rgba(0,0,0,0.25);     /* spine shadow */
+      border: 1px solid rgba(255,255,255,0.14);
       overflow: hidden;
-      margin-bottom: 24px;
+      transition: transform 220ms var(--ease);
     }
-    .lib-premium-banner::before {
+    /* spine highlight strip on the left edge */
+    .lib-veda-cover::before {
       content: '';
       position: absolute;
-      left: -20px; top: -10px;
-      width: 120px; height: 140px;
-      background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40" stroke="rgba(238,203,122,0.15)" stroke-width="2" fill="none"/></svg>') center/contain no-repeat;
+      left: 4px; top: 6px; bottom: 6px;
+      width: 2px; border-radius: 2px;
+      background: linear-gradient(180deg, transparent, rgba(255,255,255,0.5), transparent);
+    }
+    .lib-veda-card:hover .lib-veda-cover { transform: translateY(-2px) rotate(-1.5deg); }
+    .veda-cover-om {
+      font-family: 'Noto Sans Devanagari', serif;
+      font-size: 22px; line-height: 1;
+      color: rgba(255,247,214,0.95);
+      text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    }
+    .veda-cover-name {
+      font-family: 'Noto Sans Devanagari', serif;
+      font-size: 10px;
+      color: rgba(255,247,214,0.88);
+      letter-spacing: 0.02em;
+    }
+    /* per-Veda cover colours (rich gradients) */
+    .veda-amber  { background: linear-gradient(150deg,#7a4d12,#3a2407); }
+    .veda-green  { background: linear-gradient(150deg,#1f5a39,#0c2417); }
+    .veda-rose   { background: linear-gradient(150deg,#7a2438,#33101a); }
+    .veda-violet { background: linear-gradient(150deg,#4a2a7a,#1c1033); }
+
+    .lib-veda-play-mini {
+      position: absolute;
+      bottom: -6px; right: -6px;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #fce8a8, #b87f1a);
+      color: #1a0e00;
+      display: grid; place-items: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.55), 0 0 8px rgba(233,184,80,0.4);
+    }
+    .lib-veda-play-mini svg { width: 10px; height: 10px; opacity: 1; margin-left: 1px; }
+
+    /* ── Premium Banner — mobile-first, matches app card theme ── */
+    .premium-banner {
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+      margin-bottom: 24px;
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid var(--card-border);
+      background:
+        radial-gradient(ellipse 200px 160px at 12% 45%, rgba(238,203,122,0.14) 0%, transparent 70%),
+        radial-gradient(ellipse 200px 180px at 92% 10%, rgba(140,80,220,0.10) 0%, transparent 70%),
+        var(--card-bg);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.45);
+      /* 2-row grid: [art | text] then [full-width button] */
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      grid-template-rows: auto auto;
+      column-gap: 14px;
+      row-gap: 14px;
+      align-items: center;
+    }
+    /* Top hairline accent (matches .lib-section-card language) */
+    .premium-banner::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 10%; right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(238,203,122,0.45), transparent);
       pointer-events: none;
     }
-    .lib-premium-content { position: relative; z-index: 1; }
-    .lib-premium-content h4 { margin: 0 0 6px; font-family: 'Cinzel', serif; font-size: 16px; color: var(--gold-text); }
-    .lib-premium-content p { margin: 0; font-size: 12px; color: #aaa; line-height: 1.4; }
-    .lib-premium-btn {
-      background: linear-gradient(180deg, #fce8a8, #b87f1a);
-      color: #2a1c00;
-      border: none;
-      border-radius: 8px;
-      padding: 12px;
-      font-size: 14px;
-      font-weight: 700;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 4px 15px rgba(238,203,122,0.25);
+
+    .premium-left {
+      grid-row: 1;
+      grid-column: 1;
+      width: 72px;
+      height: 72px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      filter: drop-shadow(0 0 14px rgba(140,70,220,0.40))
+              drop-shadow(0 0 6px rgba(238,203,122,0.18));
     }
+    .premium-image {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center bottom;
+    }
+
+    .premium-content {
+      grid-row: 1;
+      grid-column: 2;
+      min-width: 0;
+    }
+    .premium-content h2 {
+      margin: 0 0 5px;
+      font-family: 'Playfair Display', serif;
+      color: var(--gold-text);
+      font-size: clamp(15px, 4.2vw, 18px);
+      font-weight: 700;
+      line-height: 1.25;
+    }
+    .premium-content p {
+      margin: 0;
+      color: rgba(200,185,145,0.62);
+      font-size: clamp(11px, 2.8vw, 12.5px);
+      line-height: 1.5;
+    }
+
+    .right-area {
+      grid-row: 2;
+      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+    }
+
+    /* Full-width gold CTA — same language as .lib-premium-btn / app buttons */
+    .premium-btn {
+      position: relative;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 13px 18px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(180deg, #fce8a8 0%, #e9b850 46%, #b87f1a 100%);
+      color: #1a0e00;
+      font-family: 'Cinzel', serif;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      box-shadow:
+        0 6px 22px rgba(233,184,80,0.38),
+        inset 0 1px 0 rgba(255,255,255,0.45),
+        inset 0 -1px 0 rgba(74,53,8,0.28);
+      transition: filter 200ms ease, transform 180ms ease, box-shadow 200ms ease;
+    }
+    .premium-btn::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(110deg, transparent 28%, rgba(255,255,255,0.45) 50%, transparent 72%);
+      transform: translateX(-120%);
+      transition: transform 600ms cubic-bezier(.2,.7,.2,1);
+      pointer-events: none;
+    }
+    @media (hover: hover) {
+      .premium-btn:hover { filter: brightness(1.06); box-shadow: 0 10px 30px rgba(233,184,80,0.46); }
+      .premium-btn:hover::before { transform: translateX(120%); }
+    }
+    .premium-btn:active { transform: scale(0.98); transition-duration: 80ms; }
+
+    .crown { font-size: 16px; line-height: 1; }
+
+    .premium-sub {
+      color: rgba(180,160,110,0.50);
+      font-size: 10.5px;
+      letter-spacing: 0.04em;
+      text-align: center;
+    }
+
+    @media (max-width: 360px) {
+      .premium-banner { grid-template-columns: 60px 1fr; column-gap: 12px; padding: 14px; }
+      .premium-left { width: 60px; height: 60px; }
+    }
+
+    /* Custom Audio Player Timeline */
+    .lib-progress-slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      outline: none;
+      cursor: grab;
+      position: relative;
+      transition: height 0.2s;
+    }
+    .lib-progress-slider:active {
+      cursor: grabbing;
+    }
+    .lib-progress-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #fce8a8;
+      box-shadow: 0 0 8px rgba(233,184,80,0.8);
+      cursor: grab;
+      transition: transform 0.1s;
+    }
+    .lib-progress-slider:active::-webkit-slider-thumb {
+      transform: scale(1.3);
+      cursor: grabbing;
+    }
+    .lib-progress-slider::-moz-range-thumb {
+      width: 12px;
+      height: 12px;
+      border: none;
+      border-radius: 50%;
+      background: #fce8a8;
+      box-shadow: 0 0 8px rgba(233,184,80,0.8);
+      cursor: grab;
+    }
+
+    /* Enhanced Controller Buttons */
+    .lib-cont-btn {
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: var(--gold-text);
+      background: rgba(233,184,80,0.05);
+      border: 1px solid rgba(233,184,80,0.2);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .lib-cont-btn:hover {
+      background: rgba(233,184,80,0.15);
+      transform: scale(1.05);
+    }
+    .lib-cont-btn:active {
+      transform: scale(0.95);
+    }
+    .lib-cont-play-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      background: linear-gradient(135deg, #fce8a8, #b87f1a);
+      color: #000;
+      border: none;
+      box-shadow: 0 4px 10px rgba(184,127,26,0.3);
+      transition: all 0.2s ease;
+    }
+    .lib-cont-play-btn:hover {
+      background: linear-gradient(135deg, #fff3c7, #cca33f);
+      box-shadow: 0 6px 14px rgba(184,127,26,0.5);
+      transform: scale(1.05);
+    }
+    .lib-cont-play-btn:active {
+      transform: scale(0.95);
+    }
+
+
+
+
+    /* ============================================================
+   DIVINE LIBRARY — PRODUCTION POLISH LAYER
+   Load AFTER sy-pages.css and the page's inline <style>.
+   Override-only: no HTML/structure changes required.
+   ============================================================ */
+
+:root {
+  /* --- Refined gold scale: desaturated, layered, luxurious --- */
+  --gold-100: #f8ecc4;   /* highlights / sheen        */
+  --gold-200: #f0d79a;   /* hover text                */
+  --gold-300: #e6c277;   /* PRIMARY readable gold     */
+  --gold-400: #d4ad5e;   /* secondary                 */
+  --gold-500: #b9913f;   /* mid / strokes             */
+  --gold-700: #8a6a30;   /* deep                      */
+  --gold-glow: rgba(230, 194, 119, 0.18);   /* was 0.40 — calmer */
+
+  /* --- Remap legacy vars so existing rules upgrade for free --- */
+  --gold-text: var(--gold-300);
+  --gold-dim:  #b89a5b;                 /* lifted for AA on black */
+  --card-bg:   rgba(14, 14, 20, 0.86);
+  --card-border: rgba(214, 176, 92, 0.16);
+
+  /* --- Layered shadow system (contact + ambient + edge) --- */
+  --sh-1: 0 1px 1px rgba(0,0,0,0.55), 0 6px 16px rgba(0,0,0,0.30);
+  --sh-2: 0 2px 4px rgba(0,0,0,0.45), 0 14px 34px rgba(0,0,0,0.42);
+  --edge: inset 0 1px 0 rgba(255,255,255,0.045);
+
+  /* --- Motion tokens --- */
+  --ease: cubic-bezier(.22,.61,.36,1);
+  --dur: 180ms;
+
+  /* --- Spacing rhythm --- */
+  --gap-section: 20px;
+  --pad-card: 18px;
+}
+
+/* ---------- Ambient background depth (replaces flat #000) ---------- */
+body {
+  background:
+    radial-gradient(120% 55% at 50% -8%, rgba(214,176,92,0.03), transparent 50%),
+    radial-gradient(85% 50% at 105% 102%, rgba(120,70,200,0.025), transparent 55%),
+    #000 !important;
+  background-attachment: fixed;
+}
+
+/* ---------- HERO ---------- */
+.lib-om-badge span { filter: drop-shadow(0 0 8px rgba(238,203,122,0.40)); } /* was 0.60 */
+.lib-hero h2 {
+  letter-spacing: 0.10em;
+  text-shadow: 0 0 18px rgba(230,194,119,0.18);
+}
+.lib-hero h3 { color: #d9d9d9; }
+
+/* ---------- CATEGORY CHIPS ---------- */
+.lib-cats-scroll {
+  scroll-snap-type: x proximity;
+  -webkit-mask: linear-gradient(90deg, transparent, #000 18px, #000 calc(100% - 18px), transparent);
+          mask: linear-gradient(90deg, transparent, #000 18px, #000 calc(100% - 18px), transparent);
+}
+.lib-cat-card {
+  scroll-snap-align: start;
+  cursor: pointer;
+  box-shadow: var(--sh-1), var(--edge);
+  transition: transform var(--dur) var(--ease),
+              border-color var(--dur) var(--ease),
+              box-shadow var(--dur) var(--ease);
+  will-change: transform;
+}
+.lib-cat-card:active { transform: scale(0.94); }
+.lib-cat-card.active {
+  background: linear-gradient(180deg, rgba(40,18,60,0.92), rgba(18,9,28,0.96));
+  border: 1.5px solid rgba(189,92,255,0.85);
+  box-shadow: 0 0 0 1px rgba(189,92,255,0.22),
+              0 8px 22px rgba(120,40,200,0.26), var(--edge);
+}
+
+/* ---------- SECTION CARDS (unified depth + rhythm) ---------- */
+.lib-section-card {
+  background: linear-gradient(180deg, rgba(22,22,28,0.90), rgba(11,11,15,0.92));
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  padding: var(--pad-card);
+  margin-bottom: var(--gap-section);
+  box-shadow: var(--sh-1), var(--edge);
+  transition: transform var(--dur) var(--ease),
+              box-shadow var(--dur) var(--ease),
+              border-color var(--dur) var(--ease);
+}
+@media (hover:hover) and (pointer:fine) {
+  .lib-section-card:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--sh-2), var(--edge);
+    border-color: rgba(230,194,119,0.24);
+  }
+}
+
+/* Section header labels: tighter, more legible */
+.lib-section-header h4,
+.lib-music-mode-header h4 {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: #b89a5b;
+}
+.lib-section-header a {
+  color: var(--gold-300);
+  font-weight: 500;
+  transition: opacity var(--dur) var(--ease);
+}
+.lib-section-header a:active { opacity: 0.55; }
+
+/* ---------- POPULAR MANTRAS ---------- */
+.lib-mantra-item {
+  padding: 8px; margin: -8px -8px 0;       /* extend hit area, no layout shift */
+  border-radius: 12px;
+  transition: background var(--dur) var(--ease);
+}
+.lib-mantra-item:active { background: rgba(230,194,119,0.06); }
+.lib-mantra-img {
+  background: linear-gradient(135deg, rgba(230,194,119,0.18), rgba(0,0,0,0.85));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.lib-mantra-play {
+  width: 36px; height: 36px;               /* 32 → 36, thumb-friendly */
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.lib-mantra-play:active {
+  transform: scale(0.88);
+  box-shadow: 0 0 14px var(--gold-glow);
+}
+.lib-btn-outline {
+  transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.lib-btn-outline:active {
+  transform: scale(0.985);
+  background: rgba(230,194,119,0.05);
+  border-color: rgba(230,194,119,0.45);
+}
+
+/* ---------- BOOST CARD (Gita book cover handled above) ---------- */
+.lib-boost-cover::after { content: none; }   /* spine now drawn by ::before */
+.lib-read-link { transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+.lib-read-link:active { background: rgba(230,194,119,0.08); border-color: rgba(230,194,119,0.5); }
+
+/* ---------- CONTINUE LISTENING ---------- */
+.lib-progress-fill {
+  background: linear-gradient(90deg, var(--gold-400), var(--gold-200));
+  box-shadow: 0 0 6px rgba(230,194,119,0.45);   /* was full glow */
+}
+.lib-cont-play { transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+.lib-cont-play:active { transform: scale(0.9); box-shadow: 0 0 14px var(--gold-glow); }
+
+/* ---------- SPIRITUAL MUSIC MODE ---------- */
+.lib-music-item {
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.lib-music-item:active { transform: scale(0.98); }
+/* soften the colored inner glows so they read as ambience, not neon */
+.lib-music-item.purple { box-shadow: inset 0 0 18px rgba(189,92,255,0.06), var(--edge); }
+.lib-music-item.gold   { box-shadow: inset 0 0 18px rgba(230,194,119,0.06), var(--edge); }
+.lib-music-item.green  { box-shadow: inset 0 0 18px rgba(122,240,94,0.05), var(--edge); }
+.lib-music-item.blue   { box-shadow: inset 0 0 18px rgba(100,180,255,0.06), var(--edge); }
+
+/* ---------- VEDAS GRID ---------- */
+.lib-veda-card {
+  transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+  box-shadow: var(--sh-1), var(--edge);
+}
+.lib-veda-card:active { transform: scale(0.97); }
+@media (hover:hover) and (pointer:fine) {
+  .lib-veda-card:hover { transform: translateY(-2px); border-color: rgba(230,194,119,0.3); box-shadow: var(--sh-2), var(--edge); }
+}
+.lib-veda-play-mini { transition: transform var(--dur) var(--ease); }
+.lib-veda-play-mini:active { transform: scale(0.85); }
+
+/* ---------- PLAYER CONTROLS (apply to your app-shell markup) ---------- */
+/* If your transport buttons aren't class-named yet, give the center button
+   .lib-player-main and side buttons .lib-player-btn — styles are ready. */
+.lib-player-btn, .lib-player-main {
+  transition: transform var(--dur) var(--ease), color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.lib-player-btn:active { transform: scale(0.88); color: var(--gold-200); }
+.lib-player-main:active { transform: scale(0.92); box-shadow: 0 0 20px var(--gold-glow); }
+
+/* ---------- PREVIEW FUNCTIONALITY STATES ---------- */
+.lib-cat-card,
+.lib-mantra-item,
+.lib-music-item,
+.lib-veda-card,
+.lib-cont-play,
+.lib-read-link,
+.lib-section-header a {
+  -webkit-tap-highlight-color: transparent;
+}
+.lib-mantra-item.is-playing,
+.lib-music-item.is-active,
+.lib-veda-card.is-open {
+  border-color: rgba(238,203,122,0.52) !important;
+  background:
+    radial-gradient(circle at 12% 50%, rgba(238,203,122,0.12), transparent 48%),
+    rgba(14,14,22,0.92) !important;
+  box-shadow: 0 0 0 1px rgba(238,203,122,0.16), 0 12px 26px rgba(0,0,0,0.36), var(--edge) !important;
+}
+.lib-mantra-item.is-playing {
+  border: 1px solid rgba(238,203,122,0.52);
+}
+.lib-mantra-item.is-playing .lib-mantra-play,
+.lib-cont-play.is-playing {
+  background: linear-gradient(180deg, #fce8a8, #b87f1a);
+  color: #1a0e00;
+  box-shadow: 0 0 18px rgba(238,203,122,0.42);
+}
+.lib-music-item.is-active .lib-music-action {
+  color: var(--gold-text);
+}
+.lib-progress-fill {
+  transition: width 360ms var(--ease);
+}
+.lib-reader {
+  position: fixed;
+  inset: 0;
+  z-index: 1350;
+  display: grid;
+  align-items: end;
+  background: rgba(0,0,0,0.58);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+.lib-reader.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.lib-reader__panel {
+  width: min(100%, var(--sy-shell-max, 480px));
+  margin: 0 auto;
+  border-radius: 24px 24px 0 0;
+  border: 1px solid rgba(238,203,122,0.36);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(238,203,122,0.14), transparent 42%),
+    linear-gradient(180deg, rgba(0,0,0,0.98), rgba(6,6,8,0.99));
+  box-shadow: 0 -26px 70px rgba(0,0,0,0.68), inset 0 1px 0 rgba(255,255,255,0.06);
+  transform: translateY(22px);
+  transition: transform 260ms var(--ease);
+  max-height: min(84vh, 760px);
+  overflow: auto;
+  padding: 18px 18px calc(18px + var(--sy-safe-bottom, 0px));
+}
+.lib-reader.open .lib-reader__panel { transform: translateY(0); }
+.lib-reader__grab {
+  width: 42px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(238,203,122,0.38);
+  margin: 0 auto 14px;
+}
+.lib-reader__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.lib-reader__eyebrow {
+  margin: 0 0 4px;
+  color: var(--gold-dim);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.lib-reader__title {
+  margin: 0;
+  color: var(--gold-text);
+  font-family: 'Playfair Display', serif;
+  font-size: 24px;
+  line-height: 1.15;
+}
+.lib-reader__close {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid rgba(238,203,122,0.28);
+  background: rgba(0,0,0,0.32);
+  color: var(--gold-text);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.lib-reader__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0;
+}
+.lib-reader__meta span {
+  border: 1px solid rgba(238,203,122,0.26);
+  background: rgba(238,203,122,0.08);
+  color: rgba(246,236,206,0.88);
+  border-radius: 999px;
+  padding: 7px 10px;
+  font-size: 11px;
+}
+.lib-reader__quote {
+  margin: 0;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(238,203,122,0.22);
+  background: rgba(0,0,0,0.22);
+}
+.lib-reader__quote b {
+  display: block;
+  color: #fff;
+  font-family: 'Noto Sans Devanagari', 'Inter', sans-serif;
+  font-size: 18px;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+.lib-reader__quote span {
+  color: rgba(231,218,180,0.78);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.lib-reader__progress {
+  margin: 16px 0 14px;
+}
+.lib-reader__progress-top {
+  display: flex;
+  justify-content: space-between;
+  color: rgba(231,218,180,0.76);
+  font-size: 11px;
+  margin-bottom: 7px;
+}
+.lib-reader__track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.11);
+  overflow: hidden;
+}
+.lib-reader__bar {
+  display: block;
+  height: 100%;
+  width: 36%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #fce8a8, #b87f1a);
+  box-shadow: 0 0 12px rgba(238,203,122,0.42);
+}
+.lib-reader__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.lib-reader__actions button {
+  height: 48px;
+  border-radius: 999px;
+  border: 1px solid rgba(238,203,122,0.32);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.lib-reader__primary {
+  color: #211300;
+  background: linear-gradient(180deg, #fce8a8, #b87f1a);
+}
+.lib-reader__ghost {
+  color: var(--gold-text);
+  background: rgba(0,0,0,0.26);
+}
+
+/* ---------- SCROLL REVEAL (class added by JS, no HTML edits) ---------- */
+.lib-reveal { opacity: 0; transform: translateY(14px);
+  transition: opacity 420ms var(--ease) var(--rd,0ms), transform 420ms var(--ease) var(--rd,0ms); }
+.lib-reveal.is-in { opacity: 1; transform: none; }
+
+/* ---------- ACCESSIBILITY: honor reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, .lib-reveal { animation: none !important; transition: none !important; }
+  .lib-reveal { opacity: 1; transform: none; }
+}
+
+/* ============================================================
+   CATEGORY FILTERING — sections show/hide when a chip filters.
+   ============================================================ */
+.lib-section-card[data-lib-hidden="true"] { display: none; }
+.lib-section-card.lib-filter-in { animation: libFilterIn 360ms var(--ease) both; }
+@keyframes libFilterIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+/* Active-filter pill telling the user what they're viewing */
+.lib-filter-note {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 4px 0 18px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(238,203,122,0.22);
+  background: linear-gradient(180deg, rgba(40,30,20,0.55), rgba(16,12,8,0.6));
+  box-shadow: var(--sh-1), var(--edge);
+}
+.lib-filter-note.show { display: flex; }
+.lib-filter-note span { font-size: 12px; color: var(--gold-200); letter-spacing: 0.02em; }
+.lib-filter-note span b { color: var(--gold-100); font-weight: 700; }
+.lib-filter-note button {
+  flex: none;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+  color: var(--gold-300);
+  background: rgba(238,203,122,0.10);
+  border: 1px solid rgba(238,203,122,0.30);
+  border-radius: 999px;
+  padding: 6px 12px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.lib-filter-note button:active { transform: scale(0.94); background: rgba(238,203,122,0.18); }
+
+/* ============================================================
+   NOW-PLAYING MINI BAR — persistent transport above bottom nav.
+   ============================================================ */
+.lib-nowbar {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--sy-bottom-nav-h, 82px) + var(--sy-safe-bottom, 0px) + 10px);
+  transform: translate(-50%, 140%);
+  width: min(calc(100vw - 24px), calc(var(--sy-shell-max, 480px) - 16px));
+  z-index: 950;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(238,203,122,0.34);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(238,203,122,0.14), transparent 46%),
+    linear-gradient(180deg, rgba(22,20,21,0.97), rgba(9,8,9,0.98));
+  box-shadow: 0 14px 38px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 320ms var(--ease), opacity 260ms var(--ease);
+}
+.lib-nowbar.show { transform: translate(-50%, 0); opacity: 1; pointer-events: auto; }
+.lib-nowbar__progress {
+  position: absolute;
+  left: 12px; right: 12px; top: 0;
+  height: 2px; border-radius: 999px;
+  background: rgba(255,255,255,0.10);
+  overflow: hidden;
+}
+.lib-nowbar__progress i {
+  display: block; height: 100%; width: 0%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #fce8a8, #b87f1a);
+  box-shadow: 0 0 8px rgba(238,203,122,0.5);
+  transition: width 240ms linear;
+}
+.lib-nowbar__art {
+  width: 40px; height: 40px; flex: none;
+  border-radius: 10px;
+  display: grid; place-items: center;
+  color: var(--gold-100);
+  background:
+    radial-gradient(circle at 35% 30%, rgba(238,203,122,0.30), transparent 65%),
+    rgba(40,28,60,0.85);
+  border: 1px solid rgba(238,203,122,0.3);
+}
+.lib-nowbar__art svg { width: 22px; height: 22px; }
+.lib-nowbar__eq { display: none; align-items: flex-end; gap: 2px; width: 18px; height: 16px; }
+.lib-nowbar.playing .lib-nowbar__eq { display: flex; }
+.lib-nowbar.playing .lib-nowbar__art svg { display: none; }
+.lib-nowbar__eq i {
+  flex: 1; background: var(--gold-100); border-radius: 1px;
+  animation: libEq 900ms var(--ease) infinite;
+}
+.lib-nowbar__eq i:nth-child(2) { animation-delay: 150ms; }
+.lib-nowbar__eq i:nth-child(3) { animation-delay: 300ms; }
+.lib-nowbar__eq i:nth-child(4) { animation-delay: 450ms; }
+@keyframes libEq { 0%,100% { height: 30%; } 50% { height: 100%; } }
+.lib-nowbar__info { flex: 1; min-width: 0; }
+.lib-nowbar__title {
+  font-size: 13px; font-weight: 600; color: #f3ecd6;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.lib-nowbar__sub {
+  font-size: 10.5px; color: rgba(231,218,180,0.6);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;
+}
+.lib-nowbar__btn {
+  flex: none; width: 40px; height: 40px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  cursor: pointer; border: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.lib-nowbar__play {
+  color: #1a0e00;
+  background: linear-gradient(180deg, #fce8a8, #b87f1a);
+  box-shadow: 0 4px 14px rgba(238,203,122,0.4);
+}
+.lib-nowbar__play:active { transform: scale(0.9); }
+/* prev / next — compact ghost transport */
+.lib-nowbar__prev,
+.lib-nowbar__next {
+  width: 30px; height: 30px;
+  color: var(--gold-200, #f0d79a);
+  background: transparent;
+}
+.lib-nowbar__prev:active,
+.lib-nowbar__next:active { transform: scale(0.86); }
+.lib-nowbar__close {
+  color: rgba(231,218,180,0.7);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(238,203,122,0.18);
+  width: 32px; height: 32px;
+}
+.lib-nowbar__close:active { transform: scale(0.9); }
+.lib-nowbar__btn svg { width: 18px; height: 18px; }
+.lib-nowbar__prev svg, .lib-nowbar__next svg { width: 16px; height: 16px; }
+.lib-nowbar__close svg { width: 14px; height: 14px; }
+/* tighten gap so 4 controls + info fit comfortably */
+.lib-nowbar { gap: 8px; padding: 9px 10px; }
+.lib-nowbar__info { margin-right: 2px; }
 
   </style>
 </head>
 <body>
-  <!-- Header matched exactly to design -->
-  <header class="sy-topbar" style="display:flex; align-items:center; justify-content:space-between;">
-    <button class="sy-topbar__btn" data-menu-toggle aria-label="Menu">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  <header class="sy-topbar">
+    <button class="sy-topbar__btn" data-menu-toggle aria-label="Menu" type="button">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="6"  x2="21" y2="6"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
     </button>
     <div class="sy-brand-header">
       <h1>SHREE YANTRA</h1>
       <p>Astrology</p>
     </div>
-    <button class="sy-topbar__btn" aria-label="Notifications" style="position:relative;">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--gold-text)" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-      <span style="position:absolute;top:4px;right:6px;width:12px;height:12px;background:#ff3b30;border-radius:50%;color:#fff;font-size:8px;display:grid;place-items:center;font-weight:bold; border: 1px solid #000;">3</span>
+    <button class="sy-topbar__btn sy-topbar__bell" data-sy-go="notifications" aria-label="Notifications" type="button">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.7 21a2 2 0 0 1-3.4 0"/>
+      </svg>
+      <span class="sy-topbar__badge">3</span>
     </button>
   </header>
 
   <main class="sy-container">
     
     <section class="lib-hero">
-      <div class="lib-book-icon">
-        <svg viewBox="0 0 160 110" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="libGold" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fce8a8"/><stop offset="0.6" stop-color="#e9b850"/><stop offset="1" stop-color="#a17613"/></linearGradient></defs>
-          <path d="M80 84c-19-18-40-19-66-13V22c27-7 49 1 66 18v44Z" fill="rgba(238,203,122,0.1)" stroke="url(#libGold)" stroke-width="2"/>
-          <path d="M80 84c19-18 40-19 66-13V22c-27-7-49 1-66 18v44Z" fill="rgba(238,203,122,0.1)" stroke="url(#libGold)" stroke-width="2"/>
-          <path d="M80 40v50M31 36c15-1 28 3 39 11M31 50c15-1 28 3 39 11M129 36c-15-1-28 3-39 11M129 50c-15-1-28 3-39 11" stroke="url(#libGold)" stroke-width="1.5" opacity=".7"/>
-          <text x="80" y="36" text-anchor="middle" font-family="serif" font-size="34" font-weight="bold" fill="url(#libGold)">ॐ</text>
-        </svg>
+      <!-- OM above, book below — column stack, borders touching, no overlap -->
+      <div class="lib-hero-icons">
+        <!-- OM badge on top -->
+        <div class="lib-om-badge" aria-label="Om">
+          <span>ॐ</span>
+        </div>
+        <!-- Book icon below -->
+        <div class="lib-book-icon">
+          <svg viewBox="0 0 160 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs><linearGradient id="libGold" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fce8a8"/><stop offset="0.6" stop-color="#e9b850"/><stop offset="1" stop-color="#a17613"/></linearGradient></defs>
+            <path d="M80 84c-19-18-40-19-66-13V22c27-7 49 1 66 18v44Z" fill="rgba(238,203,122,0.1)" stroke="url(#libGold)" stroke-width="2"/>
+            <path d="M80 84c19-18 40-19 66-13V22c-27-7-49 1-66 18v44Z" fill="rgba(238,203,122,0.1)" stroke="url(#libGold)" stroke-width="2"/>
+            <path d="M80 40v50M31 36c15-1 28 3 39 11M31 50c15-1 28 3 39 11M129 36c-15-1-28 3-39 11M129 50c-15-1-28 3-39 11" stroke="url(#libGold)" stroke-width="1.5" opacity=".7"/>
+          </svg>
+        </div>
       </div>
       <div class="lib-title-wrap">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/></svg>
@@ -568,10 +1395,26 @@
         <h4>TODAY'S SPIRITUAL BOOST</h4>
       </div>
       <div class="lib-boost-container">
-        <div class="lib-boost-cover">
-          <h5 style="margin-top: 10px;">Bhagavad<br>Gita</h5>
-          <div style="font-size:5px; color:#aaa; margin-top:4px;">TEACHINGS OF LORD KRISHNA</div>
-          <svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor" style="color:var(--gold-text); margin-top:10px;"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1"/><path d="M12 6v12M6 12h12" stroke="currentColor" stroke-width="1"/></svg>
+        <div class="lib-boost-cover" role="img" aria-label="Bhagavad Gita book cover">
+          <div class="bc-frame">
+            <span class="bc-om">ॐ</span>
+            <span class="bc-title-hi">श्रीमद्<br>भगवद्&nbsp;गीता</span>
+            <svg class="bc-chakra" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+              <circle cx="24" cy="24" r="13" stroke="currentColor" stroke-width="1.3"/>
+              <circle cx="24" cy="24" r="4" fill="currentColor"/>
+              <g stroke="currentColor" stroke-width="1.1">
+                <line x1="24" y1="6"  x2="24" y2="42"/>
+                <line x1="6"  y1="24" x2="42" y2="24"/>
+                <line x1="11" y1="11" x2="37" y2="37"/>
+                <line x1="37" y1="11" x2="11" y2="37"/>
+                <line x1="15.5" y1="7.5" x2="32.5" y2="40.5"/>
+                <line x1="40.5" y1="15.5" x2="7.5" y2="32.5"/>
+                <line x1="32.5" y1="7.5" x2="15.5" y2="40.5"/>
+                <line x1="7.5" y1="15.5" x2="40.5" y2="32.5"/>
+              </g>
+            </svg>
+            <span class="bc-title-en">BHAGAVAD GITA</span>
+          </div>
         </div>
         <div class="lib-boost-content">
           <h4>Today's Shloka</h4>
@@ -599,11 +1442,15 @@
         <div class="lib-cont-info">
           <h4>Bhagavad Gita - Chapter 2</h4>
           <p>Shloka 47 - 72</p>
-          <div class="lib-progress-track"><div class="lib-progress-fill"></div></div>
+          <input type="range" class="lib-progress-slider" min="0" max="100" value="0" style="margin-bottom: 6px;">
           <div class="lib-progress-times"><span>12:45</span><span>28:36</span></div>
         </div>
-        <div class="lib-cont-play">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        <div class="lib-cont-controls" style="display: flex; gap: 12px; align-items: center; margin-top: 4px;">
+          <div class="lib-cont-prev lib-cont-btn"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M11 5L4 12l7 7M4 12h16"/></svg></div>
+          <div class="lib-cont-play lib-cont-play-btn">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          <div class="lib-cont-next lib-cont-btn"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M13 5l7 7-7 7M20 12H4"/></svg></div>
         </div>
       </div>
     </div>
@@ -684,9 +1531,36 @@
           </div>
           <div class="lib-mantra-play"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
         </div>
+
+        <div class="lib-mantra-item lib-extra-mantra" style="display: none;">
+          <div class="lib-mantra-img">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+          </div>
+          <div class="lib-mantra-info">
+            <h5>Durga Mantra</h5>
+            <p>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20M12 2a10 10 0 0 1 10 10M2 12a10 10 0 0 1 10-10"/></svg>
+              108 Times <span style="margin:0 4px;">|</span> <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><path d="M2 12v6h6l7 7V3l-7 7H2z"/><path d="M19 12h4M17 6l4-4M17 18l4 4" stroke="currentColor" stroke-width="2"/></svg>
+            </p>
+          </div>
+          <div class="lib-mantra-play"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
+        </div>
+        <div class="lib-mantra-item lib-extra-mantra" style="display: none;">
+          <div class="lib-mantra-img">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/></svg>
+          </div>
+          <div class="lib-mantra-info">
+            <h5>Saraswati Mantra</h5>
+            <p>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20M12 2a10 10 0 0 1 10 10M2 12a10 10 0 0 1 10-10"/></svg>
+              108 Times <span style="margin:0 4px;">|</span> <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><path d="M2 12v6h6l7 7V3l-7 7H2z"/><path d="M19 12h4M17 6l4-4M17 18l4 4" stroke="currentColor" stroke-width="2"/></svg>
+            </p>
+          </div>
+          <div class="lib-mantra-play"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
+        </div>
       </div>
-      <button class="lib-btn-outline">
-        Explore More Mantras
+      <button class="lib-btn-outline" id="explore-more-mantras">
+        <span>Explore More Mantras</span>
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
       </button>
     </div>
@@ -719,43 +1593,7 @@
         </div>
         
         <div class="lib-music-item green">
-          <div class="lib-music-icon has-image" aria-hidden="true">
-            <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <linearGradient id="flGold" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#fce8a8"/>
-                  <stop offset="100%" stop-color="#8a6418"/>
-                </linearGradient>
-                <linearGradient id="flFeather" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#7af0a8"/>
-                  <stop offset="60%" stop-color="#3aaeff"/>
-                  <stop offset="100%" stop-color="#9a4bff"/>
-                </linearGradient>
-              </defs>
-              <!-- Krishna head silhouette -->
-              <ellipse cx="22" cy="20" rx="9" ry="11" fill="#1a0a40"/>
-              <!-- Crown -->
-              <path d="M14 15c0-5 4-9 8-9s8 4 8 9v2H14z" fill="url(#flGold)"/>
-              <!-- Peacock feather -->
-              <g transform="translate(22 5)">
-                <path d="M0 0 C-2 -3 -3 -7 -2 -10 C0 -8 2 -5 3 -2 Z" fill="url(#flFeather)"/>
-                <ellipse cx="0" cy="-8" rx="1.6" ry="2.4" fill="#9a4bff"/>
-                <circle cx="0" cy="-8" r="0.7" fill="#fce8a8"/>
-              </g>
-              <!-- Tilak -->
-              <path d="M21 14 L22 11 L23 14 L22 18 Z" fill="url(#flGold)"/>
-              <!-- Body -->
-              <path d="M14 31 Q22 35 30 31 L32 42 L12 42 Z" fill="#1a0a40"/>
-              <!-- Flute -->
-              <g transform="translate(22 32) rotate(25)">
-                <rect x="-16" y="-1.3" width="32" height="2.6" rx="1.3" fill="url(#flGold)"/>
-                <circle cx="-10" cy="0" r="0.5" fill="#1a0a40"/>
-                <circle cx="-4" cy="0" r="0.5" fill="#1a0a40"/>
-                <circle cx="2" cy="0" r="0.5" fill="#1a0a40"/>
-                <circle cx="8" cy="0" r="0.5" fill="#1a0a40"/>
-              </g>
-            </svg>
-          </div>
+          <div class="lib-music-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 17L17 4l3 3L7 20H4zM14 7l3 3"/><circle cx="8" cy="16" r="1.5" fill="currentColor"/><circle cx="11" cy="13" r="1.5" fill="currentColor"/></svg></div>
           <div class="lib-music-info">
             <h5>FLUTE MUSIC</h5>
             <p>Lord Krishna's flute for relaxation</p>
@@ -790,122 +1628,829 @@
       </div>
       <div class="lib-vedas-grid">
         <div class="lib-veda-card">
+          <div class="lib-veda-cover veda-amber">
+            <span class="veda-cover-om">ॐ</span>
+            <span class="veda-cover-name">ऋग्वेद</span>
+          </div>
           <h5>Rigveda</h5>
           <p>हिंदी | English</p>
-          <div class="lib-veda-book-icon">
-            <svg viewBox="0 0 160 110" fill="none"><path d="M80 84c-19-18-40-19-66-13V22c27-7 49 1 66 18v44Z" fill="currentColor" opacity="0.3"/><path d="M80 84c19-18 40-19 66-13V22c-27-7-49 1-66 18v44Z" fill="currentColor" opacity="0.3"/><path d="M80 40v50M31 36c15-1 28 3 39 11M31 50c15-1 28 3 39 11M129 36c-15-1-28 3-39 11M129 50c-15-1-28 3-39 11" stroke="currentColor" stroke-width="3"/></svg>
-            <div class="lib-veda-play-mini"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
-          </div>
         </div>
         <div class="lib-veda-card">
+          <div class="lib-veda-cover veda-green">
+            <span class="veda-cover-om">ॐ</span>
+            <span class="veda-cover-name">सामवेद</span>
+          </div>
           <h5>Samaveda</h5>
           <p>हिंदी | English</p>
-          <div class="lib-veda-book-icon">
-            <svg viewBox="0 0 160 110" fill="none"><path d="M80 84c-19-18-40-19-66-13V22c27-7 49 1 66 18v44Z" fill="currentColor" opacity="0.3"/><path d="M80 84c19-18 40-19 66-13V22c-27-7-49 1-66 18v44Z" fill="currentColor" opacity="0.3"/><path d="M80 40v50M31 36c15-1 28 3 39 11M31 50c15-1 28 3 39 11M129 36c-15-1-28 3-39 11M129 50c-15-1-28 3-39 11" stroke="currentColor" stroke-width="3"/></svg>
-            <div class="lib-veda-play-mini"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
-          </div>
         </div>
         <div class="lib-veda-card">
+          <div class="lib-veda-cover veda-rose">
+            <span class="veda-cover-om">ॐ</span>
+            <span class="veda-cover-name">यजुर्वेद</span>
+          </div>
           <h5>Yajurveda</h5>
           <p>हिंदी | English</p>
-          <div class="lib-veda-book-icon">
-            <svg viewBox="0 0 160 110" fill="none"><path d="M80 84c-19-18-40-19-66-13V22c27-7 49 1 66 18v44Z" fill="currentColor" opacity="0.3"/><path d="M80 84c19-18 40-19 66-13V22c-27-7-49 1-66 18v44Z" fill="currentColor" opacity="0.3"/><path d="M80 40v50M31 36c15-1 28 3 39 11M31 50c15-1 28 3 39 11M129 36c-15-1-28 3-39 11M129 50c-15-1-28 3-39 11" stroke="currentColor" stroke-width="3"/></svg>
-            <div class="lib-veda-play-mini"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
-          </div>
         </div>
         <div class="lib-veda-card">
+          <div class="lib-veda-cover veda-violet">
+            <span class="veda-cover-om">ॐ</span>
+            <span class="veda-cover-name">अथर्ववेद</span>
+          </div>
           <h5>Atharvaveda</h5>
           <p>हिंदी | English</p>
-          <div class="lib-veda-book-icon">
-            <svg viewBox="0 0 160 110" fill="none"><path d="M80 84c-19-18-40-19-66-13V22c27-7 49 1 66 18v44Z" fill="currentColor" opacity="0.3"/><path d="M80 84c19-18 40-19 66-13V22c-27-7-49 1-66 18v44Z" fill="currentColor" opacity="0.3"/><path d="M80 40v50M31 36c15-1 28 3 39 11M31 50c15-1 28 3 39 11M129 36c-15-1-28 3-39 11M129 50c-15-1-28 3-39 11" stroke="currentColor" stroke-width="3"/></svg>
-            <div class="lib-veda-play-mini"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
-          </div>
         </div>
       </div>
     </div>
 
-    <!-- Premium Banner with Lord Krishna iconography -->
-    <div class="lib-premium-banner">
-      <div class="lib-krishna-art" aria-hidden="true">
-        <svg viewBox="0 0 160 180" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="kfeather" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#7af0a8"/>
-              <stop offset="40%" stop-color="#3aaeff"/>
-              <stop offset="100%" stop-color="#9a4bff"/>
-            </linearGradient>
-            <linearGradient id="kgold" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#fce8a8"/>
-              <stop offset="55%" stop-color="#e9b850"/>
-              <stop offset="100%" stop-color="#8a6418"/>
-            </linearGradient>
-            <radialGradient id="khalo" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="rgba(252,232,168,0.55)"/>
-              <stop offset="100%" stop-color="rgba(252,232,168,0)"/>
-            </radialGradient>
-          </defs>
-          <!-- Divine halo -->
-          <circle cx="80" cy="60" r="58" fill="url(#khalo)"/>
-          <!-- Krishna's silhouette: head + crown + body -->
-          <g>
-            <!-- Crown / mukut base -->
-            <path d="M58 36c0-12 10-22 22-22s22 10 22 22v4H58z" fill="url(#kgold)" opacity="0.95"/>
-            <!-- Peacock feather standing on the crown -->
-            <g transform="translate(80 8)">
-              <path d="M0 0 C-4 -8 -8 -18 -6 -28 C-2 -22 4 -16 8 -8 C6 -4 4 -2 0 0Z" fill="url(#kfeather)"/>
-              <ellipse cx="-1" cy="-22" rx="4" ry="6" fill="#9a4bff"/>
-              <ellipse cx="-1" cy="-22" rx="2.4" ry="3.6" fill="#fce8a8"/>
-              <circle cx="-1" cy="-22" r="1.3" fill="#1a0a40"/>
-              <path d="M-2 0 q-4 -2 -6 -4" stroke="url(#kfeather)" stroke-width="1.2" fill="none"/>
-              <path d="M2 0 q4 -2 6 -4" stroke="url(#kfeather)" stroke-width="1.2" fill="none"/>
-            </g>
-            <!-- Crown peak -->
-            <path d="M70 40 L80 30 L90 40 Z" fill="url(#kgold)"/>
-            <!-- Face / head -->
-            <ellipse cx="80" cy="62" rx="20" ry="24" fill="#2b1860"/>
-            <!-- Tilak on forehead -->
-            <path d="M77 50 L80 44 L83 50 L80 58 Z" fill="url(#kgold)"/>
-            <!-- Earrings -->
-            <circle cx="60" cy="64" r="2.4" fill="url(#kgold)"/>
-            <circle cx="100" cy="64" r="2.4" fill="url(#kgold)"/>
-            <!-- Neck + body shoulder -->
-            <path d="M68 84 Q80 90 92 84 L100 100 Q80 110 60 100 Z" fill="#2b1860"/>
-            <!-- Necklace -->
-            <path d="M70 90 Q80 96 90 90" stroke="url(#kgold)" stroke-width="1.5" fill="none"/>
-            <!-- Flute (bansuri) held diagonally -->
-            <g transform="translate(80 100) rotate(28)">
-              <rect x="-46" y="-3" width="92" height="6" rx="3" fill="url(#kgold)"/>
-              <rect x="-46" y="-3" width="92" height="6" rx="3" fill="rgba(0,0,0,0.18)"/>
-              <circle cx="-30" cy="0" r="1.2" fill="#1a0a40"/>
-              <circle cx="-18" cy="0" r="1.2" fill="#1a0a40"/>
-              <circle cx="-6" cy="0" r="1.2" fill="#1a0a40"/>
-              <circle cx="6" cy="0" r="1.2" fill="#1a0a40"/>
-              <circle cx="18" cy="0" r="1.2" fill="#1a0a40"/>
-              <circle cx="30" cy="0" r="1.2" fill="#1a0a40"/>
-              <rect x="40" y="-4" width="6" height="8" rx="1" fill="#8a6418"/>
-            </g>
-          </g>
-          <!-- Decorative stars -->
-          <g fill="url(#kgold)" opacity="0.7">
-            <circle cx="20" cy="20" r="1.2"/>
-            <circle cx="140" cy="40" r="1.5"/>
-            <circle cx="135" cy="120" r="1"/>
-            <circle cx="14" cy="100" r="1.2"/>
-          </g>
-        </svg>
-      </div>
-      <div class="lib-premium-content">
-        <h4>Listen. Read. Understand. Live.</h4>
-        <p>Connect with divine knowledge<br>anytime, anywhere.</p>
-      </div>
-      <button class="lib-premium-btn">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M20.6 5.4c-2.4-2.4-6.3-2.4-8.7 0l-.9.9-.9-.9c-2.4-2.4-6.3-2.4-8.7 0-2.4 2.4-2.4 6.3 0 8.7l9.6 9.6 9.6-9.6c2.4-2.4 2.4-6.3 0-8.7z"/></svg>
-        Go Premium
-      </button>
-    </div>
-
+    <audio id="library-audio-player" style="display: none;"></audio>
   </main>
 
   <script src="../../assets/app-shell.js"></script>
+  <script>
+    /* Divine Library — lightweight scroll reveal.
+   GPU-friendly (opacity + transform only). Adds classes at runtime,
+   so no HTML changes are needed. Load after the page, defer is fine. */
+(function () {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  var targets = document.querySelectorAll('.lib-section-card, .premium-banner');
+  if (!('IntersectionObserver' in window)) {
+    targets.forEach(function (el) { el.classList.add('lib-reveal', 'is-in'); });
+    return;
+  }
+
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
+    });
+  }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+
+  targets.forEach(function (el, i) {
+    el.classList.add('lib-reveal');
+    el.style.setProperty('--rd', (i * 40) + 'ms'); // gentle stagger
+    io.observe(el);
+  });
+})();
+
+(function () {
+  var STORE_KEY = 'sy.library.preview';
+  var state = loadState();
+  var categories = Array.prototype.slice.call(document.querySelectorAll('.lib-cat-card'));
+  var targetByIndex = ['mantras', 'gita', 'ramayan', 'vedas', 'bhajans', 'saved', 'music'];
+  /* ── Offline Web Audio engine ──────────────────────────────
+     No network MP3s — generates calm spiritual ambience in the
+     browser so playback ALWAYS works (incl. offline) and stays
+     on-theme. Each track has its own timbre (drone / bell / flute
+     / rain). Exposes an <audio>-like API the rest of the code uses. */
+  var AudioEngine = (function () {
+    var ctx = null, master = null, voices = [], raf = 0;
+    var DURATION = 90;             // track length (s) — track auto-advances at end
+    var elapsed = 0, last = 0, playing = false, currentKey = '';
+    var listeners = { timeupdate: [], ended: [] };
+
+    // base frequency (Hz) + timbre per track
+    var profiles = {
+      'OM CHANTING':   { type: 'drone', f: 130.81 },   // C3
+      'TEMPLE BELLS':  { type: 'bell',  f: 523.25 },   // C5
+      'FLUTE MUSIC':   { type: 'flute', f: 392.00 },   // G4
+      'RAIN + MANTRA': { type: 'rain',  f: 120 },
+      'MIX & MATCH':   { type: 'drone', f: 146.83 },
+      'default':       { type: 'drone', f: 138.59 }    // soft tanpura-ish
+    };
+    function profile(name) { return profiles[name] || profiles['default']; }
+
+    function ensureCtx() {
+      if (!ctx) {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        ctx = new AC();
+        master = ctx.createGain();
+        master.gain.value = 0.0001;
+        master.connect(ctx.destination);
+      }
+      return ctx;
+    }
+
+    function buildVoices(p) {
+      stopVoices();
+      var now = ctx.currentTime;
+      if (p.type === 'rain') {
+        // filtered noise = gentle rain
+        var buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+        var d = buf.getChannelData(0);
+        for (var i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * 0.5;
+        var src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+        var lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1100;
+        src.connect(lp); lp.connect(master); src.start();
+        voices.push(src);
+      }
+      // tonal drone / bell / flute share a layered-oscillator base
+      var partials = p.type === 'bell' ? [1, 2.0, 3.01, 4.2] : [1, 1.5, 2.0];
+      partials.forEach(function (mult, idx) {
+        var osc = ctx.createOscillator();
+        osc.type = p.type === 'flute' ? 'triangle' : (p.type === 'bell' ? 'sine' : 'sine');
+        osc.frequency.value = p.f * mult * (idx === 0 ? 1 : 1.001); // gentle detune
+        var g = ctx.createGain();
+        g.gain.value = (p.type === 'rain' ? 0 : 0.16 / (idx + 1));
+        // slow tremolo for life
+        var lfo = ctx.createOscillator(); lfo.frequency.value = 0.18 + idx * 0.05;
+        var lg = ctx.createGain(); lg.gain.value = 0.05;
+        lfo.connect(lg); lg.connect(g.gain);
+        osc.connect(g); g.connect(master);
+        osc.start(now); lfo.start(now);
+        voices.push(osc, lfo);
+      });
+    }
+    function stopVoices() {
+      voices.forEach(function (v) { try { v.stop(); } catch (_) {} try { v.disconnect(); } catch (_) {} });
+      voices = [];
+    }
+    function fire(ev) { (listeners[ev] || []).forEach(function (cb) { try { cb(); } catch (_) {} }); }
+
+    function tick(ts) {
+      if (!playing) return;
+      if (!last) last = ts;
+      elapsed += (ts - last) / 1000; last = ts;
+      if (elapsed >= DURATION) {                   // track finished
+        elapsed = DURATION;
+        api.currentTime = elapsed; api.duration = DURATION;
+        fire('timeupdate');
+        api.pause();
+        fire('ended');                             // → auto-play next track
+        return;
+      }
+      api.currentTime = elapsed; api.duration = DURATION;
+      fire('timeupdate');
+      raf = requestAnimationFrame(tick);
+    }
+
+    var api = {
+      paused: true, currentTime: 0, duration: DURATION, src: '',
+      addEventListener: function (ev, cb) { if (listeners[ev]) listeners[ev].push(cb); },
+      load: function (key) {
+        currentKey = key;
+        api.src = key || '';
+        elapsed = 0; last = 0; api.currentTime = 0;      // new track starts at 0:00
+        if (ctx && playing) buildVoices(profile(key));   // swap timbre live
+      },
+      play: function () {
+        if (!ensureCtx()) return;
+        if (ctx.state === 'suspended') ctx.resume();
+        if (!voices.length) buildVoices(profile(currentKey));
+        master.gain.cancelScheduledValues(ctx.currentTime);
+        master.gain.setTargetAtTime(0.5, ctx.currentTime, 0.4);  // gentle fade-in
+        playing = true; api.paused = false; last = 0;
+        cancelAnimationFrame(raf); raf = requestAnimationFrame(tick);
+      },
+      pause: function () {
+        playing = false; api.paused = true; cancelAnimationFrame(raf); last = 0;
+        if (ctx && master) master.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.25);
+      },
+      seek: function (pct) {
+        elapsed = Math.max(0, Math.min(100, pct)) / 100 * DURATION;
+        api.currentTime = elapsed; last = 0;       // recalibrate timer after scrub
+      }
+    };
+    return api;
+  })();
+
+  var audioPlayer = AudioEngine;
+
+  // Reading-mode page (matches app theme)
+  var demoPdf = 'demo-book.html';
+
+  /* ── Persistent now-playing mini-bar ───────────────────────
+     One transport that every play button (mantra / music / continue)
+     feeds into — so the whole page behaves like one coherent player. */
+  var nowbar = null, nowbarTrack = '';
+  function omSvg() {
+    return '<svg viewBox="0 0 24 24" fill="currentColor"><text x="50%" y="68%" text-anchor="middle" font-family="serif" font-size="18">ॐ</text></svg>';
+  }
+  function createNowbar() {
+    var bar = document.createElement('div');
+    bar.className = 'lib-nowbar';
+    bar.innerHTML =
+      '<div class="lib-nowbar__progress"><i></i></div>' +
+      '<div class="lib-nowbar__art">' + omSvg() +
+        '<div class="lib-nowbar__eq"><i></i><i></i><i></i><i></i></div>' +
+      '</div>' +
+      '<div class="lib-nowbar__info">' +
+        '<div class="lib-nowbar__title"></div>' +
+        '<div class="lib-nowbar__sub"></div>' +
+      '</div>' +
+      '<button class="lib-nowbar__btn lib-nowbar__prev" type="button" aria-label="Previous track">' +
+        '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>' +
+      '</button>' +
+      '<button class="lib-nowbar__btn lib-nowbar__play" type="button" aria-label="Play / pause"></button>' +
+      '<button class="lib-nowbar__btn lib-nowbar__next" type="button" aria-label="Next track">' +
+        '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6h2v12h-2z"/></svg>' +
+      '</button>' +
+      '<button class="lib-nowbar__btn lib-nowbar__close" type="button" aria-label="Stop">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></svg>' +
+      '</button>';
+    document.body.appendChild(bar);
+    bar.querySelector('.lib-nowbar__play').addEventListener('click', function () { toggleAudioPlayback(); });
+    bar.querySelector('.lib-nowbar__prev').addEventListener('click', function () { playAdjacent(-1); });
+    bar.querySelector('.lib-nowbar__next').addEventListener('click', function () { playAdjacent(1); });
+    bar.querySelector('.lib-nowbar__close').addEventListener('click', function () {
+      audioPlayer.pause();
+      setButtonState(document.querySelector('.lib-cont-play'), false);
+      syncPlayIcons();
+      bar.classList.remove('show', 'playing');
+      document.body.classList.remove('lib-nowbar-open');   // release bottom clearance
+    });
+    return bar;
+  }
+  function updateNowbar() {
+    if (!nowbar) nowbar = createNowbar();
+    var title = (document.querySelector('.lib-cont-info h4') || {}).textContent || '';
+    var sub = (document.querySelector('.lib-cont-info p') || {}).textContent || '';
+    nowbar.querySelector('.lib-nowbar__title').textContent = title;
+    nowbar.querySelector('.lib-nowbar__sub').textContent = sub;
+    var playing = audioPlayer && !audioPlayer.paused;
+    nowbar.classList.add('show');
+    nowbar.classList.toggle('playing', !!playing);
+    nowbar.querySelector('.lib-nowbar__play').innerHTML = playing ? iconPause() : iconPlay();
+    document.body.classList.add('lib-nowbar-open');         // reserve space so the
+                                                            // player never hides the last card
+  }
+
+  var readerData = {
+    gita: {
+      eyebrow: 'Bhagavad Gita',
+      title: 'Chapter 2 · Sankhya Yoga',
+      meta: ['18 chapters', 'Audio + text', '36% complete'],
+      quote: 'कर्मण्येवाधिकारस्ते मा फलेषु कदाचन।',
+      meaning: 'Focus on your action with devotion; release anxiety about the result.',
+      progress: 36,
+      pdfUrl: demoPdf
+    },
+    ramayan: {
+      eyebrow: 'Ramayan',
+      title: 'Ayodhya Kand',
+      meta: ['Story mode', 'Hindi + English', '12 min read'],
+      quote: 'धर्मो रक्षति रक्षितः।',
+      meaning: 'A life rooted in dharma protects the heart, family, and community.',
+      progress: 18,
+      pdfUrl: demoPdf
+    },
+    rigveda: {
+      eyebrow: 'The Vedas',
+      title: 'Rigveda',
+      meta: ['Mandala preview', 'Hindi + English', 'Audio ready'],
+      quote: 'अग्निमीळे पुरोहितं यज्ञस्य देवमृत्विजम्।',
+      meaning: 'The opening hymn invokes sacred fire as the guide of wisdom and ritual.',
+      progress: 24,
+      pdfUrl: demoPdf
+    },
+    samaveda: {
+      eyebrow: 'The Vedas',
+      title: 'Samaveda',
+      meta: ['Chant preview', 'Hindi + English', 'Audio ready'],
+      quote: 'स्वर और श्रद्धा से ज्ञान हृदय तक पहुँचता है।',
+      meaning: 'Melody turns sacred knowledge into a lived, meditative experience.',
+      progress: 16,
+      pdfUrl: demoPdf
+    },
+    yajurveda: {
+      eyebrow: 'The Vedas',
+      title: 'Yajurveda',
+      meta: ['Ritual wisdom', 'Hindi + English', 'Audio ready'],
+      quote: 'यज्ञ जीवन को अनुशासन, सेवा और संतुलन सिखाता है।',
+      meaning: 'Action, discipline, and offering become the core of spiritual practice.',
+      progress: 21,
+      pdfUrl: demoPdf
+    },
+    atharvaveda: {
+      eyebrow: 'The Vedas',
+      title: 'Atharvaveda',
+      meta: ['Healing chants', 'Hindi + English', 'Audio ready'],
+      quote: 'शान्तिः शान्तिः शान्तिः।',
+      meaning: 'Prayers for wellbeing, protection, and harmony in everyday life.',
+      progress: 29,
+      pdfUrl: demoPdf
+    },
+    saved: {
+      eyebrow: 'My Library',
+      title: state.savedTitle || 'Saved Spiritual Shelf',
+      meta: ['Last played: ' + (state.nowPlaying || 'Om Chanting'), 'Saved reads', 'Preview data'],
+      quote: state.savedQuote || 'कर्मण्येवाधिकारस्ते मा फलेषु कदाचन।',
+      meaning: 'Your saved readings and listening progress appear together here.',
+      progress: state.progress || 36,
+      pdfUrl: demoPdf
+    }
+  };
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
+    catch (_) { return {}; }
+  }
+
+  function saveState(next) {
+    state = Object.assign({}, state, next);
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (_) {}
+  }
+
+  function iconPlay() {
+    return '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+  }
+
+  function iconPause() {
+    return '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
+  }
+
+  function escapeHTML(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch];
+    });
+  }
+
+  function toast(message, variant) {
+    if (window.SY && SY.toast) SY.toast(message, variant || 'success');
+  }
+
+  function sectionFromSelector(selector) {
+    var el = document.querySelector(selector);
+    return el && el.closest('.lib-section-card');
+  }
+
+  function scrollToSection(selector) {
+    var section = sectionFromSelector(selector);
+    if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function setActiveCategory(target) {
+    categories.forEach(function (card) {
+      card.classList.toggle('active', card.getAttribute('data-lib-target') === target);
+    });
+  }
+
+  function setButtonState(button, isPlaying) {
+    if (!button) return;
+    button.classList.toggle('is-playing', isPlaying);
+    button.innerHTML = isPlaying ? iconPause() : iconPlay();
+  }
+
+  function formatTime(seconds) {
+    if (isNaN(seconds)) return "0:00";
+    var m = Math.floor(seconds / 60);
+    var s = Math.floor(seconds % 60);
+    return m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  // Only freeze slider updates WHILE the user is actively dragging — not
+  // just because the slider holds focus (that froze it forever after a drag).
+  var isScrubbing = false;
+
+  function paintSlider(slider, progress) {
+    slider.value = progress;
+    slider.style.background = 'linear-gradient(to right, #e9b850 ' + progress + '%, rgba(255,255,255,0.1) ' + progress + '%)';
+  }
+
+  // Audio Player Event Listeners
+  if (audioPlayer) {
+    audioPlayer.addEventListener('timeupdate', function() {
+      if (audioPlayer.duration) {
+        var progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+        var slider = document.querySelector('.lib-progress-slider');
+        var times = document.querySelector('.lib-progress-times');
+        if (slider && !isScrubbing) paintSlider(slider, progress);
+        if (times) times.innerHTML = '<span>' + formatTime(audioPlayer.currentTime) + '</span><span>' + formatTime(audioPlayer.duration) + '</span>';
+        // feed the persistent now-playing bar
+        if (nowbar) {
+          var fill = nowbar.querySelector('.lib-nowbar__progress i');
+          if (fill) fill.style.width = progress + '%';
+        }
+      }
+    });
+
+    // When a track finishes, automatically advance to the next one
+    audioPlayer.addEventListener('ended', function () {
+      playAdjacent(1);
+    });
+  }
+
+  var audioSlider = document.querySelector('.lib-progress-slider');
+  if (audioSlider) {
+    audioSlider.addEventListener('input', function() {
+      isScrubbing = true;
+      var progress = audioSlider.value;
+      audioSlider.style.background = 'linear-gradient(to right, #e9b850 ' + progress + '%, rgba(255,255,255,0.1) ' + progress + '%)';
+      if (audioPlayer && audioPlayer.seek) audioPlayer.seek(progress);
+    });
+    // release → resume live updates (and blur so focus can't re-freeze it)
+    function endScrub() { isScrubbing = false; if (audioSlider.blur) audioSlider.blur(); }
+    audioSlider.addEventListener('change', endScrub);
+    audioSlider.addEventListener('pointerup', endScrub);
+    audioSlider.addEventListener('pointercancel', endScrub);
+    audioSlider.addEventListener('touchend', endScrub);
+    audioSlider.addEventListener('mouseup', endScrub);
+    audioSlider.addEventListener('blur', endScrub);
+  }
+
+  // Previous/Next logic — ordered playlist of every playable track
+  var songKeys = [
+    'Mahamrityunjaya Mantra', 'Gayatri Mantra', 'Hanuman Chalisa',
+    'Om Namah Shivaya', 'Mahalakshmi Mantra', 'Durga Mantra', 'Saraswati Mantra',
+    'OM CHANTING', 'TEMPLE BELLS', 'FLUTE MUSIC', 'RAIN + MANTRA', 'MIX & MATCH'
+  ];
+  function playAdjacent(dir) {
+    var el = document.querySelector('.lib-cont-info h4');
+    var currentTitle = el ? el.textContent.trim() : '';
+    var idx = songKeys.indexOf(currentTitle);
+    var nextIdx;
+    if (idx === -1) nextIdx = (dir > 0 ? 0 : songKeys.length - 1);  // not in playlist → start playlist
+    else nextIdx = (idx + dir + songKeys.length) % songKeys.length;
+    setNowPlaying(songKeys[nextIdx], 'Playing from Library', document.querySelector('.lib-cont-play'));
+  }
+
+  var prevBtn = document.querySelector('.lib-cont-prev');
+  if (prevBtn) prevBtn.addEventListener('click', function(e) { e.stopPropagation(); playAdjacent(-1); });
+
+  var nextBtn = document.querySelector('.lib-cont-next');
+  if (nextBtn) nextBtn.addEventListener('click', function(e) { e.stopPropagation(); playAdjacent(1); });
+
+  function toggleAudioPlayback() {
+    if (!audioPlayer) return;
+    if (audioPlayer.paused) {
+      audioPlayer.play();
+      setButtonState(document.querySelector('.lib-cont-play'), true);
+    } else {
+      audioPlayer.pause();
+      setButtonState(document.querySelector('.lib-cont-play'), false);
+    }
+    syncPlayIcons();
+    updateNowbar();
+  }
+
+  function syncPlayIcons() {
+    var isPlaying = audioPlayer && !audioPlayer.paused;
+    var currentTitle = document.querySelector('.lib-cont-info h4') ? document.querySelector('.lib-cont-info h4').textContent : '';
+
+    document.querySelectorAll('.lib-mantra-item').forEach(function (el) {
+       var title = el.querySelector('h5').textContent.trim();
+       var btn = el.querySelector('.lib-mantra-play');
+       if (title === currentTitle && isPlaying) {
+          el.classList.add('is-playing');
+          setButtonState(btn, true);
+       } else {
+          el.classList.remove('is-playing');
+          setButtonState(btn, false);
+       }
+    });
+
+    document.querySelectorAll('.lib-music-item').forEach(function (el) {
+       var title = el.querySelector('h5').textContent.trim();
+       var action = el.querySelector('.lib-music-action');
+       if (title === currentTitle && isPlaying) {
+          el.classList.add('is-active');
+          if (action) action.innerHTML = iconPause();
+       } else {
+          el.classList.remove('is-active');
+          if (action) action.innerHTML = iconPlay();
+       }
+    });
+  }
+
+  function setNowPlaying(title, subtitle, sourceEl) {
+    var titleEl = document.querySelector('.lib-cont-info h4');
+    var subEl = document.querySelector('.lib-cont-info p');
+
+    if (titleEl && titleEl.textContent === title) {
+       // Same track clicked, toggle play
+       toggleAudioPlayback();
+       return;
+    }
+
+    if (titleEl) titleEl.textContent = title;
+    if (subEl) subEl.textContent = subtitle;
+
+    if (audioPlayer) {
+      audioPlayer.load(title);     // pick on-theme timbre for this track (resets to 0:00)
+      audioPlayer.play();
+      setButtonState(document.querySelector('.lib-cont-play'), true);
+      // immediately reset the timeline so it starts filling from 0 (no leftover %)
+      isScrubbing = false;
+      var sl = document.querySelector('.lib-progress-slider');
+      if (sl) paintSlider(sl, 0);
+      if (nowbar) { var nf = nowbar.querySelector('.lib-nowbar__progress i'); if (nf) nf.style.width = '0%'; }
+    }
+
+    syncPlayIcons();
+    updateNowbar();
+    saveState({ nowPlaying: title, nowSub: subtitle, progress: 0 });
+    toast('Now playing: ' + title);
+  }
+
+  var currentBookUrl = '';
+
+  function createFullscreenReader() {
+    var wrap = document.createElement('div');
+    wrap.className = 'lib-fullscreen-reader';
+    wrap.style.cssText = 'position:fixed;inset:0;z-index:2000;background:#0a0810;display:none;flex-direction:column;';
+    wrap.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;' +
+           'padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top,0px));' +
+           'background:linear-gradient(180deg,rgba(20,15,28,0.98),rgba(9,8,9,0.96));' +
+           'border-bottom:1px solid rgba(214,176,92,0.2);box-shadow:0 4px 18px rgba(0,0,0,0.5);">' +
+        '<button class="lib-fs-close" type="button" aria-label="Back" style="width:38px;height:38px;border-radius:50%;' +
+            'display:grid;place-items:center;background:rgba(255,255,255,0.05);' +
+            'border:1px solid rgba(214,176,92,0.3);color:#e6c277;cursor:pointer;-webkit-tap-highlight-color:transparent;">' +
+          '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>' +
+        '</button>' +
+        '<h3 style="margin:0;color:#e6c277;font-family:\'Cinzel\',serif;font-size:13px;letter-spacing:0.16em;text-transform:uppercase;">Reading Mode</h3>' +
+        '<span style="width:38px;height:38px;flex:none;"></span>' +
+      '</div>' +
+      '<iframe class="lib-fs-iframe" title="Reading mode" style="flex:1;width:100%;border:none;background:#0a0810;"></iframe>';
+    document.body.appendChild(wrap);
+
+    function closeFs() {
+      wrap.style.display = 'none';
+      wrap.querySelector('.lib-fs-iframe').src = '';
+      document.body.classList.remove('sy-no-scroll');
+    }
+    wrap.querySelector('.lib-fs-close').addEventListener('click', closeFs);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && wrap.style.display === 'flex') closeFs();
+    });
+
+    return wrap;
+  }
+
+  var fsReader = null;
+
+  function createReader() {
+    var wrap = document.createElement('div');
+    wrap.className = 'lib-reader';
+    wrap.setAttribute('aria-hidden', 'true');
+    wrap.innerHTML =
+      '<div class="lib-reader__panel" role="dialog" aria-modal="true" aria-labelledby="libReaderTitle">' +
+        '<div class="lib-reader__grab"></div>' +
+        '<div class="lib-reader__head">' +
+          '<div><p class="lib-reader__eyebrow"></p><h3 class="lib-reader__title" id="libReaderTitle"></h3></div>' +
+          '<button class="lib-reader__close" type="button" aria-label="Close">×</button>' +
+        '</div>' +
+        '<div class="lib-reader__meta"></div>' +
+        '<p class="lib-reader__quote"><b></b><span></span></p>' +
+        '<div class="lib-reader__progress">' +
+          '<div class="lib-reader__progress-top"><span>Reading progress</span><b></b></div>' +
+          '<div class="lib-reader__track"><span class="lib-reader__bar"></span></div>' +
+        '</div>' +
+        '<div class="lib-reader__actions">' +
+          '<button class="lib-reader__ghost" type="button" data-reader-save>Save</button>' +
+          '<button class="lib-reader__primary" type="button" data-reader-read>Continue</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(wrap);
+    wrap.addEventListener('click', function (e) {
+      if (e.target === wrap || e.target.closest('.lib-reader__close')) closeReader();
+      if (e.target.closest('[data-reader-save]')) {
+        var title = wrap.querySelector('.lib-reader__title').textContent;
+        var quote = wrap.querySelector('.lib-reader__quote b').textContent;
+        saveState({ savedTitle: title, savedQuote: quote });
+        toast('Saved to My Library');
+      }
+      if (e.target.closest('[data-reader-read]')) {
+        closeReader();
+        if (!fsReader) fsReader = createFullscreenReader();
+        fsReader.style.display = 'flex';
+        fsReader.querySelector('.lib-fs-iframe').src = currentBookUrl;
+        document.body.classList.add('sy-no-scroll');
+      }
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && wrap.classList.contains('open')) closeReader();
+    });
+    return wrap;
+  }
+
+  var reader = null;
+  var lastFocus = null;
+
+  function openReader(key, focusEl) {
+    var data = readerData[key] || readerData.gita;
+    reader = reader || createReader();
+    lastFocus = focusEl || document.activeElement;
+    reader.querySelector('.lib-reader__eyebrow').textContent = data.eyebrow;
+    reader.querySelector('.lib-reader__title').textContent = data.title;
+    reader.querySelector('.lib-reader__meta').innerHTML = data.meta.map(function (item) {
+      return '<span>' + escapeHTML(item) + '</span>';
+    }).join('');
+    reader.querySelector('.lib-reader__quote b').textContent = data.quote;
+    reader.querySelector('.lib-reader__quote span').textContent = data.meaning;
+    reader.querySelector('.lib-reader__progress-top b').textContent = data.progress + '%';
+    reader.querySelector('.lib-reader__bar').style.width = data.progress + '%';
+
+    currentBookUrl = data.pdfUrl;
+
+    reader.classList.add('open');
+    reader.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('sy-no-scroll');
+    setTimeout(function () {
+      var close = reader.querySelector('.lib-reader__close');
+      if (close) close.focus();
+    }, 0);
+  }
+
+  function closeReader() {
+    if (!reader) return;
+    reader.classList.remove('open');
+    reader.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('sy-no-scroll');
+    // Opening a book chip (Gita/Ramayan/Saved) also filters the page to that
+    // category. Closing the reader should return to the full library instead of
+    // leaving the rest of the content hidden behind a stale filter.
+    if (typeof clearFilter === 'function') clearFilter();
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+
+  /* ── Category filtering — tag each section, then a chip shows
+     only the relevant ones (Spotify-style chip filtering). ── */
+  function kindOf(section) {
+    if (section.querySelector('.lib-mantras-list')) return 'mantras';
+    if (section.querySelector('.lib-music-list'))   return 'music';
+    if (section.querySelector('.lib-vedas-grid'))   return 'vedas';
+    if (section.querySelector('.lib-continue'))     return 'continue';
+    if (section.querySelector('.lib-boost-container')) return 'boost';
+    return 'other';
+  }
+  var allSections = Array.prototype.slice.call(document.querySelectorAll('.lib-section-card'));
+  allSections.forEach(function (s) { s.setAttribute('data-kind', kindOf(s)); });
+
+  var FILTERS = {
+    mantras: { label: 'Mantras',        kinds: ['mantras', 'continue', 'boost'] },
+    gita:    { label: 'Bhagavad Gita',  kinds: ['boost', 'continue'] },
+    ramayan: { label: 'Ramayan',        kinds: ['boost', 'continue'] },
+    vedas:   { label: 'The Vedas',      kinds: ['vedas', 'boost'] },
+    bhajans: { label: 'Bhajans & Aarti',kinds: ['music', 'continue'] },
+    saved:   { label: 'My Library',     kinds: ['continue', 'boost'] },
+    music:   { label: 'Spiritual Music',kinds: ['music', 'continue'] }
+  };
+
+  // Filter note pill (injected once, sits below the chips)
+  var filterNote = document.createElement('div');
+  filterNote.className = 'lib-filter-note';
+  filterNote.innerHTML = '<span></span><button type="button">Show all</button>';
+  var catsScroll = document.querySelector('.lib-cats-scroll');
+  if (catsScroll && catsScroll.parentNode) catsScroll.parentNode.insertBefore(filterNote, catsScroll.nextSibling);
+  filterNote.querySelector('button').addEventListener('click', clearFilter);
+
+  function clearFilter() {
+    allSections.forEach(function (s) { s.removeAttribute('data-lib-hidden'); });
+    filterNote.classList.remove('show');
+    categories.forEach(function (c) { c.classList.remove('active'); });
+  }
+
+  function applyFilter(target) {
+    var def = FILTERS[target];
+    if (!def) return;
+    allSections.forEach(function (s) {
+      var show = def.kinds.indexOf(s.getAttribute('data-kind')) !== -1;
+      s.setAttribute('data-lib-hidden', show ? 'false' : 'true');
+      if (show) {
+        s.classList.add('is-in');       // guarantee visible (override scroll-reveal)
+        s.classList.remove('lib-filter-in');
+        void s.offsetWidth;             // restart entrance animation
+        s.classList.add('lib-filter-in');
+      }
+    });
+    filterNote.querySelector('span').innerHTML = 'Showing <b>' + def.label + '</b>';
+    filterNote.classList.add('show');
+  }
+
+  categories.forEach(function (card, index) {
+    var target = targetByIndex[index] || 'music';
+    card.setAttribute('data-lib-target', target);
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.addEventListener('click', function () {
+      setActiveCategory(target);
+      applyFilter(target);
+      // Book categories also open the reader sheet on top of the filter
+      if (target === 'gita' || target === 'ramayan' || target === 'saved') {
+        openReader(target, card);
+      }
+      // gently bring the filtered content into view
+      var main = document.querySelector('main.sy-container');
+      var firstVisible = allSections.filter(function (s) { return s.getAttribute('data-lib-hidden') !== 'true'; })[0];
+      if (firstVisible) firstVisible.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    card.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); }
+    });
+  });
+
+  document.querySelectorAll('.lib-mantra-item').forEach(function (item) {
+    item.setAttribute('role', 'button');
+    item.setAttribute('tabindex', '0');
+    item.addEventListener('click', function () {
+      var title = item.querySelector('h5').textContent.trim();
+      var subtitle = item.querySelector('p').textContent.replace(/\s+/g, ' ').trim();
+      setNowPlaying(title, subtitle, item);
+    });
+    item.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); item.click(); }
+    });
+  });
+
+  document.querySelectorAll('.lib-music-item').forEach(function (item) {
+    if (!item.querySelector('.lib-music-action')) {
+      var action = document.createElement('div');
+      action.className = 'lib-music-action';
+      action.innerHTML = iconPlay();
+      item.appendChild(action);
+    }
+    item.setAttribute('role', 'button');
+    item.setAttribute('tabindex', '0');
+    item.addEventListener('click', function () {
+      var title = item.querySelector('h5').textContent.trim();
+      var subtitle = item.querySelector('p').textContent.trim();
+      setNowPlaying(title, subtitle, item);
+    });
+    item.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); item.click(); }
+    });
+  });
+
+  var readLink = document.querySelector('.lib-read-link');
+  if (readLink) {
+    readLink.addEventListener('click', function (e) {
+      e.preventDefault();
+      openReader('gita', readLink);
+    });
+  }
+
+  document.querySelectorAll('.lib-veda-card').forEach(function (card) {
+    var title = (card.querySelector('h5') || {}).textContent || '';
+    var key = title.trim().toLowerCase();
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.addEventListener('click', function () {
+      document.querySelectorAll('.lib-veda-card').forEach(function (el) { el.classList.remove('is-open'); });
+      card.classList.add('is-open');
+      openReader(key, card);
+    });
+    card.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); }
+    });
+  });
+
+  document.querySelectorAll('.lib-section-header a').forEach(function (link) {
+    link.addEventListener('click', function (e) {
+      e.preventDefault();
+      var parent = link.closest('.lib-section-card');
+      if (parent && parent.querySelector('.lib-mantras-list')) scrollToSection('.lib-mantras-list');
+      else if (parent && parent.querySelector('.lib-vedas-grid')) scrollToSection('.lib-vedas-grid');
+      else toast('Library list updated');
+    });
+  });
+
+  var more = document.getElementById('explore-more-mantras');
+  if (more) {
+    var expanded = false;
+    more.addEventListener('click', function () {
+      var extras = document.querySelectorAll('.lib-extra-mantra');
+      var span = more.querySelector('span');
+      if (!expanded) {
+        extras.forEach(function(el) { el.style.display = 'flex'; });
+        if (span) span.textContent = 'Show Less Mantras';
+        expanded = true;
+        toast('Showing more mantras');
+      } else {
+        extras.forEach(function(el) { el.style.display = 'none'; });
+        if (span) span.textContent = 'Explore More Mantras';
+        expanded = false;
+        scrollToSection('.lib-mantras-list');
+      }
+    });
+  }
+
+  var cont = document.querySelector('.lib-cont-play');
+  if (cont) {
+    cont.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var title = (document.querySelector('.lib-cont-info h4') || {}).textContent || state.nowPlaying || 'Bhagavad Gita - Chapter 2';
+      var sub = (document.querySelector('.lib-cont-info p') || {}).textContent || state.nowSub || 'Shloka 47 - 72';
+      if (audioPlayer && audioPlayer.src && audioPlayer.src !== '') {
+          toggleAudioPlayback();
+      } else {
+          setNowPlaying(title.trim(), sub.trim(), cont.closest('.lib-continue'));
+      }
+    });
+  }
+
+  if (state.nowPlaying) {
+    var titleEl = document.querySelector('.lib-cont-info h4');
+    var subEl = document.querySelector('.lib-cont-info p');
+    if (titleEl) titleEl.textContent = state.nowPlaying;
+    if (subEl) subEl.textContent = state.nowSub || 'Last session';
+    // preload the track's timbre (paused) and surface the mini-bar so the
+    // user can resume with one tap — audio itself waits for a tap (autoplay policy)
+    audioPlayer.load(state.nowPlaying);
+    updateNowbar();
+  }
+})();
+
+  </script>
 </body>
 </html>
