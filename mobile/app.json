@@ -25,7 +25,7 @@
       "usesCleartextTraffic": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#000000"
+        "backgroundColor": "#4a0c10"
       },
       "permissions": [
         "android.permission.RECORD_AUDIO",
