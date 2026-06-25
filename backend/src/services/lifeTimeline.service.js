@@ -82,7 +82,7 @@ async function getLifeTimeline(input) {
     balance: vim.balance,
     currentAge: vim.currentAge,
     periods: vim.periods,
-    source: 'VedAstro (Lahiri) chart + classical Vimshottari Dasha',
+    source: 'Lahiri sidereal chart + classical Vimshottari Dasha',
   };
 }
 

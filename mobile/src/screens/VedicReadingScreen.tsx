@@ -155,7 +155,7 @@ export function VedicReadingScreen({ navigation }: any) {
             </View>
           )}
 
-          <Text style={[styles.trust, { color: theme.textMuted }]}>🔒 {lang === 'hi' ? 'गणना VedAstro (Lahiri) · फलादेश शास्त्र-आधारित (BPHS/फलदीपिका/मानसागरी)।' : 'Chart by VedAstro (Lahiri) · readings from classical texts (BPHS/Phaldeepika/Mansagari).'}</Text>
+          <Text style={[styles.trust, { color: theme.textMuted }]}>🔒 {lang === 'hi' ? 'गणना वास्तविक ग्रह-स्थितियों (Lahiri) · फलादेश शास्त्र-आधारित (BPHS/फलदीपिका/मानसागरी)।' : 'Chart from real planetary positions (Lahiri) · readings from classical texts (BPHS/Phaldeepika/Mansagari).'}</Text>
           <View style={{ height: 8 }} />
         </View>
       )}

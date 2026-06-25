@@ -158,7 +158,7 @@ export function RemediesScreen({ navigation }: any) {
             </View>
           )}
 
-          <Text style={[styles.trust, { color: theme.textMuted }]}>🔒 {lang === 'hi' ? 'उपाय शास्त्र-आधारित · गणना VedAstro से।' : 'Remedies are scripture-based · calculated via VedAstro.'}</Text>
+          <Text style={[styles.trust, { color: theme.textMuted }]}>🔒 {lang === 'hi' ? 'उपाय शास्त्र-आधारित · गणना वास्तविक ग्रह-स्थितियों से।' : 'Remedies are scripture-based · calculated from real planetary positions.'}</Text>
           <View style={{ height: 8 }} />
         </View>
       )}

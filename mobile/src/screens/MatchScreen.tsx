@@ -216,7 +216,7 @@ export function MatchScreen({ navigation }: any) {
             <GoldButton label={busy ? (lang === 'hi' ? 'मिलान हो रहा है…' : 'Matching…') : t('match.cta', lang === 'hi' ? 'कुंडली मिलाएँ' : 'Match Kundli')} onPress={run} />
           </View>
           {busy && <ActivityIndicator color={theme.gold1} style={{ marginTop: 16 }} />}
-          <Text style={[styles.trust, { color: theme.textMuted }]}>🔒 {lang === 'hi' ? 'गणना VedAstro (Lahiri अयनांश) से · विवरण सुरक्षित।' : 'Calculated via VedAstro (Lahiri ayanamsa) · details kept private.'}</Text>
+          <Text style={[styles.trust, { color: theme.textMuted }]}>🔒 {lang === 'hi' ? 'गणना वास्तविक ग्रह-स्थितियों (Lahiri अयनांश) से · विवरण सुरक्षित।' : 'Calculated from real planetary positions (Lahiri ayanamsa) · details kept private.'}</Text>
         </>
       )}
 
@@ -287,7 +287,7 @@ export function MatchScreen({ navigation }: any) {
                   <Text style={[styles.adviceText, { color: theme.text }]}>💛 {ex.advice}</Text>
                 </View>
               )}
-              {ex.aiAssisted && <Text style={[styles.aiTag, { color: theme.textMuted }]}>{lang === 'hi' ? 'गणना VedAstro (Lahiri अयनांश) से' : 'Calculated via VedAstro (Lahiri ayanamsa)'}</Text>}
+              {ex.aiAssisted && <Text style={[styles.aiTag, { color: theme.textMuted }]}>{lang === 'hi' ? 'गणना वास्तविक ग्रह-स्थितियों (Lahiri अयनांश) से' : 'Calculated from real planetary positions (Lahiri ayanamsa)'}</Text>}
             </View>
           )}
 

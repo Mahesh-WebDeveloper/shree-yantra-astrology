@@ -76,7 +76,7 @@ async function getReading(input) {
     naamakshar,
     predictions: phala.predictions,
     explanation,
-    source: 'VedAstro (Lahiri) chart + classical Phala-Kathan (BPHS/Phaldeepika/Mansagari)',
+    source: 'Lahiri sidereal chart + classical Phala-Kathan (BPHS/Phaldeepika/Mansagari)',
   };
 }
 

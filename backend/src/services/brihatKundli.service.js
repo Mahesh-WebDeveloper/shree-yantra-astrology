@@ -173,7 +173,7 @@ function buildSections({ kundli, varga, dasha, yoga, reading, timeline, remedies
       title: { en: 'Birth Foundation', hi: 'जन्म आधार' },
       status: kundli ? 'ready' : 'unavailable',
       count: planets.length,
-      source: kundli ? 'VedAstro/Lahiri planetary positions' : null,
+      source: kundli ? 'Real planetary positions (Lahiri sidereal)' : null,
     },
     {
       key: 'planetary-positions',
@@ -446,7 +446,7 @@ async function getBrihatKundli(input) {
     },
     accuracy: {
       calculation: 'high',
-      engine: 'VedAstro + Lahiri ayanamsa + exact coordinates when provided',
+      engine: 'Real astronomical planetary positions + Lahiri ayanamsa + exact birth coordinates',
       requires: [
         'Exact birth time',
         'Exact birth place latitude/longitude',

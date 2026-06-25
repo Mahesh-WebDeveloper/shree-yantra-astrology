@@ -84,7 +84,7 @@ export function TransitForecastScreen({ navigation }: any) {
             {(data.years || []).map((y) => <YearRow key={y.year} y={y} lang={lang} theme={theme} />)}
           </View>
 
-          <Text style={[styles.trust, { color: theme.textMuted }]}>🔒 {lang === 'hi' ? 'गणना VedAstro (Lahiri) गोचर + चंद्र-आधारित शनि/गुरु फल।' : 'VedAstro (Lahiri) transits + Moon-based Saturn/Jupiter gochar.'}</Text>
+          <Text style={[styles.trust, { color: theme.textMuted }]}>🔒 {lang === 'hi' ? 'गणना वास्तविक ग्रह-स्थितियों (Lahiri) गोचर + चंद्र-आधारित शनि/गुरु फल।' : 'Real planetary positions (Lahiri) transits + Moon-based Saturn/Jupiter gochar.'}</Text>
           <View style={{ height: 8 }} />
         </View>
       )}

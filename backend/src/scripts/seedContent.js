@@ -35,7 +35,7 @@ const BOOKS = [
 ];
 
 const FAQS = [
-  { question: 'Mera data kitna accurate hai?', answer: 'Saare calculations VedAstro (Swiss Ephemeris) se hote hain — best-in-class accuracy.', category: 'General', order: 0, published: true },
+  { question: 'Mera data kitna accurate hai?', answer: 'Saare calculations real grah-nakshatra positions (Swiss-Ephemeris-grade astronomy, Lahiri ayanamsa) se hote hain — best-in-class accuracy.', category: 'General', order: 0, published: true },
   { question: 'Premium me kya extra milta hai?', answer: 'Full kundli, dasha, AI personalised predictions aur premium library.', category: 'Subscription', order: 1, published: true },
   { question: 'Login kaise karun?', answer: 'Mobile number daalein, OTP se verify karein — bas ho gaya.', category: 'Account', order: 2, published: true },
 ];

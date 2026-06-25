@@ -314,8 +314,8 @@ async function getKundli(input) {
   }
 
   const doshas = [
-    { name: 'Mangal Dosha', present: mangal, detail: mangal ? (marsH ? `Mars in House ${marsH}` : 'Mars in 2/4/7/8/12') : 'Mars not in dosha houses', tag: mangal ? 'Present' : 'Clear', source: 'VedAstro' },
-    { name: 'Kaal Sarp Dosha', present: kaalSarp, detail: kaalSarp ? 'All planets between Rahu–Ketu axis' : 'Not formed in your chart', tag: kaalSarp ? 'Present' : 'Clear', source: 'VedAstro positions' },
+    { name: 'Mangal Dosha', present: mangal, detail: mangal ? (marsH ? `Mars in House ${marsH}` : 'Mars in 2/4/7/8/12') : 'Mars not in dosha houses', tag: mangal ? 'Present' : 'Clear', source: 'Planetary positions' },
+    { name: 'Kaal Sarp Dosha', present: kaalSarp, detail: kaalSarp ? 'All planets between Rahu–Ketu axis' : 'Not formed in your chart', tag: kaalSarp ? 'Present' : 'Clear', source: 'Planetary positions' },
   ];
 
   const insights = computeInsights({ ascendant, moonSign, planets, yogas, doshas });
@@ -329,7 +329,7 @@ async function getKundli(input) {
     return { cached: false, saved: false, note: 'Some planet positions failed — result not cached.', input, data };
   }
   if (usedLocal) {
-    return { cached: false, saved: false, source: 'local-fallback', note: 'Computed via local-ephemeris fallback (VedAstro unavailable) — not cached.', input, data };
+    return { cached: false, saved: false, source: 'local-fallback', note: 'Computed via local ephemeris fallback — not cached.', input, data };
   }
   const saved = await Kundli.create({ cacheKey, input, data });
   return { cached: false, saved: true, ...saved.toObject() };
@@ -992,7 +992,7 @@ async function getPanchang(input) {
     provider: prim.provider,
     source: prim.provider === 'local'
       ? 'Local ephemeris (astronomy-engine, Lahiri) + classical Panchang'
-      : 'VedAstro (Lahiri) positions + classical Panchang',
+      : 'Real planetary positions (Lahiri) + classical Panchang',
   };
   const hasAnyEndTime = !!(endTimes && (endTimes.tithi || endTimes.karana || endTimes.nakshatra || endTimes.yoga));
   if (!includeTransitions || hasAnyEndTime) PANCHANG_CACHE.set(cacheKey, result);

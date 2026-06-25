@@ -673,7 +673,7 @@ export function BrihatKundliScreen({ navigation }: any) {
           <View style={{ flex: 1 }}>
             <Text style={[styles.formTitle, { color: theme.text }]}>{lang === 'hi' ? 'Trust & accuracy layer' : 'Trust & accuracy layer'}</Text>
             <Text style={[styles.formHint, { color: theme.textMuted }]}>
-              {report?.accuracy.engine || 'VedAstro + Lahiri + exact coordinates. AI only explains calculated data.'}
+              {report?.accuracy.engine || 'Real planetary positions + Lahiri ayanamsa + exact coordinates. AI only explains calculated data.'}
             </Text>
           </View>
         </View>

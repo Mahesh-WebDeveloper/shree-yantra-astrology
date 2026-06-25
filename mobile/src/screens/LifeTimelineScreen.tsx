@@ -136,7 +136,7 @@ export function LifeTimelineScreen({ navigation }: any) {
             {visible.map((p, i) => <PeriodCard key={`${p.lord}-${p.fromAge}-${i}`} p={p} lang={lang} theme={theme} />)}
           </View>
 
-          <Text style={[styles.trust, { color: theme.textMuted }]}>🔒 {lang === 'hi' ? 'गणना VedAstro (Lahiri) + शास्त्रीय विंशोत्तरी दशा — हर काल का फल ग्रह की वास्तविक स्थिति पर आधारित।' : 'VedAstro (Lahiri) + classical Vimshottari — each period reasoned from the planet\'s real placement.'}</Text>
+          <Text style={[styles.trust, { color: theme.textMuted }]}>🔒 {lang === 'hi' ? 'गणना वास्तविक ग्रह-स्थितियों (Lahiri) + शास्त्रीय विंशोत्तरी दशा — हर काल का फल ग्रह की वास्तविक स्थिति पर आधारित।' : 'Real planetary positions (Lahiri) + classical Vimshottari — each period reasoned from the planet\'s real placement.'}</Text>
           <View style={{ height: 8 }} />
         </View>
       )}

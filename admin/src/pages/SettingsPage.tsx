@@ -66,7 +66,7 @@ export default function SettingsPage() {
           <h2 className="text-base font-semibold">Astrology and AI</h2>
           <div className="mt-4 grid gap-4">
             <div className="grid gap-2">
-              <label className="text-sm font-medium" htmlFor="vedastro-tier">VedAstro tier</label>
+              <label className="text-sm font-medium" htmlFor="vedastro-tier">Astrology API tier</label>
               <Select
                 id="vedastro-tier"
                 value={data.vedastroTier}
@@ -88,7 +88,7 @@ export default function SettingsPage() {
               </Select>
             </div>
             <div className="grid gap-3">
-              <KeyStatus label="VedAstro key" set={data.keyStatus.vedastroKeySet} />
+              <KeyStatus label="Astrology API key" set={data.keyStatus.vedastroKeySet} />
               <KeyStatus label="Gemini key" set={data.keyStatus.geminiKeySet} />
               <KeyStatus label="Claude key" set={data.keyStatus.claudeKeySet} />
             </div>

@@ -86,7 +86,7 @@ async function getTransitForecast(input) {
     years.forEach((yr) => { yr.note = byYear[yr.year] || null; });
   }
 
-  return { moonSign, fromYear: fromY, toYear: toY, currentYear: nowY, years, summary: explanation ? explanation.summary : null, source: 'VedAstro (Lahiri) transits, local-ephemeris fallback + classical Chandra-gochar' };
+  return { moonSign, fromYear: fromY, toYear: toY, currentYear: nowY, years, summary: explanation ? explanation.summary : null, source: 'Real planetary positions (Lahiri) transits + classical Chandra-gochar' };
 }
 
 module.exports = { getTransitForecast };

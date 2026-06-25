@@ -138,7 +138,7 @@ export function GocharScreen({ navigation }: any) {
             </View>
           )}
 
-          <Text style={[styles.trust, { color: theme.textMuted }]}>🔒 {lang === 'hi' ? 'गणना VedAstro (Lahiri अयनांश) · चंद्र-गोचर विधि।' : 'Calculated via VedAstro (Lahiri ayanamsa) · Moon-based gochar.'}</Text>
+          <Text style={[styles.trust, { color: theme.textMuted }]}>🔒 {lang === 'hi' ? 'गणना वास्तविक ग्रह-स्थितियों (Lahiri अयनांश) · चंद्र-गोचर विधि।' : 'Calculated from real planetary positions (Lahiri ayanamsa) · Moon-based gochar.'}</Text>
           <View style={{ height: 8 }} />
         </View>
       )}
