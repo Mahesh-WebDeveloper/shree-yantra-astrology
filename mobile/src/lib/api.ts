@@ -717,7 +717,8 @@ export interface GocharResponse {
   date: string; ayanamsa: string; natalMoonSign?: string | null; natalAsc?: string | null;
   sadeSati: SadeSati; transits: TransitPlanet[]; explanation?: GocharExplanation | null;
 }
-export const getGochar = (input: KundliInput) => post<GocharResponse>('/api/gochar', { ...input, lang: apiLang });
+// Gochar = current transits across 9 planets + AI note → heavier; longer timeout.
+export const getGochar = (input: KundliInput) => post<GocharResponse>('/api/gochar', { ...input, lang: apiLang }, 'POST', 30000);
 
 // ── Remedies (Upaay) ──
 export interface LifeGem {
@@ -872,8 +873,9 @@ export interface TransitForecastResponse {
   moonSign?: string | null; fromYear: number; toYear: number; currentYear: number;
   years: TransitYear[]; summary?: string | null; source?: string;
 }
+// Saal-dar-saal gochar = 9 years × 2 planets + AI summary/notes → heavy; longer timeout.
 export const getTransitForecast = (input: KundliInput & { fromYear?: number; toYear?: number }) =>
-  post<TransitForecastResponse>('/api/transit-forecast', { ...input, lang: apiLang });
+  post<TransitForecastResponse>('/api/transit-forecast', { ...input, lang: apiLang }, 'POST', 45000);
 
 // ── Brihat Kundli (advanced report aggregator) ──
 export interface BrihatSection {

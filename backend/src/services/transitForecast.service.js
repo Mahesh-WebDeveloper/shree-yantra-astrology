@@ -17,8 +17,8 @@ const JUP_GOOD = [2, 5, 7, 9, 11];
 async function planetSignAt(planet, std, location, ayan, dateForLocal) {
   if (vedastroHealthy()) {
     try {
-      // 6s tight timeout: slow VedAstro ho to fast local fallback (sign exact-match).
-      const json = await vedastroPost('/Calculate/AllPlanetData', { PlanetName: { Name: planet }, Time: { StdTime: std, Location: location }, Ayanamsa: ayan }, 6000);
+      // 4s tight timeout: slow VedAstro ho to fast local fallback (sign exact-match).
+      const json = await vedastroPost('/Calculate/AllPlanetData', { PlanetName: { Name: planet }, Time: { StdTime: std, Location: location }, Ayanamsa: ayan }, 4000);
       const d = (json && json.Payload && json.Payload.AllPlanetData) || {};
       const sign = d.PlanetRasiD1Sign && d.PlanetRasiD1Sign.Name;
       if (sign) { clearVedastroCooldown(); return sign; }
