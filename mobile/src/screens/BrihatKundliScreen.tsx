@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
+import { buildBrihatHtml } from '../lib/brihatPdf';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { Page } from '../components/Page';
 import { GradientText } from '../components/GradientText';
@@ -470,6 +473,8 @@ export function BrihatKundliScreen({ navigation }: any) {
   const [place, setPlace] = useState('');
   const [birthLocation, setBirthLocation] = useState<LocationSuggestion | null>(null);
   const [busy, setBusy] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [personName, setPersonName] = useState('');
   const [report, setReport] = useState<BrihatKundliResponse | null>(null);
 
   useEffect(() => {
@@ -478,6 +483,7 @@ export function BrihatKundliScreen({ navigation }: any) {
       if (birth.dob) setDob(birth.dob);
       if (birth.tob) setTob(birth.tob);
       if (birth.place) setPlace(birth.place);
+      if (birth.name) setPersonName(birth.name);
       if (birth.lat != null && birth.lng != null) {
         setBirthLocation({
           id: 'profile',
@@ -518,6 +524,22 @@ export function BrihatKundliScreen({ navigation }: any) {
       dialog('Brihat Kundli', e?.message || (lang === 'hi' ? 'रिपोर्ट नहीं बन पाई — कृपया पुनः प्रयास करें।' : 'Could not generate the report — please try again.'));
     } finally {
       setBusy(false);
+    }
+  };
+
+  const exportPdf = async () => {
+    if (exporting || !report) return;
+    setExporting(true);
+    try {
+      const html = buildBrihatHtml({ name: personName.trim(), dob: dob.trim(), tob: tob.trim(), place: place.trim(), lang }, report);
+      const { uri } = await Print.printToFileAsync({ html, width: 595, height: 842, margins: { top: 36, right: 32, bottom: 40, left: 32 }, textZoom: 100 });
+      if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: 'Brihat Kundli', UTI: 'com.adobe.pdf' });
+      hSuccess();
+    } catch (e: any) {
+      hError();
+      dialog('PDF', e?.message || (lang === 'hi' ? 'PDF नहीं बन पाई।' : 'PDF export failed.'));
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -611,38 +633,17 @@ export function BrihatKundliScreen({ navigation }: any) {
 
           {!!report.varshphal?.years?.length && <VarshphalCard v={report.varshphal} />}
 
-          <ShellCard>
-            <View style={styles.modHead}>
-              <Text style={[styles.blockTitle, { color: theme.text, marginBottom: 0 }]}>{lang === 'hi' ? 'Report modules' : 'Report modules'}</Text>
-              <Text style={[styles.modCount, { color: theme.goldText }]}>{readyCount}/{report.sections.length} {lang === 'hi' ? 'तैयार' : 'ready'}</Text>
+          {(report.domains || []).some((d) => !!d.summary) && (
+            <View>
+              <Text style={[styles.outsideTitle, { color: theme.gold1 }]}>{lang === 'hi' ? 'Life areas' : 'Life areas'}</Text>
+              {(report.domains || []).filter((d) => !!d.summary).map((item) => <DomainCard key={item.key} item={item} />)}
             </View>
-            <View style={[styles.progressTrack, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.06)' }]}>
-              <View style={[styles.progressFill, { width: `${Math.round((readyCount / Math.max(1, report.sections.length)) * 100)}%`, backgroundColor: theme.gold1 }]} />
-            </View>
-            {(report.sections || []).map((item) => <SectionRow key={item.key} item={item} />)}
-          </ShellCard>
+          )}
 
-          <View>
-            <Text style={[styles.outsideTitle, { color: theme.gold1 }]}>{lang === 'hi' ? 'Life areas' : 'Life areas'}</Text>
-            {(report.domains || []).map((item) => <DomainCard key={item.key} item={item} />)}
+          <View style={{ marginTop: 16 }}>
+            <GoldButton label={exporting ? (lang === 'hi' ? 'PDF बन रही है…' : 'Generating PDF…') : (lang === 'hi' ? '📄 बृहत कुंडली PDF डाउनलोड करें' : '📄 Export Brihat Kundli PDF')} onPress={exportPdf} />
+            {exporting && <ActivityIndicator color={theme.gold1} style={{ marginTop: 12 }} />}
           </View>
-
-          <ShellCard>
-            <Text style={[styles.blockTitle, { color: theme.text }]}>{lang === 'hi' ? 'Expert modules roadmap' : 'Expert modules roadmap'}</Text>
-            <Text style={[styles.sourceNote, { color: theme.textMuted }]}>
-              {lang === 'hi'
-                ? 'Ye advanced systems 100% accuracy ke liye validate ho rahe hain — hum kabhi unverified prediction nahi dikhate.'
-                : 'These advanced systems are being validated for 100% accuracy — we never show unverified predictions.'}
-            </Text>
-            <View style={styles.roadmapGrid}>
-              {(report.roadmap || []).map((item) => <RoadmapItem key={item.key} title={item.title} status={item.status} />)}
-            </View>
-          </ShellCard>
-
-          <Pressable onPress={() => { hSelect(); navigation.navigate('JanamPatri'); }} style={({ pressed }) => [styles.pdfLink, { borderColor: theme.cardBorder }, pressed && { opacity: 0.78 }]}>
-            <UserLine color={theme.gold1} size={18} />
-            <Text style={[styles.pdfText, { color: theme.gold1 }]}>{t('patri.pdf', 'Export Full Janam Patri PDF')}</Text>
-          </Pressable>
         </View>
       )}
     </Page>
