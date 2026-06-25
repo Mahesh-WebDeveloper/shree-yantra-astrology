@@ -242,6 +242,43 @@ async function callOpenRouter(prompt, { json = false } = {}) {
   });
 }
 
+// ── Groq (OpenAI-compatible) — VERY fast LPU inference, free tier ───────────
+// Gemini ke baad, OpenRouter se pehle: Groq bahut tez hai aur reliable. Live-
+// verified models: llama-3.3-70b-versatile (strong) + llama-3.1-8b-instant (fast).
+const GROQ_MODELS = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'];
+async function callGroq(prompt, { json = false } = {}) {
+  const key = env.ai.groqKey;
+  if (!key) throw Object.assign(new Error('GROQ_API_KEY set nahi hai (.env)'), { status: 500 });
+  const models = [env.ai.groqModel, ...GROQ_MODELS, ...env.ai.groqExtra].filter((v, i, a) => v && a.indexOf(v) === i);
+  return runModelChain('groq', models, async (model) => {
+    const res = await fetchT('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+      body: JSON.stringify({
+        model,
+        temperature: 0.85,
+        max_tokens: 2600,
+        messages: [
+          json
+            ? { role: 'system', content: 'Respond with ONLY valid JSON — no markdown, no code fences, no analysis, no commentary.' }
+            : { role: 'system', content: "You are Shree Yantra's astrology assistant. Reply with ONLY the final answer in the user's language. Do not include any analysis, reasoning, or meta commentary." },
+          { role: 'user', content: prompt },
+        ],
+        ...(json ? { response_format: { type: 'json_object' } } : {}),
+      }),
+    }, 20000);
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      throw Object.assign(new Error(`Groq ${res.status} (${model}): ${txt.slice(0, 140)}`), { status: res.status });
+    }
+    const data = await res.json();
+    const raw = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+    const text = sanitizeText(raw);
+    if (!text) throw Object.assign(new Error(`Groq empty (${model})`), { status: 502 });
+    return json ? parseJsonLoose(text) : text;
+  });
+}
+
 // Kya is error par hum fallback provider try karein? Sirf availability/quota errors par —
 // (rate-limit 429, server 5xx, timeout/network, invalid-response 502, ya allCooldown).
 // 4xx client errors (galat input) par fallback ka koi fayda nahi.
@@ -263,22 +300,26 @@ async function callAI(prompt, opts) {
   } catch (_) {
     // fallback to .env provider if DB settings are temporarily unavailable
   }
-  const primary = provider === 'claude' ? callClaude : callGemini;
-  try {
-    return await primary(prompt, opts);
-  } catch (err) {
-    // Primary fail/quota/all-cooldown → OpenRouter FREE fallback (agar key set ho).
-    if (env.ai.openrouterKey && shouldFailover(err)) {
-      try {
-        console.warn(`[ai] ${provider} unavailable (${err.status || 'err'}${err.allCooldown ? '/all-cooldown' : ''}) → OpenRouter free fallback`);
-        return await callOpenRouter(prompt, opts);
-      } catch (orErr) {
-        // Dono fail → jo error zyada informative ho wahi throw karo.
-        throw orErr.allCooldown ? err : (orErr.status ? orErr : err);
+  // Fallback chain (each layer = its own multi-model + circuit breaker):
+  //   PRIMARY (Gemini multi-key / Claude) → Groq (fast) → OpenRouter (free).
+  // We only step to the next provider on a failover-worthy error (quota/5xx/down).
+  const chain = [{ name: provider, fn: provider === 'claude' ? callClaude : callGemini }];
+  if (env.ai.groqKey) chain.push({ name: 'groq', fn: callGroq });
+  if (env.ai.openrouterKey) chain.push({ name: 'openrouter', fn: callOpenRouter });
+  let lastErr;
+  for (let i = 0; i < chain.length; i++) {
+    try {
+      return await chain[i].fn(prompt, opts);
+    } catch (err) {
+      lastErr = err;
+      if (i < chain.length - 1 && shouldFailover(err)) {
+        console.warn(`[ai] ${chain[i].name} unavailable (${err.status || 'err'}${err.allCooldown ? '/all-cooldown' : ''}) → ${chain[i + 1].name} fallback`);
+        continue;
       }
+      throw err;
     }
-    throw err;
   }
+  throw lastErr;
 }
 
 // ── helpers ──

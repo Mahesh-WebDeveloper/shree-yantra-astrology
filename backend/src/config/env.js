@@ -42,6 +42,11 @@ const env = {
     // OPENROUTER_FALLBACK_MODELS="qwen/qwen-2.5-72b-instruct:free,openai/gpt-4o-mini"
     openrouterExtra: (process.env.OPENROUTER_FALLBACK_MODELS || '')
       .split(',').map((s) => s.trim()).filter(Boolean),
+    // Groq (OpenAI-compatible, very fast LPU) — fallback between Gemini and OpenRouter.
+    groqKey: process.env.GROQ_API_KEY || '',
+    groqModel: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+    groqExtra: (process.env.GROQ_FALLBACK_MODELS || '')
+      .split(',').map((s) => s.trim()).filter(Boolean),
   },
   youtube: {
     apiKey: process.env.YOUTUBE_API_KEY || '',
