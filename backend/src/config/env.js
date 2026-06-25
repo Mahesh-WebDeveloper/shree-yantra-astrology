@@ -28,6 +28,14 @@ const env = {
     provider: (process.env.AI_PROVIDER || 'gemini').toLowerCase(), // 'gemini' | 'claude'
     geminiKey: process.env.GEMINI_API_KEY || '',
     geminiModel: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+    // OpenRouter (OpenAI-compatible) — automatic FREE-model fallback jab primary (Gemini) fail/quota ho.
+    openrouterKey: process.env.OPENROUTER_API_KEY || '',
+    // Default = ek capable FREE model. Service ke andar pura free-model chain try hota hai.
+    openrouterModel: process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct:free',
+    // Extra fallback models (CSV) — bina code change ke chain extend karne ke liye. e.g.
+    // OPENROUTER_FALLBACK_MODELS="qwen/qwen-2.5-72b-instruct:free,openai/gpt-4o-mini"
+    openrouterExtra: (process.env.OPENROUTER_FALLBACK_MODELS || '')
+      .split(',').map((s) => s.trim()).filter(Boolean),
   },
   youtube: {
     apiKey: process.env.YOUTUBE_API_KEY || '',

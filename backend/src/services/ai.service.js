@@ -28,12 +28,73 @@ function parseJsonLoose(text) {
   }
 }
 
+// ── Circuit breaker (per-model cooldown) ────────────────────────────────────
+// Jab koi model 429 (quota) / 5xx / down ho, use thodi der ke liye "cooldown" me
+// daal dete hain — agle requests me usse SKIP karke seedhe agle model par jaate
+// hain (bina network call ke). Isse user ko kabhi slow/error feel nahi hota:
+// hum sirf un models ko try karte hain jo abhi healthy hain. (Process-memory me;
+// restart par reset — yeh by design hai.)
+const _cooldownUntil = new Map();
+function inCooldown(id) {
+  const until = _cooldownUntil.get(id);
+  if (!until) return false;
+  if (Date.now() >= until) { _cooldownUntil.delete(id); return false; }
+  return true;
+}
+function tripCooldown(id, ms) { _cooldownUntil.set(id, Date.now() + ms); }
+function clearCooldown(id) { _cooldownUntil.delete(id); }
+
+// Error ke hisaab se model ko kitni der skip karein:
+function cooldownMsFor(err) {
+  const s = err && err.status;
+  const msg = String((err && err.message) || '');
+  if (s === 429) return /per[\s-]?day|daily|free-?models?-?per-?day/i.test(msg) ? 20 * 60 * 1000 : 60 * 1000; // daily quota → 20min, per-min → 60s
+  if (s === 402) return 6 * 60 * 60 * 1000; // needs credits (paid model on free key) → long skip
+  if (s === 404 || s === 400) return 6 * 60 * 60 * 1000; // stale/invalid model id → long skip (self-heal)
+  if (s === 401 || s === 403) return 10 * 60 * 1000; // auth issue → skip a while
+  if (s == null || s >= 500) return 30 * 1000; // server/timeout/invalid-response → short
+  return 15 * 1000;
+}
+
+// Ek model-chain ko ek-ke-baad-ek try karta hai. Cooldown-wale models instantly
+// skip. Success par cooldown clear. Sab models cooldown me ho to allCooldown flag
+// ke saath turant throw (taaki caller agle provider par bina ruke jump kar sake).
+async function runModelChain(label, models, doCall) {
+  let lastErr;
+  let triedLive = false;
+  for (const model of models) {
+    const id = `${label}:${model}`;
+    if (inCooldown(id)) continue; // circuit OPEN → skip instantly (no network)
+    triedLive = true;
+    try {
+      const out = await doCall(model);
+      clearCooldown(id);
+      return out;
+    } catch (e) {
+      lastErr = e;
+      const ms = cooldownMsFor(e);
+      if (ms) tripCooldown(id, ms);
+    }
+  }
+  const err = lastErr || Object.assign(new Error(`${label}: koi model available nahi`), { status: 503 });
+  if (!triedLive) err.allCooldown = true; // sabhi cooldown me the → fast failover signal
+  throw err;
+}
+
+// Reasoning/open models ke output ko saaf karta hai (harmony channel tokens etc.)
+function sanitizeText(t) {
+  return String(t == null ? '' : t)
+    .replace(/<\|[^|>]*\|>/g, ' ')        // OpenAI "harmony" channel tokens (gpt-oss)
+    .replace(/^\s*assistantfinal\s*/i, '') // gpt-oss final-channel marker
+    .trim();
+}
+
 async function callGemini(prompt, { json = false } = {}) {
   const key = env.ai.geminiKey;
   if (!key) throw Object.assign(new Error('GEMINI_API_KEY set nahi hai (.env)'), { status: 500 });
   // Free tier quota is PER-MODEL-PER-DAY (~20 req/day each). So when one model is
-  // exhausted (429), we must hop to the NEXT model — each has its own fresh quota.
-  // This multiplies effective free quota and adds resilience. Order: capable first.
+  // exhausted (429), we hop to the NEXT model — each has its own fresh quota.
+  // Circuit breaker exhausted models ko skip kar deta hai → fast. Order: capable first.
   const models = [
     env.ai.geminiModel,
     'gemini-2.5-flash',
@@ -51,32 +112,22 @@ async function callGemini(prompt, { json = false } = {}) {
       ...(json ? { responseMimeType: 'application/json' } : {}),
     },
   };
-  let lastErr;
-  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-  for (const model of models) {
-    // 503 = transient overload → retry SAME model briefly; 429 = quota → hop to next model immediately
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        const res = await fetchT(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
-          { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) },
-          20000
-        );
-        if (!res.ok) {
-          const txt = await res.text().catch(() => '');
-          lastErr = Object.assign(new Error(`Gemini ${res.status} (${model}): ${txt.slice(0, 140)}`), { status: res.status });
-          if (res.status === 503) { await sleep(600 * (attempt + 1)); continue; } // transient → retry same model
-          break; // 429 (daily quota) or other → try next model right away
-        }
-        const data = await res.json();
-        const text = (data.candidates && data.candidates[0] && data.candidates[0].content
-          && data.candidates[0].content.parts || []).map((p) => p.text || '').join('');
-        if (!text) { lastErr = new Error('Gemini: empty response'); break; }
-        return json ? parseJsonLoose(text) : text.trim();
-      } catch (e) { lastErr = e; break; }
+  return runModelChain('gemini', models, async (model) => {
+    const res = await fetchT(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) },
+      18000
+    );
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      throw Object.assign(new Error(`Gemini ${res.status} (${model}): ${txt.slice(0, 140)}`), { status: res.status });
     }
-  }
-  throw Object.assign(lastErr || new Error('Gemini call failed'), { status: 502 });
+    const data = await res.json();
+    const text = ((data.candidates && data.candidates[0] && data.candidates[0].content
+      && data.candidates[0].content.parts) || []).map((p) => p.text || '').join('');
+    if (!text) throw Object.assign(new Error(`Gemini empty (${model})`), { status: 502 });
+    return json ? parseJsonLoose(text) : text.trim();
+  });
 }
 
 async function callClaude(prompt, { json = false } = {}) {
@@ -106,7 +157,80 @@ async function callClaude(prompt, { json = false } = {}) {
   return json ? parseJsonLoose(text) : text;
 }
 
-// provider switch
+// ── OpenRouter (OpenAI-compatible) — FREE model chain ───────────────────────
+// Yeh hamara FALLBACK provider hai: jab Gemini quota (429)/down ho, hum yahan
+// switch karte hain. OpenRouter par ye sab models BILKUL FREE hain (:free) —
+// $0 balance par chalte hain. Free tier ka rate-limit account-wide (~20 req/min)
+// hai, isliye hum ek-ke-baad-ek kai models try karte hain + circuit breaker se
+// rate-limited model ko skip karte hain. (Live-verified working models, order:
+// best quality + cleanest output first; gpt-oss JSON ke liye reliable backup.)
+const OPENROUTER_FREE_MODELS = [
+  'meta-llama/llama-3.3-70b-instruct:free',
+  'qwen/qwen3-next-80b-a3b-instruct:free',
+  'openai/gpt-oss-120b:free',
+  'google/gemma-4-31b-it:free',
+  'nousresearch/hermes-3-llama-3.1-405b:free',
+  'nvidia/nemotron-3-super-120b-a12b:free',
+];
+
+async function callOpenRouter(prompt, { json = false } = {}) {
+  const key = env.ai.openrouterKey;
+  if (!key) throw Object.assign(new Error('OPENROUTER_API_KEY set nahi hai (.env)'), { status: 500 });
+  // env.ai.openrouterModel pehle (user override), phir verified free chain, phir
+  // optional extra models (OPENROUTER_FALLBACK_MODELS) / paid last-resort (agar enable ho).
+  const models = [
+    env.ai.openrouterModel,
+    ...OPENROUTER_FREE_MODELS,
+    ...env.ai.openrouterExtra,
+  ].filter((v, i, a) => v && a.indexOf(v) === i);
+  return runModelChain('openrouter', models, async (model) => {
+    const res = await fetchT('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${key}`,
+        // OpenRouter attribution headers (recommended).
+        'HTTP-Referer': 'https://shreeyantra.app',
+        'X-Title': 'Shree Yantra',
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0.85,
+        max_tokens: 2600,
+        messages: [
+          json
+            ? { role: 'system', content: 'Respond with ONLY valid JSON — no markdown, no code fences, no analysis, no commentary.' }
+            : { role: 'system', content: "You are Shree Yantra's astrology assistant. Reply with ONLY the final answer in the user's language. Do not include any analysis, reasoning, or meta commentary." },
+          { role: 'user', content: prompt },
+        ],
+        ...(json ? { response_format: { type: 'json_object' } } : {}),
+      }),
+    }, 22000);
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      throw Object.assign(new Error(`OpenRouter ${res.status} (${model}): ${txt.slice(0, 140)}`), { status: res.status });
+    }
+    const data = await res.json();
+    const raw = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+    const text = sanitizeText(raw);
+    if (!text) throw Object.assign(new Error(`OpenRouter empty (${model})`), { status: 502 });
+    return json ? parseJsonLoose(text) : text;
+  });
+}
+
+// Kya is error par hum fallback provider try karein? Sirf availability/quota errors par —
+// (rate-limit 429, server 5xx, timeout/network, invalid-response 502, ya allCooldown).
+// 4xx client errors (galat input) par fallback ka koi fayda nahi.
+function shouldFailover(err) {
+  if (err && err.allCooldown) return true;
+  const s = err && err.status;
+  return s === 429 || s === 500 || s === 502 || s === 503 || s === 504 || s == null;
+}
+
+// provider switch + smart failover (industry-standard graceful degradation)
+// Chain: PRIMARY (Gemini free models, per-model daily quota) → OpenRouter FREE models.
+// Har layer ke andar multi-model + circuit breaker. Result: user ko kabhi "AI down /
+// slow / quota exceeded" feel nahi hota — koi na koi healthy model jawab de deta hai.
 async function callAI(prompt, opts) {
   let provider = env.ai.provider || 'gemini';
   try {
@@ -115,8 +239,22 @@ async function callAI(prompt, opts) {
   } catch (_) {
     // fallback to .env provider if DB settings are temporarily unavailable
   }
-  if (provider === 'claude') return callClaude(prompt, opts);
-  return callGemini(prompt, opts);
+  const primary = provider === 'claude' ? callClaude : callGemini;
+  try {
+    return await primary(prompt, opts);
+  } catch (err) {
+    // Primary fail/quota/all-cooldown → OpenRouter FREE fallback (agar key set ho).
+    if (env.ai.openrouterKey && shouldFailover(err)) {
+      try {
+        console.warn(`[ai] ${provider} unavailable (${err.status || 'err'}${err.allCooldown ? '/all-cooldown' : ''}) → OpenRouter free fallback`);
+        return await callOpenRouter(prompt, opts);
+      } catch (orErr) {
+        // Dono fail → jo error zyada informative ho wahi throw karo.
+        throw orErr.allCooldown ? err : (orErr.status ? orErr : err);
+      }
+    }
+    throw err;
+  }
 }
 
 // ── helpers ──
