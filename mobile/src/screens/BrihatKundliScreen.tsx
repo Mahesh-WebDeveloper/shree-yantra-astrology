@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { Page } from '../components/Page';
@@ -12,7 +12,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { fonts, radii } from '../theme/tokens';
 import { hError, hSelect, hSuccess, hTap } from '../lib/haptics';
 import { birthFromProfile } from '../lib/birth';
-import { ApiPlanet, BrihatAvakhada, BrihatDomain, BrihatKundliResponse, BrihatSection, getBrihatKundli, LocationSuggestion, resolveLocation } from '../lib/api';
+import { ApiPlanet, BrihatAshtakavarga, BrihatAvakhada, BrihatDomain, BrihatKundliResponse, BrihatNumerology, BrihatSection, getBrihatKundli, LocationSuggestion, NumberCard, resolveLocation } from '../lib/api';
 import { useDialog } from '../components/DialogProvider';
 import { useLang, useT } from '../i18n/LanguageProvider';
 import { aSign } from '../i18n/astro';
@@ -215,6 +215,86 @@ function PlanetTable({ planets }: { planets: ApiPlanet[] }) {
   );
 }
 
+function AshtakavargaCard({ av }: { av: BrihatAshtakavarga }) {
+  const { theme } = useTheme();
+  const { lang } = useLang();
+  const L = (en: string, hi: string) => (lang === 'hi' ? hi : en);
+  const abbr = (s: string) => s.slice(0, 3);
+  const planets = Object.keys(av.bhinna);
+  const cell = (v: number) => (v >= 30 ? '#3ec77a' : v <= 24 ? '#e0865a' : theme.textSoft);
+  return (
+    <ShellCard>
+      <Text style={[styles.blockTitle, { color: theme.text }]}>{L('Ashtakavarga', 'अष्टकवर्ग')}</Text>
+      <Text style={[styles.sourceNote, { color: theme.textMuted, marginTop: 1, marginBottom: 8 }]}>
+        {L(`Sarvashtakavarga — bindus per sign (total ${av.sarvaTotal}). More bindus = stronger sign.`, `सर्वाष्टकवर्ग — प्रति राशि बिंदु (कुल ${av.sarvaTotal})। अधिक बिंदु = बलवान राशि।`)}
+      </Text>
+      <View style={styles.savGrid}>
+        {av.sarva.map((v, i) => (
+          <View key={i} style={[styles.savCell, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.05)' : 'rgba(176,115,22,0.05)' }]}>
+            <Text style={[styles.savSign, { color: theme.textMuted }]}>{abbr(av.signs[i])}</Text>
+            <Text style={[styles.savNum, { color: cell(v) }]}>{v}</Text>
+          </View>
+        ))}
+      </View>
+      <Text style={[styles.sourceNote, { color: theme.textMuted, marginTop: 13, marginBottom: 6 }]}>{L('Bhinnashtakavarga (per planet) — swipe →', 'भिन्नाष्टकवर्ग (प्रति ग्रह) — स्वाइप →')}</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <View>
+          <View style={styles.bavRow}>
+            <Text style={[styles.bavCell, styles.bavLabel, styles.bavHead, { color: theme.goldText }]}>{L('Planet', 'ग्रह')}</Text>
+            {av.signs.map((s, i) => <Text key={i} style={[styles.bavCell, styles.bavHead, { color: theme.goldText }]}>{abbr(s)}</Text>)}
+            <Text style={[styles.bavCell, styles.bavHead, { color: theme.goldText }]}>{L('Tot', 'कुल')}</Text>
+          </View>
+          {planets.map((p) => (
+            <View key={p} style={[styles.bavRow, { borderTopColor: theme.isDark ? 'rgba(201,150,46,0.12)' : 'rgba(176,115,22,0.12)', borderTopWidth: StyleSheet.hairlineWidth }]}>
+              <Text style={[styles.bavCell, styles.bavLabel, { color: theme.text }]}>{(lang === 'hi' ? PLANET_HI[p] : null) || p}</Text>
+              {av.bhinna[p].bindus.map((v, i) => <Text key={i} style={[styles.bavCell, { color: theme.textSoft }]}>{v}</Text>)}
+              <Text style={[styles.bavCell, { color: theme.gold1, fontFamily: fonts.interBold }]}>{av.bhinna[p].total}</Text>
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+    </ShellCard>
+  );
+}
+
+function NumCard({ label, c }: { label: string; c: NumberCard }) {
+  const { theme } = useTheme();
+  const { lang } = useLang();
+  const tr = (en: string, hi: string) => (lang === 'hi' ? hi : en);
+  return (
+    <View style={[styles.numCard, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.05)' : 'rgba(176,115,22,0.05)' }]}>
+      <View style={styles.numTop}>
+        <View style={[styles.numCircle, { borderColor: theme.gold2 + 'aa' }]}><Text style={[styles.numBig, { color: theme.gold1 }]}>{c.number}</Text></View>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={[styles.numLabel, { color: theme.goldText }]}>{label}</Text>
+          <Text style={[styles.numPlanet, { color: theme.text }]}>{lang === 'hi' ? c.planetHi : c.planet}</Text>
+        </View>
+      </View>
+      <Text style={[styles.numAttrs, { color: theme.textMuted }]}>
+        {tr('Day', 'दिन')}: {lang === 'hi' ? c.dayHi : c.day} · {tr('Color', 'रंग')}: {lang === 'hi' ? c.colorHi : c.color} · {tr('Stone', 'रत्न')}: {lang === 'hi' ? c.stoneHi : c.stone} · {tr('Metal', 'धातु')}: {lang === 'hi' ? c.metalHi : c.metal}
+      </Text>
+    </View>
+  );
+}
+
+function NumerologyCard({ nu }: { nu: BrihatNumerology }) {
+  const { theme } = useTheme();
+  const { lang } = useLang();
+  const L = (en: string, hi: string) => (lang === 'hi' ? hi : en);
+  return (
+    <ShellCard>
+      <Text style={[styles.blockTitle, { color: theme.text }]}>{L('Numerology', 'अंक ज्योतिष')}</Text>
+      <Text style={[styles.sourceNote, { color: theme.textMuted, marginTop: 1, marginBottom: 10 }]}>
+        {L('Moolank (from birth day) & Bhagyank (from full date) — Chaldean.', 'मूलांक (जन्म-दिन से) व भाग्यांक (पूर्ण तिथि से) — कैल्डियन।')}
+      </Text>
+      <NumCard label={L('Moolank (Psychic)', 'मूलांक')} c={nu.psychic} />
+      <View style={{ height: 10 }} />
+      <NumCard label={L('Bhagyank (Destiny)', 'भाग्यांक')} c={nu.destiny} />
+      {!!nu.name && (<><View style={{ height: 10 }} /><NumCard label={L('Name Number', 'नाम अंक')} c={nu.name} /></>)}
+    </ShellCard>
+  );
+}
+
 export function BrihatKundliScreen({ navigation }: any) {
   const { theme } = useTheme();
   const { lang } = useLang();
@@ -352,6 +432,10 @@ export function BrihatKundliScreen({ navigation }: any) {
 
           {!!report.data?.kundli?.data?.planets?.length && <PlanetTable planets={report.data.kundli.data.planets} />}
 
+          {!!report.ashtakavarga && <AshtakavargaCard av={report.ashtakavarga} />}
+
+          {!!report.numerology && <NumerologyCard nu={report.numerology} />}
+
           <ShellCard>
             <Text style={[styles.blockTitle, { color: theme.text }]}>{lang === 'hi' ? 'Report modules' : 'Report modules'}</Text>
             {(report.sections || []).map((item) => <SectionRow key={item.key} item={item} />)}
@@ -434,4 +518,19 @@ const styles = StyleSheet.create({
   cD: { flex: 1 },
   cN: { flex: 1.7 },
   cH: { flex: 0.6, textAlign: 'right' },
+  savGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  savCell: { width: '14.7%', borderWidth: 1, borderRadius: 9, paddingVertical: 7, alignItems: 'center' },
+  savSign: { fontFamily: fonts.interSemi, fontSize: 9, letterSpacing: 0.3 },
+  savNum: { fontFamily: fonts.playfairBold, fontSize: 16, marginTop: 1 },
+  bavRow: { flexDirection: 'row', alignItems: 'center' },
+  bavCell: { width: 30, textAlign: 'center', fontFamily: fonts.interSemi, fontSize: 11.5, paddingVertical: 6 },
+  bavHead: { fontFamily: fonts.interBold, fontSize: 9.5, letterSpacing: 0.3, textTransform: 'uppercase' },
+  bavLabel: { width: 52, textAlign: 'left', fontFamily: fonts.interSemi },
+  numCard: { borderWidth: 1, borderRadius: 14, padding: 12 },
+  numTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  numCircle: { width: 42, height: 42, borderRadius: 21, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  numBig: { fontFamily: fonts.playfairBold, fontSize: 20 },
+  numLabel: { fontFamily: fonts.interBold, fontSize: 10.5, letterSpacing: 0.8, textTransform: 'uppercase' },
+  numPlanet: { fontFamily: fonts.playfairBold, fontSize: 16, marginTop: 1 },
+  numAttrs: { fontFamily: fonts.inter, fontSize: 11.5, lineHeight: 17, marginTop: 9 },
 });

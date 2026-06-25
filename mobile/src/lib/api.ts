@@ -906,11 +906,29 @@ export interface BrihatAvakhada {
   lagna?: { name: string; lord: BiText } | null;
   dashaBalance?: string | null;
 }
+export interface BrihatAshtakavarga {
+  bhinna: Record<string, { bindus: number[]; total: number }>;
+  sarva: number[];
+  sarvaTotal: number;
+  signs: string[];
+}
+export interface NumberCard {
+  number: number;
+  planet: string; planetHi: string;
+  color: string; colorHi: string;
+  stone: string; stoneHi: string;
+  metal: string; metalHi: string;
+  day: string; dayHi: string;
+  supporting: number[];
+}
+export interface BrihatNumerology { psychic: NumberCard; destiny: NumberCard; name?: NumberCard }
 export interface BrihatKundliResponse {
   generatedAt: string;
   reportType: string;
   title: BiText;
   avakhada?: BrihatAvakhada | null;
+  ashtakavarga?: BrihatAshtakavarga | null;
+  numerology?: BrihatNumerology | null;
   summary: {
     ascendant?: string | null;
     moonSign?: string | null;

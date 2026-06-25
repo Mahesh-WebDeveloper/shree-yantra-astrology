@@ -88,7 +88,44 @@ function nameNumerology(name) {
   };
 }
 
-module.exports = { nameNumerology, reduceToDigit, CHALDEAN, NUMBER_INFO };
+// Map a root number (1..9) to its full info card.
+function numberCard(number) {
+  const info = NUMBER_INFO[number] || NUMBER_INFO[9];
+  return {
+    number,
+    planet: info.planet, planetHi: info.planetHi,
+    color: info.color, colorHi: info.colorHi,
+    stone: info.stone, stoneHi: info.stoneHi,
+    metal: info.metal, metalHi: info.metalHi,
+    day: info.day, dayHi: info.dayHi,
+    supporting: info.supporting,
+  };
+}
+
+/**
+ * birthNumerology(dob, name?)
+ * @param {string} dob  "DD-MM-YYYY"
+ * @param {string} [name]
+ * @returns {{ psychic, destiny, name? } | null}
+ *   psychic (Moolank) = reduced day-of-birth; destiny (Bhagyank) = reduced full DOB.
+ */
+function birthNumerology(dob, name) {
+  const m = String(dob || '').match(/(\d{1,2})-(\d{1,2})-(\d{4})/);
+  if (!m) return null;
+  const day = Number(m[1]);
+  const allDigits = (m[1] + m[2] + m[3]).split('').reduce((s, d) => s + Number(d), 0);
+  const out = {
+    psychic: numberCard(reduceToDigit(day)),   // Moolank
+    destiny: numberCard(reduceToDigit(allDigits)), // Bhagyank
+  };
+  if (name && String(name).trim()) {
+    const nn = nameNumerology(name);
+    if (nn) out.name = numberCard(nn.nameNumber);
+  }
+  return out;
+}
+
+module.exports = { nameNumerology, birthNumerology, numberCard, reduceToDigit, CHALDEAN, NUMBER_INFO };
 
 // ---------------------------------------------------------------------------
 // Self-test: run `node numerology.js`

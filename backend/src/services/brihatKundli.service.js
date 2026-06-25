@@ -7,8 +7,11 @@ const { getLifeTimeline } = require('./lifeTimeline.service');
 const { getRemedies } = require('./remedies.service');
 const { getTransitForecast } = require('./transitForecast.service');
 const { computeAvakhada } = require('../utils/avakhada');
+const { computeAshtakavarga } = require('../utils/ashtakavarga');
+const { birthNumerology } = require('../utils/numerology');
 
 const RASHIS = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
+const RASHI_IDX = RASHIS.reduce((a, s, i) => { a[s] = i; return a; }, {});
 
 const DOMAIN_CONFIG = [
   {
@@ -57,12 +60,10 @@ const DOMAIN_CONFIG = [
 
 const ROADMAP = [
   { key: 'shadbala', title: 'Shadbala / Bhavbala', status: 'needs-verification' },
-  { key: 'ashtakavarga', title: 'Ashtakavarga', status: 'needs-verification' },
   { key: 'kp', title: 'KP / Cuspal Interlinks / 4-Step', status: 'expert-module' },
   { key: 'jaimini', title: 'Jaimini / Chara Dasha / Arudha', status: 'expert-module' },
   { key: 'lal-kitab', title: 'Lal Kitab Tewa & Debt', status: 'expert-module' },
   { key: 'varshphal', title: '5 Year Varshphal', status: 'planned' },
-  { key: 'numerology', title: 'Numerology Report', status: 'planned' },
 ];
 
 const ok = (value) => ({ ok: true, value });
@@ -297,6 +298,29 @@ async function getBrihatKundli(input) {
     }
   } catch (_) { /* avakhada optional — report still renders */ }
 
+  // Ashtakavarga (Bhinna + Sarva) — deterministic BPHS bindu tables.
+  let ashtakavarga = null;
+  try {
+    const byName = {};
+    planets.forEach((p) => { byName[p.planet] = p; });
+    const posOf = (n) => { const p = byName[n]; return p && p.sign != null && RASHI_IDX[p.sign] != null ? RASHI_IDX[p.sign] : null; };
+    const positions = {
+      Sun: posOf('Sun'), Moon: posOf('Moon'), Mars: posOf('Mars'), Mercury: posOf('Mercury'),
+      Jupiter: posOf('Jupiter'), Venus: posOf('Venus'), Saturn: posOf('Saturn'),
+      Lagna: data.ascendant != null && RASHI_IDX[data.ascendant] != null ? RASHI_IDX[data.ascendant] : null,
+    };
+    if (Object.values(positions).every((v) => v != null)) {
+      ashtakavarga = computeAshtakavarga(positions);
+    }
+  } catch (_) { /* optional */ }
+
+  // Numerology — Moolank (psychic) + Bhagyank (destiny) from DOB.
+  let numerology = null;
+  try { numerology = birthNumerology(input.dob); } catch (_) { /* optional */ }
+
+  if (ashtakavarga) sections.push({ key: 'ashtakavarga', title: { en: 'Ashtakavarga', hi: 'अष्टकवर्ग' }, status: 'ready', count: ashtakavarga.sarvaTotal, source: 'BPHS bindu tables (Sarva total 337)' });
+  if (numerology) sections.push({ key: 'numerology', title: { en: 'Numerology', hi: 'अंक ज्योतिष' }, status: 'ready', count: 2, source: 'Moolank + Bhagyank (Chaldean)' });
+
   return {
     generatedAt: new Date().toISOString(),
     reportType: 'brihat-kundli-v1',
@@ -325,6 +349,8 @@ async function getBrihatKundli(input) {
       note: 'Astronomical calculations can be validated. Interpretations are traditional indications, not guaranteed outcomes.',
     },
     avakhada,
+    ashtakavarga,
+    numerology,
     sections,
     domains,
     data: {
