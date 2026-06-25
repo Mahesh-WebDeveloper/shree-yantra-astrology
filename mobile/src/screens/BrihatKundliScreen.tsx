@@ -12,7 +12,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { fonts, radii } from '../theme/tokens';
 import { hError, hSelect, hSuccess, hTap } from '../lib/haptics';
 import { birthFromProfile } from '../lib/birth';
-import { ApiPlanet, BrihatAshtakavarga, BrihatAvakhada, BrihatDomain, BrihatKundliResponse, BrihatNumerology, BrihatSection, getBrihatKundli, LocationSuggestion, NumberCard, resolveLocation } from '../lib/api';
+import { ApiDosha, ApiPlanet, BrihatAshtakavarga, BrihatAvakhada, BrihatDomain, BrihatKundliResponse, BrihatNumerology, BrihatSection, DashaResponse, getBrihatKundli, LifeTimelineResponse, LocationSuggestion, NumberCard, RemediesResponse, resolveLocation, YogaItem } from '../lib/api';
 import { useDialog } from '../components/DialogProvider';
 import { useLang, useT } from '../i18n/LanguageProvider';
 import { aSign } from '../i18n/astro';
@@ -295,6 +295,99 @@ function NumerologyCard({ nu }: { nu: BrihatNumerology }) {
   );
 }
 
+const yearOf = (s?: string) => { const m = String(s ?? '').match(/(\d{4})/); return m ? m[1] : ''; };
+
+function DashaCard({ timeline, dasha }: { timeline?: LifeTimelineResponse | null; dasha?: DashaResponse | null }) {
+  const { theme } = useTheme();
+  const { lang } = useLang();
+  const L = (en: string, hi: string) => (lang === 'hi' ? hi : en);
+  let rows: { lord: string; range: string; current: boolean }[] = [];
+  if (timeline?.periods?.length) {
+    rows = timeline.periods.filter((p) => !p.past).slice(0, 10).map((p) => ({ lord: p.lord, range: `${p.fromYear} – ${p.toYear}`, current: !!p.current }));
+  } else if (dasha?.dasha?.length) {
+    rows = dasha.dasha.slice(0, 10).map((d) => ({ lord: d.lord, range: `${yearOf(d.start)} – ${yearOf(d.end)}`, current: false }));
+  }
+  if (!rows.length) return null;
+  const bal = timeline?.balance;
+  return (
+    <ShellCard>
+      <Text style={[styles.blockTitle, { color: theme.text }]}>{L('Vimshottari Dasha', 'विंशोत्तरी दशा')}</Text>
+      {!!bal && <Text style={[styles.sourceNote, { color: theme.textMuted, marginTop: 1, marginBottom: 8 }]}>{L(`Balance at birth: ${bal.lord} ${bal.bhogyaYears}y`, `जन्म-शेष दशा: ${bal.lord} ${bal.bhogyaYears} वर्ष`)}</Text>}
+      {rows.map((r, i) => (
+        <View key={i} style={[styles.dashaRow, { borderBottomColor: theme.isDark ? 'rgba(201,150,46,0.12)' : 'rgba(176,115,22,0.12)' }, r.current && { backgroundColor: theme.gold2 + '1c', borderRadius: 8, paddingHorizontal: 8 }]}>
+          <Text style={[styles.dashaLord, { color: r.current ? theme.gold1 : theme.text }]}>{(lang === 'hi' ? PLANET_HI[r.lord] : null) || r.lord}{r.current ? `  • ${L('Current', 'वर्तमान')}` : ''}</Text>
+          <Text style={[styles.dashaRange, { color: theme.textMuted }]}>{r.range}</Text>
+        </View>
+      ))}
+    </ShellCard>
+  );
+}
+
+function YogaDoshaCard({ yogas, doshas }: { yogas?: YogaItem[]; doshas?: ApiDosha[] }) {
+  const { theme } = useTheme();
+  const { lang } = useLang();
+  const L = (en: string, hi: string) => (lang === 'hi' ? hi : en);
+  const yg = yogas || [];
+  const ds = doshas || [];
+  if (!yg.length && !ds.length) return null;
+  return (
+    <ShellCard>
+      <Text style={[styles.blockTitle, { color: theme.text }]}>{L('Yogas & Doshas', 'योग व दोष')}</Text>
+      {!!ds.length && (
+        <View style={styles.doshaChips}>
+          {ds.map((d, i) => (
+            <View key={i} style={[styles.doshaChip, { borderColor: (d.present ? '#e0865a' : '#3ec77a') + '88', backgroundColor: (d.present ? '#e0865a' : '#3ec77a') + '14' }]}>
+              <Text style={[styles.doshaChipTxt, { color: d.present ? '#e0865a' : '#3ec77a' }]}>{d.name}: {d.present ? L('Present', 'है') : L('Clear', 'नहीं')}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+      {yg.slice(0, 12).map((y, i) => (
+        <View key={i} style={[styles.yogaRow, { borderBottomColor: theme.isDark ? 'rgba(201,150,46,0.12)' : 'rgba(176,115,22,0.12)' }]}>
+          <Text style={[styles.yogaName, { color: theme.gold1 }]}>{y.name}</Text>
+          {!!y.description && <Text style={[styles.yogaDesc, { color: theme.textSoft }]} numberOfLines={2}>{y.description}</Text>}
+        </View>
+      ))}
+      {!yg.length && <Text style={[styles.sourceNote, { color: theme.textMuted, marginTop: 8 }]}>{L('No special yogas in the primary set.', 'मुख्य सूची में कोई विशेष योग नहीं।')}</Text>}
+    </ShellCard>
+  );
+}
+
+function RemediesCard({ rem }: { rem: RemediesResponse }) {
+  const { theme } = useTheme();
+  const { lang } = useLang();
+  const L = (en: string, hi: string) => (lang === 'hi' ? hi : en);
+  const gem = rem.remedies?.lifeGem;
+  const mantras = rem.remedies?.planetMantras || [];
+  const sade = rem.sadeSati;
+  return (
+    <ShellCard>
+      <Text style={[styles.blockTitle, { color: theme.text }]}>{L('Gemstone & Remedies', 'रत्न व उपाय')}</Text>
+      {!!sade && (sade.active || sade.dhaiya) && (
+        <View style={[styles.doshaChip, { alignSelf: 'flex-start', marginTop: 4, marginBottom: 4, borderColor: '#e0865a88', backgroundColor: '#e0865a14' }]}>
+          <Text style={[styles.doshaChipTxt, { color: '#e0865a' }]}>{sade.active ? L('Sade Sati active', 'साढ़े साती सक्रिय') : L('Dhaiya active', 'ढैय्या सक्रिय')}{sade.phase ? ` — ${lang === 'hi' ? (sade.phaseHi || sade.phase) : sade.phase}` : ''}</Text>
+        </View>
+      )}
+      {!!gem && (
+        <View style={[styles.metrics, { marginTop: 8 }]}>
+          <Metric label={L('Life Gem', 'जीवन रत्न')} value={lang === 'hi' ? (gem.gemstoneHi || gem.gemstone) : gem.gemstone} />
+          <Metric label={L('Metal', 'धातु')} value={lang === 'hi' ? (gem.metalHi || gem.metal) : gem.metal} />
+          <Metric label={L('Finger', 'उँगली')} value={lang === 'hi' ? (gem.fingerHi || gem.finger) : gem.finger} />
+          <Metric label={L('Day', 'दिन')} value={lang === 'hi' ? (gem.dayHi || gem.day) : gem.day} />
+        </View>
+      )}
+      {!!mantras.length && (
+        <>
+          <Text style={[styles.sourceNote, { color: theme.textMuted, marginTop: 12, marginBottom: 5 }]}>{L('Key planetary mantras', 'मुख्य ग्रह मंत्र')}</Text>
+          {mantras.slice(0, 4).map((m, i) => (
+            <Text key={i} style={[styles.mantraTxt, { color: theme.textSoft }]} numberOfLines={2}>•  {(lang === 'hi' ? m.planetHi : null) || m.planet}: {m.mantra}</Text>
+          ))}
+        </>
+      )}
+    </ShellCard>
+  );
+}
+
 export function BrihatKundliScreen({ navigation }: any) {
   const { theme } = useTheme();
   const { lang } = useLang();
@@ -432,9 +525,15 @@ export function BrihatKundliScreen({ navigation }: any) {
 
           {!!report.data?.kundli?.data?.planets?.length && <PlanetTable planets={report.data.kundli.data.planets} />}
 
+          {(!!report.data?.timeline?.periods?.length || !!report.data?.dasha?.dasha?.length) && <DashaCard timeline={report.data?.timeline} dasha={report.data?.dasha} />}
+
+          {(!!report.data?.yoga?.yogas?.length || !!report.summary?.doshas?.length) && <YogaDoshaCard yogas={report.data?.yoga?.yogas} doshas={report.summary?.doshas} />}
+
           {!!report.ashtakavarga && <AshtakavargaCard av={report.ashtakavarga} />}
 
           {!!report.numerology && <NumerologyCard nu={report.numerology} />}
+
+          {!!report.data?.remedies && <RemediesCard rem={report.data.remedies} />}
 
           <ShellCard>
             <Text style={[styles.blockTitle, { color: theme.text }]}>{lang === 'hi' ? 'Report modules' : 'Report modules'}</Text>
@@ -533,4 +632,14 @@ const styles = StyleSheet.create({
   numLabel: { fontFamily: fonts.interBold, fontSize: 10.5, letterSpacing: 0.8, textTransform: 'uppercase' },
   numPlanet: { fontFamily: fonts.playfairBold, fontSize: 16, marginTop: 1 },
   numAttrs: { fontFamily: fonts.inter, fontSize: 11.5, lineHeight: 17, marginTop: 9 },
+  dashaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 9, borderBottomWidth: StyleSheet.hairlineWidth },
+  dashaLord: { fontFamily: fonts.interSemi, fontSize: 13.5 },
+  dashaRange: { fontFamily: fonts.inter, fontSize: 12 },
+  doshaChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 4, marginBottom: 6 },
+  doshaChip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
+  doshaChipTxt: { fontFamily: fonts.interSemi, fontSize: 11 },
+  yogaRow: { paddingVertical: 9, borderBottomWidth: StyleSheet.hairlineWidth },
+  yogaName: { fontFamily: fonts.interSemi, fontSize: 13 },
+  yogaDesc: { fontFamily: fonts.inter, fontSize: 11.5, lineHeight: 16.5, marginTop: 2 },
+  mantraTxt: { fontFamily: fonts.inter, fontSize: 12, lineHeight: 18 },
 });
