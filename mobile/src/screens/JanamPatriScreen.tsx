@@ -253,7 +253,7 @@ export function JanamPatriScreen({ navigation }: any) {
             {!!cand && (
               <View style={[styles.candBox, { borderColor: cand.suitable ? '#3ec77a88' : '#e06a5a88', backgroundColor: (cand.suitable ? '#3ec77a' : '#e06a5a') + '14' }]}>
                 <Text style={[styles.candTxt, { color: cand.suitable ? '#3ec77a' : '#e06a5a' }]}>
-                  {cand.suitable ? '✓' : '✗'} "{cand.name}" — {cand.reason}
+                  {cand.suitable ? '✓' : '✗'} "{lang === 'hi' ? (cand.nameHi || cand.name) : cand.name}" — {lang === 'hi' ? (cand.reasonHi || cand.reason) : cand.reason}
                 </Text>
                 {!cand.suitable && !!(cand.alternativesIfNo || []).length && <Text style={[styles.candAlt, { color: theme.textSoft }]}>{lang === 'hi' ? 'मिलते-जुलते' : 'Close'}: {cand.alternativesIfNo!.join(', ')}</Text>}
               </View>
@@ -261,8 +261,8 @@ export function JanamPatriScreen({ navigation }: any) {
             <View style={styles.nameWrap}>
               {(names?.names || []).map((n, i) => (
                 <View key={i} style={[styles.nameChip, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.25)' : '#fffdf7' }]}>
-                  <Text style={[styles.nameTxt, { color: theme.text }]}>{n.name}</Text>
-                  <Text style={[styles.nameMean, { color: theme.textMuted }]} numberOfLines={1}>{n.meaning}</Text>
+                  <Text style={[styles.nameTxt, { color: theme.text }]}>{lang === 'hi' ? (n.nameHi || n.name) : n.name}</Text>
+                  <Text style={[styles.nameMean, { color: theme.textMuted }]} numberOfLines={1}>{lang === 'hi' ? (n.meaningHi || n.meaning) : n.meaning}</Text>
                 </View>
               ))}
             </View>

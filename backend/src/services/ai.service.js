@@ -1141,8 +1141,9 @@ function enrichName(n) {
   if (!name) return null;
   return {
     name,
-    nameHi: asText(n && n.nameHi) || null,
+    nameHi: asText(n && (n.nameHi || n.hi)) || null, // curated dataset uses `hi`
     meaning: asText(n && n.meaning),
+    meaningHi: asText(n && n.meaningHi) || null,
     origin: asText(n && n.origin) || null,
     gender: asText(n && n.gender) || null,
     pronunciation: asText(n && n.pronunciation) || null,
@@ -1167,7 +1168,7 @@ async function generateNames(filters = {}) {
   const nakshatra = asText(filters.nakshatra);
   const rashi = asText(filters.rashi);
 
-  const key = `names|v3|${g}|${startArr.join(',')}|${origin.toLowerCase()}|${theme.toLowerCase()}|${words.toLowerCase()}|${lengthPref}|${count}|${cand.toLowerCase()}|${L}`;
+  const key = `names|v4|${g}|${startArr.join(',')}|${origin.toLowerCase()}|${theme.toLowerCase()}|${words.toLowerCase()}|${lengthPref}|${count}|${cand.toLowerCase()}`;
   return cached(key, 'name-engine', async () => {
     const lenRule = lengthPref === 'short' ? 'Keep names SHORT (3-4 letters / 1-2 syllables).'
       : lengthPref === 'medium' ? 'Names of MEDIUM length (5-7 letters / 2-3 syllables).'
@@ -1184,13 +1185,13 @@ async function generateNames(filters = {}) {
     const prompt = `You are an expert Indian / Vedic baby-naming consultant. Suggest ${count} beautiful, REAL, positive-meaning names.
 ${constraints}
 ${nakshatra || rashi ? `Astrology context (for tone only): Janma Nakshatra ${nakshatra || '-'}, Rashi ${rashi || '-'}.` : ''}
-${writeIn(L)}
-For EACH name provide: name (Roman script), nameHi (the SAME name written in Devanagari), a short meaning, origin (e.g. Sanskrit / Hindu / Sikh / Persian), gender (boy|girl|unisex), pronunciation (simple phonetic, e.g. "AH-rav"), and 1-3 single-word themes (e.g. "light","strength","goddess").
-${cand ? `ALSO evaluate this candidate name the parents like: "${cand}" — give its meaning, origin and ${startArr.length ? `whether its first sound matches one of "${startWith}"` : 'whether it is auspicious'}; if not, give 2-3 close alternatives that fit.` : ''}
+Provide every name's meaning in BOTH English (meaning) and Hindi/Devanagari (meaningHi), and the candidate reason in both English (reason) and Hindi (reasonHi).
+For EACH name provide: name (Roman script), nameHi (the SAME name written in Devanagari), meaning (short, English), meaningHi (the same meaning in Hindi/Devanagari), origin (e.g. Sanskrit / Hindu / Sikh / Persian), gender (boy|girl|unisex), pronunciation (simple phonetic, e.g. "AH-rav"), and 1-3 single-word themes (e.g. "light","strength","goddess").
+${cand ? `ALSO evaluate this candidate name the parents like: "${cand}" — give its meaning (meaning + meaningHi), origin and ${startArr.length ? `whether its first sound matches one of "${startWith}"` : 'whether it is auspicious'}; if not, give 2-3 close alternatives that fit.` : ''}
 Return STRICT JSON:
 {
- "names":[{"name":"...","nameHi":"...","meaning":"...","origin":"...","gender":"boy|girl|unisex","pronunciation":"...","themes":["..."]} ... ${count} items]${cand ? `,
- "candidate":{"name":"${cand}","nameHi":"...","meaning":"...","origin":"...","suitable":true,"reason":"1 line","alternatives":["..."]}` : ''}
+ "names":[{"name":"...","nameHi":"...","meaning":"...","meaningHi":"...","origin":"...","gender":"boy|girl|unisex","pronunciation":"...","themes":["..."]} ... ${count} items]${cand ? `,
+ "candidate":{"name":"${cand}","nameHi":"...","meaning":"...","meaningHi":"...","origin":"...","suitable":true,"reason":"1 line","reasonHi":"1 line (Hindi)","alternatives":["..."]}` : ''}
 }`;
     // Try AI; if it is down / rate-limited (or returns too few), fall back to the
     // curated local dataset so names ALWAYS appear. Numerology is computed in code either way.
@@ -1215,9 +1216,11 @@ Return STRICT JSON:
           name: asText(out.candidate.name) || cand,
           nameHi: asText(out.candidate.nameHi) || null,
           meaning: asText(out.candidate.meaning),
+          meaningHi: asText(out.candidate.meaningHi) || null,
           origin: asText(out.candidate.origin) || null,
           suitable: !!out.candidate.suitable,
           reason: asText(out.candidate.reason),
+          reasonHi: asText(out.candidate.reasonHi) || null,
           alternatives: alts,
           alternativesIfNo: alts, // backward-compat alias (JanamPatri screen)
           numerology: numerologyCard(asText(out.candidate.name) || cand),
@@ -1227,11 +1230,14 @@ Return STRICT JSON:
         const suitable = startArr.length ? startArr.some((sw) => firstSoundMatches({ name: cand, hi: '' }, sw)) : true;
         const alts = finalNames.slice(0, 3).map((n) => n.name);
         candidate = {
-          name: cand, nameHi: null, meaning: '', origin: null,
+          name: cand, nameHi: null, meaning: '', meaningHi: null, origin: null,
           suitable,
           reason: startArr.length
             ? (suitable ? `"${cand}" begins with the auspicious sound.` : `"${cand}" does not begin with "${startArr.join('", "')}".`)
             : `"${cand}" — numerology computed.`,
+          reasonHi: startArr.length
+            ? (suitable ? `"${cand}" शुभ अक्षर से आरंभ होता है।` : `"${cand}" "${startArr.join('", "')}" अक्षर से आरंभ नहीं होता।`)
+            : `"${cand}" — अंक-ज्योतिष गणना की गई।`,
           alternatives: alts, alternativesIfNo: alts,
           numerology: numerologyCard(cand),
         };

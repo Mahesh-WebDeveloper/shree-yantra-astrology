@@ -345,7 +345,7 @@ export function BabyNamesScreen({ navigation }: any) {
                     </View>
                     <Pressable hitSlop={8} onPress={() => onToggleSave(n)}><Heart filled={isSaved} color={isSaved ? '#e0567a' : theme.gold2} size={17} /></Pressable>
                   </View>
-                  <Text style={[styles.nameMean, { color: theme.textMuted }]} numberOfLines={2}>{n.meaning}</Text>
+                  <Text style={[styles.nameMean, { color: theme.textMuted }]} numberOfLines={2}>{hi ? (n.meaningHi || n.meaning) : n.meaning}</Text>
                   <View style={styles.metaRow}>
                     {!!n.origin && <Text style={[styles.metaTag, { color: theme.gold1, borderColor: theme.gold2 + '55' }]} numberOfLines={1}>{n.origin}</Text>}
                     {!!n.numerology && <Text style={[styles.metaNum, { color: theme.textSoft }]}>#{n.numerology.luckyNumber}</Text>}
@@ -443,7 +443,7 @@ function NameDetail({ n, hi, theme, saved, onSave, onClose }: any) {
         {!!n.nameHi && <Text style={[styles.dNameHi, { color: theme.gold1 }]}>{n.nameHi}</Text>}
         {!!n.pronunciation && <Text style={[styles.dPron, { color: theme.textMuted }]}>/ {n.pronunciation} /</Text>}
       </View>
-      <Text style={[styles.dMean, { color: theme.text }]}>{n.meaning}</Text>
+      <Text style={[styles.dMean, { color: theme.text }]}>{hi ? (n.meaningHi || n.meaning) : n.meaning}</Text>
       {Array.isArray(n.themes) && n.themes.length > 0 && (
         <View style={styles.themeRow}>
           {n.themes.map((t: string, i: number) => (

@@ -807,6 +807,7 @@ export interface NameItem {
   name: string;
   nameHi?: string | null;
   meaning: string;
+  meaningHi?: string | null;
   origin?: string | null;
   gender?: string | null;
   pronunciation?: string | null;
@@ -815,8 +816,8 @@ export interface NameItem {
   numerology?: NameNumerology | null;
 }
 export interface NameCandidate {
-  name: string; nameHi?: string | null; meaning?: string; origin?: string | null;
-  suitable: boolean; reason: string;
+  name: string; nameHi?: string | null; meaning?: string; meaningHi?: string | null; origin?: string | null;
+  suitable: boolean; reason: string; reasonHi?: string | null;
   alternatives?: string[]; alternativesIfNo?: string[];
   numerology?: NameNumerology | null;
 }

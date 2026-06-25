@@ -121,7 +121,8 @@ export function buildJanamPatriHtml(d: JanamPatriData): string {
     `<tr><td>नामाक्षर / Naamakshar</td><td class="big">${esc(nm?.syllable || '')}</td><td>गण्डमूल</td><td>${j.gandmool?.present ? 'हाँ (' + esc(j.gandmool.nakshatra) + ')' : 'नहीं'}</td></tr>`,
   ] : [];
 
-  const names = (d.names?.names || []).slice(0, 12).map((n) => `<span class="nchip"><b>${esc(n.name)}</b> — ${esc(n.meaning)}</span>`).join('');
+  const hiLang = d.person.lang === 'hi';
+  const names = (d.names?.names || []).slice(0, 12).map((n) => `<span class="nchip"><b>${esc(hiLang ? (n.nameHi || n.name) : n.name)}</b> — ${esc(hiLang ? (n.meaningHi || n.meaning) : n.meaning)}</span>`).join('');
 
   const predItems = (r?.predictions || []).slice(0, 12).map((x) => `<li><b>${esc(x.title.hi || x.title.en)}:</b> ${esc(x.text.hi || x.text.en)} <i>(${esc(x.source || '')})</i></li>`);
 
