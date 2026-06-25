@@ -15,7 +15,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { fonts, radii } from '../theme/tokens';
 import { hError, hSelect, hSuccess, hTap } from '../lib/haptics';
 import { birthFromProfile } from '../lib/birth';
-import { ApiDosha, ApiPlanet, BrihatAshtakavarga, BrihatAvakhada, BrihatDomain, BrihatJaimini, BrihatKundliResponse, BrihatNumerology, BrihatSection, BrihatVarshphal, DashaResponse, getBrihatKundli, LifeTimelineResponse, LocationSuggestion, NumberCard, RemediesResponse, resolveLocation, YogaItem } from '../lib/api';
+import { ApiDosha, ApiPlanet, BrihatAshtakavarga, BrihatAvakhada, BrihatDomain, BrihatJaimini, BrihatKp, BrihatKundliResponse, BrihatNumerology, BrihatSection, BrihatVarshphal, DashaResponse, getBrihatKundli, LifeTimelineResponse, LocationSuggestion, NumberCard, RemediesResponse, resolveLocation, YogaItem } from '../lib/api';
 import { useDialog } from '../components/DialogProvider';
 import { useLang, useT } from '../i18n/LanguageProvider';
 import { aSign } from '../i18n/astro';
@@ -463,6 +463,37 @@ function VarshphalCard({ v }: { v: BrihatVarshphal }) {
   );
 }
 
+function KpCard({ kp }: { kp: BrihatKp }) {
+  const { theme } = useTheme();
+  const { lang } = useLang();
+  const L = (en: string, hi: string) => (lang === 'hi' ? hi : en);
+  const head = theme.goldText;
+  const rows = [...(kp.ascendant ? [{ ...kp.ascendant, planet: 'Asc' }] : []), ...kp.planets];
+  const pl = (p: string, hiName?: string) => (lang === 'hi' ? (PLANET_HI[p] || hiName || p) : p);
+  return (
+    <ShellCard>
+      <Text style={[styles.blockTitle, { color: theme.text }]}>{L('KP Significators', 'KP कारक')}</Text>
+      <Text style={[styles.sourceNote, { color: theme.textMuted, marginTop: 1, marginBottom: 8 }]}>
+        {L('Krishnamurti Paddhati — Sign / Star / Sub lord of each planet.', 'कृष्णमूर्ति पद्धति — हर ग्रह का राशि / नक्षत्र / उप स्वामी।')}
+      </Text>
+      <View style={[styles.trHead, { borderBottomColor: theme.gold2 + '55' }]}>
+        <Text style={[styles.kP, styles.thTxt, { color: head }]}>{L('Planet', 'ग्रह')}</Text>
+        <Text style={[styles.kL, styles.thTxt, { color: head }]}>{L('Sign L', 'राशि')}</Text>
+        <Text style={[styles.kL, styles.thTxt, { color: head }]}>{L('Star L', 'नक्षत्र')}</Text>
+        <Text style={[styles.kL, styles.thTxt, { color: head }]}>{L('Sub L', 'उप')}</Text>
+      </View>
+      {rows.map((r, i) => (
+        <View key={i} style={[styles.tr, { borderBottomColor: theme.isDark ? 'rgba(201,150,46,0.12)' : 'rgba(176,115,22,0.12)' }]}>
+          <Text style={[styles.kP, styles.tdTxt, { color: r.planet === 'Asc' ? theme.gold1 : theme.text }]} numberOfLines={1}>{r.planet === 'Asc' ? L('Asc', 'लग्न') : pl(r.planet)}</Text>
+          <Text style={[styles.kL, styles.tdTxt, { color: theme.textSoft }]} numberOfLines={1}>{pl(r.signLord, r.signLordHi)}</Text>
+          <Text style={[styles.kL, styles.tdTxt, { color: theme.textSoft }]} numberOfLines={1}>{pl(r.starLord, r.starLordHi)}</Text>
+          <Text style={[styles.kL, styles.tdTxt, { color: theme.gold1 }]} numberOfLines={1}>{pl(r.subLord, r.subLordHi)}</Text>
+        </View>
+      ))}
+    </ShellCard>
+  );
+}
+
 export function BrihatKundliScreen({ navigation }: any) {
   const { theme } = useTheme();
   const { lang } = useLang();
@@ -633,6 +664,8 @@ export function BrihatKundliScreen({ navigation }: any) {
 
           {!!report.varshphal?.years?.length && <VarshphalCard v={report.varshphal} />}
 
+          {!!report.kp?.planets?.length && <KpCard kp={report.kp} />}
+
           {(report.domains || []).some((d) => !!d.summary) && (
             <View>
               <Text style={[styles.outsideTitle, { color: theme.gold1 }]}>{lang === 'hi' ? 'Life areas' : 'Life areas'}</Text>
@@ -742,6 +775,8 @@ const styles = StyleSheet.create({
   vYearNum: { fontFamily: fonts.playfairBold, fontSize: 15 },
   vYearSign: { fontFamily: fonts.interSemi, fontSize: 13.5 },
   vYearTheme: { fontFamily: fonts.inter, fontSize: 11.5, marginTop: 2 },
+  kP: { flex: 1.1, fontFamily: fonts.interSemi },
+  kL: { flex: 1, textAlign: 'left' },
   roadmapTop: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   roadmapDot: { width: 7, height: 7, borderRadius: 4 },
   roadmapBadge: { alignSelf: 'flex-start', borderWidth: 1, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3, marginTop: 8 },

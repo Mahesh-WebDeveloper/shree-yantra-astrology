@@ -934,6 +934,13 @@ export interface VarshphalYear {
   theme: BiText; kind: 'good' | 'neutral';
 }
 export interface BrihatVarshphal { years: VarshphalYear[]; note?: string }
+export interface KpLord {
+  planet: string; sign: string; nakshatra: string;
+  signLord: string; signLordHi: string;
+  starLord: string; starLordHi: string;
+  subLord: string; subLordHi: string;
+}
+export interface BrihatKp { ascendant?: KpLord | null; planets: KpLord[] }
 export interface BrihatKundliResponse {
   generatedAt: string;
   reportType: string;
@@ -943,6 +950,7 @@ export interface BrihatKundliResponse {
   numerology?: BrihatNumerology | null;
   jaimini?: BrihatJaimini | null;
   varshphal?: BrihatVarshphal | null;
+  kp?: BrihatKp | null;
   summary: {
     ascendant?: string | null;
     moonSign?: string | null;
