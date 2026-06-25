@@ -52,6 +52,12 @@ const env = {
     groqModel: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
     groqExtra: (process.env.GROQ_FALLBACK_MODELS || '')
       .split(',').map((s) => s.trim()).filter(Boolean),
+    // ofox.ai (OpenAI-compatible aggregator) — last-resort fallback. Default free model;
+    // paid models (e.g. openai/gpt-5.4-mini) need account credits → add via OFOX_FALLBACK_MODELS.
+    ofoxKey: process.env.OFOX_API_KEY || '',
+    ofoxModel: process.env.OFOX_MODEL || 'z-ai/glm-4.7-flash:free',
+    ofoxExtra: (process.env.OFOX_FALLBACK_MODELS || '')
+      .split(',').map((s) => s.trim()).filter(Boolean),
   },
   youtube: {
     apiKey: process.env.YOUTUBE_API_KEY || '',

@@ -301,6 +301,45 @@ async function callGroq(prompt, { json = false } = {}) {
   });
 }
 
+// ── ofox.ai (OpenAI-compatible aggregator) — LAST-resort fallback ───────────
+// Default = free model z-ai/glm-4.7-flash:free ($0 balance OK; occasionally
+// rate-limited → circuit breaker skips it). Paid models (e.g. openai/gpt-5.4-mini)
+// need account credits — add them via OFOX_FALLBACK_MODELS once topped up.
+const OFOX_MODELS = ['z-ai/glm-4.7-flash:free'];
+async function callOfox(prompt, { json = false } = {}) {
+  const key = env.ai.ofoxKey;
+  if (!key) throw Object.assign(new Error('OFOX_API_KEY set nahi hai (.env)'), { status: 500 });
+  const models = [env.ai.ofoxModel, ...OFOX_MODELS, ...env.ai.ofoxExtra].filter((v, i, a) => v && a.indexOf(v) === i);
+  return runModelChain('ofox', models, async (model) => {
+    const res = await fetchT('https://api.ofox.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+      body: JSON.stringify({
+        model,
+        temperature: 0.85,
+        max_tokens: 2600,
+        messages: [
+          json
+            ? { role: 'system', content: 'Respond with ONLY valid JSON — no markdown, no code fences, no analysis, no commentary.' }
+            : { role: 'system', content: "You are Shree Yantra's astrology assistant. Reply with ONLY the final answer in the user's language. Do not include any analysis, reasoning, or meta commentary." },
+          { role: 'user', content: prompt },
+        ],
+        ...(json ? { response_format: { type: 'json_object' } } : {}),
+      }),
+    }, 22000);
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      throw Object.assign(new Error(`ofox ${res.status} (${model}): ${txt.slice(0, 140)}`), { status: res.status });
+    }
+    const data = await res.json();
+    if (data && data.error) throw Object.assign(new Error(`ofox ${model}: ${String(data.error.message || 'provider error').slice(0, 120)}`), { status: 502 });
+    const raw = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+    const text = sanitizeText(raw);
+    if (!text) throw Object.assign(new Error(`ofox empty (${model})`), { status: 502 });
+    return json ? parseJsonLoose(text) : text;
+  });
+}
+
 // Kya is error par hum fallback provider try karein? Sirf availability/quota errors par —
 // (rate-limit 429, server 5xx, timeout/network, invalid-response 502, ya allCooldown).
 // 4xx client errors (galat input) par fallback ka koi fayda nahi.
@@ -328,6 +367,7 @@ async function callAI(prompt, opts) {
   const chain = [{ name: provider, fn: provider === 'claude' ? callClaude : callGemini }];
   if (env.ai.groqKey) chain.push({ name: 'groq', fn: callGroq });
   if (env.ai.openrouterKey) chain.push({ name: 'openrouter', fn: callOpenRouter });
+  if (env.ai.ofoxKey) chain.push({ name: 'ofox', fn: callOfox });
   let lastErr;
   for (let i = 0; i < chain.length; i++) {
     try {
