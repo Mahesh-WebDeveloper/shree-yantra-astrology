@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, ActivityIndicator, TextInput } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Page } from '../components/Page';
 import { GradientText } from '../components/GradientText';
 import { useTheme } from '../theme/ThemeProvider';
@@ -100,6 +101,145 @@ function TimingTile({ label, value, sub, theme }: { label: string; value: string
   );
 }
 
+// Extract a clean day + 3-letter month from whatever date format the festival API returns.
+function festDateParts(s: string): { day: string; mon: string } {
+  const str = String(s || '').trim();
+  let m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);            // YYYY-MM-DD
+  if (m) return { day: String(+m[3]), mon: MON[+m[2] - 1] || '' };
+  m = str.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{2,4})/);      // DD/MM/YYYY
+  if (m) return { day: String(+m[1]), mon: MON[+m[2] - 1] || '' };
+  m = str.match(/^(\d{1,2})\s+([A-Za-z]{3,})/);                 // DD Mon YYYY
+  if (m) return { day: String(+m[1]), mon: m[2].slice(0, 3) };
+  return { day: str.slice(0, 2), mon: '' };
+}
+
+// Beautiful gradient thumbnail for each festival card (replaces the blank date badge).
+function FestivalThumb({ row, lang }: { row: FestivalRow; lang: 'en' | 'hi' }) {
+  const { day, mon } = festDateParts(row.date);
+  const caution = row.obs.type === 'caution';
+  const major = row.obs.importance === 'major';
+  const colors = (caution ? ['#e8836f', '#a8412f'] : major ? ['#eab94f', '#9f6b16'] : ['#c99a52', '#6e5326']) as [string, string];
+  return (
+    <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.thumb}>
+      <Text style={styles.thumbGlyph}>🪔</Text>
+      <Text style={styles.thumbDay}>{day}</Text>
+      {!!mon && <Text style={styles.thumbMon}>{mon}</Text>}
+      <Text style={styles.thumbWeek} numberOfLines={1}>{lang === 'hi' ? (row.weekdayHi || row.weekday) : row.weekday}</Text>
+    </LinearGradient>
+  );
+}
+
+// Festival detail / AI guide — rendered INLINE right below the clicked card.
+function FestivalDetail({ detail, selected, mode, error, theme, lang }: { detail: PanchangFestivalDetail | null; selected: FestivalRow; mode: 'details' | 'ai'; error: string | null; theme: Theme; lang: 'en' | 'hi' }) {
+  const L = (o?: { en: string; hi: string } | null) => (o ? (lang === 'hi' ? o.hi : o.en) : '');
+  return (
+    <View style={[styles.detailBox, { borderColor: theme.gold2 + '66', backgroundColor: theme.isDark ? 'rgba(0,0,0,0.16)' : 'rgba(255,255,255,0.55)' }]}>
+      <View style={styles.detailHero}>
+        <View style={[styles.detailMark, { borderColor: theme.gold2 + '66', backgroundColor: 'rgba(214,160,59,0.12)' }]}>
+          <Text style={[styles.detailMarkText, { color: theme.gold1 }]}>{mode === 'ai' && detail?.ai ? 'AI' : 'Om'}</Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.detailKicker, { color: theme.gold2 }]}>{selected.date} · {lang === 'hi' ? (selected.weekdayHi || selected.weekday) : selected.weekday}</Text>
+          <Text style={[styles.detailTitle, { color: theme.text }]}>{detail?.title || L(selected.obs.name)}</Text>
+        </View>
+      </View>
+      <Text style={[styles.detailLead, { color: theme.textMuted }]}>{safeText(detail?.ai?.summary) || (detail?.catalog?.guidance ? L(detail.catalog.guidance) : L(selected.obs.guidance))}</Text>
+      {!!error && (
+        <View style={[styles.detailWarn, { borderColor: '#e0a92e66', backgroundColor: 'rgba(224,169,46,0.11)' }]}>
+          <Text style={[styles.detailWarnText, { color: theme.textMuted }]}>{error}</Text>
+        </View>
+      )}
+      {!!detail && (
+        <View style={styles.metaGrid}>
+          {[
+            { label: lang === 'hi' ? 'तिथि' : 'Tithi', value: [detail.panchang?.tithi, detail.panchang?.paksha].filter(Boolean).join(' · ') },
+            { label: lang === 'hi' ? 'नक्षत्र' : 'Nakshatra', value: detail.panchang?.nakshatra },
+            { label: lang === 'hi' ? 'सूर्योदय' : 'Sunrise', value: detail.panchang?.sunrise },
+            { label: lang === 'hi' ? 'सूर्यास्त' : 'Sunset', value: detail.panchang?.sunset },
+          ].filter((x) => !!x.value).map((x) => (
+            <View key={x.label} style={[styles.metaPill, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.025)' : 'rgba(255,253,247,0.76)' }]}>
+              <Text style={[styles.metaLabel, { color: theme.textMuted }]}>{x.label}</Text>
+              <Text style={[styles.metaValue, { color: theme.text }]} numberOfLines={1}>{x.value}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+      {!!detail?.catalog?.why && (
+        <View style={styles.detailSection}>
+          <Text style={[styles.detailSub, { color: theme.gold1 }]}>{lang === 'hi' ? 'क्यों मनाया जाता है' : 'Why it matters'}</Text>
+          <Text style={[styles.obsText, { color: theme.textMuted }]}>{L(detail.catalog.why)}</Text>
+        </View>
+      )}
+      {!!(detail?.recommendedMuhurat || []).length && (
+        <View style={styles.detailSection}>
+          <Text style={[styles.detailSub, { color: theme.gold1 }]}>{lang === 'hi' ? 'शुभ समय' : 'Muhurat'}</Text>
+          <View style={{ gap: 7 }}>
+            {detail!.recommendedMuhurat.slice(0, 4).map((m) => (
+              <View key={`${m.name}-${m.start}`} style={[styles.muhuratPill, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.018)' : 'rgba(255,255,255,0.44)' }]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.periodName, { color: theme.text }]}>{m.name}</Text>
+                  {!!m.advice && <Text style={[styles.obsText, { color: theme.textMuted }]} numberOfLines={2}>{m.advice}</Text>}
+                </View>
+                <Text style={[styles.periodTime, { color: theme.gold2 }]}>{m.start} - {m.end}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+      {!!detail?.catalog?.samagri?.length && (
+        <View style={styles.detailSection}>
+          <Text style={[styles.detailSub, { color: theme.gold1 }]}>{lang === 'hi' ? 'पूजा सामग्री' : 'Puja Samagri'}</Text>
+          <View style={styles.chipWrap}>
+            {detail.catalog.samagri.slice(0, 10).map((x) => <Text key={x} style={[styles.infoChip, { color: theme.text, borderColor: theme.cardBorder }]}>{x}</Text>)}
+          </View>
+        </View>
+      )}
+      {!!(detail?.doList || []).length && (
+        <View style={styles.detailCols}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.detailSub, { color: '#3ec77a' }]}>{lang === 'hi' ? 'करें' : 'Do'}</Text>
+            {detail!.doList.slice(0, 3).map((x) => <Text key={x} style={[styles.obsText, { color: theme.textMuted }]}>• {x}</Text>)}
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.detailSub, { color: '#e06a5a' }]}>{lang === 'hi' ? 'न करें' : 'Avoid'}</Text>
+            {detail!.avoidList.slice(0, 3).map((x) => <Text key={x} style={[styles.obsText, { color: theme.textMuted }]}>• {x}</Text>)}
+          </View>
+        </View>
+      )}
+      {!!detail?.catalog?.steps?.length && (
+        <View style={styles.detailSection}>
+          <Text style={[styles.detailSub, { color: theme.gold1 }]}>{lang === 'hi' ? 'कैसे करें' : 'How to Perform'}</Text>
+          {detail.catalog.steps.slice(0, 6).map((x, i) => <Text key={x} style={[styles.obsText, { color: theme.textMuted }]}>{i + 1}. {x}</Text>)}
+        </View>
+      )}
+      {!!detail?.ai?.ritualSteps?.length && (
+        <View style={styles.detailSection}>
+          <Text style={[styles.detailSub, { color: theme.gold1 }]}>{lang === 'hi' ? 'AI पूजा गाइड' : 'AI Puja Guide'}</Text>
+          {detail.ai.ritualSteps.slice(0, 5).map((x, i) => <Text key={`${safeText(x)}-${i}`} style={[styles.obsText, { color: theme.textMuted }]}>{i + 1}. {safeText(x)}</Text>)}
+        </View>
+      )}
+      {!!detail?.catalog?.mantras?.length && (
+        <View style={styles.detailSection}>
+          <Text style={[styles.detailSub, { color: theme.gold1 }]}>{lang === 'hi' ? 'मंत्र' : 'Mantras'}</Text>
+          {detail.catalog.mantras.map((m) => <Text key={m.en} style={[styles.mantraText, { color: theme.text }]}>{lang === 'hi' ? m.hi : m.en}</Text>)}
+        </View>
+      )}
+      {!!detail?.catalog?.aarti && (
+        <View style={styles.detailSection}>
+          <Text style={[styles.detailSub, { color: theme.gold1 }]}>{lang === 'hi' ? 'आरती' : 'Aarti'}</Text>
+          <Text style={[styles.obsText, { color: theme.textMuted }]}>{L(detail.catalog.aarti)}</Text>
+        </View>
+      )}
+      {!!safeText(detail?.ai?.muhuratAdvice) && (
+        <View style={[styles.detailWarn, { borderColor: theme.gold2 + '55', backgroundColor: 'rgba(214,160,59,0.09)' }]}>
+          <Text style={[styles.detailWarnText, { color: theme.textMuted }]}>{safeText(detail?.ai?.muhuratAdvice)}</Text>
+        </View>
+      )}
+      {!!detail?.note && <Text style={[styles.detailNote, { color: theme.textMuted }]}>{detail.note}</Text>}
+    </View>
+  );
+}
+
 export function PanchangScreen({ navigation }: any) {
   const { theme } = useTheme();
   const { lang } = useLang();
@@ -163,7 +303,8 @@ export function PanchangScreen({ navigation }: any) {
   const shift = (days: number) => { hTap(); const d = new Date(date); d.setDate(d.getDate() + days); setDate(d); };
   const today = () => { hTap(); setDate(new Date()); };
   const isToday = toDMY(date) === toDMY(new Date());
-  const dLabel = lang === 'hi' ? `${toDev(date.getDate())} ${MON_HI[date.getMonth()]} ${toDev(date.getFullYear())}` : `${date.getDate()} ${MON[date.getMonth()]} ${date.getFullYear()}`;
+  // Date is ALWAYS shown in English (English numerals + month) regardless of app language.
+  const dLabel = `${date.getDate()} ${MON[date.getMonth()]} ${date.getFullYear()}`;
   const weekday = data ? (lang === 'hi' ? (data.weekdayHi || data.weekday) : data.weekday) : '';
   const L = (o?: { en: string; hi: string } | null) => (o ? (lang === 'hi' ? o.hi : o.en) : '');
   const tm = (p?: { hm12: string; hm24: string } | null, fallback?: string | null) => (p ? (lang === 'hi' ? p.hm24 : p.hm12) : (fallback || '—'));
@@ -311,136 +452,30 @@ export function PanchangScreen({ navigation }: any) {
                     ? [f.tithi?.hi || f.tithi?.name, f.tithi?.pakshaHi || f.tithi?.paksha].filter(Boolean).join(' · ')
                     : [f.tithi?.name, f.tithi?.paksha ? `${f.tithi.paksha} Paksha` : ''].filter(Boolean).join(' · ');
                   return (
-                    <View key={`${f.date}-${f.obs.key}`} style={[styles.festivalCard, { borderColor: active ? theme.gold1 : theme.cardBorder, backgroundColor: active ? 'rgba(214,160,59,0.12)' : (theme.isDark ? 'rgba(255,255,255,0.018)' : 'rgba(255,255,255,0.42)') }]}>
-                      <Pressable onPress={() => openFestival(f, false)} style={styles.festivalMain}>
-                        <View style={[styles.festivalDateBadge, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.18)' : 'rgba(255,253,247,0.88)' }]}>
-                          <Text style={[styles.upDate, { color: theme.text }]}>{f.date}</Text>
-                          <Text style={[styles.upWeek, { color: theme.textMuted }]} numberOfLines={1}>{lang === 'hi' ? (f.weekdayHi || f.weekday) : f.weekday}</Text>
-                        </View>
-                        <View style={styles.festivalBody}>
-                          <Text style={[styles.festivalTitle, { color: theme.text }]} numberOfLines={2}>{L(f.obs.name)}</Text>
-                          {!!tithiText && <Text style={[styles.festivalMeta, { color: theme.textMuted }]} numberOfLines={2}>{tithiText}</Text>}
-                          <Text style={[styles.festivalHint, { color: theme.textMuted }]} numberOfLines={2}>{L(f.obs.guidance)}</Text>
-                        </View>
-                      </Pressable>
-                      <View style={styles.festivalActions}>
-                        <Text style={[styles.obsType, { color: theme.gold2 }]}>{f.obs.importance}</Text>
-                        <Pressable onPress={() => openFestival(f, true)} style={[styles.aiChip, { borderColor: theme.gold2 + '88', backgroundColor: active && detailMode === 'ai' ? 'rgba(214,160,59,0.18)' : 'transparent' }]}>
-                          <Text style={[styles.aiChipText, { color: theme.gold1 }]}>AI Guide</Text>
+                    <View key={`${f.date}-${f.obs.key}`}>
+                      <View style={[styles.festivalCard, { borderColor: active ? theme.gold1 : theme.cardBorder, backgroundColor: active ? 'rgba(214,160,59,0.12)' : (theme.isDark ? 'rgba(255,255,255,0.018)' : 'rgba(255,255,255,0.42)') }]}>
+                        <Pressable onPress={() => openFestival(f, false)} style={styles.festivalMain}>
+                          <FestivalThumb row={f} lang={lang} />
+                          <View style={styles.festivalBody}>
+                            <Text style={[styles.festivalTitle, { color: theme.text }]} numberOfLines={2}>{L(f.obs.name)}</Text>
+                            {!!tithiText && <Text style={[styles.festivalMeta, { color: theme.textMuted }]} numberOfLines={2}>{tithiText}</Text>}
+                            <Text style={[styles.festivalHint, { color: theme.textMuted }]} numberOfLines={2}>{L(f.obs.guidance)}</Text>
+                          </View>
                         </Pressable>
+                        <View style={styles.festivalActions}>
+                          <Text style={[styles.obsType, { color: theme.gold2 }]}>{f.obs.importance}</Text>
+                          <Pressable onPress={() => openFestival(f, true)} style={[styles.aiChip, { borderColor: theme.gold2 + '88', backgroundColor: active && detailMode === 'ai' ? 'rgba(214,160,59,0.18)' : 'transparent' }]}>
+                            <Text style={[styles.aiChipText, { color: theme.gold1 }]}>AI Guide</Text>
+                          </Pressable>
+                        </View>
                       </View>
+                      {active && detailLoading && <View style={styles.detailLoading}><ActivityIndicator color={theme.gold1} /><Text style={[styles.obsText, { color: theme.textMuted }]}>{detailMode === 'ai' ? (lang === 'hi' ? 'AI guide तैयार हो रहा है' : 'Preparing AI guide') : (lang === 'hi' ? 'विस्तार लोड हो रहा है' : 'Loading details')}</Text></View>}
+                      {active && !detailLoading && <FestivalDetail detail={festivalDetail} selected={f} mode={detailMode} error={detailError} theme={theme} lang={lang} />}
                     </View>
                   );
                 })}
                 {!festivalRows.length && <Text style={[styles.emptyTxt, { color: theme.textMuted }]}>{lang === 'hi' ? 'कोई परिणाम नहीं मिला' : 'No results found'}</Text>}
               </View>
-              {detailLoading && <View style={styles.detailLoading}><ActivityIndicator color={theme.gold1} /><Text style={[styles.obsText, { color: theme.textMuted }]}>{detailMode === 'ai' ? (lang === 'hi' ? 'AI guide तैयार हो रहा है' : 'Preparing AI guide') : (lang === 'hi' ? 'विस्तार लोड हो रहा है' : 'Loading details')}</Text></View>}
-              {!!selectedFestival && !detailLoading && (
-                <View style={[styles.detailBox, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.16)' : 'rgba(255,255,255,0.55)' }]}>
-                  <View style={styles.detailHero}>
-                    <View style={[styles.detailMark, { borderColor: theme.gold2 + '66', backgroundColor: 'rgba(214,160,59,0.12)' }]}>
-                      <Text style={[styles.detailMarkText, { color: theme.gold1 }]}>{detailMode === 'ai' && festivalDetail?.ai ? 'AI' : 'Om'}</Text>
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.detailKicker, { color: theme.gold2 }]}>{selectedFestival.date} · {lang === 'hi' ? (selectedFestival.weekdayHi || selectedFestival.weekday) : selectedFestival.weekday}</Text>
-                      <Text style={[styles.detailTitle, { color: theme.text }]}>{festivalDetail?.title || L(selectedFestival.obs.name)}</Text>
-                    </View>
-                  </View>
-                  <Text style={[styles.detailLead, { color: theme.textMuted }]}>{safeText(festivalDetail?.ai?.summary) || (festivalDetail?.catalog?.guidance ? L(festivalDetail.catalog.guidance) : L(selectedFestival.obs.guidance))}</Text>
-                  {!!detailError && (
-                    <View style={[styles.detailWarn, { borderColor: '#e0a92e66', backgroundColor: 'rgba(224,169,46,0.11)' }]}>
-                      <Text style={[styles.detailWarnText, { color: theme.textMuted }]}>{detailError}</Text>
-                    </View>
-                  )}
-                  {!!festivalDetail && (
-                    <View style={styles.metaGrid}>
-                      {[
-                        { label: lang === 'hi' ? 'तिथि' : 'Tithi', value: [festivalDetail.panchang?.tithi, festivalDetail.panchang?.paksha].filter(Boolean).join(' · ') },
-                        { label: lang === 'hi' ? 'नक्षत्र' : 'Nakshatra', value: festivalDetail.panchang?.nakshatra },
-                        { label: lang === 'hi' ? 'सूर्योदय' : 'Sunrise', value: festivalDetail.panchang?.sunrise },
-                        { label: lang === 'hi' ? 'सूर्यास्त' : 'Sunset', value: festivalDetail.panchang?.sunset },
-                      ].filter((x) => !!x.value).map((x) => (
-                        <View key={x.label} style={[styles.metaPill, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.025)' : 'rgba(255,253,247,0.76)' }]}>
-                          <Text style={[styles.metaLabel, { color: theme.textMuted }]}>{x.label}</Text>
-                          <Text style={[styles.metaValue, { color: theme.text }]} numberOfLines={1}>{x.value}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  )}
-                  {!!festivalDetail?.catalog?.why && (
-                    <View style={styles.detailSection}>
-                      <Text style={[styles.detailSub, { color: theme.gold1 }]}>{lang === 'hi' ? 'क्यों मनाया जाता है' : 'Why it matters'}</Text>
-                      <Text style={[styles.obsText, { color: theme.textMuted }]}>{L(festivalDetail.catalog.why)}</Text>
-                    </View>
-                  )}
-                  {!!(festivalDetail?.recommendedMuhurat || []).length && (
-                    <View style={styles.detailSection}>
-                      <Text style={[styles.detailSub, { color: theme.gold1 }]}>{lang === 'hi' ? 'शुभ समय' : 'Muhurat'}</Text>
-                      <View style={{ gap: 7 }}>
-                        {festivalDetail!.recommendedMuhurat.slice(0, 4).map((m) => (
-                          <View key={`${m.name}-${m.start}`} style={[styles.muhuratPill, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.018)' : 'rgba(255,255,255,0.44)' }]}>
-                            <View style={{ flex: 1 }}>
-                              <Text style={[styles.periodName, { color: theme.text }]}>{m.name}</Text>
-                              {!!m.advice && <Text style={[styles.obsText, { color: theme.textMuted }]} numberOfLines={2}>{m.advice}</Text>}
-                            </View>
-                            <Text style={[styles.periodTime, { color: theme.gold2 }]}>{m.start} - {m.end}</Text>
-                          </View>
-                        ))}
-                      </View>
-                    </View>
-                  )}
-                  {!!festivalDetail?.catalog?.samagri?.length && (
-                    <View style={styles.detailSection}>
-                      <Text style={[styles.detailSub, { color: theme.gold1 }]}>{lang === 'hi' ? 'पूजा सामग्री' : 'Puja Samagri'}</Text>
-                      <View style={styles.chipWrap}>
-                        {festivalDetail.catalog.samagri.slice(0, 10).map((x) => <Text key={x} style={[styles.infoChip, { color: theme.text, borderColor: theme.cardBorder }]}>{x}</Text>)}
-                      </View>
-                    </View>
-                  )}
-                  {!!(festivalDetail?.doList || []).length && (
-                    <View style={styles.detailCols}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={[styles.detailSub, { color: '#3ec77a' }]}>{lang === 'hi' ? 'करें' : 'Do'}</Text>
-                        {festivalDetail!.doList.slice(0, 3).map((x) => <Text key={x} style={[styles.obsText, { color: theme.textMuted }]}>• {x}</Text>)}
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={[styles.detailSub, { color: '#e06a5a' }]}>{lang === 'hi' ? 'न करें' : 'Avoid'}</Text>
-                        {festivalDetail!.avoidList.slice(0, 3).map((x) => <Text key={x} style={[styles.obsText, { color: theme.textMuted }]}>• {x}</Text>)}
-                      </View>
-                    </View>
-                  )}
-                  {!!festivalDetail?.catalog?.steps?.length && (
-                    <View style={styles.detailSection}>
-                      <Text style={[styles.detailSub, { color: theme.gold1 }]}>{lang === 'hi' ? 'कैसे करें' : 'How to Perform'}</Text>
-                      {festivalDetail.catalog.steps.slice(0, 6).map((x, i) => <Text key={x} style={[styles.obsText, { color: theme.textMuted }]}>{i + 1}. {x}</Text>)}
-                    </View>
-                  )}
-                  {!!festivalDetail?.ai?.ritualSteps?.length && (
-                    <View style={styles.detailSection}>
-                      <Text style={[styles.detailSub, { color: theme.gold1 }]}>{lang === 'hi' ? 'AI पूजा गाइड' : 'AI Puja Guide'}</Text>
-                      {festivalDetail.ai.ritualSteps.slice(0, 5).map((x, i) => <Text key={`${safeText(x)}-${i}`} style={[styles.obsText, { color: theme.textMuted }]}>{i + 1}. {safeText(x)}</Text>)}
-                    </View>
-                  )}
-                  {!!festivalDetail?.catalog?.mantras?.length && (
-                    <View style={styles.detailSection}>
-                      <Text style={[styles.detailSub, { color: theme.gold1 }]}>{lang === 'hi' ? 'मंत्र' : 'Mantras'}</Text>
-                      {festivalDetail.catalog.mantras.map((m) => <Text key={m.en} style={[styles.mantraText, { color: theme.text }]}>{lang === 'hi' ? m.hi : m.en}</Text>)}
-                    </View>
-                  )}
-                  {!!festivalDetail?.catalog?.aarti && (
-                    <View style={styles.detailSection}>
-                      <Text style={[styles.detailSub, { color: theme.gold1 }]}>{lang === 'hi' ? 'आरती' : 'Aarti'}</Text>
-                      <Text style={[styles.obsText, { color: theme.textMuted }]}>{L(festivalDetail.catalog.aarti)}</Text>
-                    </View>
-                  )}
-                  {!!safeText(festivalDetail?.ai?.muhuratAdvice) && (
-                    <View style={[styles.detailWarn, { borderColor: theme.gold2 + '55', backgroundColor: 'rgba(214,160,59,0.09)' }]}>
-                      <Text style={[styles.detailWarnText, { color: theme.textMuted }]}>{safeText(festivalDetail?.ai?.muhuratAdvice)}</Text>
-                    </View>
-                  )}
-                  {!!festivalDetail?.note && <Text style={[styles.detailNote, { color: theme.textMuted }]}>{festivalDetail.note}</Text>}
-                </View>
-              )}
             </View>
           )}
 
@@ -520,6 +555,11 @@ const styles = StyleSheet.create({
   festivalCard: { flexDirection: 'row', alignItems: 'stretch', gap: 10, borderWidth: 1, borderRadius: 14, padding: 10 },
   festivalMain: { flex: 1, flexDirection: 'row', alignItems: 'stretch', gap: 10 },
   festivalDateBadge: { width: 78, borderWidth: 1, borderRadius: 12, paddingVertical: 8, paddingHorizontal: 7, justifyContent: 'center' },
+  thumb: { width: 64, borderRadius: 12, paddingVertical: 8, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center' },
+  thumbGlyph: { fontSize: 13, marginBottom: 1 },
+  thumbDay: { fontFamily: fonts.cinzelSemi, fontSize: 22, color: '#fff8ec', lineHeight: 24 },
+  thumbMon: { fontFamily: fonts.interBold, fontSize: 11, color: '#fff3da', letterSpacing: 1, textTransform: 'uppercase', marginTop: 1 },
+  thumbWeek: { fontFamily: fonts.inter, fontSize: 9, color: 'rgba(255,248,236,0.85)', marginTop: 2 },
   festivalBody: { flex: 1, justifyContent: 'center', minWidth: 0 },
   festivalActions: { width: 78, alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 },
   festivalTitle: { fontFamily: fonts.interSemi, fontSize: 14, lineHeight: 19 },
