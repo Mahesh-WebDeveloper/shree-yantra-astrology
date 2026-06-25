@@ -5,7 +5,7 @@ const USER_KEY = 'shree-yantra-admin-user'
 
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api',
-  timeout: 20000, // never let a hung backend spin a query forever
+  timeout: 30000, // generous — VedAstro/AI-backed endpoints can be slow; never spin forever
 })
 
 export function getStoredToken() {

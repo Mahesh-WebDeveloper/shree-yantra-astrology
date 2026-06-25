@@ -12,7 +12,10 @@ const DEV_API = 'http://192.168.0.234:4000';
 export const API_BASE = (process.env.EXPO_PUBLIC_API_URL || (__DEV__ ? DEV_API : '')).replace(/\/$/, '');
 
 // every network call gets a hard timeout so a hung backend never spins a loader forever
-const REQUEST_TIMEOUT_MS = 15000;
+// Default timeout for ALL API calls. VedAstro-backed endpoints + heavy days (many
+// parallel calls / slow upstream) can take a while, so we keep this generous; the
+// heaviest aggregators (Brihat, transit) override with even longer values below.
+const REQUEST_TIMEOUT_MS = 30000;
 async function fetchT(url: string, options: RequestInit = {}, timeoutMs: number = REQUEST_TIMEOUT_MS): Promise<Response> {
   const ctrl = new AbortController();
   const id = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -875,7 +878,7 @@ export interface TransitForecastResponse {
 }
 // Saal-dar-saal gochar = 9 years × 2 planets + AI summary/notes → heavy; longer timeout.
 export const getTransitForecast = (input: KundliInput & { fromYear?: number; toYear?: number }) =>
-  post<TransitForecastResponse>('/api/transit-forecast', { ...input, lang: apiLang }, 'POST', 45000);
+  post<TransitForecastResponse>('/api/transit-forecast', { ...input, lang: apiLang }, 'POST', 60000);
 
 // ── Brihat Kundli (advanced report aggregator) ──
 export interface BrihatSection {
@@ -930,7 +933,7 @@ export interface BrihatKundliResponse {
 }
 // Brihat = heaviest aggregator (kundli + 8 sub-reports). Longer timeout so it never
 // false-times-out while the backend assembles the full report.
-export const getBrihatKundli = (input: KundliInput) => post<BrihatKundliResponse>('/api/brihat-kundli', { ...input, lang: apiLang }, 'POST', 45000);
+export const getBrihatKundli = (input: KundliInput) => post<BrihatKundliResponse>('/api/brihat-kundli', { ...input, lang: apiLang }, 'POST', 60000);
 
 // ── endpoints ──
 export const getKundli = (input: KundliInput) => post<KundliResponse>('/api/kundli', input);
