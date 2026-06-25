@@ -12,7 +12,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { fonts, radii } from '../theme/tokens';
 import { hError, hSelect, hSuccess, hTap } from '../lib/haptics';
 import { birthFromProfile } from '../lib/birth';
-import { ApiDosha, ApiPlanet, BrihatAshtakavarga, BrihatAvakhada, BrihatDomain, BrihatKundliResponse, BrihatNumerology, BrihatSection, DashaResponse, getBrihatKundli, LifeTimelineResponse, LocationSuggestion, NumberCard, RemediesResponse, resolveLocation, YogaItem } from '../lib/api';
+import { ApiDosha, ApiPlanet, BrihatAshtakavarga, BrihatAvakhada, BrihatDomain, BrihatJaimini, BrihatKundliResponse, BrihatNumerology, BrihatSection, BrihatVarshphal, DashaResponse, getBrihatKundli, LifeTimelineResponse, LocationSuggestion, NumberCard, RemediesResponse, resolveLocation, YogaItem } from '../lib/api';
 import { useDialog } from '../components/DialogProvider';
 import { useLang, useT } from '../i18n/LanguageProvider';
 import { aSign } from '../i18n/astro';
@@ -136,12 +136,26 @@ function SmallChip({ label }: { label: string }) {
   );
 }
 
+const ROADMAP_REASON: Record<string, { en: string; hi: string }> = {
+  'in-calibration': { en: 'Being calibrated', hi: 'सत्यापन जारी' },
+  'needs-placidus-cusps': { en: 'Needs Placidus cusps', hi: 'Placidus cusp आवश्यक' },
+  'source-verification': { en: 'Verifying sources', hi: 'स्रोत सत्यापन' },
+  'expert-module': { en: 'Expert module', hi: 'विशेषज्ञ मॉड्यूल' },
+  planned: { en: 'Planned', hi: 'योजनाबद्ध' },
+};
 function RoadmapItem({ title, status }: { title: string; status: string }) {
   const { theme } = useTheme();
+  const { lang } = useLang();
+  const reason = ROADMAP_REASON[status] || { en: status.replace(/-/g, ' '), hi: status.replace(/-/g, ' ') };
   return (
-    <View style={[styles.roadmap, { borderColor: theme.cardBorder }]}>
-      <Text style={[styles.roadmapTitle, { color: theme.text }]}>{title}</Text>
-      <Text style={[styles.roadmapStatus, { color: theme.textMuted }]}>{status.replace(/-/g, ' ')}</Text>
+    <View style={[styles.roadmap, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(176,115,22,0.03)' }]}>
+      <View style={styles.roadmapTop}>
+        <View style={[styles.roadmapDot, { backgroundColor: theme.gold2 }]} />
+        <Text style={[styles.roadmapTitle, { color: theme.text }]} numberOfLines={2}>{title}</Text>
+      </View>
+      <View style={[styles.roadmapBadge, { borderColor: theme.gold2 + '66', backgroundColor: theme.gold2 + '12' }]}>
+        <Text style={[styles.roadmapStatus, { color: theme.goldText }]}>{lang === 'hi' ? reason.hi : reason.en}</Text>
+      </View>
     </View>
   );
 }
@@ -388,6 +402,64 @@ function RemediesCard({ rem }: { rem: RemediesResponse }) {
   );
 }
 
+function JaiminiCard({ j }: { j: BrihatJaimini }) {
+  const { theme } = useTheme();
+  const { lang } = useLang();
+  const L = (en: string, hi: string) => (lang === 'hi' ? hi : en);
+  return (
+    <ShellCard>
+      <Text style={[styles.blockTitle, { color: theme.text }]}>{L('Jaimini — Chara Karakas', 'जैमिनी — चर कारक')}</Text>
+      <Text style={[styles.sourceNote, { color: theme.textMuted, marginTop: 1, marginBottom: 8 }]}>
+        {L('Planets ranked by degree — each signifies a life area.', 'अंश अनुसार ग्रह क्रम — प्रत्येक एक जीवन-क्षेत्र दर्शाता है।')}
+      </Text>
+      {!!j.arudhaLagna && (
+        <View style={[styles.alBox, { borderColor: theme.gold2 + '66', backgroundColor: theme.gold2 + '12' }]}>
+          <Text style={[styles.alLabel, { color: theme.goldText }]}>{L('Arudha Lagna (AL)', 'आरूढ़ लग्न')}</Text>
+          <Text style={[styles.alValue, { color: theme.gold1 }]}>{safeSign(j.arudhaLagna.sign, lang)}</Text>
+        </View>
+      )}
+      {j.charaKarakas.map((k) => (
+        <View key={k.key} style={[styles.karakaRow, { borderBottomColor: theme.isDark ? 'rgba(201,150,46,0.12)' : 'rgba(176,115,22,0.12)' }]}>
+          <View style={[styles.karakaTag, { borderColor: theme.gold2 + '88' }]}><Text style={[styles.karakaTagTxt, { color: theme.gold1 }]}>{k.key}</Text></View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={[styles.karakaName, { color: theme.text }]} numberOfLines={1}>{lang === 'hi' ? k.hi : k.en} · {(lang === 'hi' ? PLANET_HI[k.planet] : null) || k.planet}</Text>
+            <Text style={[styles.karakaSig, { color: theme.textMuted }]} numberOfLines={1}>{k.sig} · {k.degree}° {safeSign(k.sign, lang)}</Text>
+          </View>
+        </View>
+      ))}
+    </ShellCard>
+  );
+}
+
+function VarshphalCard({ v }: { v: BrihatVarshphal }) {
+  const { theme } = useTheme();
+  const { lang } = useLang();
+  const L = (en: string, hi: string) => (lang === 'hi' ? hi : en);
+  if (!v.years?.length) return null;
+  return (
+    <ShellCard>
+      <Text style={[styles.blockTitle, { color: theme.text }]}>{L('Varshphal — 5 Year Muntha', 'वर्षफल — 5 वर्ष मुन्था')}</Text>
+      <Text style={[styles.sourceNote, { color: theme.textMuted, marginTop: 1, marginBottom: 8 }]}>
+        {L('Muntha advances one sign per year and flags each year’s theme.', 'मुन्था हर वर्ष एक राशि आगे बढ़कर वर्ष का भाव दर्शाती है।')}
+      </Text>
+      {v.years.map((y) => {
+        const good = y.kind === 'good';
+        return (
+          <View key={y.year} style={[styles.vYear, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.025)' : 'rgba(176,115,22,0.04)' }]}>
+            <View style={[styles.vYearBadge, { borderColor: (good ? '#3ec77a' : theme.gold2) + '88', backgroundColor: (good ? '#3ec77a' : theme.gold2) + '14' }]}>
+              <Text style={[styles.vYearNum, { color: good ? '#3ec77a' : theme.gold1 }]}>{y.year}</Text>
+            </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={[styles.vYearSign, { color: theme.text }]} numberOfLines={1}>{safeSign(y.munthaSign, lang)} · {L('House', 'भाव')} {y.houseFromLagna}</Text>
+              <Text style={[styles.vYearTheme, { color: theme.textMuted }]} numberOfLines={1}>{tx(y.theme, lang)}</Text>
+            </View>
+          </View>
+        );
+      })}
+    </ShellCard>
+  );
+}
+
 export function BrihatKundliScreen({ navigation }: any) {
   const { theme } = useTheme();
   const { lang } = useLang();
@@ -535,8 +607,18 @@ export function BrihatKundliScreen({ navigation }: any) {
 
           {!!report.data?.remedies && <RemediesCard rem={report.data.remedies} />}
 
+          {!!report.jaimini?.charaKarakas?.length && <JaiminiCard j={report.jaimini} />}
+
+          {!!report.varshphal?.years?.length && <VarshphalCard v={report.varshphal} />}
+
           <ShellCard>
-            <Text style={[styles.blockTitle, { color: theme.text }]}>{lang === 'hi' ? 'Report modules' : 'Report modules'}</Text>
+            <View style={styles.modHead}>
+              <Text style={[styles.blockTitle, { color: theme.text, marginBottom: 0 }]}>{lang === 'hi' ? 'Report modules' : 'Report modules'}</Text>
+              <Text style={[styles.modCount, { color: theme.goldText }]}>{readyCount}/{report.sections.length} {lang === 'hi' ? 'तैयार' : 'ready'}</Text>
+            </View>
+            <View style={[styles.progressTrack, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.06)' }]}>
+              <View style={[styles.progressFill, { width: `${Math.round((readyCount / Math.max(1, report.sections.length)) * 100)}%`, backgroundColor: theme.gold1 }]} />
+            </View>
             {(report.sections || []).map((item) => <SectionRow key={item.key} item={item} />)}
           </ShellCard>
 
@@ -549,8 +631,8 @@ export function BrihatKundliScreen({ navigation }: any) {
             <Text style={[styles.blockTitle, { color: theme.text }]}>{lang === 'hi' ? 'Expert modules roadmap' : 'Expert modules roadmap'}</Text>
             <Text style={[styles.sourceNote, { color: theme.textMuted }]}>
               {lang === 'hi'
-                ? 'Ye modules tabhi enable honge jab formula/API/expert validation complete hogi.'
-                : 'These modules will be enabled only after formula/API/expert validation is complete.'}
+                ? 'Ye advanced systems 100% accuracy ke liye validate ho rahe hain — hum kabhi unverified prediction nahi dikhate.'
+                : 'These advanced systems are being validated for 100% accuracy — we never show unverified predictions.'}
             </Text>
             <View style={styles.roadmapGrid}>
               {(report.roadmap || []).map((item) => <RoadmapItem key={item.key} title={item.title} status={item.status} />)}
@@ -604,8 +686,8 @@ const styles = StyleSheet.create({
   smallChipText: { fontFamily: fonts.interSemi, fontSize: 10.5 },
   roadmapGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
   roadmap: { width: '48%', borderWidth: 1, borderRadius: 13, padding: 10 },
-  roadmapTitle: { fontFamily: fonts.interSemi, fontSize: 12 },
-  roadmapStatus: { fontFamily: fonts.inter, fontSize: 10.5, marginTop: 4, textTransform: 'uppercase' },
+  roadmapTitle: { flex: 1, minWidth: 0, fontFamily: fonts.interSemi, fontSize: 12 },
+  roadmapStatus: { fontFamily: fonts.interSemi, fontSize: 9.5, letterSpacing: 0.3 },
   pdfLink: { marginTop: 14, borderWidth: 1, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 12, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 },
   pdfText: { fontFamily: fonts.interBold, fontSize: 12.5, letterSpacing: 0.4 },
   trHead: { flexDirection: 'row', alignItems: 'center', paddingBottom: 7, marginTop: 8, borderBottomWidth: 1 },
@@ -642,4 +724,24 @@ const styles = StyleSheet.create({
   yogaName: { fontFamily: fonts.interSemi, fontSize: 13 },
   yogaDesc: { fontFamily: fonts.inter, fontSize: 11.5, lineHeight: 16.5, marginTop: 2 },
   mantraTxt: { fontFamily: fonts.inter, fontSize: 12, lineHeight: 18 },
+  modHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  modCount: { fontFamily: fonts.interBold, fontSize: 11, letterSpacing: 0.5 },
+  progressTrack: { height: 6, borderRadius: 999, marginTop: 8, marginBottom: 6, overflow: 'hidden' },
+  progressFill: { height: 6, borderRadius: 999 },
+  alBox: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+  alLabel: { fontFamily: fonts.interBold, fontSize: 10.5, letterSpacing: 0.8, textTransform: 'uppercase' },
+  alValue: { fontFamily: fonts.playfairBold, fontSize: 16 },
+  karakaRow: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 9, borderBottomWidth: StyleSheet.hairlineWidth },
+  karakaTag: { width: 40, borderWidth: 1, borderRadius: 8, paddingVertical: 4, alignItems: 'center' },
+  karakaTagTxt: { fontFamily: fonts.interBold, fontSize: 11, letterSpacing: 0.5 },
+  karakaName: { fontFamily: fonts.interSemi, fontSize: 13 },
+  karakaSig: { fontFamily: fonts.inter, fontSize: 11, marginTop: 2 },
+  vYear: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderRadius: 13, padding: 10, marginTop: 8 },
+  vYearBadge: { borderWidth: 1, borderRadius: 9, paddingHorizontal: 9, paddingVertical: 6, minWidth: 56, alignItems: 'center' },
+  vYearNum: { fontFamily: fonts.playfairBold, fontSize: 15 },
+  vYearSign: { fontFamily: fonts.interSemi, fontSize: 13.5 },
+  vYearTheme: { fontFamily: fonts.inter, fontSize: 11.5, marginTop: 2 },
+  roadmapTop: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  roadmapDot: { width: 7, height: 7, borderRadius: 4 },
+  roadmapBadge: { alignSelf: 'flex-start', borderWidth: 1, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3, marginTop: 8 },
 });

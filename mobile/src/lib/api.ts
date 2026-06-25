@@ -922,6 +922,18 @@ export interface NumberCard {
   supporting: number[];
 }
 export interface BrihatNumerology { psychic: NumberCard; destiny: NumberCard; name?: NumberCard }
+export interface CharaKaraka { key: string; en: string; hi: string; sig: string; planet: string; planetHi: string; sign: string; degree: number }
+export interface BrihatJaimini {
+  charaKarakas: CharaKaraka[];
+  arudhaLagna?: { sign: string; signIdx: number; lord: string; lordHi: string } | null;
+  scheme: string;
+}
+export interface VarshphalYear {
+  year: number; age: number; munthaSign: string; munthaSignIdx: number;
+  munthaLord: string; munthaLordHi: string; houseFromLagna: number;
+  theme: BiText; kind: 'good' | 'neutral';
+}
+export interface BrihatVarshphal { years: VarshphalYear[]; note?: string }
 export interface BrihatKundliResponse {
   generatedAt: string;
   reportType: string;
@@ -929,6 +941,8 @@ export interface BrihatKundliResponse {
   avakhada?: BrihatAvakhada | null;
   ashtakavarga?: BrihatAshtakavarga | null;
   numerology?: BrihatNumerology | null;
+  jaimini?: BrihatJaimini | null;
+  varshphal?: BrihatVarshphal | null;
   summary: {
     ascendant?: string | null;
     moonSign?: string | null;

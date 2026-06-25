@@ -9,6 +9,8 @@ const { getTransitForecast } = require('./transitForecast.service');
 const { computeAvakhada } = require('../utils/avakhada');
 const { computeAshtakavarga } = require('../utils/ashtakavarga');
 const { birthNumerology } = require('../utils/numerology');
+const { computeJaimini } = require('../utils/jaimini');
+const { computeVarshphal } = require('../utils/varshphal');
 
 const RASHIS = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
 const RASHI_IDX = RASHIS.reduce((a, s, i) => { a[s] = i; return a; }, {});
@@ -59,11 +61,9 @@ const DOMAIN_CONFIG = [
 ];
 
 const ROADMAP = [
-  { key: 'shadbala', title: 'Shadbala / Bhavbala', status: 'needs-verification' },
-  { key: 'kp', title: 'KP / Cuspal Interlinks / 4-Step', status: 'expert-module' },
-  { key: 'jaimini', title: 'Jaimini / Chara Dasha / Arudha', status: 'expert-module' },
-  { key: 'lal-kitab', title: 'Lal Kitab Tewa & Debt', status: 'expert-module' },
-  { key: 'varshphal', title: '5 Year Varshphal', status: 'planned' },
+  { key: 'shadbala', title: 'Shadbala / Bhavbala', status: 'in-calibration' },
+  { key: 'kp', title: 'KP System / Cuspal Sub-lords', status: 'needs-placidus-cusps' },
+  { key: 'lal-kitab', title: 'Lal Kitab Tewa & Debts', status: 'source-verification' },
 ];
 
 const ok = (value) => ({ ok: true, value });
@@ -318,8 +318,29 @@ async function getBrihatKundli(input) {
   let numerology = null;
   try { numerology = birthNumerology(input.dob); } catch (_) { /* optional */ }
 
+  // Jaimini (Chara Karakas + Arudha Lagna) + Varshphal (Muntha) — deterministic.
+  let jaimini = null;
+  let varshphal = null;
+  try {
+    const lagnaIdx = data.ascendant != null && RASHI_IDX[data.ascendant] != null ? RASHI_IDX[data.ascendant] : null;
+    const degMap = {};
+    planets.forEach((p) => {
+      if (p.nirayanaLongitude != null && Number.isFinite(Number(p.nirayanaLongitude))) {
+        const lon = (((Number(p.nirayanaLongitude) % 360) + 360) % 360);
+        degMap[p.planet] = { signIdx: Math.floor(lon / 30), deg: lon % 30 };
+      }
+    });
+    if (Object.keys(degMap).length >= 7) jaimini = computeJaimini(degMap, lagnaIdx);
+    const birthYear = Number(String(input.dob || '').split('-')[2]);
+    if (lagnaIdx != null && birthYear) {
+      varshphal = computeVarshphal({ lagnaSignIdx: lagnaIdx, birthYear, fromYear: nowY, count: 5 });
+    }
+  } catch (_) { /* optional */ }
+
   if (ashtakavarga) sections.push({ key: 'ashtakavarga', title: { en: 'Ashtakavarga', hi: 'अष्टकवर्ग' }, status: 'ready', count: ashtakavarga.sarvaTotal, source: 'BPHS bindu tables (Sarva total 337)' });
   if (numerology) sections.push({ key: 'numerology', title: { en: 'Numerology', hi: 'अंक ज्योतिष' }, status: 'ready', count: 2, source: 'Moolank + Bhagyank (Chaldean)' });
+  if (jaimini) sections.push({ key: 'jaimini', title: { en: 'Jaimini Karakas', hi: 'जैमिनी कारक' }, status: 'ready', count: (jaimini.charaKarakas || []).length, source: 'Chara Karakas + Arudha Lagna' });
+  if (varshphal && varshphal.years.length) sections.push({ key: 'varshphal', title: { en: 'Varshphal (Muntha)', hi: 'वर्षफल (मुन्था)' }, status: 'ready', count: varshphal.years.length, source: 'Tajika Muntha progression' });
 
   return {
     generatedAt: new Date().toISOString(),
@@ -351,6 +372,8 @@ async function getBrihatKundli(input) {
     avakhada,
     ashtakavarga,
     numerology,
+    jaimini,
+    varshphal,
     sections,
     domains,
     data: {
