@@ -655,7 +655,13 @@ function computeMangalCompat(boyMangal, girlMangal) {
   return { boy, girl, compatible, severity, note, noteHi };
 }
 
-module.exports = { computeGunMilan, computeMangalCompat, NAKSHATRAS, RASHIS };
+module.exports = {
+  computeGunMilan, computeMangalCompat, NAKSHATRAS, RASHIS,
+  // verified lookup tables (re-exported for Avakhada Chakra reuse — single source of truth)
+  NAK_YONI, NAK_GANA, NAK_NADI, RASHI_VARNA, RASHI_VASHYA, RASHI_LORD,
+  YONI_NAME, YONI_NAME_HI, GANA_NAME, GANA_NAME_HI, NADI_NAME, NADI_NAME_HI,
+  VARNA_NAME, VARNA_NAME_HI, VASHYA_NAME, VASHYA_NAME_HI, PLANET_NAME, PLANET_NAME_HI,
+};
 
 /* ------------------------------------------------------------------ */
 /* Self-test                                                           */

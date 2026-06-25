@@ -6,6 +6,9 @@ const { getReading } = require('./reading.service');
 const { getLifeTimeline } = require('./lifeTimeline.service');
 const { getRemedies } = require('./remedies.service');
 const { getTransitForecast } = require('./transitForecast.service');
+const { computeAvakhada } = require('../utils/avakhada');
+
+const RASHIS = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
 
 const DOMAIN_CONFIG = [
   {
@@ -271,6 +274,29 @@ async function getBrihatKundli(input) {
   const domains = buildDomains({ reading: optional.reading, timeline: optional.timeline, transitForecast: optional.transitForecast });
   const sections = buildSections({ kundli, ...optional });
 
+  // Avakhada Chakra — deterministic classical attributes from Moon + Lagna.
+  let avakhada = null;
+  try {
+    const moonLon = moon && moon.nirayanaLongitude != null ? (((Number(moon.nirayanaLongitude) % 360) + 360) % 360) : null;
+    if (moonLon != null && Number.isFinite(moonLon)) {
+      const NAK = 360 / 27;
+      const nakIdx0 = Math.floor(moonLon / NAK) % 27;
+      const moonPada = Math.floor((moonLon % NAK) / (NAK / 4)) + 1;
+      const lagnaIdx = data.ascendant ? RASHIS.indexOf(data.ascendant) : -1;
+      const bal = optional.timeline && optional.timeline.balance;
+      const dashaBalance = bal
+        ? `${bal.lord}${bal.bhogyaYears != null ? ' ' + bal.bhogyaYears + 'y' : ''}`.trim()
+        : (activeDasha ? activeDasha.lord : null);
+      avakhada = computeAvakhada({
+        moonNakIdx0: nakIdx0,
+        moonPada,
+        moonRashiIdx0: Math.floor(moonLon / 30),
+        lagnaRashiIdx0: lagnaIdx >= 0 ? lagnaIdx : null,
+        dashaBalance,
+      });
+    }
+  } catch (_) { /* avakhada optional — report still renders */ }
+
   return {
     generatedAt: new Date().toISOString(),
     reportType: 'brihat-kundli-v1',
@@ -298,6 +324,7 @@ async function getBrihatKundli(input) {
       ],
       note: 'Astronomical calculations can be validated. Interpretations are traditional indications, not guaranteed outcomes.',
     },
+    avakhada,
     sections,
     domains,
     data: {

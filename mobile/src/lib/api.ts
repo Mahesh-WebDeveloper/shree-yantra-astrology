@@ -898,10 +898,19 @@ export interface BrihatDomain {
   timing?: { currentDashaLord?: string | null; currentDashaNature?: string | null; favorableYears?: number[] };
   confidence?: 'calculated' | 'needs-deeper-rules' | string;
 }
+export interface BrihatAvakhada {
+  varna: BiText; vashya: BiText; yoni: BiText; gana: BiText; nadi: BiText;
+  tatva: BiText; paya?: BiText | null;
+  nakshatra: { name: string; pada: number | null; lord: BiText };
+  rashi: { name: string; lord: BiText };
+  lagna?: { name: string; lord: BiText } | null;
+  dashaBalance?: string | null;
+}
 export interface BrihatKundliResponse {
   generatedAt: string;
   reportType: string;
   title: BiText;
+  avakhada?: BrihatAvakhada | null;
   summary: {
     ascendant?: string | null;
     moonSign?: string | null;

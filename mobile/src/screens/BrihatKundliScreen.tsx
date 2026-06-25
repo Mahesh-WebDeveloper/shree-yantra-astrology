@@ -12,7 +12,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { fonts, radii } from '../theme/tokens';
 import { hError, hSelect, hSuccess, hTap } from '../lib/haptics';
 import { birthFromProfile } from '../lib/birth';
-import { BrihatDomain, BrihatKundliResponse, BrihatSection, getBrihatKundli, LocationSuggestion, resolveLocation } from '../lib/api';
+import { ApiPlanet, BrihatAvakhada, BrihatDomain, BrihatKundliResponse, BrihatSection, getBrihatKundli, LocationSuggestion, resolveLocation } from '../lib/api';
 import { useDialog } from '../components/DialogProvider';
 import { useLang, useT } from '../i18n/LanguageProvider';
 import { aSign } from '../i18n/astro';
@@ -143,6 +143,75 @@ function RoadmapItem({ title, status }: { title: string; status: string }) {
       <Text style={[styles.roadmapTitle, { color: theme.text }]}>{title}</Text>
       <Text style={[styles.roadmapStatus, { color: theme.textMuted }]}>{status.replace(/-/g, ' ')}</Text>
     </View>
+  );
+}
+
+const PLANET_HI: Record<string, string> = { Sun: 'सूर्य', Moon: 'चंद्र', Mars: 'मंगल', Mercury: 'बुध', Jupiter: 'गुरु', Venus: 'शुक्र', Saturn: 'शनि', Rahu: 'राहु', Ketu: 'केतु' };
+const nakName = (n: any): string => (!n ? '-' : typeof n === 'string' ? n : n.Name || '-');
+const houseNum = (h: any): string => { const m = String(h ?? '').match(/\d+/); return m ? m[0] : '-'; };
+const degShort = (d: any): string => { const n = String(d ?? '').match(/\d+/g); return n && n.length >= 2 ? `${n[0]}°${n[1]}'` : (n && n[0] ? `${n[0]}°` : '-'); };
+
+function AvakhadaCard({ a }: { a: BrihatAvakhada }) {
+  const { theme } = useTheme();
+  const { lang } = useLang();
+  const L = (en: string, hi: string) => (lang === 'hi' ? hi : en);
+  const rows: [string, string][] = [
+    [L('Varna', 'वर्ण'), tx(a.varna, lang)],
+    [L('Vashya', 'वश्य'), tx(a.vashya, lang)],
+    [L('Yoni', 'योनि'), tx(a.yoni, lang)],
+    [L('Gana', 'गण'), tx(a.gana, lang)],
+    [L('Nadi', 'नाड़ी'), tx(a.nadi, lang)],
+    [L('Tatva', 'तत्व'), tx(a.tatva, lang)],
+    [L('Paya', 'पाया'), a.paya ? tx(a.paya, lang) : '-'],
+    [L('Nakshatra', 'नक्षत्र'), `${a.nakshatra.name}${a.nakshatra.pada ? ' • ' + a.nakshatra.pada : ''}`],
+    [L('Nakshatra Lord', 'नक्षत्र स्वामी'), tx(a.nakshatra.lord, lang)],
+    [L('Rashi', 'राशि'), safeSign(a.rashi.name, lang)],
+    [L('Rashi Lord', 'राशि स्वामी'), tx(a.rashi.lord, lang)],
+    [L('Lagna', 'लग्न'), a.lagna ? safeSign(a.lagna.name, lang) : '-'],
+    [L('Lagna Lord', 'लग्न स्वामी'), a.lagna ? tx(a.lagna.lord, lang) : '-'],
+    [L('Dasha Balance', 'दशा शेष'), a.dashaBalance || '-'],
+  ];
+  return (
+    <ShellCard>
+      <Text style={[styles.blockTitle, { color: theme.text }]}>{L('Avakhada Chakra', 'अवकहड़ा चक्र')}</Text>
+      <Text style={[styles.sourceNote, { color: theme.textMuted, marginTop: 1, marginBottom: 4 }]}>
+        {L('Classical birth attributes derived from Moon & Lagna.', 'चंद्र व लग्न से शास्त्रीय जन्म-विशेषताएँ।')}
+      </Text>
+      <View style={styles.metrics}>
+        {rows.map(([k, v]) => <Metric key={k} label={k} value={v} />)}
+      </View>
+    </ShellCard>
+  );
+}
+
+function PlanetTable({ planets }: { planets: ApiPlanet[] }) {
+  const { theme } = useTheme();
+  const { lang } = useLang();
+  const L = (en: string, hi: string) => (lang === 'hi' ? hi : en);
+  const head = theme.goldText;
+  return (
+    <ShellCard>
+      <Text style={[styles.blockTitle, { color: theme.text }]}>{L('Planetary Positions', 'ग्रह स्थिति')}</Text>
+      <View style={[styles.trHead, { borderBottomColor: theme.gold2 + '55' }]}>
+        <Text style={[styles.cP, styles.thTxt, { color: head }]}>{L('Planet', 'ग्रह')}</Text>
+        <Text style={[styles.cS, styles.thTxt, { color: head }]}>{L('Sign', 'राशि')}</Text>
+        <Text style={[styles.cD, styles.thTxt, { color: head }]}>{L('Deg', 'अंश')}</Text>
+        <Text style={[styles.cN, styles.thTxt, { color: head }]}>{L('Nakshatra', 'नक्षत्र')}</Text>
+        <Text style={[styles.cH, styles.thTxt, { color: head }]}>{L('Hse', 'भाव')}</Text>
+      </View>
+      {planets.map((p) => {
+        const retro = !!p.isRetrograde && String(p.isRetrograde).toLowerCase() !== 'false';
+        return (
+          <View key={p.planet} style={[styles.tr, { borderBottomColor: theme.isDark ? 'rgba(201,150,46,0.12)' : 'rgba(176,115,22,0.12)' }]}>
+            <Text style={[styles.cP, styles.tdTxt, { color: theme.text }]} numberOfLines={1}>{(lang === 'hi' ? PLANET_HI[p.planet] : null) || p.planet}{retro ? ' (R)' : ''}</Text>
+            <Text style={[styles.cS, styles.tdTxt, { color: theme.textSoft }]} numberOfLines={1}>{p.sign ? safeSign(p.sign, lang) : '-'}</Text>
+            <Text style={[styles.cD, styles.tdTxt, { color: theme.textSoft }]} numberOfLines={1}>{degShort(p.degreeInSign)}</Text>
+            <Text style={[styles.cN, styles.tdTxt, { color: theme.textSoft }]} numberOfLines={1}>{nakName(p.nakshatra)}</Text>
+            <Text style={[styles.cH, styles.tdTxt, { color: theme.textSoft }]} numberOfLines={1}>{houseNum(p.house)}</Text>
+          </View>
+        );
+      })}
+    </ShellCard>
   );
 }
 
@@ -279,6 +348,10 @@ export function BrihatKundliScreen({ navigation }: any) {
             </Text>
           </ShellCard>
 
+          {!!report.avakhada && <AvakhadaCard a={report.avakhada} />}
+
+          {!!report.data?.kundli?.data?.planets?.length && <PlanetTable planets={report.data.kundli.data.planets} />}
+
           <ShellCard>
             <Text style={[styles.blockTitle, { color: theme.text }]}>{lang === 'hi' ? 'Report modules' : 'Report modules'}</Text>
             {(report.sections || []).map((item) => <SectionRow key={item.key} item={item} />)}
@@ -352,4 +425,13 @@ const styles = StyleSheet.create({
   roadmapStatus: { fontFamily: fonts.inter, fontSize: 10.5, marginTop: 4, textTransform: 'uppercase' },
   pdfLink: { marginTop: 14, borderWidth: 1, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 12, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 },
   pdfText: { fontFamily: fonts.interBold, fontSize: 12.5, letterSpacing: 0.4 },
+  trHead: { flexDirection: 'row', alignItems: 'center', paddingBottom: 7, marginTop: 8, borderBottomWidth: 1 },
+  tr: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth },
+  thTxt: { fontFamily: fonts.interBold, fontSize: 10, letterSpacing: 0.5, textTransform: 'uppercase' },
+  tdTxt: { fontFamily: fonts.interSemi, fontSize: 12 },
+  cP: { flex: 1.5 },
+  cS: { flex: 1.25 },
+  cD: { flex: 1 },
+  cN: { flex: 1.7 },
+  cH: { flex: 0.6, textAlign: 'right' },
 });
