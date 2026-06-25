@@ -12,6 +12,15 @@ const { birthNumerology } = require('../utils/numerology');
 const { computeJaimini } = require('../utils/jaimini');
 const { computeVarshphal } = require('../utils/varshphal');
 const { kpLords } = require('../utils/kp');
+const { computeLalKitab } = require('../utils/lalKitab');
+const { computeShadbala } = require('../utils/shadbala');
+const eph = require('../utils/localEphemeris');
+
+const SHADBALA_PLANETS = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn'];
+const WEEKDAY_LORD = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn']; // Sun..Sat
+const CHALDEAN = ['Saturn', 'Jupiter', 'Mars', 'Sun', 'Venus', 'Mercury', 'Moon'];
+const isRetroFn = (v) => v === true || String(v).toLowerCase() === 'true';
+const hnumFn = (h) => { const m = String(h ?? '').match(/\d+/); return m ? Number(m[0]) : null; };
 
 const RASHIS = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
 const RASHI_IDX = RASHIS.reduce((a, s, i) => { a[s] = i; return a; }, {});
@@ -61,10 +70,7 @@ const DOMAIN_CONFIG = [
   },
 ];
 
-const ROADMAP = [
-  { key: 'shadbala', title: 'Shadbala / Bhavbala', status: 'in-calibration' },
-  { key: 'lal-kitab', title: 'Lal Kitab Tewa & Debts', status: 'source-verification' },
-];
+const ROADMAP = []; // all expert modules implemented
 
 const ok = (value) => ({ ok: true, value });
 const fail = (error) => ({ ok: false, error: error && error.message ? error.message : String(error || 'Unavailable') });
@@ -348,7 +354,75 @@ async function getBrihatKundli(input) {
     if (rows.length) kp = { ascendant, planets: rows };
   } catch (_) { /* optional */ }
 
+  // Lal Kitab house chart (deterministic placement only).
+  let lalKitab = null;
+  try {
+    const lagnaIdx = data.ascendant != null && RASHI_IDX[data.ascendant] != null ? RASHI_IDX[data.ascendant] : null;
+    if (lagnaIdx != null) lalKitab = computeLalKitab(planets.filter((p) => p.sign), lagnaIdx);
+  } catch (_) { /* optional */ }
+
+  // Shadbala (six-fold strength, classical BPHS).
+  let shadbala = null;
+  try {
+    const [bd, bm, by] = String(input.dob).split('-').map(Number);
+    const [bh, bmin] = String(input.tob).split(':').map(Number);
+    const tzMin = eph.parseTzMin(input.tz || '+05:30');
+    const birthDate = new Date(Date.UTC(by, bm - 1, bd, bh, bmin, 0) - tzMin * 60000);
+    const byName = {}; planets.forEach((p) => { byName[p.planet] = p; });
+    const ctxPlanets = {};
+    for (const pl of SHADBALA_PLANETS) {
+      const pp = byName[pl];
+      if (!pp || pp.nirayanaLongitude == null) continue;
+      const lon = (((Number(pp.nirayanaLongitude)) % 360) + 360) % 360;
+      let navIdx = pp.navamsaSign != null ? RASHI_IDX[pp.navamsaSign] : null;
+      if (navIdx == null) navIdx = RASHI_IDX[eph.navamsaSign(lon)];
+      ctxPlanets[pl] = {
+        lon, signIdx: Math.floor(lon / 30), deg: lon % 30,
+        house: hnumFn(pp.house) || (((Math.floor(lon / 30) - (RASHI_IDX[data.ascendant] || 0) + 12) % 12) + 1),
+        navIdx: navIdx || 0, retro: isRetroFn(pp.isRetrograde),
+        speed: eph.dailySpeed(pl, birthDate), decl: eph.declination(pl, birthDate),
+      };
+    }
+    // varga signs for Saptavargaja
+    const vargaSignIdx = {};
+    SHADBALA_PLANETS.forEach((pl) => { vargaSignIdx[pl] = {}; });
+    ((optional.varga && optional.varga.data && optional.varga.data.charts) || []).forEach((c) => {
+      const dn = Number(String(c.code).replace(/\D/g, ''));
+      if (![2, 3, 7, 9, 12, 30].includes(dn)) return;
+      (c.planets || []).forEach((pp) => { if (vargaSignIdx[pp.planet] && pp.sign != null) vargaSignIdx[pp.planet][dn] = RASHI_IDX[pp.sign]; });
+    });
+    // time context
+    const localMin = bh * 60 + bmin;
+    const civil = new Date(by, bm - 1, bd, 12);
+    const sunrise = eph.riseSetMinutes('Sun', civil, input.lat, input.lng, tzMin, 1);
+    const sunset = eph.riseSetMinutes('Sun', civil, input.lat, input.lng, tzMin, -1);
+    const sr = sunrise == null ? 360 : sunrise;
+    const ss = sunset == null ? 1080 : sunset;
+    let weekday = civil.getDay();
+    if (localMin < sr) weekday = (weekday + 6) % 7;
+    const weekdayLord = WEEKDAY_LORD[weekday];
+    let msr = localMin - sr; if (msr < 0) msr += 1440;
+    const horaIndex = Math.floor(msr / 60);
+    const horaLord = CHALDEAN[(CHALDEAN.indexOf(weekdayLord) + horaIndex) % 7];
+    const isDay = localMin >= sr && localMin < ss;
+    let tribhagaLord;
+    if (isDay) { const part = Math.min(2, Math.floor((localMin - sr) / Math.max(1, (ss - sr) / 3))); tribhagaLord = ['Mercury', 'Sun', 'Saturn'][part]; }
+    else { const t = localMin >= ss ? localMin : localMin + 1440; const nl = (sr + 1440) - ss; const part = Math.min(2, Math.floor((t - ss) / Math.max(1, nl / 3))); tribhagaLord = ['Moon', 'Venus', 'Mars'][part]; }
+
+    if (ctxPlanets.Sun && ctxPlanets.Moon) {
+      shadbala = computeShadbala({
+        planets: ctxPlanets, vargaSignIdx,
+        ascLon: data.ascendantLongitude != null ? Number(data.ascendantLongitude) : (RASHI_IDX[data.ascendant] || 0) * 30,
+        sunLon: ctxPlanets.Sun.lon, moonLon: ctxPlanets.Moon.lon,
+        noonDist: Math.abs(localMin / 60 - 12),
+        weekdayLord, horaLord, tribhagaLord,
+      });
+    }
+  } catch (_) { /* optional */ }
+
   if (ashtakavarga) sections.push({ key: 'ashtakavarga', title: { en: 'Ashtakavarga', hi: 'अष्टकवर्ग' }, status: 'ready', count: ashtakavarga.sarvaTotal, source: 'BPHS bindu tables (Sarva total 337)' });
+  if (shadbala) sections.push({ key: 'shadbala', title: { en: 'Shadbala', hi: 'षड्बल' }, status: 'ready', count: Object.keys(shadbala.planets).length, source: 'Six-fold strength (classical BPHS, Rupas)' });
+  if (lalKitab) sections.push({ key: 'lal-kitab', title: { en: 'Lal Kitab Chart', hi: 'लाल किताब' }, status: 'ready', count: 12, source: 'House-wise placement (Teva)' });
   if (kp) sections.push({ key: 'kp', title: { en: 'KP Significators', hi: 'KP कारक' }, status: 'ready', count: (kp.planets || []).length, source: 'Sign / Star / Sub lord (Vimshottari sub-division)' });
   if (numerology) sections.push({ key: 'numerology', title: { en: 'Numerology', hi: 'अंक ज्योतिष' }, status: 'ready', count: 2, source: 'Moolank + Bhagyank (Chaldean)' });
   if (jaimini) sections.push({ key: 'jaimini', title: { en: 'Jaimini Karakas', hi: 'जैमिनी कारक' }, status: 'ready', count: (jaimini.charaKarakas || []).length, source: 'Chara Karakas + Arudha Lagna' });
@@ -387,6 +461,8 @@ async function getBrihatKundli(input) {
     jaimini,
     varshphal,
     kp,
+    shadbala,
+    lalKitab,
     sections,
     domains,
     data: {

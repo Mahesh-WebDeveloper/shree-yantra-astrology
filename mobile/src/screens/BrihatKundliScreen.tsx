@@ -15,7 +15,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { fonts, radii } from '../theme/tokens';
 import { hError, hSelect, hSuccess, hTap } from '../lib/haptics';
 import { birthFromProfile } from '../lib/birth';
-import { ApiDosha, ApiPlanet, BrihatAshtakavarga, BrihatAvakhada, BrihatDomain, BrihatJaimini, BrihatKp, BrihatKundliResponse, BrihatNumerology, BrihatSection, BrihatVarshphal, DashaResponse, getBrihatKundli, LifeTimelineResponse, LocationSuggestion, NumberCard, RemediesResponse, resolveLocation, YogaItem } from '../lib/api';
+import { ApiDosha, ApiPlanet, BrihatAshtakavarga, BrihatAvakhada, BrihatDomain, BrihatJaimini, BrihatKp, BrihatKundliResponse, BrihatLalKitab, BrihatNumerology, BrihatSection, BrihatShadbala, BrihatVarshphal, DashaResponse, getBrihatKundli, LifeTimelineResponse, LocationSuggestion, NumberCard, RemediesResponse, resolveLocation, YogaItem } from '../lib/api';
 import { useDialog } from '../components/DialogProvider';
 import { useLang, useT } from '../i18n/LanguageProvider';
 import { aSign } from '../i18n/astro';
@@ -494,6 +494,58 @@ function KpCard({ kp }: { kp: BrihatKp }) {
   );
 }
 
+function ShadbalaCard({ sb }: { sb: BrihatShadbala }) {
+  const { theme } = useTheme();
+  const { lang } = useLang();
+  const L = (en: string, hi: string) => (lang === 'hi' ? hi : en);
+  const rows = Object.entries(sb.planets).sort((a, b) => a[1].rank - b[1].rank);
+  const maxR = Math.max(...rows.map(([, v]) => v.rupas), 1);
+  return (
+    <ShellCard>
+      <Text style={[styles.blockTitle, { color: theme.text }]}>{L('Shadbala — Planetary Strength', 'षड्बल — ग्रह बल')}</Text>
+      <Text style={[styles.sourceNote, { color: theme.textMuted, marginTop: 1, marginBottom: 10 }]}>
+        {L('Six-fold strength in Rupas (classical BPHS). Green = above required minimum.', 'षड्विध बल (रूप में, BPHS)। हरा = आवश्यक न्यूनतम से अधिक।')}
+      </Text>
+      {rows.map(([pl, v]) => (
+        <View key={pl} style={styles.sbRow}>
+          <Text style={[styles.sbName, { color: theme.text }]} numberOfLines={1}>{(lang === 'hi' ? PLANET_HI[pl] : null) || pl}</Text>
+          <View style={[styles.sbTrack, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
+            <View style={[styles.sbFill, { width: `${Math.round((v.rupas / maxR) * 100)}%`, backgroundColor: v.strong ? '#3ec77a' : theme.gold2 }]} />
+          </View>
+          <Text style={[styles.sbVal, { color: v.strong ? '#3ec77a' : theme.textMuted }]}>{v.rupas}</Text>
+        </View>
+      ))}
+      <Text style={[styles.sourceNote, { color: theme.textMuted, marginTop: 8, fontSize: 10.5 }]}>
+        {L('Components per planet: Sthana · Dig · Kala · Cheshta · Naisargika · Drik (in the PDF).', 'प्रति ग्रह घटक: स्थान · दिग · काल · चेष्टा · नैसर्गिक · दृक् (PDF में)।')}
+      </Text>
+    </ShellCard>
+  );
+}
+
+function LalKitabCard({ lk }: { lk: BrihatLalKitab }) {
+  const { theme } = useTheme();
+  const { lang } = useLang();
+  const L = (en: string, hi: string) => (lang === 'hi' ? hi : en);
+  return (
+    <ShellCard>
+      <Text style={[styles.blockTitle, { color: theme.text }]}>{L('Lal Kitab Chart', 'लाल किताब कुंडली')}</Text>
+      <Text style={[styles.sourceNote, { color: theme.textMuted, marginTop: 1, marginBottom: 10 }]}>
+        {L('House-wise planet placement (Teva). Lagna: ', 'भाव अनुसार ग्रह स्थिति (टेवा)। लग्न: ')}{lk.lagna ? safeSign(lk.lagna, lang) : '-'}
+      </Text>
+      <View style={styles.lkGrid}>
+        {lk.houses.map((h) => (
+          <View key={h.house} style={[styles.lkCell, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.05)' : 'rgba(176,115,22,0.05)' }]}>
+            <Text style={[styles.lkHouse, { color: theme.goldText }]}>{h.house} · {safeSign(h.sign, lang).slice(0, 3)}</Text>
+            <Text style={[styles.lkPlanets, { color: h.planets.length ? theme.text : theme.textMuted }]} numberOfLines={2}>
+              {h.planets.length ? h.planets.map((p) => (lang === 'hi' ? p.hi : p.en)).join(', ') : '—'}
+            </Text>
+          </View>
+        ))}
+      </View>
+    </ShellCard>
+  );
+}
+
 export function BrihatKundliScreen({ navigation }: any) {
   const { theme } = useTheme();
   const { lang } = useLang();
@@ -666,6 +718,10 @@ export function BrihatKundliScreen({ navigation }: any) {
 
           {!!report.kp?.planets?.length && <KpCard kp={report.kp} />}
 
+          {!!report.shadbala?.planets && Object.keys(report.shadbala.planets).length > 0 && <ShadbalaCard sb={report.shadbala} />}
+
+          {!!report.lalKitab?.houses?.length && <LalKitabCard lk={report.lalKitab} />}
+
           {(report.domains || []).some((d) => !!d.summary) && (
             <View>
               <Text style={[styles.outsideTitle, { color: theme.gold1 }]}>{lang === 'hi' ? 'Life areas' : 'Life areas'}</Text>
@@ -777,6 +833,15 @@ const styles = StyleSheet.create({
   vYearTheme: { fontFamily: fonts.inter, fontSize: 11.5, marginTop: 2 },
   kP: { flex: 1.1, fontFamily: fonts.interSemi },
   kL: { flex: 1, textAlign: 'left' },
+  sbRow: { flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 9 },
+  sbName: { width: 58, fontFamily: fonts.interSemi, fontSize: 12.5 },
+  sbTrack: { flex: 1, height: 8, borderRadius: 999, overflow: 'hidden' },
+  sbFill: { height: 8, borderRadius: 999 },
+  sbVal: { width: 34, textAlign: 'right', fontFamily: fonts.interBold, fontSize: 12 },
+  lkGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  lkCell: { width: '31.5%', borderWidth: 1, borderRadius: 9, padding: 7, minHeight: 52 },
+  lkHouse: { fontFamily: fonts.interBold, fontSize: 9.5, letterSpacing: 0.3 },
+  lkPlanets: { fontFamily: fonts.interSemi, fontSize: 11, marginTop: 3 },
   roadmapTop: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   roadmapDot: { width: 7, height: 7, borderRadius: 4 },
   roadmapBadge: { alignSelf: 'flex-start', borderWidth: 1, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3, marginTop: 8 },

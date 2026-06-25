@@ -941,6 +941,13 @@ export interface KpLord {
   subLord: string; subLordHi: string;
 }
 export interface BrihatKp { ascendant?: KpLord | null; planets: KpLord[] }
+export interface ShadbalaPlanet {
+  sthana: number; dig: number; kala: number; cheshta: number; naisargika: number; drik: number;
+  total: number; rupas: number; required: number; strong: boolean; rank: number;
+}
+export interface BrihatShadbala { planets: Record<string, ShadbalaPlanet>; note?: string }
+export interface LalKitabHouse { house: number; sign: string; planets: { en: string; hi: string }[] }
+export interface BrihatLalKitab { lagna: string | null; houses: LalKitabHouse[] }
 export interface BrihatKundliResponse {
   generatedAt: string;
   reportType: string;
@@ -951,6 +958,8 @@ export interface BrihatKundliResponse {
   jaimini?: BrihatJaimini | null;
   varshphal?: BrihatVarshphal | null;
   kp?: BrihatKp | null;
+  shadbala?: BrihatShadbala | null;
+  lalKitab?: BrihatLalKitab | null;
   summary: {
     ascendant?: string | null;
     moonSign?: string | null;

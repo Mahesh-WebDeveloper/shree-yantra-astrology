@@ -127,6 +127,27 @@ function localAscendant(date, lat, lng) {
 // Navamsa (D9) sign from a sidereal longitude (continuous 3°20' scheme).
 function navamsaSign(lon) { return SIGNS[Math.floor(norm360(lon) / (10 / 3)) % 12]; }
 
+// Geocentric declination (degrees) of a body — for Shadbala Ayana Bala.
+function declination(name, date) {
+  let body;
+  if (name === 'Sun') body = Astronomy.Body.Sun;
+  else if (name === 'Moon') body = Astronomy.Body.Moon;
+  else body = Astronomy.Body[name];
+  if (!body) return 0;
+  const vec = Astronomy.GeoVector(body, date, true);
+  return Astronomy.EquatorFromVector(vec).dec;
+}
+
+// Daily motion in ecliptic longitude (deg/day, signed; negative = retrograde) — for Cheshta Bala.
+function dailySpeed(name, date) {
+  const l1 = bodyTropicalLon(name, date);
+  const l2 = bodyTropicalLon(name, new Date(date.getTime() + 86400000));
+  if (l1 == null || l2 == null) return 0;
+  let d = l2 - l1;
+  if (d > 180) d -= 360; if (d < -180) d += 360;
+  return d;
+}
+
 // Degrees → "D:M:S" string (matches VedAstro DegreeMinuteSecond display).
 function dms(deg) {
   const d = Math.floor(deg);
@@ -135,4 +156,4 @@ function dms(deg) {
   return `${d}:${m}:${s}`;
 }
 
-module.exports = { norm360, lahiriAyanamsa, siderealLon, parseTzMin, localMidnightUTC, riseSetMinutes, localPlanet, bodyTropicalLon, localAscendant, navamsaSign, dms, SIGNS, NAKSHATRAS };
+module.exports = { norm360, lahiriAyanamsa, siderealLon, parseTzMin, localMidnightUTC, riseSetMinutes, localPlanet, bodyTropicalLon, localAscendant, navamsaSign, dms, declination, dailySpeed, SIGNS, NAKSHATRAS };
