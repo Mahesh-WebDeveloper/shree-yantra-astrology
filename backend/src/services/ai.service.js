@@ -90,11 +90,14 @@ function sanitizeText(t) {
 }
 
 async function callGemini(prompt, { json = false } = {}) {
-  const key = env.ai.geminiKey;
-  if (!key) throw Object.assign(new Error('GEMINI_API_KEY set nahi hai (.env)'), { status: 500 });
-  // Free tier quota is PER-MODEL-PER-DAY (~20 req/day each). So when one model is
-  // exhausted (429), we hop to the NEXT model — each has its own fresh quota.
-  // Circuit breaker exhausted models ko skip kar deta hai → fast. Order: capable first.
+  // MULTI-KEY: free tier quota is PER-MODEL-PER-DAY (~20/day each) and PER-KEY.
+  // So we try every (key × model) pair. When a model on one key is exhausted (429),
+  // the circuit breaker cools that exact (key,model) and we instantly skip to the
+  // next model — and when a whole key is exhausted, we move to the NEXT KEY. With N
+  // keys this multiplies the effective free quota ~N×. Order: best model first,
+  // primary key first; extra keys only kick in once the earlier ones are spent.
+  const keys = (env.ai.geminiKeys && env.ai.geminiKeys.length) ? env.ai.geminiKeys : (env.ai.geminiKey ? [env.ai.geminiKey] : []);
+  if (!keys.length) throw Object.assign(new Error('GEMINI_API_KEY set nahi hai (.env)'), { status: 500 });
   const models = [
     env.ai.geminiModel,
     'gemini-2.5-flash',
@@ -112,7 +115,7 @@ async function callGemini(prompt, { json = false } = {}) {
       ...(json ? { responseMimeType: 'application/json' } : {}),
     },
   };
-  return runModelChain('gemini', models, async (model) => {
+  const callOne = async (key, model) => {
     const res = await fetchT(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
       { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) },
@@ -127,7 +130,28 @@ async function callGemini(prompt, { json = false } = {}) {
       && data.candidates[0].content.parts) || []).map((p) => p.text || '').join('');
     if (!text) throw Object.assign(new Error(`Gemini empty (${model})`), { status: 502 });
     return json ? parseJsonLoose(text) : text.trim();
-  });
+  };
+  let lastErr;
+  let triedLive = false;
+  for (let ki = 0; ki < keys.length; ki++) {
+    for (const model of models) {
+      const id = `gemini:k${ki}:${model}`;       // per-(key,model) cooldown
+      if (inCooldown(id)) continue;              // circuit OPEN → skip instantly (no network)
+      triedLive = true;
+      try {
+        const out = await callOne(keys[ki], model);
+        clearCooldown(id);
+        return out;
+      } catch (e) {
+        lastErr = e;
+        const ms = cooldownMsFor(e);
+        if (ms) tripCooldown(id, ms);
+      }
+    }
+  }
+  const err = lastErr || Object.assign(new Error('Gemini: koi key/model available nahi'), { status: 503 });
+  if (!triedLive) err.allCooldown = true;        // all (key,model) cooled → fast failover to OpenRouter
+  throw err;
 }
 
 async function callClaude(prompt, { json = false } = {}) {

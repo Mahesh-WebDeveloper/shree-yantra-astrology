@@ -27,6 +27,12 @@ const env = {
   ai: {
     provider: (process.env.AI_PROVIDER || 'gemini').toLowerCase(), // 'gemini' | 'claude'
     geminiKey: process.env.GEMINI_API_KEY || '',
+    // ALL Gemini keys tried in order (primary + extras). Each key has its own
+    // per-model daily quota, so more keys = more effective free quota. Extra keys
+    // via GEMINI_API_KEYS (comma-separated). Deduped, primary first.
+    geminiKeys: [process.env.GEMINI_API_KEY, ...String(process.env.GEMINI_API_KEYS || '').split(',')]
+      .map((s) => String(s || '').trim()).filter(Boolean)
+      .filter((v, i, a) => a.indexOf(v) === i),
     geminiModel: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
     // OpenRouter (OpenAI-compatible) — automatic FREE-model fallback jab primary (Gemini) fail/quota ho.
     openrouterKey: process.env.OPENROUTER_API_KEY || '',
