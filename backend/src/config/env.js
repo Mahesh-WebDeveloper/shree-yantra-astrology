@@ -36,6 +36,11 @@ const env = {
     geminiModel: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
     // OpenRouter (OpenAI-compatible) — automatic FREE-model fallback jab primary (Gemini) fail/quota ho.
     openrouterKey: process.env.OPENROUTER_API_KEY || '',
+    // ALL OpenRouter keys (primary + extras via OPENROUTER_API_KEYS csv). Each key has
+    // its own free-tier rate-limit, so more keys = more fallback capacity. Deduped.
+    openrouterKeys: [process.env.OPENROUTER_API_KEY, ...String(process.env.OPENROUTER_API_KEYS || '').split(',')]
+      .map((s) => String(s || '').trim()).filter(Boolean)
+      .filter((v, i, a) => a.indexOf(v) === i),
     // Default = ek capable FREE model. Service ke andar pura free-model chain try hota hai.
     openrouterModel: process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct:free',
     // Extra fallback models (CSV) — bina code change ke chain extend karne ke liye. e.g.

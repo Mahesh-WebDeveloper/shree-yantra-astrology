@@ -198,22 +198,22 @@ const OPENROUTER_FREE_MODELS = [
 ];
 
 async function callOpenRouter(prompt, { json = false } = {}) {
-  const key = env.ai.openrouterKey;
-  if (!key) throw Object.assign(new Error('OPENROUTER_API_KEY set nahi hai (.env)'), { status: 500 });
-  // env.ai.openrouterModel pehle (user override), phir verified free chain, phir
-  // optional extra models (OPENROUTER_FALLBACK_MODELS) / paid last-resort (agar enable ho).
+  // MULTI-KEY: free tier rate-limit is PER-KEY (~20/min, 50/day). So we try every
+  // (key × free-model) pair — when one key's models are rate-limited (429) we skip
+  // to the next model, and when a whole key is spent we move to the NEXT KEY.
+  const keys = (env.ai.openrouterKeys && env.ai.openrouterKeys.length) ? env.ai.openrouterKeys : (env.ai.openrouterKey ? [env.ai.openrouterKey] : []);
+  if (!keys.length) throw Object.assign(new Error('OPENROUTER_API_KEY set nahi hai (.env)'), { status: 500 });
   const models = [
     env.ai.openrouterModel,
     ...OPENROUTER_FREE_MODELS,
     ...env.ai.openrouterExtra,
   ].filter((v, i, a) => v && a.indexOf(v) === i);
-  return runModelChain('openrouter', models, async (model) => {
+  const callOne = async (key, model) => {
     const res = await fetchT('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${key}`,
-        // OpenRouter attribution headers (recommended).
         'HTTP-Referer': 'https://shreeyantra.app',
         'X-Title': 'Shree Yantra',
       },
@@ -235,11 +235,33 @@ async function callOpenRouter(prompt, { json = false } = {}) {
       throw Object.assign(new Error(`OpenRouter ${res.status} (${model}): ${txt.slice(0, 140)}`), { status: res.status });
     }
     const data = await res.json();
+    if (data && data.error) throw Object.assign(new Error(`OpenRouter ${model}: ${String(data.error.message || 'provider error').slice(0, 120)}`), { status: 502 });
     const raw = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
     const text = sanitizeText(raw);
     if (!text) throw Object.assign(new Error(`OpenRouter empty (${model})`), { status: 502 });
     return json ? parseJsonLoose(text) : text;
-  });
+  };
+  let lastErr;
+  let triedLive = false;
+  for (let ki = 0; ki < keys.length; ki++) {
+    for (const model of models) {
+      const id = `openrouter:k${ki}:${model}`;     // per-(key,model) cooldown
+      if (inCooldown(id)) continue;                // circuit OPEN → skip instantly
+      triedLive = true;
+      try {
+        const out = await callOne(keys[ki], model);
+        clearCooldown(id);
+        return out;
+      } catch (e) {
+        lastErr = e;
+        const ms = cooldownMsFor(e);
+        if (ms) tripCooldown(id, ms);
+      }
+    }
+  }
+  const err = lastErr || Object.assign(new Error('OpenRouter: koi key/model available nahi'), { status: 503 });
+  if (!triedLive) err.allCooldown = true;
+  throw err;
 }
 
 // ── Groq (OpenAI-compatible) — VERY fast LPU inference, free tier ───────────
