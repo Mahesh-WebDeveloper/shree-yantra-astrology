@@ -333,6 +333,37 @@ exports.searchPanchangFestivalDates = asyncHandler(async (req, res) => {
     }
   }
 
+  // AI FALLBACK — query not in the catalog: ask AI to identify the festival/vrat and
+  // its upcoming date(s). Dates are flagged as AI-estimated so they aren't presented
+  // as authoritative; the Panchang for that date is still computed by our engine.
+  if (!catalog.length && items.length === 0 && String(query || '').trim().length >= 2) {
+    try {
+      const ai = await callAI(`You are a precise Hindu Panchang assistant. Identify the festival, vrat or observance the user means and its upcoming date(s).
+User query: "${String(query).trim()}".
+Start date (today): ${toDMY(start)} in DD/MM/YYYY.
+Return STRICT JSON only: {"found": boolean, "nameEn": string, "nameHi": string, "type": "festival" or "vrat" or "observance", "dates": ["DD/MM/YYYY", ...up to 2 upcoming dates on/after the start date], "guidanceEn": string, "guidanceHi": string, "whyEn": string, "whyHi": string}.
+Only include dates you are reasonably confident about. If it is NOT a real Hindu festival/vrat/observance, return {"found": false}.`, { json: true });
+      if (ai && ai.found && Array.isArray(ai.dates)) {
+        const obsKey = `ai-${String(query).trim().toLowerCase().replace(/[^a-z0-9]/g, '')}`.slice(0, 40) || 'ai-festival';
+        const observance = {
+          key: obsKey,
+          name: { en: ai.nameEn || String(query).trim(), hi: ai.nameHi || ai.nameEn || String(query).trim() },
+          type: ai.type === 'vrat' ? 'vrat' : 'festival',
+          importance: 'major',
+          guidance: { en: ai.guidanceEn || '', hi: ai.guidanceHi || ai.guidanceEn || '' },
+        };
+        const why = { en: ai.whyEn || '', hi: ai.whyHi || ai.whyEn || '' };
+        for (const dmy of ai.dates.slice(0, 2)) {
+          if (!/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(String(dmy)) || fromDMY(dmy) < start) continue;
+          const item = await festivalItemFromDate({ festival: { key: obsKey, name: observance.name, guidance: observance.guidance, why }, dmy, lat, lng, place, tz });
+          item.observances = [observance];
+          item.catalog = { ...(item.catalog || {}), aiAssisted: true, dateConfidence: 'ai-estimate' };
+          items.push(item);
+        }
+      }
+    } catch (_) { /* AI fallback optional — empty result is fine */ }
+  }
+
   res.json({ query: query || '', from: toDMY(start), years, location: place || `${lat},${lng}`, items, errors });
 });
 

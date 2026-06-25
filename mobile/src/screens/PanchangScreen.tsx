@@ -310,16 +310,12 @@ export function PanchangScreen({ navigation }: any) {
   const tm = (p?: { hm12: string; hm24: string } | null, fallback?: string | null) => (p ? (lang === 'hi' ? p.hm24 : p.hm12) : (fallback || '—'));
   const dur = (d?: { text: string; hi: string } | null) => (d ? (lang === 'hi' ? d.hi : d.text) : '—');
   const festivalRows = useMemo<FestivalRow[]>(() => {
-    const q = festivalQuery.trim().toLowerCase();
+    const q = festivalQuery.trim();
+    // When searching (q>=2) we use the backend search results AS-IS — the server
+    // already matches the query (spacing-insensitive + AI fallback), so re-filtering
+    // on the client would wrongly drop matches like "Raksha Bandhan" for "rakshabandhan".
     const source = q.length >= 2 ? remoteFestivals : festivals;
-    return source
-      .flatMap((f) => (f.observances || []).map((obs) => ({ date: f.date, weekday: f.weekday, weekdayHi: f.weekdayHi, tithi: f.tithi, obs })))
-      .filter((r) => {
-        if (!q) return true;
-        return [r.date, r.weekday, r.weekdayHi, r.tithi?.name, r.tithi?.hi, r.obs.key, r.obs.name.en, r.obs.name.hi, r.obs.type]
-          .filter(Boolean)
-          .some((v) => String(v).toLowerCase().includes(q));
-      });
+    return source.flatMap((f) => (f.observances || []).map((obs) => ({ date: f.date, weekday: f.weekday, weekdayHi: f.weekdayHi, tithi: f.tithi, obs })));
   }, [festivals, remoteFestivals, festivalQuery]);
   const openFestival = async (row: FestivalRow, withAi = false) => {
     hTap();
