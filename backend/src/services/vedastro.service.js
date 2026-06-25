@@ -751,7 +751,9 @@ function endTimesFromSampler(srMin, rawEl, lonsAt) {
     }
     return est;
   };
-  const fmt = (min) => (min == null ? null : { hm: minToHM(min), nextDay: min >= 1440 });
+  // Truncate to the minute (drop seconds) — tithi/nakshatra end times are shown
+  // minute-only, so 9:09:45 stays 9:09 instead of rounding up to 9:10.
+  const fmt = (min) => (min == null ? null : { hm: minToHM(Math.floor(min)), nextDay: min >= 1440 });
   return {
     tithi: fmt(crossing(rawEl.diff, 12, vMoon - vSun, (m) => { const l = lonsAt(m); return norm360(l.moon - l.sun); })),
     karana: fmt(crossing(rawEl.diff, 6, vMoon - vSun, (m) => { const l = lonsAt(m); return norm360(l.moon - l.sun); })),
@@ -857,7 +859,9 @@ async function vedastroPanchangPrimitives({ dateObj, dstr, tz, location, ayan, i
         }
         return est;
       };
-      const fmt = (min) => (min == null ? null : { hm: minToHM(min), nextDay: min >= 1440 });
+      // Truncate to the minute (drop seconds) — tithi/nakshatra end times are shown
+  // minute-only, so 9:09:45 stays 9:09 instead of rounding up to 9:10.
+  const fmt = (min) => (min == null ? null : { hm: minToHM(Math.floor(min)), nextDay: min >= 1440 });
       const safe = (args) => crossing(...args).catch(() => null);
       const [tEnd, kEnd, nEnd, yEnd] = await Promise.all([
         safe([elements._raw.diff, 12, vMoon - vSun, async (min) => { const l = await lonsAt(min); return norm360(l.moon - l.sun); }]),
