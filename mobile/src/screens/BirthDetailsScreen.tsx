@@ -79,10 +79,10 @@ export function BirthDetailsScreen({ navigation }: any) {
   }, []);
 
   const save = async () => {
-    if (!name.trim()) { hError(); dialog('Naam zaroori hai', 'Kripya apna naam daalein.'); return; }
-    if (!dob) { hError(); dialog('Date of Birth', 'Kripya apni janm tithi chunein.'); return; }
-    if (!tob.trim()) { hError(); dialog('Time of Birth', 'Kripya apna janm samay chunein.'); return; }
-    if (!place.trim()) { hError(); dialog('Place of Birth', 'Kripya apna janm sthan daalein.'); return; }
+    if (!name.trim()) { hError(); dialog(lang === 'hi' ? 'नाम आवश्यक है' : 'Name Required', lang === 'hi' ? 'कृपया अपना नाम दर्ज करें।' : 'Please enter your name.'); return; }
+    if (!dob) { hError(); dialog(lang === 'hi' ? 'जन्म तिथि' : 'Date of Birth', lang === 'hi' ? 'कृपया अपनी जन्म तिथि चुनें।' : 'Please select your date of birth.'); return; }
+    if (!tob.trim()) { hError(); dialog(lang === 'hi' ? 'जन्म समय' : 'Time of Birth', lang === 'hi' ? 'कृपया अपना जन्म समय चुनें।' : 'Please select your time of birth.'); return; }
+    if (!place.trim()) { hError(); dialog(lang === 'hi' ? 'जन्म स्थान' : 'Place of Birth', lang === 'hi' ? 'कृपया अपना जन्मस्थान दर्ज करें।' : 'Please enter your place of birth.'); return; }
     if (busy) return;
     setBusy(true);
     const resolved = birthLocation || await resolveLocation({ query: place.trim(), lang }).then((r) => r.item).catch(() => null);
@@ -117,7 +117,7 @@ export function BirthDetailsScreen({ navigation }: any) {
           </View>
           <GradientText style={styles.h1}>{t('birth.title', 'YOUR BIRTH DETAILS')}</GradientText>
           <Text style={[styles.lead, { color: theme.textSoft }]}>
-            {t('birth.lead', 'Ye sirf ek baar — inse hum aapki kundli, daily panchang aur predictions 100% accurate banate hain.')}
+            {t('birth.lead', lang === 'hi' ? 'बस एक बार — इनसे हम आपकी कुंडली, दैनिक पंचांग और भविष्यवाणियाँ 100% सटीक बनाते हैं।' : 'Just once — these make your kundli, daily panchang and predictions 100% accurate.')}
           </Text>
         </View>
 
@@ -154,7 +154,7 @@ export function BirthDetailsScreen({ navigation }: any) {
           </View>
         </View>
 
-        <Text style={[styles.privacy, { color: theme.textMuted }]}>🔒 Aapki details surakshit hain aur sirf astrology calculations ke liye use hoti hain.</Text>
+        <Text style={[styles.privacy, { color: theme.textMuted }]}>🔒 {lang === 'hi' ? 'आपकी जानकारी सुरक्षित है और केवल ज्योतिष गणनाओं के लिए उपयोग होती है।' : 'Your details are secure and used only for astrology calculations.'}</Text>
 
         <View style={{ marginTop: 18 }}>
           <GoldButton label={busy ? t('common.loading', 'Saving…') : t('birth.continueApp', 'Continue to App')} onPress={save} />

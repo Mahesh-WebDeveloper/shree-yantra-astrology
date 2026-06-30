@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
   View, Text, StyleSheet, Pressable, useWindowDimensions,
 } from 'react-native';
@@ -9,7 +9,6 @@ import Animated, {
   interpolate,
   runOnJS,
   useAnimatedStyle,
-  useSharedValue,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
@@ -20,7 +19,7 @@ import { fonts } from '../theme/tokens';
 import { CosmicBackground } from '../components/CosmicBackground';
 import { GradientText } from '../components/GradientText';
 import { Seekbar } from './Seekbar';
-import { usePlayer, fmtTime } from './PlayerProvider';
+import { usePlayer, fmtTime, SHEET_SPRING } from './PlayerProvider';
 import { PlayIcon, PauseIcon, PrevIcon, NextIcon, Equalizer, BookmarkIcon } from './PlayerIcons';
 import { toggleSaved, useLibraryStore } from '../lib/libraryStore';
 import { hTap, hPress, hSelect } from '../lib/haptics';
@@ -28,32 +27,19 @@ import { hTap, hPress, hSelect } from '../lib/haptics';
 export function FullPlayer() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
-  const { track, isPlaying, position, duration, toggle, next, prev, seekFraction, expanded, setExpanded } = usePlayer();
+  const { track, isPlaying, position, duration, toggle, next, prev, seekFraction, expanded, setExpanded, sheetY, screenH, closeSheet } = usePlayer();
   const { saved } = useLibraryStore();
-  const { height: screenH, width } = useWindowDimensions();
+  const { width } = useWindowDimensions();
   const compact = screenH < 720;
   const artSize = Math.min(width - 118, compact ? 172 : 220);
 
-  const sheetY = useSharedValue(screenH);
-
-  useEffect(() => {
-    if (expanded) {
-      sheetY.value = screenH;
-      sheetY.value = withSpring(0, { damping: 24, stiffness: 230, mass: 0.75 });
-    }
-  }, [expanded, screenH, sheetY]);
-
-  const minimise = () => {
-    hTap();
-    sheetY.value = withTiming(screenH, { duration: 220 }, (finished) => {
-      if (finished) runOnJS(setExpanded)(false);
-    });
-  };
+  const minimise = () => { hTap(); closeSheet(); };
 
   const pan = Gesture.Pan()
     .activeOffsetY([-8, 8])
     .failOffsetX([-34, 34])
     .onUpdate((event) => {
+      // drag DOWN follows the finger; tiny rubber-band on up
       sheetY.value = event.translationY > 0 ? event.translationY : Math.max(-16, event.translationY * 0.08);
     })
     .onEnd((event) => {
@@ -62,16 +48,29 @@ export function FullPlayer() {
           if (finished) runOnJS(setExpanded)(false);
         });
       } else {
-        sheetY.value = withSpring(0, { damping: 24, stiffness: 230, mass: 0.75, velocity: event.velocityY });
+        sheetY.value = withSpring(0, { ...SHEET_SPRING, velocity: event.velocityY });
       }
     })
     .onFinalize(() => {
-      if (sheetY.value < 0) sheetY.value = withSpring(0, { damping: 24, stiffness: 230, mass: 0.75 });
+      if (sheetY.value < 0) sheetY.value = withSpring(0, SHEET_SPRING);
     });
 
-  const sheetStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: sheetY.value }],
-  }));
+  // The player GROWS out of the docked mini-bar (≈120px above the bottom inset) instead of
+  // sliding up from the very bottom — a container-transform feel. Uniform scale keeps the
+  // content undistorted; opacity + backdrop fade in as it expands. Drives off the shared
+  // sheetY so it follows the finger during the drag.
+  const originY = Math.max(0, screenH - insets.bottom - 120);
+
+  const sheetStyle = useAnimatedStyle(() => {
+    const p = interpolate(sheetY.value, [0, screenH], [1, 0], Extrapolation.CLAMP); // 1 open, 0 collapsed
+    return {
+      opacity: interpolate(p, [0, 0.35], [0, 1], Extrapolation.CLAMP),
+      transform: [
+        { translateY: interpolate(p, [0, 1], [34, 0], Extrapolation.CLAMP) },
+        { scale: interpolate(p, [0, 1], [0.46, 1], Extrapolation.CLAMP) },
+      ],
+    };
+  });
 
   const backdropStyle = useAnimatedStyle(() => ({
     opacity: interpolate(sheetY.value, [0, screenH], [1, 0], Extrapolation.CLAMP),
@@ -83,7 +82,7 @@ export function FullPlayer() {
   const isSaved = saved.includes(track.id);
 
   return (
-    <Animated.View style={[StyleSheet.absoluteFill, styles.host, sheetStyle]}>
+    <Animated.View style={[StyleSheet.absoluteFill, styles.host, { transformOrigin: ['50%', originY, 0] }, sheetStyle]}>
       <Animated.View style={[StyleSheet.absoluteFill, backdropStyle]}>
         <LinearGradient colors={theme.bgGradient} style={StyleSheet.absoluteFill} />
         <CosmicBackground />
@@ -94,10 +93,10 @@ export function FullPlayer() {
         <View style={styles.sheetContent} collapsable={false}>
           <View style={{ paddingTop: insets.top + 8 }}>
             <View style={styles.headerRow}>
-              <Pressable onPress={minimise} hitSlop={10} style={({ pressed }) => [styles.iconBtn, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.45)' : 'rgba(176,115,22,0.06)' }, pressed && { transform: [{ scale: 0.92 }] }]}>
+              <Pressable onPress={minimise} hitSlop={10} style={({ pressed }) => [styles.iconBtn, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.45)' : '#ffffff' }, pressed && { transform: [{ scale: 0.92 }] }]}>
                 <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={theme.gold1} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M6 9l6 6 6-6" /></Svg>
               </Pressable>
-              <Text style={[styles.eyebrow, { color: theme.isDark ? '#b89a5b' : '#8a6f3a' }]}>NOW PLAYING</Text>
+              <Text style={[styles.eyebrow, { color: theme.isDark ? '#b89a5b' : theme.textMuted }]}>NOW PLAYING</Text>
               <Pressable
                 onPress={() => { hSelect(); toggleSaved(track.id); }}
                 hitSlop={10}
@@ -136,7 +135,7 @@ export function FullPlayer() {
             </View>
 
             <View style={styles.transport}>
-              <Pressable onPress={() => { hTap(); prev(); }} hitSlop={10} style={({ pressed }) => [styles.tBtn, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.4)' : 'rgba(176,115,22,0.06)' }, pressed && { transform: [{ scale: 0.92 }] }]}>
+              <Pressable onPress={() => { hTap(); prev(); }} hitSlop={10} style={({ pressed }) => [styles.tBtn, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.4)' : '#ffffff' }, pressed && { transform: [{ scale: 0.92 }] }]}>
                 <PrevIcon color={theme.goldText} size={22} />
               </Pressable>
               <Pressable onPress={() => { hPress(); toggle(); }} hitSlop={10} style={({ pressed }) => [pressed && { transform: [{ scale: 0.95 }] }]}>
@@ -144,7 +143,7 @@ export function FullPlayer() {
                   {isPlaying ? <PauseIcon color="#211300" size={28} /> : <PlayIcon color="#211300" size={28} />}
                 </LinearGradient>
               </Pressable>
-              <Pressable onPress={() => { hTap(); next(); }} hitSlop={10} style={({ pressed }) => [styles.tBtn, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.4)' : 'rgba(176,115,22,0.06)' }, pressed && { transform: [{ scale: 0.92 }] }]}>
+              <Pressable onPress={() => { hTap(); next(); }} hitSlop={10} style={({ pressed }) => [styles.tBtn, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.4)' : '#ffffff' }, pressed && { transform: [{ scale: 0.92 }] }]}>
                 <NextIcon color={theme.goldText} size={22} />
               </Pressable>
             </View>

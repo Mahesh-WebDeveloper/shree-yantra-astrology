@@ -16,8 +16,7 @@ export function StubScreen({ navigation, title, note }: any) {
   const { theme } = useTheme();
   const openMenu = () => openAppDrawer();
   return (
-    <Screen>
-      <BrandHeader onMenu={openMenu} />
+    <Screen header={<BrandHeader onMenu={openMenu} />}>
       <SectionTitle>{title}</SectionTitle>
       <Card padded style={{ marginTop: 10 }}>
         <Text style={[styles.h, { color: theme.gold1 }]}>Native port in progress</Text>

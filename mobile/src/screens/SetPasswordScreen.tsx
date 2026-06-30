@@ -12,10 +12,12 @@ import { hSuccess, hError } from '../lib/haptics';
 import { useDialog } from '../components/DialogProvider';
 import { setPasswordApi } from '../lib/api';
 import { getStoredUser, updateStoredUser } from '../lib/auth';
+import { useLang } from '../i18n/LanguageProvider';
 
 export function SetPasswordScreen({ navigation }: any) {
   const { theme } = useTheme();
   const dialog = useDialog();
+  const { lang } = useLang();
 
   const [hasPassword, setHasPassword] = useState(false);
   const [email, setEmail] = useState('');
@@ -37,10 +39,10 @@ export function SetPasswordScreen({ navigation }: any) {
   const matchErr = pw2.length > 0 && pw !== pw2;
 
   const save = async () => {
-    if (!email.trim()) { hError(); dialog('Email chahiye', 'Email login ke liye email zaroori hai.'); return; }
-    if (emailErr) { hError(); dialog('Galat email', 'Sahi email daalein.'); return; }
-    if (pw.length < 6) { hError(); dialog('Password chhota hai', 'Password kam se kam 6 characters ka ho.'); return; }
-    if (pw !== pw2) { hError(); dialog('Password match nahi', 'Dono passwords same hone chahiye.'); return; }
+    if (!email.trim()) { hError(); dialog(lang === 'hi' ? 'ईमेल आवश्यक है' : 'Email Required', lang === 'hi' ? 'ईमेल लॉगिन के लिए ईमेल आवश्यक है।' : 'Email is required to set up email login.'); return; }
+    if (emailErr) { hError(); dialog(lang === 'hi' ? 'अमान्य ईमेल' : 'Invalid Email', lang === 'hi' ? 'कृपया वैध ईमेल दर्ज करें।' : 'Please enter a valid email.'); return; }
+    if (pw.length < 6) { hError(); dialog(lang === 'hi' ? 'पासवर्ड बहुत छोटा है' : 'Password Too Short', lang === 'hi' ? 'पासवर्ड कम से कम 6 वर्णों का होना चाहिए।' : 'Password must be at least 6 characters.'); return; }
+    if (pw !== pw2) { hError(); dialog(lang === 'hi' ? 'पासवर्ड मेल नहीं खाते' : 'Passwords Don’t Match', lang === 'hi' ? 'दोनों पासवर्ड समान होने चाहिए।' : 'Both passwords must be the same.'); return; }
     if (busy) return;
     setBusy(true);
     try {
@@ -75,7 +77,7 @@ export function SetPasswordScreen({ navigation }: any) {
               onChangeText={setEmail}
               placeholder="you@example.com"
               keyboardType="email-address"
-              error={emailErr ? 'Sahi email daalein' : null}
+              error={emailErr ? (lang === 'hi' ? 'वैध ईमेल दर्ज करें' : 'Enter a valid email') : null}
             />
             <TextField
               icon={<LockIcon color={theme.gold2} size={20} />}
@@ -84,7 +86,7 @@ export function SetPasswordScreen({ navigation }: any) {
               onChangeText={setPw}
               placeholder="Min 6 characters"
               secureTextEntry
-              error={pwErr ? 'Kam se kam 6 characters' : null}
+              error={pwErr ? (lang === 'hi' ? 'कम से कम 6 वर्ण' : 'At least 6 characters') : null}
             />
             <TextField
               icon={<LockIcon color={theme.gold2} size={20} />}
@@ -93,7 +95,7 @@ export function SetPasswordScreen({ navigation }: any) {
               onChangeText={setPw2}
               placeholder="Re-enter password"
               secureTextEntry
-              error={matchErr ? 'Passwords match nahi karte' : null}
+              error={matchErr ? (lang === 'hi' ? 'पासवर्ड मेल नहीं खाते' : 'Passwords don’t match') : null}
             />
           </View>
           <View style={{ marginTop: 18 }}>

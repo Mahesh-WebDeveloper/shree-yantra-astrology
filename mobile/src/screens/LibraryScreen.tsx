@@ -130,7 +130,7 @@ function LibCard({ children, theme }: { children: React.ReactNode; theme: Theme 
 }
 
 function SectionHead({ label, theme }: { label: string; theme: Theme }) {
-  const dim = theme.isDark ? '#b89a5b' : '#8a6f3a';
+  const dim = theme.isDark ? '#b89a5b' : theme.textMuted;
   return <View style={styles.secHead}><Text style={[styles.secLabel, { color: dim }]}>{label}</Text></View>;
 }
 
@@ -194,10 +194,8 @@ export function LibraryScreen({ navigation }: any) {
   const playTrack = (t: Track) => { hTap(); player.play(t); };
 
   const cont = byId(CONTINUE);
-  const contLive = isCurrent(CONTINUE);
-  const contProgress = contLive && player.duration > 0 ? player.position / player.duration : 0.45;
 
-  const dim = theme.isDark ? '#b89a5b' : '#8a6f3a';
+  const dim = theme.isDark ? '#b89a5b' : theme.textMuted;
 
   useEffect(() => {
     let on = true;
@@ -222,12 +220,21 @@ export function LibraryScreen({ navigation }: any) {
   const gitaQueue = gitaAudio.map(mediaToTrack);
   const playGita = (m: MediaItem) => { hTap(); player.play(mediaToTrack(m), gitaQueue); };
 
+  // CONTINUE LISTENING → REAL Bhagavad Gita Chapter 2 audio (Yatharth Geeta) once loaded;
+  // falls back to the static placeholder until the media list arrives.
+  const gitaCh2 = gitaAudio.find((m) => /chapter\s*0*2\b/i.test(m.title || ''));
+  const contTrack: Track = gitaCh2 ? mediaToTrack(gitaCh2) : cont;
+  const contLive = isCurrent(contTrack.id);
+  const contProgress = contLive && player.duration > 0 ? player.position / player.duration : 0.45;
+  const playContinue = () => { hTap(); player.play(contTrack, gitaCh2 ? gitaQueue : undefined); };
+
   // Ramayan audio (Audioboom playlist) — apni dedicated screen me, Library sections me nahi
   const isRamayanAudio = (m: MediaItem) => m.subCategory === 'ramayan_audio';
   const hide = (m: MediaItem) => isGitaAudio(m) || isRamayanAudio(m);
   const mediaMantras = mediaItems.filter((item) => item.category === 'mantra' && !hide(item));
   const mediaMusic = mediaItems.filter((item) => item.category === 'spiritual_music' && !hide(item));
   const mediaBhajans = mediaItems.filter((item) => item.category === 'bhajan' && !hide(item));
+  const mediaAarti = mediaItems.filter((item) => (item.category as string) === 'aarti' && !hide(item));
 
   /* Saved list — static library items (books/mantras/music) + dynamic media
      (mantra/bhajan/audio) resolved by id, into one normalized render shape. */
@@ -283,8 +290,8 @@ export function LibraryScreen({ navigation }: any) {
       <SectionHead label={label} theme={theme} />
       <View style={{ gap: 12 }}>
         {items.map((item) => {
-          const glyph = item.category === 'bhajan' ? 'star' : item.subCategory === 'flute' ? 'flute' : item.subCategory === 'temple_bells' ? 'bells' : item.category === 'mantra' ? 'om' : 'mix';
-          const accent = item.category === 'bhajan' ? theme.red : item.subCategory === 'flute' ? theme.green : theme.goldText;
+          const glyph = (item.category as string) === 'aarti' ? 'om' : item.category === 'bhajan' ? 'star' : item.subCategory === 'flute' ? 'flute' : item.subCategory === 'temple_bells' ? 'bells' : item.category === 'mantra' ? 'om' : 'mix';
+          const accent = (item.category as string) === 'aarti' ? theme.red : item.category === 'bhajan' ? theme.red : item.subCategory === 'flute' ? theme.green : theme.goldText;
           const sourceLabel = [item.sourceName || (item.sourceType === 'youtube' ? 'YouTube' : item.sourceType === 'audio' ? 'Audio' : 'External'), item.durationText, item.licenseName].filter(Boolean).join(' - ');
           return (
             <Pressable
@@ -322,9 +329,10 @@ export function LibraryScreen({ navigation }: any) {
   );
 
   return (
-    <Screen contentStyle={player.track ? { paddingBottom: 230 } : undefined}>
-      <BrandHeader onMenu={openMenu} onBell={() => navigation.navigate('Notifications')} />
-
+    <Screen
+      header={<BrandHeader onMenu={openMenu} onBell={() => navigation.navigate('Notifications')} />}
+      contentStyle={player.track ? { paddingBottom: 230 } : undefined}
+    >
       {/* ── Hero ── */}
       <Animated.View style={[styles.hero, rise(0)]}>
         <Animated.Text style={[styles.omGlyph, { color: theme.gold1, transform: [{ scale: omScale }] }]}>ॐ</Animated.Text>
@@ -426,7 +434,7 @@ export function LibraryScreen({ navigation }: any) {
                 <Text style={[styles.boostTitle, { color: theme.goldText }]}>{tr('daily.todayShloka', "Today's Shloka")}</Text>
                 <Text style={[styles.sanskrit, { color: theme.isDark ? '#fff' : theme.text }]} numberOfLines={2}>{daily.sanskrit}</Text>
                 <Text style={[styles.ref, { color: dim }]}>– {daily.refLabel}</Text>
-                <View style={[styles.readLink, { borderColor: 'rgba(220,180,80,0.4)', backgroundColor: theme.isDark ? 'rgba(233,184,80,0.1)' : 'rgba(176,115,22,0.06)' }]}>
+                <View style={[styles.readLink, { borderColor: theme.isDark ? 'rgba(220,180,80,0.4)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.1)' : '#ffffff' }]}>
                   <Sparkle color={theme.goldText} size={13} />
                   <Text style={[styles.readLinkText, { color: theme.goldText }]}>{tr('daily.learnMore', 'Learn more')}</Text>
                   <Chevron color={theme.goldText} size={14} />
@@ -446,8 +454,8 @@ export function LibraryScreen({ navigation }: any) {
         </LibCard>
       )}
 
-      {/* ── CONTINUE LISTENING (All + Mantras) ── */}
-      {(filter === 'all' || filter === 'mantras') && (
+      {/* ── CONTINUE LISTENING — resume the last audio (only on All; not a mantra) ── */}
+      {filter === 'all' && (
         <LibCard theme={theme}>
           <SectionHead label="CONTINUE LISTENING" theme={theme} />
           <View style={styles.contRow}>
@@ -455,8 +463,8 @@ export function LibraryScreen({ navigation }: any) {
               <Text style={{ color: theme.gold2, fontSize: 26, fontFamily: fonts.devanagari }}>ॐ</Text>
             </LinearGradient>
             <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={[styles.contTitle, { color: theme.isDark ? '#fff' : theme.text }]} numberOfLines={1}>{cont.title}</Text>
-              <Text style={[styles.itemSub, { color: theme.textMuted }]}>{cont.sub}</Text>
+              <Text style={[styles.contTitle, { color: theme.isDark ? '#fff' : theme.text }]} numberOfLines={1}>{contTrack.title}</Text>
+              <Text style={[styles.itemSub, { color: theme.textMuted }]} numberOfLines={1}>{contTrack.sub}</Text>
             </View>
           </View>
           <Seekbar progress={contProgress} onSeek={contLive ? player.seekFraction : undefined} showThumb={contLive} style={{ marginTop: 10 }} />
@@ -464,9 +472,9 @@ export function LibraryScreen({ navigation }: any) {
             <Text style={[styles.timeText, { color: theme.textMuted }]}>{contLive ? fmtTime(player.position) : '12:45'}</Text>
             <View style={styles.transport}>
               <Pressable onPress={player.prev} hitSlop={8} style={[styles.tBtn, { borderColor: 'rgba(233,184,80,0.2)', backgroundColor: 'rgba(233,184,80,0.05)' }]}><PrevIcon color={theme.goldText} /></Pressable>
-              <Pressable onPress={() => playTrack(cont)} hitSlop={8}>
+              <Pressable onPress={playContinue} hitSlop={8}>
                 <LinearGradient colors={['#fce8a8', '#b87f1a']} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={styles.tPlay}>
-                  {playing(CONTINUE) ? <PauseIcon color="#1a0e00" size={18} /> : <PlayIcon color="#1a0e00" size={18} />}
+                  {playing(contTrack.id) ? <PauseIcon color="#1a0e00" size={18} /> : <PlayIcon color="#1a0e00" size={18} />}
                 </LinearGradient>
               </Pressable>
               <Pressable onPress={player.next} hitSlop={8} style={[styles.tBtn, { borderColor: 'rgba(233,184,80,0.2)', backgroundColor: 'rgba(233,184,80,0.05)' }]}><NextIcon color={theme.goldText} /></Pressable>
@@ -539,7 +547,7 @@ export function LibraryScreen({ navigation }: any) {
                       : b.subtitle}
                   </Text>
                   {/* explicit READ affordance so it's never mistaken for an audio tile */}
-                  <View style={[styles.readPill, { borderColor: 'rgba(220,180,80,0.4)', backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(176,115,22,0.06)' }]}>
+                  <View style={[styles.readPill, { borderColor: theme.isDark ? 'rgba(220,180,80,0.4)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : '#ffffff' }]}>
                     <Text style={[styles.readPillText, { color: theme.goldText }]}>READ</Text>
                     <Chevron color={theme.goldText} size={13} />
                   </View>
@@ -554,10 +562,13 @@ export function LibraryScreen({ navigation }: any) {
         </LibCard>
       )}
 
+      {(filter === 'all' || filter === 'bhajans') && mediaAarti.length > 0 && renderMediaSection(tr('lib.dynamicAarti', 'AARTI'), mediaAarti)}
+
       {(filter === 'all' || filter === 'bhajans') && mediaBhajans.length > 0 && renderMediaSection(tr('lib.dynamicBhajans', 'BHAJANS'), mediaBhajans)}
 
-      {/* ── BHAGAVAD GITA AUDIO — Yatharth Geeta, playlist (All + Scriptures + Music) ── */}
-      {(filter === 'all' || filter === 'scriptures' || filter === 'music') && gitaAudio.length > 0 && (
+      {/* ── BHAGAVAD GITA AUDIO — Yatharth Geeta playlist. It's AUDIO → lives in Music (NOT
+            Scriptures, which is books-only). Also on All. ── */}
+      {(filter === 'all' || filter === 'music') && gitaAudio.length > 0 && (
         <LibCard theme={theme}>
           <SectionHead label={tr('lib.gitaAudio', 'BHAGAVAD GITA AUDIO')} theme={theme} />
           <Text style={[styles.scriptHint, { color: theme.textMuted }]}>{tr('lib.gitaAudioHint', 'Yatharth Geeta · Swami Adgadanand · Hindi — tap to listen, auto-plays next.')}</Text>

@@ -22,6 +22,9 @@ export function Tabs() {
         sceneStyleInterpolator: forTabFadeThrough,
         // keep inactive tabs lazy-mounted but not detached, so the fade plays
         lazy: true,
+        // PERF: freeze (skip re-rendering) tabs that aren't focused — so a theme
+        // toggle or any state change only re-renders the VISIBLE tab, not all of them.
+        freezeOnBlur: true,
       }}
       tabBar={(props) => <CustomTabBar {...props} />}
     >

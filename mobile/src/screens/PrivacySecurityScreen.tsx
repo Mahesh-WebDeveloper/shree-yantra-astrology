@@ -36,7 +36,7 @@ function Icon({ name, color }: { name: IconName; color: string }) {
 
 function IcCircle({ name, theme }: { name: IconName; theme: Theme }) {
   return (
-    <View style={[styles.icCircle, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(176,115,22,0.06)' }]}>
+    <View style={[styles.icCircle, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : '#ffffff' }]}>
       <Icon name={name} color={theme.gold1} />
     </View>
   );
@@ -77,7 +77,7 @@ function ActionRow({ icon, title, sub, onPress, theme, last, destructive }: {
       ripple={theme.ripple}
       style={[styles.row, { borderBottomColor: theme.line, marginHorizontal: -2, paddingHorizontal: 2 }, last && styles.noBorder]}
     >
-      <View style={[styles.icCircle, { borderColor: destructive ? 'rgba(192,57,43,0.4)' : theme.cardBorder, backgroundColor: destructive ? 'rgba(192,57,43,0.08)' : (theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(176,115,22,0.06)') }]}>
+      <View style={[styles.icCircle, { borderColor: destructive ? 'rgba(192,57,43,0.4)' : theme.cardBorder, backgroundColor: destructive ? 'rgba(192,57,43,0.08)' : (theme.isDark ? 'rgba(233,184,80,0.10)' : '#ffffff') }]}>
         <Icon name={icon} color={destructive ? (theme.isDark ? '#ff8585' : '#c0392b') : theme.gold1} />
       </View>
       <View style={styles.body}>
@@ -125,7 +125,7 @@ export function PrivacySecurityScreen({ navigation }: any) {
     <Page title="Privacy & Security" onBack={() => { hTap(); navigation.goBack(); }}>
       {/* intro */}
       <Card contentStyle={styles.intro}>
-        <View style={[styles.shieldWrap, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(176,115,22,0.06)' }]}>
+        <View style={[styles.shieldWrap, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : '#ffffff' }]}>
           <Svg width={30} height={30} viewBox="0 0 24 24" fill="none" stroke={theme.gold1} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><Path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z" /><Polyline points="9 12 11 14 15 10" /></Svg>
         </View>
         <Text style={[styles.introTitle, { color: theme.text }]}>{t('ps.protected', 'Your data is protected')}</Text>
@@ -135,14 +135,6 @@ export function PrivacySecurityScreen({ navigation }: any) {
       <SectionLabel text={t('ps.security', 'Security')} theme={theme} />
       <Card padded={false} contentStyle={styles.listCard}>
         <ToggleRow icon="finger" title="App Lock" sub="Require fingerprint / face to open the app" value={p.appLock} onValueChange={set('appLock')} theme={theme} />
-        <ToggleRow icon="twofa" title="Two-Factor Authentication" sub="Extra OTP step when signing in" value={p.twoFA} onValueChange={set('twoFA')} theme={theme} />
-        <ActionRow
-          icon="lock"
-          title={hasPassword ? 'Change Password' : 'Add Email & Password Login'}
-          sub={hasPassword ? 'Update your account password' : 'Also add email login alongside mobile OTP'}
-          onPress={() => { hTap(); navigation.navigate('SetPassword'); }}
-          theme={theme}
-        />
         <ActionRow icon="activity" title="Login Activity" sub="See recent sign-ins to your account" onPress={loginActivity} theme={theme} last />
       </Card>
 

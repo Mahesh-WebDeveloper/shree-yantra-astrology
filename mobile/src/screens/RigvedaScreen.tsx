@@ -30,7 +30,7 @@ export function RigvedaScreen({ navigation }: any) {
   return (
     <Page title={t('rig.title', 'Rigveda')} onBack={() => { hTap(); navigation.goBack(); }}>
       <View style={styles.hero}>
-        <View style={[styles.omCircle, { borderColor: 'rgba(201,150,46,0.5)', backgroundColor: theme.isDark ? 'rgba(0,0,0,0.5)' : 'rgba(176,115,22,0.05)' }]}>
+        <View style={[styles.omCircle, { borderColor: theme.isDark ? 'rgba(201,150,46,0.5)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.5)' : '#ffffff' }]}>
           <OmGlyph size={40} />
         </View>
         <GradientText style={styles.heroTitle}>{t('rig.title', 'Rigveda')}</GradientText>

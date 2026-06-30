@@ -69,7 +69,7 @@ function TabItem({
     <Pressable
       onPress={onPress}
       hitSlop={4}
-      android_ripple={{ color: isDark ? 'rgba(252,232,168,0.12)' : 'rgba(151,93,12,0.12)', borderless: false }}
+      android_ripple={{ color: isDark ? 'rgba(252,232,168,0.12)' : 'rgba(95,56,8,0.14)', borderless: false }}
       accessibilityRole="tab"
       accessibilityState={{ selected: focused }}
       accessibilityLabel={label}
@@ -118,7 +118,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
      through the gaps around/below the floating pill */
   const scrim = isDark
     ? (['rgba(0,0,0,0)', '#000000', '#000000'] as const)
-    : (['rgba(255,248,234,0)', '#fff8ea', '#fff8ea'] as const);
+    : (['rgba(255,255,255,0)', '#ffffff', '#ffffff'] as const);
 
   return (
     <View style={styles.host} pointerEvents="box-none">
@@ -135,7 +135,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
           styles.bar,
           {
             bottom: insets.bottom + 10,
-            backgroundColor: isDark ? 'rgba(8,7,15,0.98)' : 'rgba(255,253,247,0.99)',
+            backgroundColor: isDark ? 'rgba(8,7,15,0.98)' : '#ffffff',
             borderColor: isDark ? 'rgba(201,150,46,0.38)' : theme.cardBorder,
           },
         ]}

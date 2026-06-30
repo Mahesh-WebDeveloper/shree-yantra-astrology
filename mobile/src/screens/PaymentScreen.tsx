@@ -135,8 +135,8 @@ export function PaymentScreen({ navigation }: any) {
   const [cvv, setCvv] = useState('');
   const [processing, setProcessing] = useState(false);
 
-  const dim = theme.isDark ? '#b89a5b' : '#8a6f3a';
-  const subtle = theme.isDark ? 'rgba(0,0,0,0.5)' : '#fffdf7';
+  const dim = theme.isDark ? '#b89a5b' : theme.textMuted;
+  const subtle = theme.isDark ? 'rgba(0,0,0,0.5)' : '#ffffff';
 
   const selectMethod = (m: Method) => { if (m === method) return; hSelect(); easeNext(); setMethod(m); };
 
@@ -173,7 +173,7 @@ export function PaymentScreen({ navigation }: any) {
           pressed && { transform: [{ scale: 0.995 }] },
         ]}
       >
-        <View style={[styles.mIcon, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : 'rgba(176,115,22,0.08)' }]}>{icon}</View>
+        <View style={[styles.mIcon, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : '#ffffff' }]}>{icon}</View>
         <View style={{ flex: 1, minWidth: 0 }}>
           <View style={styles.mTitleRow}>
             <Text style={[styles.mTitle, { color: theme.text }]}>{title}</Text>
@@ -212,7 +212,7 @@ export function PaymentScreen({ navigation }: any) {
               <Text style={[styles.kicker, { color: dim }]}>YOU’RE SUBSCRIBING TO</Text>
               <Text style={[styles.planName, { color: theme.goldText }]}>Premium Astrology</Text>
             </View>
-            <View style={[styles.crown, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : 'rgba(176,115,22,0.08)' }]}>
+            <View style={[styles.crown, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : '#ffffff' }]}>
               <Svg width={22} height={22} viewBox="0 0 24 24" fill={theme.gold1}><Path d="M2 8l4 6 5-7 5 7 4-4-2 12H4z" /></Svg>
             </View>
           </View>

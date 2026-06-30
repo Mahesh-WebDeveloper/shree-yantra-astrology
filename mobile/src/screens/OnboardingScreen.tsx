@@ -58,7 +58,7 @@ function Art({ children }: { children: React.ReactNode }) {
     Animated.loop(Animated.timing(c, { toValue: 1, duration: 80000, easing: Easing.linear, useNativeDriver: true })).start();
   }, [a, b, c]);
   const rot = (v: Animated.Value, rev?: boolean) => v.interpolate({ inputRange: [0, 1], outputRange: rev ? ['0deg', '-360deg'] : ['0deg', '360deg'] });
-  const ringClr = (o: number) => (theme.isDark ? `rgba(201,150,46,${o})` : `rgba(151,93,12,${Math.min(0.9, o * 1.7)})`);
+  const ringClr = (o: number) => (theme.isDark ? `rgba(201,150,46,${o})` : `rgba(95,56,8,${Math.min(0.9, o * 1.7)})`);
 
   return (
     <View style={styles.art}>
@@ -152,7 +152,7 @@ export function OnboardingScreen({ navigation }: any) {
             i === index ? (
               <LinearGradient key={i} colors={theme.buttonGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.dotActive} />
             ) : (
-              <View key={i} style={[styles.dot, { backgroundColor: theme.isDark ? 'rgba(201,150,46,0.32)' : 'rgba(151,93,12,0.45)' }]} />
+              <View key={i} style={[styles.dot, { backgroundColor: theme.isDark ? 'rgba(201,150,46,0.32)' : 'rgba(95,56,8,0.45)' }]} />
             )
           )}
         </View>

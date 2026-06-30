@@ -12,15 +12,19 @@ interface Props {
   contentStyle?: StyleProp<ViewStyle>;
   /** extra bottom padding so content clears the tab bar */
   tabPadding?: boolean;
+  /** rendered FIXED above the scroll (e.g. BrandHeader) so it stays put while content scrolls */
+  header?: React.ReactNode;
 }
 
-/** Page wrapper: theme nebula backdrop + safe area + optional scroll. */
-export function Screen({ children, scroll = true, contentStyle, tabPadding = true }: Props) {
+/** Page wrapper: theme nebula backdrop + safe area + optional scroll + fixed header. */
+export function Screen({ children, scroll = true, contentStyle, tabPadding = true, header }: Props) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
 
   const padded = [
-    { paddingTop: insets.top + space[2], paddingHorizontal: 18, width: '100%' as const, maxWidth: 480, alignSelf: 'center' as const },
+    // when a fixed header is present it occupies the safe-area top, so the scroll body
+    // only needs a small gap (no double insets.top padding).
+    { paddingTop: header ? space[2] : insets.top + space[2], paddingHorizontal: 18, width: '100%' as const, maxWidth: 480, alignSelf: 'center' as const },
     tabPadding && { paddingBottom: 118 + insets.bottom },
     contentStyle,
   ];
@@ -28,6 +32,7 @@ export function Screen({ children, scroll = true, contentStyle, tabPadding = tru
   return (
     <View style={[styles.root, { backgroundColor: theme.bgDeep }]}>
       <CosmicBackground />
+      {header ? <View style={{ zIndex: 20 }}>{header}</View> : null}
       {scroll ? (
         <KeyboardAwareScroll
           contentContainerStyle={padded}

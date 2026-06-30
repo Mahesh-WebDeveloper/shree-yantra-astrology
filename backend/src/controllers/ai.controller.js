@@ -21,6 +21,15 @@ exports.periodPrediction = asyncHandler(async (req, res) => {
   res.json(await ai.generatePeriodPrediction(req.body, req.body.period));
 });
 
+// POST /api/ai/sign-rashifal  { sign, period:'daily'|'weekly'|'monthly'|'yearly', lang?, moonTransit?, sunTransit? }
+// AI-rich, period-scaled horoscope for ONE zodiac sign (12-rashi page) — sections + saral + conclusion.
+const VALID_SIGNS = new Set(['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces']);
+exports.signRashifal = asyncHandler(async (req, res) => {
+  const { sign } = req.body;
+  if (!VALID_SIGNS.has(String(sign))) return res.status(400).json({ error: 'Valid English sign name required (Aries..Pisces)' });
+  res.json(await ai.generateSignRashifal(req.body));
+});
+
 // POST /api/baby-names  { startWith?|letter?, words?, theme?, origin?, lengthPref?, count?, gender?, lang? }
 // general name explorer (no chart needed). At least one of startWith/letter/words/theme/origin required.
 exports.babyNames = asyncHandler(async (req, res) => {

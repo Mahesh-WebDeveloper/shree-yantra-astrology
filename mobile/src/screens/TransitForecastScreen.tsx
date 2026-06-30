@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { Page } from '../components/Page';
 import { GradientText } from '../components/GradientText';
 import { SpeakButton } from '../components/SpeakButton';
+import { SaralVivaran } from '../components/SaralVivaran';
 import { useTheme } from '../theme/ThemeProvider';
 import { Theme, fonts } from '../theme/tokens';
 import { hTap } from '../lib/haptics';
@@ -83,6 +84,8 @@ export function TransitForecastScreen({ navigation }: any) {
           <View>
             {(data.years || []).map((y) => <YearRow key={y.year} y={y} lang={lang} theme={theme} />)}
           </View>
+
+          <SaralVivaran text={data.saralVivaran} />
 
           <Text style={[styles.trust, { color: theme.textMuted }]}>🔒 {lang === 'hi' ? 'गणना वास्तविक ग्रह-स्थितियों (Lahiri) गोचर + चंद्र-आधारित शनि/गुरु फल।' : 'Real planetary positions (Lahiri) transits + Moon-based Saturn/Jupiter gochar.'}</Text>
           <View style={{ height: 8 }} />

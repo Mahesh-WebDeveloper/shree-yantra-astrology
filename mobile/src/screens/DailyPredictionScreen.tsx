@@ -8,11 +8,13 @@ import { Page } from '../components/Page';
 import { Card } from '../components/Card';
 import { CrownIcon, CalendarIcon } from '../components/icons/ProfileIcons';
 import { ZodiacIcon } from '../components/icons/ZodiacIcon';
+import { SaralVivaran } from '../components/SaralVivaran';
 import { IMAGES } from '../assets/images';
 import { hTap, hSelect } from '../lib/haptics';
 import { getPanchang, PanchangResponse, getDailyPrediction, DailyPrediction, avatarUrl, PredPeriod } from '../lib/api';
 import { PeriodForecast } from '../components/PeriodForecast';
 import { birthFromProfile } from '../lib/birth';
+import { naamRashi } from '../lib/naamRashi';
 import { useScreen } from '../context/AppConfigProvider';
 import { useT, useLang } from '../i18n/LanguageProvider';
 
@@ -110,12 +112,14 @@ export function DailyPredictionScreen({ navigation }: any) {
   const [predLoading, setPredLoading] = useState(true);
   const [predError, setPredError] = useState<string | null>(null);
   const [panch, setPanch] = useState<PanchangResponse | null>(null);
+  const [birthName, setBirthName] = useState<string | null>(null);
 
   useEffect(() => {
     let on = true;
     (async () => {
       const b = await birthFromProfile().catch(() => null);
       const birth = b || DEFAULT_BIRTH;
+      if (on) setBirthName((b as any)?.name || null);
       try {
         const p = await getDailyPrediction({ ...birth, name: (b as any)?.name });
         if (on) setPred(p);
@@ -133,12 +137,15 @@ export function DailyPredictionScreen({ navigation }: any) {
       }
     })();
     return () => { on = false; };
-  }, []);
+    // refetch when language switches so the AI rashifal text re-renders in the chosen language
+  }, [lang]);
 
   const today = pred?.basis?.today;
   const predText = pred?.overall || FALLBACK_TEXT;
   const detailText = pred?.detailedSummary || pred?.transitSummary || '';
   const moonSign = pred?.basis?.moonSign || panch?.moon.sign || 'Moon Sign';
+  // user's rashi identity shown prominently = naam-rashi (by name) when known, else moon sign
+  const displayRashi = naamRashi(birthName) || (pred?.basis?.moonSign || panch?.moon.sign || null);
   const ascendant = pred?.basis?.ascendant || 'Lagna';
   const dasha = pred?.basis?.dasha || 'Dasha';
   const luckyColour = pred?.luckyColour || 'Gold';
@@ -259,8 +266,8 @@ export function DailyPredictionScreen({ navigation }: any) {
       <>
       <Card>
         <View style={{ alignItems: 'center' }}>
-          <ZodiacIcon sign={pred?.basis?.moonSign || panch?.moon?.sign} size={96} theme={theme} />
-          <Text style={[styles.sign, { color: theme.goldText }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{String(moonSign).toUpperCase()}</Text>
+          <ZodiacIcon sign={displayRashi || moonSign} size={96} theme={theme} />
+          <Text style={[styles.sign, { color: theme.goldText }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{String(displayRashi || moonSign).toUpperCase()}</Text>
           <Text style={[styles.hindi, { color: theme.textSoft }]}>{t('dp.moonBased', 'Moon sign based guidance')}</Text>
         </View>
         <View style={[styles.dateRow, { borderTopColor: theme.line }]}>
@@ -276,7 +283,7 @@ export function DailyPredictionScreen({ navigation }: any) {
 
         <View style={styles.focusRow}>
           {focus.map((item) => (
-            <View key={item} style={[styles.focusChip, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(176,115,22,0.08)' }]}>
+            <View key={item} style={[styles.focusChip, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : '#ffffff' }]}>
               <MiniSpark color={theme.gold1} />
               <Text style={[styles.focusText, { color: theme.goldText }]} numberOfLines={1}>{item}</Text>
             </View>
@@ -284,18 +291,18 @@ export function DailyPredictionScreen({ navigation }: any) {
         </View>
 
         <View style={styles.luckRow}>
-          <View style={[styles.luckPill, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.5)' : 'rgba(176,115,22,0.05)' }]}>
+          <View style={[styles.luckPill, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.5)' : '#ffffff' }]}>
             <Text style={[styles.luckStar, { color: theme.gold1 }]}>#</Text>
             <Text style={[styles.luckLbl, { color: theme.textSoft }]}>{t('dp.luckyNumber', 'Lucky Number')} </Text>
             <Text style={[styles.luckVal, { color: theme.goldText }]}>{luckyNumber}</Text>
           </View>
-          <View style={[styles.luckPill, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.5)' : 'rgba(176,115,22,0.05)' }]}>
+          <View style={[styles.luckPill, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.5)' : '#ffffff' }]}>
             <MiniSpark color={theme.gold1} />
             <Text style={[styles.luckLbl, { color: theme.textSoft }]}>{t('dp.luckyColour', 'Lucky Colour')} </Text>
             <Text style={[styles.luckVal, { color: theme.goldText }]}>{luckyColour}</Text>
           </View>
           {!!confidence && (
-            <View style={[styles.luckPill, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.5)' : 'rgba(176,115,22,0.05)' }]}>
+            <View style={[styles.luckPill, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.5)' : '#ffffff' }]}>
               <Text style={[styles.luckLbl, { color: theme.textSoft }]}>{t('dp.confidence', 'Confidence')} </Text>
               <Text style={[styles.luckVal, { color: theme.goldText }]}>{confidence}%</Text>
             </View>
@@ -352,7 +359,7 @@ export function DailyPredictionScreen({ navigation }: any) {
         {panchCells ? (
           <View style={styles.timeGrid}>
             {panchCells.map((c, i) => (
-              <View key={`${c.lbl}-${i}`} style={[styles.timeCell, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.5)' : 'rgba(176,115,22,0.05)' }]}>
+              <View key={`${c.lbl}-${i}`} style={[styles.timeCell, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.5)' : '#ffffff' }]}>
                 <Text style={[styles.timeLbl, { color: accent(c.tone) }]}>{c.lbl}</Text>
                 <Text style={[styles.timeVal, { color: theme.text }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{c.val}</Text>
               </View>
@@ -452,6 +459,8 @@ export function DailyPredictionScreen({ navigation }: any) {
           </Text>
         </Card>
       )}
+
+      <SaralVivaran text={pred?.saralVivaran} />
 
       <Card style={{ marginTop: 14 }}>
         <SectionH theme={theme}>{t('dp.askAi', 'Ask the Astrologer')}</SectionH>

@@ -14,10 +14,12 @@ interface Props {
   children: React.ReactNode;
   scroll?: boolean;
   contentStyle?: StyleProp<ViewStyle>;
+  /** ref to the scroll view (e.g. to auto-scroll to a new chat answer) */
+  scrollRef?: any;
 }
 
 /** Stack-screen scaffold: nebula backdrop + TopBar + scrollable body. */
-export function Page({ title, onBack, right, onRight, children, scroll = true, contentStyle }: Props) {
+export function Page({ title, onBack, right, onRight, children, scroll = true, contentStyle, scrollRef }: Props) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const padded = [styles.content, { paddingBottom: insets.bottom + 28 }, contentStyle];
@@ -27,7 +29,7 @@ export function Page({ title, onBack, right, onRight, children, scroll = true, c
       <CosmicBackground />
       <TopBar title={title} onBack={onBack} right={right} onRight={onRight} />
       {scroll ? (
-        <KeyboardAwareScroll contentContainerStyle={padded} showsVerticalScrollIndicator={false}>
+        <KeyboardAwareScroll ref={scrollRef} contentContainerStyle={padded} showsVerticalScrollIndicator={false}>
           {children}
         </KeyboardAwareScroll>
       ) : (

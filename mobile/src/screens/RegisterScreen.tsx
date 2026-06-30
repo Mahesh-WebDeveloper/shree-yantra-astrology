@@ -262,7 +262,7 @@ export function RegisterScreen({ navigation }: any) {
                             pressed && { transform: [{ scale: 0.98 }] },
                           ]}
                         >
-                          <View style={[styles.tileIcon, { borderWidth: 1, borderColor: on ? theme.gold1 : (theme.isDark ? 'rgba(201,150,46,0.4)' : 'rgba(176,115,22,0.28)'), backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : 'rgba(176,115,22,0.06)' }]}>
+                          <View style={[styles.tileIcon, { borderWidth: 1, borderColor: on ? theme.gold1 : (theme.isDark ? 'rgba(201,150,46,0.4)' : theme.cardBorder), backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : '#ffffff' }]}>
                             {it.icon(theme.gold1)}
                           </View>
                           <View style={{ flex: 1, minWidth: 0 }}>

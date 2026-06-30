@@ -169,7 +169,7 @@ export function EditProfileScreen({ navigation }: any) {
     hSuccess();
     uploadAvatar(uri)
       .then((r) => updateStoredUser({ profile: { avatar: r.avatar } }))
-      .catch((e) => dialog('Upload failed', e?.message || 'Photo server par save nahi hui.'));
+      .catch((e) => dialog(lang === 'hi' ? 'अपलोड विफल' : 'Upload failed', e?.message || (lang === 'hi' ? 'फ़ोटो सर्वर पर सहेजी नहीं जा सकी।' : 'Photo could not be saved on the server.')));
   };
   const openCamera = async () => {
     const perm = await ImagePicker.requestCameraPermissionsAsync();

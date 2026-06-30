@@ -4,6 +4,7 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Page } from '../components/Page';
 import { GradientText } from '../components/GradientText';
+import { SaralVivaran } from '../components/SaralVivaran';
 import { GoldButton } from '../components/GoldButton';
 import { TextField } from '../components/TextField';
 import { BirthPlaceField } from '../components/BirthPlaceField';
@@ -288,6 +289,7 @@ export function MatchScreen({ navigation }: any) {
                 </View>
               )}
               {ex.aiAssisted && <Text style={[styles.aiTag, { color: theme.textMuted }]}>{lang === 'hi' ? 'गणना वास्तविक ग्रह-स्थितियों (Lahiri अयनांश) से' : 'Calculated from real planetary positions (Lahiri ayanamsa)'}</Text>}
+              <SaralVivaran text={ex.saralVivaran} />
             </View>
           )}
 

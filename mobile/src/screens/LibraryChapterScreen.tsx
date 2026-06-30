@@ -77,7 +77,7 @@ export function LibraryChapterScreen({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
   const player = usePlayer();
   const pal = paperTheme(theme.isDark);
-  const dim = theme.isDark ? '#b89a5b' : '#8a6f3a';
+  const dim = theme.isDark ? '#b89a5b' : theme.textMuted;
 
   const doc = BOOKS[route?.params?.id as string] ?? BOOKS.gita;
   const [chapter, setChapter] = useState<number>(Math.min(route?.params?.chapter ?? 0, doc.chapters.length - 1));
@@ -115,7 +115,7 @@ export function LibraryChapterScreen({ navigation, route }: any) {
     <LinearGradient colors={theme.bgGradient} style={styles.fill}>
       {/* top bar */}
       <View style={[styles.topbar, { paddingTop: insets.top + 8 }]}>
-        <Pressable onPress={() => { hTap(); navigation.goBack(); }} hitSlop={8} style={({ pressed }) => [styles.iconBtn, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.5)' : 'rgba(176,115,22,0.06)' }, pressed && { transform: [{ scale: 0.92 }] }]}>
+        <Pressable onPress={() => { hTap(); navigation.goBack(); }} hitSlop={8} style={({ pressed }) => [styles.iconBtn, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.5)' : '#ffffff' }, pressed && { transform: [{ scale: 0.92 }] }]}>
           <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={theme.gold1} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Polyline points="15 18 9 12 15 6" /></Svg>
         </Pressable>
         <View style={{ flex: 1, alignItems: 'center' }}>

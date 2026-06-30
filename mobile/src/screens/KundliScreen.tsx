@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View, ViewStyle, StyleProp } from 'react-native';
-import Svg, { Defs, LinearGradient as SvgGradient, Stop, Rect, Line, Text as SvgText, Path } from 'react-native-svg';
+import Svg, { Defs, LinearGradient as SvgGradient, Stop, Rect, Line, G, Text as SvgText, Path } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
@@ -22,7 +22,9 @@ import { getKundli, getDasha, getAiInsights, getVargaCharts, ApiPlanet, KundliIn
 import { birthFromProfile } from '../lib/birth';
 import { useScreen } from '../context/AppConfigProvider';
 import { useT, useLang } from '../i18n/LanguageProvider';
-import { aSign, aPlanet } from '../i18n/astro';
+import { aSign, aPlanet, aDosha, aYoga, aYogaDetail, aPhrase, aTag } from '../i18n/astro';
+import { ChartExplainModal } from '../components/ChartExplainModal';
+import { ExplainView, explainHouse, explainPlanet, planetFromAbbr } from '../data/jyotish';
 
 type KundliTab = typeof TABS[number]['key'];
 
@@ -63,35 +65,42 @@ const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct
 const fmtDob = (ddmmyyyy: string) => { const [d, m, y] = ddmmyyyy.split('-'); return `${d} ${MON[(Number(m) || 1) - 1]} ${y}`; }; // 15-06-1990 → 15 Jun 1990
 // "00:00 18/06/2026 +05:30" → "Jun 2026"
 const fmtMonYr = (std: string) => { const p = String(std).split(' '); const dmy = (p[1] || '').split('/'); return dmy.length === 3 ? `${MON[(Number(dmy[1]) || 1) - 1]} ${dmy[2]}` : std; };
-function dashaToRows(dasha: { lord: string; start: string; end: string; durationText: string }[]): PlanetRow[] {
+function dashaToRows(dasha: { lord: string; start: string; end: string; durationText: string }[], lang: 'en' | 'hi' = 'en'): PlanetRow[] {
+  const hi = lang === 'hi';
   return dasha.map((d, i) => ({
     glyph: GLYPH[d.lord] || '✦',
-    name: d.lord.toUpperCase(),
-    detail: `${fmtMonYr(d.start)} – ${fmtMonYr(d.end)} · ${d.durationText}${i === 0 ? ' · running now' : ''}`,
-    tag: i === 0 ? 'Active' : 'Upcoming',
+    name: hi ? aPlanet(d.lord, lang) : d.lord.toUpperCase(),
+    detail: `${fmtMonYr(d.start)} – ${fmtMonYr(d.end)} · ${hi ? d.durationText.replace(/years?/i, 'वर्ष').replace(/months?/i, 'माह') : d.durationText}${i === 0 ? ` · ${hi ? 'अभी चल रही है' : 'running now'}` : ''}`,
+    tag: aTag(i === 0 ? 'Active' : 'Upcoming', lang),
     strength: (i === 0 ? 'solid' : 'plain') as PlanetRow['strength'],
   }));
 }
 // "SunaphaYoga" → "Sunapha Yoga" (trailing digits hata ke)
 const prettyName = (n: string) => n.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\d+[A-Z]?$/, '').trim();
-function yogaToRows(yogas: { name: string; description: string }[]): PlanetRow[] {
+function yogaToRows(yogas: { name: string; description: string }[], lang: 'en' | 'hi' = 'en'): PlanetRow[] {
+  const hi = lang === 'hi';
   return yogas.map((y) => ({
     glyph: '✦',
-    name: prettyName(y.name),
-    detail: y.description || 'Beneficial yoga present in your chart',
-    tag: 'Present',
+    name: hi ? aYoga(prettyName(y.name), lang) : prettyName(y.name),
+    detail: hi ? aYogaDetail(y.description || 'Beneficial yoga present in your chart', lang) : (y.description || 'Beneficial yoga present in your chart'),
+    tag: aTag('Present', lang),
     strength: 'soft' as PlanetRow['strength'],
   }));
 }
-function doshaToRows(doshas: { name: string; present: boolean; detail: string; tag: string; source?: string }[]): PlanetRow[] {
+function doshaToRows(doshas: { name: string; present: boolean; detail: string; tag: string; source?: string }[], lang: 'en' | 'hi' = 'en'): PlanetRow[] {
+  const hi = lang === 'hi';
   const G: Record<string, string> = { 'Mangal Dosha': '♂', 'Kaal Sarp Dosha': '☊', 'Sade Sati': '♄' };
-  return doshas.map((d) => ({
-    glyph: G[d.name] || '☉',
-    name: d.name,
-    detail: d.source ? `${d.detail} · ${d.source}` : d.detail,
-    tag: d.tag || (d.present ? 'Present' : 'Clear'),
-    strength: (d.present ? 'plain' : 'solid') as PlanetRow['strength'],
-  }));
+  return doshas.map((d) => {
+    const det = hi ? aPhrase(d.detail, lang) : d.detail;
+    const src = hi ? aPhrase(d.source, lang) : d.source;
+    return {
+      glyph: G[d.name] || '☉',
+      name: hi ? aDosha(d.name, lang) : d.name,
+      detail: src ? `${det} · ${src}` : det,
+      tag: aTag(d.tag || (d.present ? 'Present' : 'Clear'), lang),
+      strength: (d.present ? 'plain' : 'solid') as PlanetRow['strength'],
+    };
+  });
 }
 
 function toPlanetRows(planets: ApiPlanet[], lang: 'en' | 'hi' = 'en'): PlanetRow[] {
@@ -121,15 +130,27 @@ function toChartPlanets(planets: ApiPlanet[], lang: 'en' | 'hi' = 'en'): ChartPl
 function toChartPlanetsBySign(planets: ApiPlanet[], ascendantSign: string | null | undefined, lang: 'en' | 'hi' = 'en'): ChartPlanet[] {
   const lagnaIdx = ascendantSign ? SIGN_IDX[ascendantSign] : null;
   if (lagnaIdx == null) return [];
-  const counts: Record<number, number> = {};
-  const out: ChartPlanet[] = [];
+  // group planets by house first, then lay them out in a centred ≤2-per-row grid just
+  // below the house number — so multiple planets never spill over lines or the number.
+  const byHouse: Record<number, string[]> = {};
   planets.forEach((p) => {
     if (!p.sign) return;
     const idx = SIGN_IDX[p.sign]; if (idx == null) return;
     const house = ((idx - lagnaIdx + 12) % 12) + 1;
+    (byHouse[house] = byHouse[house] || []).push(planetAbbr(p.planet, lang));
+  });
+  const out: ChartPlanet[] = [];
+  Object.keys(byHouse).forEach((hk) => {
+    const house = Number(hk);
     const h = HOUSES.find((x) => x.n === house); if (!h) return;
-    const used = counts[house] || 0; counts[house] = used + 1;
-    out.push({ abbr: planetAbbr(p.planet, lang), x: h.x + (HOUSE_OFF[used] || 0), y: h.y + 14 });
+    const list = byHouse[house];
+    const perRow = list.length > 1 ? 2 : 1;
+    list.forEach((abbr, i) => {
+      const row = Math.floor(i / perRow);
+      const rowItems = Math.min(perRow, list.length - row * perRow);
+      const col = i % perRow;
+      out.push({ abbr, x: h.x + (col - (rowItems - 1) / 2) * 17, y: h.y + 13 + row * 9.5 });
+    });
   });
   return out;
 }
@@ -309,7 +330,7 @@ function VargaChartCard({ chart, onAsk, onOpen }: { chart: VargaChart; onAsk: (c
       <View style={styles.vargaHeader}>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={[styles.vargaCode, { color: theme.gold2 }]}>{chart.code}</Text>
-          <GradientText style={styles.vargaName}>{chart.name}</GradientText>
+          <GradientText style={styles.vargaName}>{lang === 'hi' && chart.nameHi ? chart.nameHi : chart.name}</GradientText>
           {!!chart.sanskrit && <Text style={[styles.vargaSanskrit, { color: theme.textMuted }]}>{chart.sanskrit}</Text>}
         </View>
       </View>
@@ -358,8 +379,8 @@ function VargaChartCard({ chart, onAsk, onOpen }: { chart: VargaChart; onAsk: (c
 
       <View style={[styles.vargaInfoBox, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.42)' : 'rgba(176,115,22,0.05)' }]}>
         <Text style={[styles.vargaInfoLabel, { color: theme.goldText }]}>{t('kundli.whatItShows', 'What it shows')}</Text>
-        <Text style={[styles.vargaInfoText, { color: theme.text }]}>{chart.area}</Text>
-        <Text style={[styles.vargaWhy, { color: theme.textSoft }]}>{chart.why}</Text>
+        <Text style={[styles.vargaInfoText, { color: theme.text }]}>{lang === 'hi' && chart.areaHi ? chart.areaHi : chart.area}</Text>
+        <Text style={[styles.vargaWhy, { color: theme.textSoft }]}>{lang === 'hi' && chart.whyHi ? chart.whyHi : chart.why}</Text>
       </View>
 
       <Pressable
@@ -376,41 +397,68 @@ function VargaChartCard({ chart, onAsk, onOpen }: { chart: VargaChart; onAsk: (c
   );
 }
 
-// planet label with a contrast chip behind it → readable over chart lines
-function PToken({ x, y, label, fill, bg }: { x: number; y: number; label: string; fill: string; bg: string }) {
+// planet label with a contrast chip behind it → readable over chart lines.
+// Tappable (onPress) → opens an easy explanation of that planet.
+function PToken({ x, y, label, fill, bg, onPress }: { x: number; y: number; label: string; fill: string; bg: string; onPress?: () => void }) {
   const w = label.length * 4.6 + 4;
   return (
-    <>
+    <G onPress={onPress}>
+      {!!onPress && <Rect x={x - w / 2 - 3} y={y - 9.6} width={w + 6} height={13.8} rx={2.4} fill="transparent" />}
       <Rect x={x - w / 2} y={y - 7.6} width={w} height={9.8} rx={2.4} fill={bg} opacity={0.92} />
       <SvgText x={x} y={y} fontFamily={fonts.cinzel} fontWeight="700" fontSize={7.8} fill={fill} textAnchor="middle">{label}</SvgText>
-    </>
+    </G>
   );
 }
 
-function BirthChart({ style = 'north', rawPlanets = null, ascendant = null, northPlanets = CHART_PLANETS, lang = 'en', svgRef, bare = false }: {
-  style?: ChartStyle; rawPlanets?: ApiPlanet[] | null; ascendant?: string | null; northPlanets?: ChartPlanet[]; lang?: 'en' | 'hi'; svgRef?: any; bare?: boolean;
+// house/rashi NUMBER with its own contrast chip → always readable over the diagonal
+// chart lines AND never hidden behind planet glyphs (the number is drawn on top).
+// Tappable (onPress) → opens an easy explanation of that house/box.
+function NToken({ x, y, label, fill, bg, onPress }: { x: number; y: number; label: string; fill: string; bg: string; onPress?: () => void }) {
+  const w = label.length * 6.2 + 6;
+  return (
+    <G onPress={onPress}>
+      {!!onPress && <Rect x={x - w / 2 - 4} y={y - 11} width={w + 8} height={16} rx={2.8} fill="transparent" />}
+      <Rect x={x - w / 2} y={y - 9} width={w} height={12.6} rx={2.8} fill={bg} opacity={0.95} />
+      <SvgText x={x} y={y} fontFamily={fonts.cinzelSemi} fontWeight="700" fontSize={10.5} fill={fill} textAnchor="middle">{label}</SvgText>
+    </G>
+  );
+}
+
+function BirthChart({ style = 'north', rawPlanets = null, ascendant = null, northPlanets = CHART_PLANETS, lang = 'en', svgRef, bare = false, interactive = false }: {
+  style?: ChartStyle; rawPlanets?: ApiPlanet[] | null; ascendant?: string | null; northPlanets?: ChartPlanet[]; lang?: 'en' | 'hi'; svgRef?: any; bare?: boolean; interactive?: boolean;
 }) {
   const { theme } = useTheme();
-  const [a, b, c] = theme.isDark ? ['#fce8a8', '#e9b850', '#a17613'] : ['#6a460c', '#b07e1c', '#7a510e'];
+  const [a, b, c] = theme.isDark ? ['#fce8a8', '#e9b850', '#a17613'] : ['#3d2809', '#76460a', '#4e330c'];
   const stroke = 'url(#kg)';
-  const planetFill = theme.isDark ? '#f6d27a' : '#7a510e';
-  const chip = theme.isDark ? '#0c0c18' : '#fff9ec';
-  const numFill = theme.isDark ? '#e9b850' : '#9a6c12';     // house/rashi numbers — clearly visible
-  const signFill = theme.isDark ? '#d6b05c' : '#8a6f3a';    // sign labels
+  const planetFill = theme.isDark ? '#f6d27a' : theme.goldText;
+  const chip = theme.isDark ? '#0c0c18' : '#ffffff';
+  const numFill = theme.isDark ? '#e9b850' : theme.gold1;     // house/rashi numbers — clearly visible
+  const signFill = theme.isDark ? '#d6b05c' : theme.textSoft;    // sign labels
   const lagnaIdx = ascendant != null ? SIGN_IDX[ascendant] : -1;
   const num = (n: number) => String(n); // always English numerals in charts (per request)
   // North: each house shows its RASHI (sign) number, computed from Lagna; fallback to house number
   const rashiOf = (houseN: number) => (lagnaIdx >= 0 ? ((lagnaIdx + houseN - 1) % 12) + 1 : houseN);
   const bySign = style !== 'north' && rawPlanets ? planetsBySign(rawPlanets, lang) : {};
 
+  // tap-to-explain: any box/number/sign/planet → easy explanation with example.
+  // Only active when `interactive` (i.e. the full-screen viewer) — on small preview
+  // charts a tap should instead open the full view (handled by the parent).
+  const [view, setView] = useState<ExplainView | null>(null);
+  const openHouse = interactive ? (h: number) => setView(explainHouse(rawPlanets, ascendant, h, lang)) : undefined;
+  const openPlanet = interactive ? (ab: string) => { const name = planetFromAbbr(ab); if (name) setView(explainPlanet(rawPlanets, ascendant, name, lang)); } : undefined;
+  const houseOfSignIdx = (si: number) => (lagnaIdx >= 0 ? ((si - lagnaIdx + 12) % 12) + 1 : si + 1);
+
   return (
-    <View style={[bare ? styles.chartBare : styles.chartWrap, !theme.isDark && !bare && { borderWidth: 1.5, borderColor: 'rgba(176,115,22,0.38)', borderRadius: 14, padding: 10 }]}>
+    <View style={[bare ? styles.chartBare : styles.chartWrap, !theme.isDark && !bare && { borderWidth: 1.5, borderColor: theme.cardBorder, borderRadius: 14, padding: 10 }]}>
       <Svg ref={svgRef} viewBox="0 0 200 200" width="100%" height="100%">
         <Defs>
           <SvgGradient id="kg" x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0%" stopColor={a} /><Stop offset="60%" stopColor={b} /><Stop offset="100%" stopColor={c} />
           </SvgGradient>
         </Defs>
+
+        {/* subtle filled backdrop → adds depth so the gold lines, numbers & planets pop */}
+        <Rect x={10} y={10} width={180} height={180} rx={3} fill={theme.isDark ? 'rgba(12,10,5,0.55)' : 'rgba(255,251,242,0.6)'} />
 
         {style === 'south' ? (
           <>
@@ -425,10 +473,13 @@ function BirthChart({ style = 'north', rawPlanets = null, ascendant = null, nort
               const pls = bySign[idx] || [];
               return (
                 <React.Fragment key={si}>
-                  <SvgText x={x0 + 4} y={y0 + 11} fontFamily={fonts.cinzelSemi} fontWeight="700" fontSize={8} fill={isLagna ? planetFill : signFill} textAnchor="start">{signAbbr(idx, lang)}</SvgText>
+                  <G onPress={openHouse ? () => openHouse(houseOfSignIdx(idx)) : undefined}>
+                    {interactive && <Rect x={x0} y={y0} width={45} height={20} fill="transparent" />}
+                    <SvgText x={x0 + 4} y={y0 + 11} fontFamily={fonts.cinzelSemi} fontWeight="700" fontSize={8} fill={isLagna ? planetFill : signFill} textAnchor="start">{signAbbr(idx, lang)}</SvgText>
+                  </G>
                   {isLagna && <Line x1={x0} y1={y0} x2={x0 + 14} y2={y0 + 14} stroke={planetFill} strokeWidth={1.6} />}
                   {pls.map((ab, i) => (
-                    <PToken key={`${ab}${i}`} x={pls.length > 1 ? cx + ((i % 2) * 20 - 10) : cx} y={y0 + 27 + Math.floor(i / 2) * 9} label={ab} fill={planetFill} bg={chip} />
+                    <PToken key={`${ab}${i}`} x={pls.length > 1 ? cx + ((i % 2) * 20 - 10) : cx} y={y0 + 27 + Math.floor(i / 2) * 9} label={ab} fill={planetFill} bg={chip} onPress={openPlanet ? () => openPlanet(ab) : undefined} />
                   ))}
                 </React.Fragment>
               );
@@ -450,9 +501,12 @@ function BirthChart({ style = 'north', rawPlanets = null, ascendant = null, nort
               const pls = bySign[signIdx] || [];
               return (
                 <React.Fragment key={`e${h.n}`}>
-                  <SvgText x={h.x} y={h.y - 4} fontFamily={fonts.cinzelSemi} fontWeight="700" fontSize={8} fill={isLagna ? planetFill : signFill} textAnchor="middle">{signAbbr(signIdx, lang)}{isLagna ? ' ◹' : ''}</SvgText>
+                  <G onPress={openHouse ? () => openHouse(houseOfSignIdx(signIdx)) : undefined}>
+                    {interactive && <Rect x={h.x - 14} y={h.y - 12} width={28} height={16} fill="transparent" />}
+                    <SvgText x={h.x} y={h.y - 4} fontFamily={fonts.cinzelSemi} fontWeight="700" fontSize={8} fill={isLagna ? planetFill : signFill} textAnchor="middle">{signAbbr(signIdx, lang)}{isLagna ? ' ◹' : ''}</SvgText>
+                  </G>
                   {pls.map((ab, i) => (
-                    <PToken key={`${ab}${i}`} x={h.x + (pls.length > 1 ? (i % 2) * 18 - 9 : 0)} y={h.y + 8 + Math.floor(i / 2) * 9} label={ab} fill={planetFill} bg={chip} />
+                    <PToken key={`${ab}${i}`} x={h.x + (pls.length > 1 ? (i % 2) * 18 - 9 : 0)} y={h.y + 8 + Math.floor(i / 2) * 9} label={ab} fill={planetFill} bg={chip} onPress={openPlanet ? () => openPlanet(ab) : undefined} />
                   ))}
                 </React.Fragment>
               );
@@ -467,15 +521,18 @@ function BirthChart({ style = 'north', rawPlanets = null, ascendant = null, nort
             <Line x1={190} y1={100} x2={100} y2={190} stroke={stroke} strokeWidth={1.1} />
             <Line x1={100} y1={190} x2={10} y2={100} stroke={stroke} strokeWidth={1.1} />
             <Line x1={10} y1={100} x2={100} y2={10} stroke={stroke} strokeWidth={1.1} />
-            {HOUSES.map((h) => (
-              <SvgText key={`h${h.n}`} x={h.x} y={h.y} fontFamily={fonts.cinzelSemi} fontWeight="700" fontSize={10.5} fill={numFill} textAnchor="middle">{num(rashiOf(h.n))}</SvgText>
-            ))}
+            {/* planets first, then house numbers ON TOP (each with its own chip) so a
+                number is never hidden behind the diagonal lines or a planet glyph */}
             {northPlanets.map((p) => (
-              <PToken key={`${p.abbr}-${p.x}-${p.y}`} x={p.x} y={p.y} label={p.abbr} fill={planetFill} bg={chip} />
+              <PToken key={`${p.abbr}-${p.x}-${p.y}`} x={p.x} y={p.y} label={p.abbr} fill={planetFill} bg={chip} onPress={openPlanet ? () => openPlanet!(p.abbr) : undefined} />
+            ))}
+            {HOUSES.map((h) => (
+              <NToken key={`h${h.n}`} x={h.x} y={h.y} label={num(rashiOf(h.n))} fill={numFill} bg={chip} onPress={openHouse ? () => openHouse!(h.n) : undefined} />
             ))}
           </>
         )}
       </Svg>
+      {interactive && <ChartExplainModal view={view} lang={lang} onClose={() => setView(null)} />}
     </View>
   );
 }
@@ -518,6 +575,7 @@ function ChartViewer({ visible, onClose, title, planets, ascendant, northPlanets
     .onUpdate((e) => { 'worklet'; scale.value = Math.min(4, Math.max(1, saveS.value * e.scale)); })
     .onEnd(() => { 'worklet'; saveS.value = scale.value; if (scale.value <= 1.01) { tx.value = withTiming(0); ty.value = withTiming(0); sx.value = 0; sy.value = 0; } });
   const pan = Gesture.Pan()
+    .minDistance(8) // a clean tap (<8px) falls through to the SVG so tap-to-explain fires
     .onUpdate((e) => { 'worklet'; tx.value = sx.value + e.translationX; ty.value = sy.value + e.translationY; })
     .onEnd(() => { 'worklet'; sx.value = tx.value; sy.value = ty.value; });
   const dbl = Gesture.Tap().numberOfTaps(2).onEnd(() => { 'worklet'; runOnJS(reset)(); });
@@ -571,7 +629,7 @@ function ChartViewer({ visible, onClose, title, planets, ascendant, northPlanets
         <View style={fv.stage}>
           <GestureDetector gesture={gesture}>
             <Animated.View style={[fv.canvas, aStyle]} collapsable={false}>
-              <BirthChart style={chartStyle} rawPlanets={planets} ascendant={ascendant} northPlanets={northPlanets} lang={lang} svgRef={svgRef} bare />
+              <BirthChart style={chartStyle} rawPlanets={planets} ascendant={ascendant} northPlanets={northPlanets} lang={lang} svgRef={svgRef} bare interactive />
             </Animated.View>
           </GestureDetector>
         </View>
@@ -581,7 +639,7 @@ function ChartViewer({ visible, onClose, title, planets, ascendant, northPlanets
           <Pressable onPress={() => { hTap(); reset(); }} style={[fv.zoomBtn, fv.zoomReset]}><Text style={fv.zoomResetTxt}>{t('kundli.reset', 'RESET')}</Text></Pressable>
           <Pressable onPress={() => { hTap(); zoom(1.4); }} style={fv.zoomBtn}><Text style={fv.zoomTxt}>+</Text></Pressable>
         </View>
-        <Text style={fv.hint}>{t('kundli.zoomHint', 'पिंच ज़ूम · खींचकर घुमाएँ · डबल-टैप रीसेट')}</Text>
+        <Text style={fv.hint}>{lang === 'hi' ? '👆 किसी भी खाने / नंबर / ग्रह पर टैप करके समझें  ·  पिंच ज़ूम · डबल-टैप रीसेट' : '👆 Tap any box / number / planet to understand it  ·  pinch to zoom · double-tap to reset'}</Text>
       </View>
       </GestureHandlerRootView>
     </Modal>
@@ -716,7 +774,8 @@ export function KundliScreen({ navigation }: any) {
       if (Math.abs(e.translationX) < 36) return;
       runOnJS(cycleChart)(e.translationX < 0 ? 1 : -1); // left → next, right → prev
     });
-  // tap chart → open full-screen viewer; swipe still toggles style (pan wins over tap)
+  // tap the small chart → open the full-screen image view (tap-to-explain then works
+  // INSIDE the full view); horizontal swipe still cycles the chart style.
   const chartTap = Gesture.Tap().maxDuration(250).onEnd(() => { runOnJS(setShowFull)(true); });
   const chartGesture = Gesture.Exclusive(chartPan, chartTap);
   const [moonSign, setMoonSign] = useState<string | null>(null);
@@ -728,6 +787,9 @@ export function KundliScreen({ navigation }: any) {
   const [vargaCharts, setVargaCharts] = useState<VargaChart[] | null>(null);
   const [vargaLoading, setVargaLoading] = useState(false);
   const [vargaErr, setVargaErr] = useState<string | null>(null);
+  // Progressively mount the 16 heavy SVG divisional charts a few at a time so the
+  // JS thread never freezes (rendering all at once on open hung the screen on scroll).
+  const [visibleVarga, setVisibleVarga] = useState(3);
 
   useEffect(() => {
     let on = true;
@@ -747,8 +809,8 @@ export function KundliScreen({ navigation }: any) {
           setLive(r.data.planets);
           setAscendant(r.data.ascendant || null);
           setMoonSign(r.data.moonSign || null);
-          if (r.data.doshas && r.data.doshas.length) setDoshaRowsLive(doshaToRows(r.data.doshas));
-          if (r.data.yogas && r.data.yogas.length) setYogaRows(yogaToRows(r.data.yogas));
+          if (r.data.doshas && r.data.doshas.length) setDoshaRowsLive(doshaToRows(r.data.doshas, lang));
+          if (r.data.yogas && r.data.yogas.length) setYogaRows(yogaToRows(r.data.yogas, lang));
           if (r.data.insights && r.data.insights.length) setInsightsLive(r.data.insights);
           setLoading(false);
         }
@@ -769,9 +831,9 @@ export function KundliScreen({ navigation }: any) {
       try {
         const dr = await getDasha(birth);
         if (on && dr.dasha && dr.dasha.length) {
-          setDashaRows(dashaToRows(dr.dasha));
+          setDashaRows(dashaToRows(dr.dasha, lang));
           const d0 = dr.dasha[0];
-          setCurrentDasha({ title: `${d0.lord} Mahadasha`, range: `${fmtMonYr(d0.start)} – ${fmtMonYr(d0.end)}` });
+          setCurrentDasha({ title: `${lang === 'hi' ? aPlanet(d0.lord, lang) : d0.lord} ${lang === 'hi' ? 'महादशा' : 'Mahadasha'}`, range: `${fmtMonYr(d0.start)} – ${fmtMonYr(d0.end)}` });
         }
       } catch (_) { /* dasha optional — demo dikhega */ }
       // AI insights (richer prose) — computed insights ko override karta hai
@@ -781,9 +843,26 @@ export function KundliScreen({ navigation }: any) {
       } catch (_) { /* AI optional — computed/demo dikhega */ }
     })();
     return () => { on = false; };
-  }, []);
+    // refetch on language switch so dasha/yoga/dosha + AI insights re-render in the chosen language
+  }, [lang]);
+
+  // Reveal divisional charts in small batches (2 every ~140ms) once they're loaded and
+  // the charts tab is open — keeps the first paint instant and scroll smooth, no freeze.
+  useEffect(() => {
+    if (tab !== 'charts') return;
+    const total = vargaCharts ? vargaCharts.length : 0;
+    if (visibleVarga >= total) return;
+    const id = setTimeout(() => setVisibleVarga((n) => Math.min(n + 2, total)), 140);
+    return () => clearTimeout(id);
+  }, [tab, vargaCharts, visibleVarga]);
 
   const planetRows = live ? toPlanetRows(live, lang) : PLANETS;
+  const fallbackYogas = useMemo(() => YOGAS.map((y) => ({
+    ...y,
+    name: lang === 'hi' ? aYoga(y.name, lang) : y.name,
+    detail: lang === 'hi' ? aYogaDetail(y.detail, lang) : y.detail,
+    tag: aTag(y.tag, lang),
+  })), [lang]);
   const chartPlanets = live ? toChartPlanets(live, lang) : CHART_PLANETS;
   const askAboutChart = (chart: VargaChart) => {
     hTap();
@@ -807,8 +886,7 @@ export function KundliScreen({ navigation }: any) {
   };
 
   return (
-    <Screen>
-      <BrandHeader onMenu={openMenu} onBell={() => navigation.navigate('Notifications')} />
+    <Screen header={<BrandHeader onMenu={openMenu} onBell={() => navigation.navigate('Notifications')} />}>
       <PageHero />
 
       <KundliCard hero bodyStyle={styles.hero}>
@@ -873,7 +951,7 @@ export function KundliScreen({ navigation }: any) {
                 <ExpandIcon color={theme.gold1} />
               </Pressable>
             </View>
-            <Text style={[styles.chartHint, { color: theme.textMuted }]}>{t('kundli.swipeHint', '← स्वाइप करके चार्ट बदलें →')} · {t('kundli.tapHint', 'टैप करके बड़ा करें')}</Text>
+            <Text style={[styles.chartHint, { color: theme.textMuted }]}>{lang === 'hi' ? '👆 चार्ट खोलने के लिए टैप करें — फिर बड़े व्यू में किसी भी खाने/ग्रह पर टैप करके समझें  ·  ← स्वाइप से चार्ट बदलें →' : '👆 Tap to open the chart — then tap any box/planet in the big view to understand it  ·  ← swipe to switch →'}</Text>
           </View>
         </GestureDetector>
 
@@ -908,7 +986,7 @@ export function KundliScreen({ navigation }: any) {
       <ChartViewer
         visible={!!vargaView}
         onClose={() => setVargaView(null)}
-        title={vargaView ? `${vargaView.code} · ${vargaView.name}` : ''}
+        title={vargaView ? `${vargaView.code} · ${lang === 'hi' && vargaView.nameHi ? vargaView.nameHi : vargaView.name}` : ''}
         planets={vargaView ? vargaView.planets : null}
         ascendant={vargaView ? (vargaView.ascendantSign || null) : null}
         northPlanets={vargaView ? toChartPlanetsBySign(vargaView.planets, vargaView.ascendantSign || null, lang) : []}
@@ -918,8 +996,28 @@ export function KundliScreen({ navigation }: any) {
       />
 
       <Pressable
+        onPress={() => { hTap(); navigation.navigate('KundliLearn'); }}
+        style={({ pressed }) => [styles.milanEntry, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(75,154,210,0.10)' : '#ffffff' }, pressed && { transform: [{ scale: 0.99 }], borderColor: theme.gold2 }]}
+      >
+        <View style={[styles.milanIcon, { backgroundColor: theme.isDark ? 'rgba(75,154,210,0.16)' : 'rgba(28,95,145,0.10)' }]}>
+          <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={theme.isDark ? '#74c8ff' : '#1c5f91'} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <Path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H19v15H7.5A2.5 2.5 0 0 0 5 20.5v-15z" />
+            <Path d="M5 5.5A2.5 2.5 0 0 1 7.5 8H19" />
+            <Path d="M9 11h5M9 14h4" />
+            <Path d="M17 10l.7 1.7L19.5 12l-1.8.7L17 14.5l-.7-1.8-1.8-.7 1.8-.3z" />
+          </Svg>
+        </View>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={[styles.milanTitle, { color: theme.text }]}>{t('learnKundli.title', lang === 'hi' ? 'कुंडली सीखें' : 'Learn Kundli')}</Text>
+          <Text style={[styles.milanSub, { color: theme.textMuted }]} numberOfLines={2}>
+            {t('learnKundli.entrySub', lang === 'hi' ? 'बिलकुल basic से chart, लग्न, चंद्र राशि, दशा, गोचर और पंचांग को कहानी की तरह समझें' : 'Start from zero: charts, lagna, moon sign, dasha, transits and panchang in story format')}
+          </Text>
+        </View>
+        <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={theme.gold2} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M9 18l6-6-6-6" /></Svg>
+      </Pressable>
+      <Pressable
         onPress={() => { hTap(); navigation.navigate('BrihatKundli'); }}
-        style={({ pressed }) => [styles.milanEntry, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(216,162,58,0.12)' : 'rgba(216,162,58,0.12)' }, pressed && { transform: [{ scale: 0.99 }], borderColor: theme.gold2 }]}
+        style={({ pressed }) => [styles.milanEntry, { marginTop: 10, borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(216,162,58,0.12)' : 'rgba(216,162,58,0.12)' }, pressed && { transform: [{ scale: 0.99 }], borderColor: theme.gold2 }]}
       >
         <View style={[styles.milanIcon, { backgroundColor: 'rgba(216,162,58,0.18)' }]}>
           <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="#d8a23a" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -929,9 +1027,9 @@ export function KundliScreen({ navigation }: any) {
           </Svg>
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={[styles.milanTitle, { color: theme.text }]}>{t('brihat.title', 'Brihat Kundli Report')}</Text>
+          <Text style={[styles.milanTitle, { color: theme.text }]}>{t('brihat.title', lang === 'hi' ? 'बृहत कुंडली रिपोर्ट' : 'Brihat Kundli Report')}</Text>
           <Text style={[styles.milanSub, { color: theme.textMuted }]} numberOfLines={2}>
-            {t('brihat.entrySub', lang === 'hi' ? 'Chart, varga, dasha, dosha, gochar aur domain-wise advanced report' : 'Charts, varga, dasha, dosha, transits and domain-wise advanced report')}
+            {t('brihat.entrySub', lang === 'hi' ? 'कुंडली, वर्ग, दशा, दोष, गोचर और जीवन-क्षेत्र आधारित विस्तृत रिपोर्ट' : 'Charts, varga, dasha, dosha, transits and domain-wise advanced report')}
           </Text>
         </View>
         <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={theme.gold2} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M9 18l6-6-6-6" /></Svg>
@@ -1078,7 +1176,12 @@ export function KundliScreen({ navigation }: any) {
               {!!vargaErr && <Text style={[styles.liveStatus, { color: theme.red }]}>{t('kundli.chartUnavailable', 'Divisional charts are unavailable right now.')}</Text>}
             </KundliCard>
 
-            {(vargaCharts || []).map((chart) => <VargaChartCard key={chart.code} chart={chart} onAsk={askAboutChart} onOpen={setVargaView} />)}
+            {(vargaCharts || []).slice(0, visibleVarga).map((chart) => <VargaChartCard key={chart.code} chart={chart} onAsk={askAboutChart} onOpen={setVargaView} />)}
+            {!!vargaCharts && visibleVarga < vargaCharts.length && (
+              <Text style={[styles.liveStatus, { color: theme.gold1, textAlign: 'center', paddingVertical: 10 }]}>
+                {t('kundli.chartLoadingMore', 'Loading more charts…')}
+              </Text>
+            )}
           </View>
         )}
 
@@ -1099,7 +1202,7 @@ export function KundliScreen({ navigation }: any) {
         {tab === 'yoga' && (
           <KundliCard>
             <CardHead>{t('kundli.auspiciousYogas', 'AUSPICIOUS YOGAS')}</CardHead>
-            <RowList rows={yogaRows || YOGAS} />
+            <RowList rows={yogaRows || fallbackYogas} />
           </KundliCard>
         )}
 

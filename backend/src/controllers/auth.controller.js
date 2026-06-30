@@ -43,6 +43,13 @@ exports.verifyOtp = asyncHandler(async (req, res) => {
   res.json({ token, user: user.toPublic(), isNew, profileComplete });
 });
 
+// POST /api/auth/google  { idToken }  — verify Google ID token, find-or-create, return JWT
+exports.google = asyncHandler(async (req, res) => {
+  const { idToken } = req.body;
+  const { user, token, isNew, profileComplete } = await auth.loginWithGoogle({ idToken });
+  res.json({ token, user: user.toPublic(), isNew, profileComplete });
+});
+
 // POST /api/auth/set-password  (protected)  { email?, password }
 // Logged-in user (OTP wala) apne account par email+password link karta hai.
 exports.setPassword = asyncHandler(async (req, res) => {

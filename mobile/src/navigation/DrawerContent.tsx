@@ -20,7 +20,7 @@ const NAV_KEY: Record<string, string> = {
   Help: 'nav.help', SignIn: 'common.logout',
 };
 import { useDialog } from '../components/DialogProvider';
-import { navTo, currentRouteName } from './navigationRef';
+import { navTo, resetTo, currentRouteName } from './navigationRef';
 
 /* ── 22px nav icons — same paths as the web drawer (stroke 1.7) ── */
 type IC = { c: string };
@@ -135,7 +135,7 @@ const NAV: Array<
   { label: 'Vedic Astrologer', icon: 'spark', route: 'AiAstrologer', stack: true },
   { label: 'Janam Patri + Naamkaran', icon: 'chart', route: 'JanamPatri', stack: true },
   { label: 'Brihat Kundli Report', icon: 'book', route: 'BrihatKundli', stack: true },
-  { label: 'Baby Names', icon: 'spark', route: 'BabyNames', stack: true },
+  { label: 'Child Name Finder', icon: 'spark', route: 'BabyNames', stack: true },
   { label: 'Panchang', icon: 'star', route: 'Panchang', stack: true },
   { label: 'Choghadiya', icon: 'clock', route: 'Choghadiya', tab: 'Choghadiya' },
   { label: 'Divine Library', icon: 'book', route: 'Library', tab: 'Library' },
@@ -145,7 +145,7 @@ const NAV: Array<
   { label: 'Notifications', icon: 'bell', route: 'Notifications', stack: true },
   { label: 'Manage Subscription', icon: 'crown', route: 'ManageSubscription', stack: true },
   { label: 'Help & Support', icon: 'help', route: 'Help', stack: true },
-  { label: 'Logout', icon: 'logout', route: 'SignIn', stack: true, logout: true },
+  { label: 'Logout', icon: 'logout', route: 'PhoneAuth', stack: true, logout: true },
 ];
 
 /** Side drawer — exact port of the web `.sy-drawer`:
@@ -197,7 +197,8 @@ export function DrawerContent({ close, progress }: { close: () => void; progress
             onPress: () => {
               clearAuth();
               close();
-              requestAnimationFrame(() => navTo(item.route));
+              // logout → Phone+OTP entry (NOT the old email/password SignIn page)
+              requestAnimationFrame(() => resetTo('PhoneAuth'));
             },
           },
         ],
@@ -213,17 +214,17 @@ export function DrawerContent({ close, progress }: { close: () => void; progress
   };
 
   /* palette */
-  const line = isDark ? 'rgba(201,150,46,0.25)' : 'rgba(176,115,22,0.18)';
-  const sectionBg = isDark ? 'rgba(238,203,122,0.05)' : 'rgba(151,93,12,0.11)';
-  const btnBg = isDark ? 'rgba(0,0,0,0.5)' : '#fffdf7';
-  const btnBorder = isDark ? 'rgba(201,150,46,0.3)' : 'rgba(176,115,22,0.3)';
+  const line = isDark ? 'rgba(201,150,46,0.25)' : theme.line;
+  const sectionBg = isDark ? 'rgba(238,203,122,0.05)' : 'rgba(95,56,8,0.08)';
+  const btnBg = isDark ? 'rgba(0,0,0,0.5)' : '#ffffff';
+  const btnBorder = isDark ? 'rgba(201,150,46,0.3)' : theme.cardBorder;
 
   return (
     <View
       style={[
         styles.panel,
         {
-          backgroundColor: isDark ? '#000000' : '#fffdf6',
+          backgroundColor: isDark ? '#000000' : '#ffffff',
           borderRightColor: isDark ? 'rgba(201,150,46,0.35)' : theme.cardBorder,
         },
       ]}
@@ -252,10 +253,10 @@ export function DrawerContent({ close, progress }: { close: () => void; progress
               {
                 top: insets.top + 12,
                 backgroundColor: pressed
-                  ? (isDark ? 'rgba(233,184,80,0.22)' : 'rgba(176,115,22,0.18)')
-                  : (isDark ? 'rgba(255,255,255,0.04)' : 'rgba(176,115,22,0.06)'),
+                  ? (isDark ? 'rgba(233,184,80,0.22)' : 'rgba(95,56,8,0.14)')
+                  : (isDark ? 'rgba(255,255,255,0.04)' : 'rgba(95,56,8,0.06)'),
                 borderColor: pressed
-                  ? (isDark ? 'rgba(233,184,80,0.7)' : 'rgba(176,115,22,0.6)')
+                  ? (isDark ? 'rgba(233,184,80,0.7)' : theme.gold2)
                   : btnBorder,
               },
             ]}
@@ -289,7 +290,7 @@ export function DrawerContent({ close, progress }: { close: () => void; progress
             <Text style={[styles.namaste, { color: theme.textSoft }]}>
               {tr('drawer.namaste', 'Namaste')}, <Text style={{ color: theme.gold1, fontFamily: fonts.interSemi }}>{firstName}</Text>
             </Text>
-            <View style={[styles.badge, { borderColor: isDark ? 'rgba(201,150,46,0.5)' : 'rgba(176,115,22,0.5)' }]}>
+            <View style={[styles.badge, { borderColor: isDark ? 'rgba(201,150,46,0.5)' : theme.cardBorder }]}>
               <Text style={[styles.badgeText, { color: theme.gold1 }]}>{isPremium ? 'PREMIUM' : 'FREE'}</Text>
             </View>
           </View>
@@ -371,7 +372,7 @@ export function DrawerContent({ close, progress }: { close: () => void; progress
               return (
                 <Animated.View key={`d${i}`} style={itemAnim(i)}>
                   <LinearGradient
-                    colors={['transparent', isDark ? 'rgba(201,150,46,0.5)' : 'rgba(176,115,22,0.4)', 'transparent']}
+                    colors={['transparent', isDark ? 'rgba(201,150,46,0.5)' : theme.line, 'transparent']}
                     start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                     style={styles.divider}
                   />
@@ -389,9 +390,9 @@ export function DrawerContent({ close, progress }: { close: () => void; progress
                     {
                       borderLeftColor: active ? theme.gold1 : 'transparent',
                       backgroundColor: active
-                        ? (isDark ? 'rgba(233,184,80,0.12)' : 'rgba(151,93,12,0.20)')
+                        ? (isDark ? 'rgba(233,184,80,0.12)' : 'rgba(95,56,8,0.14)')
                         : pressed
-                          ? (isDark ? 'rgba(233,184,80,0.08)' : 'rgba(176,115,22,0.08)')
+                          ? (isDark ? 'rgba(233,184,80,0.08)' : 'rgba(95,56,8,0.08)')
                           : 'transparent',
                     },
                   ]}
@@ -405,7 +406,7 @@ export function DrawerContent({ close, progress }: { close: () => void; progress
         </ScrollView>
 
       {/* ── FIXED: Footer ── */}
-      <Text style={[styles.foot, { color: isDark ? 'rgba(216,203,168,0.82)' : '#8a6f3a', paddingBottom: insets.bottom + 14 }]}>
+      <Text style={[styles.foot, { color: isDark ? 'rgba(216,203,168,0.82)' : theme.textMuted, paddingBottom: insets.bottom + 14 }]}>
         SHREE YANTRA · ASTROLOGY v1.0
       </Text>
     </View>

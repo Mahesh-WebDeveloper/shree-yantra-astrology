@@ -5,7 +5,7 @@ import { Theme, ThemeName, themes } from './tokens';
 const STORE_KEY = 'sy.theme';
 // bump this to force every install back to the dark default once (clears any
 // stale 'light' preference saved during testing)
-const DEFAULT_DARK_MIGRATION = 'sy.theme.defaultDark.v1';
+const DEFAULT_DARK_MIGRATION = 'sy.theme.defaultDark.v2';
 
 interface ThemeCtx {
   theme: Theme;

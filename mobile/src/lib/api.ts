@@ -6,6 +6,8 @@
  *    Agar connect na ho to Windows Firewall me Node/port 4000 (inbound) allow karo.
  *    Emulator: Android emulator ke liye 10.0.2.2 use karo.
  */
+import { beginNetworkActivity, type NetworkActivityMeta } from './networkActivity';
+
 // Production: set EXPO_PUBLIC_API_URL (https) in the build env / app.config / EAS secrets.
 // Dev fallback: LAN IP for Expo Go on a phone (localhost won't reach the PC from the device).
 const DEV_API = 'http://192.168.0.234:4000';
@@ -16,14 +18,119 @@ export const API_BASE = (process.env.EXPO_PUBLIC_API_URL || (__DEV__ ? DEV_API :
 // parallel calls / slow upstream) can take a while, so we keep this generous; the
 // heaviest aggregators (Brihat, transit) override with even longer values below.
 const REQUEST_TIMEOUT_MS = 30000;
+
+function activityForPath(path: string): NetworkActivityMeta | null {
+  const clean = path.split('?')[0];
+  if (clean.includes('/locations/search') || clean.includes('/locations/resolve')) return null;
+  // primary:true = heavy, user-awaited initial load → full cosmic loader.
+  // primary absent = background/secondary fetch → only a subtle non-blocking top bar.
+  if (clean.includes('/brihat-kundli')) return { key: 'brihat', primary: true, titleEn: 'Generating Brihat Kundli', titleHi: 'बृहत कुंडली बन रही है', detailEn: 'Chart, dasha, varga and remedies are being assembled.', detailHi: 'कुंडली, दशा, वर्ग और उपाय जोड़े जा रहे हैं।' };
+  if (clean.includes('/festival')) return { key: 'panchang', titleEn: 'Finding Festival Dates', titleHi: 'पर्व-तिथियाँ खोजी जा रही हैं', detailEn: 'Upcoming festival and vrat dates are being checked.', detailHi: 'आने वाले पर्व-व्रत की तिथियाँ जांची जा रही हैं।' };
+  if (clean.includes('/kundli')) return { key: 'kundli', primary: true, titleEn: 'Calculating Kundli', titleHi: 'कुंडली की गणना हो रही है', detailEn: 'Precise planetary positions are loading.', detailHi: 'सटीक ग्रह-स्थिति लोड हो रही है।' };
+  if (clean.includes('/varga')) return { key: 'varga', titleEn: 'Preparing Varga Charts', titleHi: 'वर्ग चार्ट तैयार हो रहे हैं', detailEn: 'Divisional charts are being calculated.', detailHi: 'विभागीय चार्ट की गणना हो रही है।' };
+  if (clean.includes('/dasha') || clean.includes('/life-timeline')) return { key: 'dasha', titleEn: 'Computing Dasha Timeline', titleHi: 'दशा समयरेखा बन रही है', detailEn: 'Life periods are being mapped from the birth chart.', detailHi: 'जन्म कुंडली से जीवन कालखंड मिलाए जा रहे हैं।' };
+  if (clean.includes('/gochar')) return { key: 'gochar', titleEn: 'Fetching Gochar', titleHi: 'गोचर लोड हो रहा है', detailEn: 'Current planetary transits are being checked.', detailHi: 'वर्तमान ग्रह गोचर जांचे जा रहे हैं।' };
+  if (clean.includes('/transit-forecast')) return { key: 'forecast', primary: true, titleEn: 'Computing Year Forecast', titleHi: 'वार्षिक फल की गणना हो रही है', detailEn: 'Saturn and Jupiter transit years are being prepared.', detailHi: 'शनि और गुरु के गोचर वर्ष तैयार हो रहे हैं।' };
+  if (clean.includes('/remedies')) return { key: 'remedies', primary: true, titleEn: 'Preparing Remedies', titleHi: 'उपाय तैयार हो रहे हैं', detailEn: 'Chart-based remedies are being prepared.', detailHi: 'कुंडली आधारित उपाय तैयार हो रहे हैं।' };
+  if (clean.includes('/vedic-reading')) return { key: 'reading', primary: true, titleEn: 'Preparing Reading', titleHi: 'फलादेश तैयार हो रहा है', detailEn: 'Classical chart indications are being assembled.', detailHi: 'शास्त्रीय कुंडली संकेत जोड़े जा रहे हैं।' };
+  if (clean.includes('/panchang') || clean.includes('/muhurat')) return { key: 'panchang', primary: true, titleEn: 'Computing Panchang', titleHi: 'पंचांग की गणना हो रही है', detailEn: 'Local time, tithi and nakshatra are being checked.', detailHi: 'स्थानीय समय, तिथि और नक्षत्र जांचे जा रहे हैं।' };
+  // daily / period rashifal = the screen's MAIN content (empty until it loads) → full loader
+  if (clean.includes('/ai/daily-prediction') || clean.includes('/ai/period-prediction')) return { key: 'ai', primary: true, titleEn: 'Preparing Your Rashifal', titleHi: 'आपका राशिफल तैयार हो रहा है', detailEn: 'Reading your chart and today’s panchang.', detailHi: 'आपकी कुंडली और आज का पंचांग पढ़ा जा रहा है।' };
+  // ask-astrologer / insights etc. = background (the screen shows its own inline loader)
+  if (clean.includes('/ai') || clean.includes('/name-suggestions') || clean.includes('/horoscope/personalized')) return { key: 'ai', titleEn: 'Preparing AI Guidance', titleHi: 'AI मार्गदर्शन तैयार हो रहा है', detailEn: 'Your chart context is being converted into a clear answer.', detailHi: 'कुंडली संदर्भ को सरल उत्तर में बदला जा रहा है।' };
+  if (clean.includes('/match')) return { key: 'match', primary: true, titleEn: 'Matching Kundlis', titleHi: 'कुंडली मिलान हो रहा है', detailEn: 'Compatibility factors are being checked.', detailHi: 'अनुकूलता के कारक जांचे जा रहे हैं।' };
+  if (clean.includes('/auth')) return { key: 'auth', titleEn: 'Securing Session', titleHi: 'सत्र सुरक्षित हो रहा है', detailEn: 'Your login request is being verified.', detailHi: 'आपका लॉगिन अनुरोध सत्यापित हो रहा है।' };
+  if (clean.includes('/profile')) return { key: 'profile', titleEn: 'Updating Profile', titleHi: 'प्रोफ़ाइल अपडेट हो रही है', detailEn: 'Your saved details are being synced.', detailHi: 'आपके सहेजे हुए विवरण सिंक हो रहे हैं।' };
+  if (clean.includes('/content') || clean.includes('/library') || clean.includes('/audio') || clean.includes('/veda') || clean.includes('/gita') || clean.includes('/ramayan')) return { key: 'content', titleEn: 'Loading Sacred Content', titleHi: 'धार्मिक सामग्री लोड हो रही है', detailEn: 'Chapters and reading data are being prepared.', detailHi: 'अध्याय और पठन डेटा तैयार हो रहा है।' };
+  return { key: 'generic', titleEn: 'Loading Data', titleHi: 'डेटा लोड हो रहा है', detailEn: 'Please wait while the app prepares this screen.', detailHi: 'स्क्रीन तैयार हो रही है, कृपया प्रतीक्षा करें।' };
+}
+
+function createApiError(message: string, retryable = false, status?: number): Error {
+  const err = new Error(message) as Error & { retryable?: boolean; status?: number };
+  err.retryable = retryable;
+  if (status != null) err.status = status;
+  return err;
+}
+
+function normalizeFetchError(e: any): Error {
+  if (e?.name === 'AbortError') {
+    return createApiError(apiLang === 'hi'
+      ? 'अनुरोध समय सीमा से बाहर हो गया। नेटवर्क स्थिर है या नहीं जांचें और फिर प्रयास करें।'
+      : 'Request timed out. Please check your connection and try again.', true);
+  }
+  const msg = String(e?.message || e || '');
+  if (/Network request failed|Failed to fetch|NetworkError/i.test(msg)) {
+    if (apiLang === 'hi') {
+      return createApiError(__DEV__
+        ? 'नेटवर्क अनुरोध विफल रहा। ऐप backend ' + (API_BASE || 'API server') + ' तक नहीं पहुंच पा रहा है। Backend running, same WiFi, firewall और EXPO_PUBLIC_API_URL जांचें।'
+        : 'नेटवर्क अनुरोध विफल रहा। इंटरनेट कनेक्शन जांचें और फिर प्रयास करें।', true);
+    }
+    return createApiError(__DEV__
+      ? 'Network request failed. The app cannot reach backend ' + (API_BASE || 'API server') + '. Check that the backend is running, the device is on the same WiFi, firewall allows the port, and EXPO_PUBLIC_API_URL is correct.'
+      : 'Network request failed. Please check your internet connection and try again.', true);
+  }
+  return e instanceof Error ? e : createApiError(msg || (apiLang === 'hi' ? 'नेटवर्क अनुरोध विफल रहा।' : 'Network request failed'));
+}
+
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const retryDelayMs = (attempt: number) => 900 + attempt * 900;
+const isRetryableStatus = (status?: number) => status === 408 || status === 429 || (typeof status === 'number' && status >= 500);
+
+function isRetryableError(e: any) {
+  if (e?.retryable) return true;
+  if (isRetryableStatus(e?.status)) return true;
+  const msg = String(e?.message || e || '');
+  return /timed out|Network request failed|Failed to fetch|NetworkError|temporarily unavailable|timeout|504|503|502|429|408/i.test(msg);
+}
+
+function retryCountForPath(path: string, method: string) {
+  const clean = path.split('?')[0];
+  if (clean.includes('/auth') || clean.includes('/profile/avatar')) return 0;
+  if (clean.includes('/locations/search') || clean.includes('/locations/resolve')) return 0;
+  if (clean.includes('/profile') && method !== 'GET') return 0;
+  if (clean.includes('/api/ai/ask-astrologer')) return 0;
+  const safeComputeEndpoints = [
+    '/brihat-kundli', '/kundli', '/varga', '/dasha', '/life-timeline', '/gochar', '/transit-forecast',
+    '/remedies', '/vedic-reading', '/panchang', '/muhurat', '/festival', '/ai', '/name-suggestions',
+    '/horoscope/personalized', '/match', '/baby-names', '/name-ask',
+  ];
+  if (safeComputeEndpoints.some((endpoint) => clean.includes(endpoint))) return 1;
+  return method === 'GET' ? 1 : 0;
+}
+
+async function requestJson<T>(path: string, makeRequest: () => Promise<Response>, retries: number): Promise<T> {
+  let lastError: any = null;
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      const res = await makeRequest();
+      if (!res.ok) {
+        const retryable = isRetryableStatus(res.status);
+        if (retryable && attempt < retries) {
+          await delay(retryDelayMs(attempt));
+          continue;
+        }
+        throw createApiError(await parseError(res), retryable, res.status);
+      }
+      return await res.json();
+    } catch (e: any) {
+      lastError = e;
+      if (attempt < retries && isRetryableError(e)) {
+        await delay(retryDelayMs(attempt));
+        continue;
+      }
+      throw e;
+    }
+  }
+  throw lastError instanceof Error ? lastError : createApiError(apiLang === 'hi' ? 'अनुरोध पूरा नहीं हो पाया।' : 'Request could not be completed.');
+}
+
 async function fetchT(url: string, options: RequestInit = {}, timeoutMs: number = REQUEST_TIMEOUT_MS): Promise<Response> {
   const ctrl = new AbortController();
   const id = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     return await fetch(url, { ...options, signal: ctrl.signal });
   } catch (e: any) {
-    if (e?.name === 'AbortError') throw new Error('Request timed out — please check your connection and try again.');
-    throw e;
+    throw normalizeFetchError(e);
   } finally {
     clearTimeout(id);
   }
@@ -85,10 +192,13 @@ export interface KundliResponse {
 export interface VargaChart {
   code: string;
   name: string;
+  nameHi?: string;
   sanskrit?: string;
   area: string;
+  areaHi?: string;
   level: 'core' | 'advanced' | 'expert';
   why: string;
+  whyHi?: string;
   ascendantSign?: string | null;
   planets: ApiPlanet[];
   calculation?: string;
@@ -113,25 +223,34 @@ async function parseError(res: Response): Promise<string> {
 }
 
 async function post<T>(path: string, body: any, method: 'POST' | 'PUT' | 'PATCH' = 'POST', timeoutMs?: number): Promise<T> {
-  const res = await fetchT(`${API_BASE}${path}`, {
-    method,
-    headers: { 'Content-Type': 'application/json', ...authHeaders() },
-    body: JSON.stringify(body),
-  }, timeoutMs);
-  if (!res.ok) throw new Error(await parseError(res));
-  return res.json();
+  const endActivity = beginNetworkActivity(activityForPath(path));
+  try {
+    return await requestJson<T>(path, () => fetchT(`${API_BASE}${path}`, {
+      method,
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify(body),
+    }, timeoutMs), retryCountForPath(path, method));
+  } finally {
+    endActivity();
+  }
 }
 
 async function get<T>(path: string): Promise<T> {
-  const res = await fetchT(`${API_BASE}${path}`, { headers: authHeaders() });
-  if (!res.ok) throw new Error(await parseError(res));
-  return res.json();
+  const endActivity = beginNetworkActivity(activityForPath(path));
+  try {
+    return await requestJson<T>(path, () => fetchT(`${API_BASE}${path}`, { headers: authHeaders() }), retryCountForPath(path, 'GET'));
+  } finally {
+    endActivity();
+  }
 }
 
 async function del<T>(path: string): Promise<T> {
-  const res = await fetchT(`${API_BASE}${path}`, { method: 'DELETE', headers: authHeaders() });
-  if (!res.ok) throw new Error(await parseError(res));
-  return res.json();
+  const endActivity = beginNetworkActivity(activityForPath(path));
+  try {
+    return await requestJson<T>(path, () => fetchT(`${API_BASE}${path}`, { method: 'DELETE', headers: authHeaders() }), retryCountForPath(path, 'DELETE'));
+  } finally {
+    endActivity();
+  }
 }
 
 export interface DashaRow {
@@ -183,6 +302,9 @@ export interface VerifyOtpResponse { token: string; user: AuthUser; isNew: boole
 export const requestOtp = (phone: string) => post<OtpRequestResponse>('/api/auth/request-otp', { phone });
 export const verifyOtp = (input: { phone: string; code: string; name?: string }) =>
   post<VerifyOtpResponse>('/api/auth/verify-otp', input);
+// Google Sign-In — send the Google ID token, backend verifies + returns our JWT (same shape as OTP)
+export const googleLogin = (idToken: string) =>
+  post<VerifyOtpResponse>('/api/auth/google', { idToken });
 // account linking — logged-in (OTP) user apne account par email+password add kare
 export const setPasswordApi = (input: { email?: string; password: string }) =>
   post<{ user: AuthUser }>('/api/auth/set-password', input);
@@ -192,13 +314,15 @@ export const updateProfileApi = (input: { name?: string; interests?: string[]; p
 // ── birth-place search/resolve ──
 export interface LocationSuggestion {
   id: string;
-  provider: 'google' | 'nominatim' | 'manual' | string;
+  provider: 'google' | 'nominatim' | 'photon' | 'manual' | string;
   placeId?: string;
   mainText: string;
   secondaryText?: string;
   description: string;
   lat?: number | null;
   lng?: number | null;
+  /** OSM place type when available (village, town, city, administrative…) */
+  type?: string;
 }
 export const searchLocations = (input: { query: string; lang?: 'en' | 'hi'; country?: string; limit?: number }) => {
   const qs = new URLSearchParams();
@@ -222,13 +346,20 @@ export async function uploadAvatar(uri: string): Promise<{ user: AuthUser; avata
   const form = new FormData();
   // RN FormData file shape
   form.append('avatar', { uri, name, type } as any);
-  const res = await fetch(`${API_BASE}/api/profile/avatar`, {
-    method: 'POST',
-    headers: { ...authHeaders() }, // Content-Type NAHI — fetch khud multipart boundary set karega
-    body: form,
-  });
-  if (!res.ok) throw new Error(await parseError(res));
-  return res.json();
+  const endActivity = beginNetworkActivity(activityForPath('/api/profile/avatar'));
+  try {
+    const res = await fetch(`${API_BASE}/api/profile/avatar`, {
+      method: 'POST',
+      headers: { ...authHeaders() }, // Content-Type NAHI - fetch khud multipart boundary set karega
+      body: form,
+    });
+    if (!res.ok) throw new Error(await parseError(res));
+    return await res.json();
+  } catch (e: any) {
+    throw normalizeFetchError(e);
+  } finally {
+    endActivity();
+  }
 }
 
 // ── daily panchang ──
@@ -390,6 +521,7 @@ export interface DailyPrediction {
   remedies?: { title: string; body?: string; text?: string; timing?: string; tag?: string; mantra?: string; priority?: 'high' | 'medium' | 'low' }[];
   doList?: string[];
   avoidList?: string[];
+  saralVivaran?: string;
   mantra?: { title?: string; text?: string; count?: string; bestTime?: string } | null;
   focus?: string[];
   aiQuestions?: string[];
@@ -449,6 +581,7 @@ export interface PeriodPrediction {
   highlights?: PeriodHighlight[];
   remedies?: PeriodRemedy[];
   advice?: string;
+  saralVivaran?: string;
   sourceNote?: string;
   aiAssisted?: boolean;
 }
@@ -469,7 +602,10 @@ export interface AiAstrologerResponse {
   contextForChat?: Record<string, any>;
 }
 export const askAiAstrologer = (input: KundliInput & { name?: string; question: string }) =>
-  post<AiAstrologerResponse>('/api/ai/ask-astrologer', { ...input, lang: apiLang });
+  // 180s: this call computes the FULL kundli (chart + dasha timeline + live transits/Sade Sati + varga)
+  // and the AI then writes a long dual-language (technical + simple) answer over a large context — so
+  // give it very generous room to avoid any "request timed out" error on cold (uncached) questions.
+  post<AiAstrologerResponse>('/api/ai/ask-astrologer', { ...input, lang: apiLang }, 'POST', 180000);
 export const getAiInsights = (input: KundliInput) =>
   post<{ insights: KundliInsight[] }>('/api/ai/insights', { ...input, lang: apiLang });
 export const getChoghadiyaMessage = (input: KundliInput & { period: string; quality?: string }) =>
@@ -527,6 +663,18 @@ export const getHoroscope = (params?: { period?: HoroscopePeriod; date?: string;
 export const getPersonalizedHoroscope = (input: KundliInput & { name?: string }) =>
   post<{ type: 'personalized'; horoscope: DailyPrediction; sourceNote?: string }>('/api/horoscope/personalized', { ...input, lang: apiLang });
 
+// AI-rich, period-scaled rashifal for ONE zodiac sign (12-rashi page period tabs).
+export interface SignRashifalSection { heading: string; text: string; saral: string; }
+export interface SignRashifal {
+  sign: string; period: HoroscopePeriod; range: string; headline: string;
+  sections: SignRashifalSection[];
+  conclusion: { text: string; saral: string };
+  aiAssisted?: boolean;
+}
+// yearly does a deep AI year-long analysis → can take a while; allow a long timeout.
+export const getSignRashifal = (sign: string, period: HoroscopePeriod, transit?: { moonSign?: string; sunSign?: string }) =>
+  post<SignRashifal>('/api/ai/sign-rashifal', { sign, period, lang: apiLang, moonTransit: transit?.moonSign, sunTransit: transit?.sunSign }, 'POST', 180000);
+
 // ── dynamic content (admin-managed) ──
 export interface ContentChapter { _id?: string; title: string; order: number; content?: string; audioUrl?: string }
 export interface ContentBook {
@@ -536,7 +684,7 @@ export interface ContentBook {
 export const getLibrary = () => get<{ books: ContentBook[] }>(withLang('/api/library'));
 export const getBook = (id: string) => get<{ book: ContentBook }>(withLang(`/api/library/${id}`));
 
-export type MediaCategory = 'mantra' | 'spiritual_music' | 'bhajan';
+export type MediaCategory = 'mantra' | 'spiritual_music' | 'bhajan' | 'aarti';
 export interface MediaItem {
   _id: string;
   title: string;
@@ -696,7 +844,7 @@ export interface MatchMangal {
   severity: 'none' | 'cancelled' | 'present'; note?: string; noteHi?: string;
 }
 export interface MatchExplanation {
-  verdict?: string; summary?: string; strengths?: string[]; cautions?: string[]; advice?: string; aiAssisted?: boolean;
+  verdict?: string; summary?: string; strengths?: string[]; cautions?: string[]; advice?: string; saralVivaran?: string; aiAssisted?: boolean;
 }
 export interface MatchResponse {
   people: { boy: MatchPerson; girl: MatchPerson };
@@ -714,7 +862,7 @@ export interface TransitPlanet {
 }
 export interface SadeSati { active: boolean; dhaiya: boolean; phase?: string | null; phaseHi?: string | null; }
 export interface GocharExplanation {
-  summary?: string; highlights?: { planet: string; text: string }[]; advice?: string; aiAssisted?: boolean;
+  summary?: string; highlights?: { planet: string; text: string }[]; advice?: string; saralVivaran?: string; aiAssisted?: boolean;
 }
 export interface GocharResponse {
   date: string; ayanamsa: string; natalMoonSign?: string | null; natalAsc?: string | null;
@@ -734,7 +882,7 @@ export interface DoshaRemedy {
   mantra?: string; mantraHi?: string; deity?: string; deityHi?: string;
 }
 export interface PlanetMantra { planet: string; planetHi?: string; mantra: string; count?: number; forWhat?: string; forWhatHi?: string; }
-export interface RemediesExplanation { summary?: string; gemWhy?: string; scriptureNote?: string; advice?: string; aiAssisted?: boolean; }
+export interface RemediesExplanation { summary?: string; gemWhy?: string; scriptureNote?: string; advice?: string; saralVivaran?: string; aiAssisted?: boolean; }
 export interface RemediesResponse {
   ascendant?: string | null; moonSign?: string | null; sadeSati: SadeSati;
   remedies: { lifeGem: LifeGem | null; doshaRemedies: DoshaRemedy[]; planetMantras: PlanetMantra[] };
@@ -769,7 +917,7 @@ export interface VedicReadingResponse {
   birthPanchang?: BirthPanchang | null;
   naamakshar?: Naamakshar | null;
   predictions: ReadingPrediction[];
-  explanation?: { summary?: string; advice?: string; aiAssisted?: boolean } | null;
+  explanation?: { summary?: string; advice?: string; saralVivaran?: string; aiAssisted?: boolean } | null;
   source?: string;
 }
 export const getVedicReading = (input: KundliInput) => post<VedicReadingResponse>('/api/vedic-reading', { ...input, lang: apiLang });
@@ -789,6 +937,7 @@ export interface LifeTimelineResponse {
   balance: { lord: string; totalYears: number; bhuktaYears: number; bhogyaYears: number };
   currentAge: number;
   periods: DashaPeriod[];
+  saralVivaran?: string;
   source?: string;
 }
 export const getLifeTimeline = (input: KundliInput) => post<LifeTimelineResponse>('/api/life-timeline', { ...input, lang: apiLang });
@@ -875,7 +1024,7 @@ export interface TransitPlanetYear { sign?: string | null; signHi?: string | nul
 export interface TransitYear { year: number; current?: boolean; shani: TransitPlanetYear; guru: TransitPlanetYear; note?: string | null }
 export interface TransitForecastResponse {
   moonSign?: string | null; fromYear: number; toYear: number; currentYear: number;
-  years: TransitYear[]; summary?: string | null; source?: string;
+  years: TransitYear[]; summary?: string | null; saralVivaran?: string; source?: string;
 }
 // Saal-dar-saal gochar = 9 years × 2 planets + AI summary/notes → heavy; longer timeout.
 export const getTransitForecast = (input: KundliInput & { fromYear?: number; toYear?: number }) =>

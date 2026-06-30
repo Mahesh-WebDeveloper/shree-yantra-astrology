@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Circle, Line, Path } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -11,6 +11,8 @@ import { askAiAstrologer, AiAstrologerResponse } from '../lib/api';
 import { birthFromProfile } from '../lib/birth';
 import { hTap } from '../lib/haptics';
 import { useT } from '../i18n/LanguageProvider';
+
+const RETRYABLE_AI_ERROR = /timed out|Network request failed|Failed to fetch|NetworkError|temporarily unavailable|timeout|504|503|502|429|408|समय सीमा|नेटवर्क अनुरोध/i;
 
 const DEFAULT_BIRTH = { dob: '01-01-2000', tob: '06:42', tz: '+05:30', place: 'Jaipur' };
 
@@ -47,6 +49,19 @@ export function AiAstrologerScreen({ navigation, route }: any) {
   const [question, setQuestion] = useState('');
   const [history, setHistory] = useState<ChatTurn[]>([]);
   const [sending, setSending] = useState(false);
+  const scrollRef = useRef<any>(null);
+  const historyYRef = useRef(0);
+  // the newest answer is prepended to the TOP of the history list → scroll up to it so the
+  // user actually sees their reply (otherwise it appears off-screen above their position).
+  const scrollToAnswer = () => setTimeout(() => scrollRef.current?.scrollTo({ y: Math.max(0, historyYRef.current - 80), animated: true }), 80);
+  const friendlyAiError = (message?: string) => {
+    const raw = String(message || '');
+    if (RETRYABLE_AI_ERROR.test(raw)) {
+      return t('ai.retryMessage', 'The answer is taking longer than expected. Please tap retry and the app will try again.');
+    }
+    return raw || t('ai.unavailable', 'Could not get an answer. Please try again.');
+  };
+
   const quickQuestions = [
     t('ai.quick.today', 'What should I focus on today?'),
     t('ai.quick.time', 'Which time is better for important work?'),
@@ -54,21 +69,27 @@ export function AiAstrologerScreen({ navigation, route }: any) {
     t('ai.quick.remedy', 'Suggest a simple remedy for today.'),
   ];
 
-  const sendQuestion = async (raw: string) => {
+  const sendQuestion = async (raw: string, retryTurnId?: string) => {
     const q = raw.trim();
     if (!q || sending) return;
     hTap();
-    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const id = retryTurnId || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     setQuestion('');
     setSending(true);
-    setHistory((h) => [{ id, question: q, loading: true }, ...h]);
+    if (retryTurnId) {
+      setHistory((h) => h.map((turn) => (turn.id === retryTurnId ? { id, question: q, loading: true } : turn)));
+    } else {
+      setHistory((h) => [{ id, question: q, loading: true }, ...h]);
+    }
+    scrollToAnswer();
     try {
       const profileBirth = await birthFromProfile().catch(() => null);
       const birth = profileBirth || DEFAULT_BIRTH;
       const response = await askAiAstrologer({ ...birth, name: (profileBirth as any)?.name, question: q });
       setHistory((h) => h.map((turn) => (turn.id === id ? { id, question: q, response } : turn)));
+      scrollToAnswer();
     } catch (e: any) {
-      setHistory((h) => h.map((turn) => (turn.id === id ? { id, question: q, error: e?.message || 'AI answer unavailable' } : turn)));
+      setHistory((h) => h.map((turn) => (turn.id === id ? { id, question: q, error: friendlyAiError(e?.message) } : turn)));
     } finally {
       setSending(false);
     }
@@ -82,10 +103,10 @@ export function AiAstrologerScreen({ navigation, route }: any) {
   }, []);
 
   return (
-    <Page title={t('ai.title', 'Vedic Astrologer')} onBack={() => navigation.goBack()}>
+    <Page title={t('ai.title', 'Vedic Astrologer')} onBack={() => navigation.goBack()} scrollRef={scrollRef}>
       <Card>
         <View style={styles.heroRow}>
-          <View style={[styles.heroIcon, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : 'rgba(176,115,22,0.10)' }]}>
+          <View style={[styles.heroIcon, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : '#ffffff' }]}>
             <SparkIcon color={theme.gold1} size={24} />
           </View>
           <View style={{ flex: 1 }}>
@@ -95,7 +116,7 @@ export function AiAstrologerScreen({ navigation, route }: any) {
             </Text>
           </View>
         </View>
-        <View style={[styles.sourceRow, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.45)' : 'rgba(176,115,22,0.05)' }]}>
+        <View style={[styles.sourceRow, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.45)' : '#ffffff' }]}>
           <InfoIcon color={theme.gold1} />
           <Text style={[styles.sourceText, { color: theme.textSoft }]}>
             {t('ai.sourceLead', 'The answer uses your saved birth details and precise chart/panchang data before AI writes the explanation.')}
@@ -154,6 +175,9 @@ export function AiAstrologerScreen({ navigation, route }: any) {
         </Card>
       )}
 
+      {/* marker: remembers where the answer list starts so we can scroll the newest reply into view */}
+      <View onLayout={(e) => { historyYRef.current = e.nativeEvent.layout.y; }} />
+
       {history.map((turn) => (
         <Card key={turn.id} style={{ marginTop: 14 }}>
           <Text style={[styles.questionTitle, { color: theme.goldText }]}>{t('ai.question', 'Question')}</Text>
@@ -167,9 +191,23 @@ export function AiAstrologerScreen({ navigation, route }: any) {
           )}
 
           {!!turn.error && (
-            <Text style={[styles.errorText, { color: theme.red }]}>
-              {turn.error}
-            </Text>
+            <View style={styles.errorBlock}>
+              <Text style={[styles.errorText, { color: theme.red }]}>
+                {turn.error}
+              </Text>
+              <Pressable
+                disabled={sending}
+                onPress={() => sendQuestion(turn.question, turn.id)}
+                style={({ pressed }) => [
+                  styles.retryBtn,
+                  { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(176,115,22,0.08)' },
+                  pressed && { transform: [{ scale: 0.98 }] },
+                  sending && { opacity: 0.55 },
+                ]}
+              >
+                <Text style={[styles.retryText, { color: theme.goldText }]}>{t('ai.retry', 'TRY AGAIN')}</Text>
+              </Pressable>
+            </View>
           )}
 
           {!!turn.response && (
@@ -265,7 +303,10 @@ const styles = StyleSheet.create({
   questionBody: { fontFamily: fonts.interSemi, fontSize: 14, lineHeight: 20, marginTop: 5 },
   loadingRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 16 },
   loadingText: { fontFamily: fonts.inter, fontSize: 12.5 },
-  errorText: { fontFamily: fonts.interSemi, fontSize: 12.5, lineHeight: 18, marginTop: 14 },
+  errorBlock: { marginTop: 14, gap: 10, alignItems: 'flex-start' },
+  errorText: { fontFamily: fonts.interSemi, fontSize: 12.5, lineHeight: 18 },
+  retryBtn: { borderWidth: 1, borderRadius: radii.pill, paddingHorizontal: 14, paddingVertical: 9 },
+  retryText: { fontFamily: fonts.interBold, fontSize: 11, letterSpacing: 0.8 },
   answerHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 },
   voiceHint: { fontFamily: fonts.inter, fontSize: 11, lineHeight: 16, marginTop: 8 },
   answerTitle: { fontFamily: fonts.interBold, fontSize: 11, textTransform: 'uppercase' },

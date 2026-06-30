@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -15,6 +15,8 @@ import { NowPlayingBar } from './src/audio/NowPlayingBar';
 import { FullPlayer } from './src/audio/FullPlayer';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { DialogProvider } from './src/components/DialogProvider';
+import { CosmicLoadingOverlay } from './src/components/CosmicLoadingOverlay';
+import { markActivityStale } from './src/lib/networkActivity';
 import { AppConfigProvider } from './src/context/AppConfigProvider';
 import { LanguageProvider } from './src/i18n/LanguageProvider';
 import { initAnalytics, trackScreen } from './src/lib/analytics';
@@ -32,6 +34,7 @@ function Root() {
   const { theme, ready } = useTheme();
   const [fontsLoaded, fontError] = useAppFonts();
   const [routeName, setRouteName] = useState<string | undefined>();
+  const lastRouteRef = useRef<string | undefined>(undefined);
 
   const [waited, setWaited] = useState(false);
   useEffect(() => {
@@ -61,6 +64,12 @@ function Root() {
       }}
       onStateChange={() => {
         const r = navigationRef.getCurrentRoute();
+        // moved to a different screen → clear any loader still in flight from the previous
+        // screen, so e.g. the "Calculating Kundli" loader never shows on the Choghadiya page.
+        if (r?.name && r.name !== lastRouteRef.current) {
+          lastRouteRef.current = r.name;
+          markActivityStale();
+        }
         setRouteName(r?.name);
         if (r) trackScreen(r.name);
       }}
@@ -76,6 +85,7 @@ function Root() {
             <FullPlayer />
             {/* custom side drawer — overlays everything, opened via openAppDrawer() */}
             <AppDrawerHost />
+            <CosmicLoadingOverlay />
           </PlayerProvider>
         </DialogProvider>
       </AppConfigProvider>

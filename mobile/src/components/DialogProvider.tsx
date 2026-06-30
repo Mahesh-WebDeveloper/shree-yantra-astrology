@@ -114,7 +114,7 @@ function DialogBtn({ btn, theme, fill, onPress }: { btn: DialogButton; theme: an
   }
   const color = destructive ? (theme.isDark ? '#ff8585' : '#c0392b') : theme.goldText;
   const border = destructive ? 'rgba(192,57,43,0.5)' : theme.cardBorder;
-  const bg = destructive ? (theme.isDark ? 'rgba(255,80,80,0.08)' : 'rgba(192,57,43,0.09)') : (theme.isDark ? 'rgba(0,0,0,0.35)' : 'rgba(151,93,12,0.13)');
+  const bg = destructive ? (theme.isDark ? 'rgba(255,80,80,0.08)' : 'rgba(192,57,43,0.09)') : (theme.isDark ? 'rgba(0,0,0,0.35)' : 'rgba(95,56,8,0.10)');
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [fill ? styles.btnFlex : styles.btnFull, styles.btn, styles.ghost, { borderColor: border, backgroundColor: bg }, pressed && styles.pressed]}>
       <Text style={[styles.btnText, { color }]} numberOfLines={1}>{btn.text}</Text>

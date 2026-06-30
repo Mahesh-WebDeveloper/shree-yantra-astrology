@@ -71,8 +71,15 @@ const env = {
     googleAutocompleteMonthlyLimit: numberEnv('GOOGLE_MAPS_AUTOCOMPLETE_MONTHLY_LIMIT', 8000),
     googlePlaceDetailsDailyLimit: numberEnv('GOOGLE_MAPS_PLACE_DETAILS_DAILY_LIMIT', 250),
     googlePlaceDetailsMonthlyLimit: numberEnv('GOOGLE_MAPS_PLACE_DETAILS_MONTHLY_LIMIT', 8000),
+    // Photon (photon.komoot.io) — free OSM-based typeahead with typo tolerance; the
+    // primary source for tiny Indian villages/tehsils. A self-hosted URL can be set
+    // via PHOTON_URL; otherwise the public endpoint is used.
+    photonEnabled: process.env.PHOTON_ENABLED !== 'false',
+    photonUrl: process.env.PHOTON_URL || 'https://photon.komoot.io/api',
   },
   jwtSecret: process.env.JWT_SECRET || 'dev_secret',
+  // Google Sign-In: the WEB OAuth client ID (used as the ID-token audience to verify).
+  google: { clientId: process.env.GOOGLE_CLIENT_ID || '' },
   admin: {
     email: process.env.ADMIN_EMAIL || '',
     password: process.env.ADMIN_PASSWORD || '',

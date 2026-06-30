@@ -121,7 +121,7 @@ export function ManageSubscriptionScreen({ navigation }: any) {
         <CardHead theme={theme}>YOUR PREMIUM PERKS</CardHead>
         <View style={styles.perks}>
           {PERKS.map((p) => (
-            <View key={p.label} style={[styles.perk, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.55)' : 'rgba(176,115,22,0.05)' }]}>
+            <View key={p.label} style={[styles.perk, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.55)' : '#ffffff' }]}>
               {p.icon(theme.gold1)}
               <Text style={[styles.perkText, { color: theme.textSoft }]} numberOfLines={1}>{p.label}</Text>
             </View>
@@ -139,7 +139,8 @@ export function ManageSubscriptionScreen({ navigation }: any) {
               onPress={() => switchPlan(p.key, p.name, p.price)}
               style={({ pressed }) => [
                 styles.planCard,
-                { backgroundColor: isCurrent ? (theme.isDark ? 'rgba(233,184,80,0.08)' : 'rgba(176,115,22,0.07)') : theme.cardBg, borderColor: isCurrent ? theme.gold1 : theme.cardBorder, borderWidth: isCurrent ? 1.5 : 1 },
+                { backgroundColor: isCurrent ? (theme.isDark ? 'rgba(233,184,80,0.08)' : '#ffffff') : theme.cardBg, borderColor: isCurrent ? theme.gold1 : theme.cardBorder, borderWidth: isCurrent ? 1.5 : 1 },
+                !theme.isDark && styles.lightPlanShadow,
                 pressed && !isCurrent && { transform: [{ scale: 0.985 }], borderColor: theme.gold2 },
               ]}
             >
@@ -212,6 +213,7 @@ const styles = StyleSheet.create({
 
   section: { fontFamily: fonts.cinzelSemi, fontSize: 13, letterSpacing: 1.4, marginTop: 22, marginBottom: 10, marginLeft: 2 },
   planCard: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: radii.lg, borderWidth: 1 },
+  lightPlanShadow: { shadowColor: '#3d2809', shadowOpacity: 0.08, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 3 },
   planTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   currentPill: { borderWidth: 1, borderRadius: radii.pill, paddingHorizontal: 7, paddingVertical: 2 },
   currentText: { fontFamily: fonts.interBold, fontSize: 8.5, letterSpacing: 0.8, color: '#3aa860' },

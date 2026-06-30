@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { Page } from '../components/Page';
 import { GradientText } from '../components/GradientText';
 import { SpeakButton } from '../components/SpeakButton';
+import { SaralVivaran } from '../components/SaralVivaran';
 import { useTheme } from '../theme/ThemeProvider';
 import { Theme, fonts, radii } from '../theme/tokens';
 import { hTap } from '../lib/haptics';
@@ -137,6 +138,8 @@ export function GocharScreen({ navigation }: any) {
               <Text style={[styles.adviceText, { color: theme.text }]}>💛 {ex.advice}</Text>
             </View>
           )}
+
+          <SaralVivaran text={ex?.saralVivaran} />
 
           <Text style={[styles.trust, { color: theme.textMuted }]}>🔒 {lang === 'hi' ? 'गणना वास्तविक ग्रह-स्थितियों (Lahiri अयनांश) · चंद्र-गोचर विधि।' : 'Calculated from real planetary positions (Lahiri ayanamsa) · Moon-based gochar.'}</Text>
           <View style={{ height: 8 }} />

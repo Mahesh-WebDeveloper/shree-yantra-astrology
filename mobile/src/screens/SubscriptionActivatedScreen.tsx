@@ -12,6 +12,7 @@ import { Card } from '../components/Card';
 import { GradientText } from '../components/GradientText';
 import { CosmicBackground } from '../components/CosmicBackground';
 import { hSuccess } from '../lib/haptics';
+import { birthFromProfile } from '../lib/birth';
 import { useCurrentUser } from '../lib/auth';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -198,7 +199,13 @@ export function SubscriptionActivatedScreen({ navigation }: any) {
   const firstName = (user?.name || 'Friend').trim().split(/\s+/)[0];
   const insets = useSafeAreaInsets();
 
-  const goHome = () => navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
+  // After activation: if birth details aren't set yet (fresh onboarding), collect them next;
+  // otherwise straight to the app.
+  const goHome = async () => {
+    const b = await birthFromProfile().catch(() => null);
+    const target = b && (b as any).dob ? 'Main' : 'BirthDetails';
+    navigation.reset({ index: 0, routes: [{ name: target }] });
+  };
 
   // celebratory haptic + content reveal on mount, then auto-redirect to home
   const enter = useRef(new Animated.Value(0)).current;
@@ -214,7 +221,7 @@ export function SubscriptionActivatedScreen({ navigation }: any) {
     transform: [{ translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }],
   };
 
-  const dim = theme.isDark ? '#b89a5b' : '#8a6f3a';
+  const dim = theme.isDark ? '#b89a5b' : theme.textMuted;
 
   return (
     <LinearGradient colors={theme.bgGradient} style={styles.fill}>
@@ -250,7 +257,7 @@ export function SubscriptionActivatedScreen({ navigation }: any) {
         <ActivationBadge />
 
         {/* Headline */}
-        <View style={[styles.pill, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(176,115,22,0.08)' }]}>
+        <View style={[styles.pill, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : '#ffffff' }]}>
           <Text style={[styles.pillText, { color: theme.goldText }]}>PREMIUM · ACTIVE</Text>
         </View>
         <View style={styles.titleRow}>
@@ -282,7 +289,7 @@ export function SubscriptionActivatedScreen({ navigation }: any) {
           </View>
           {TRIAL.map((it, i) => (
             <View key={it.k} style={[styles.row, { borderBottomColor: theme.line }, i === TRIAL.length - 1 && styles.noBorder]}>
-              <View style={[styles.rowIc, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.4)' : 'rgba(176,115,22,0.06)' }]}>
+              <View style={[styles.rowIc, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.4)' : '#ffffff' }]}>
                 <RowIcon kind={it.icon} color={theme.gold1} />
               </View>
               <Text style={[styles.rowK, { color: theme.text }]} numberOfLines={1}>{it.k}</Text>
@@ -295,7 +302,7 @@ export function SubscriptionActivatedScreen({ navigation }: any) {
         <View style={styles.perks}>
           {PERKS.map((p) => (
             <View key={p.label} style={styles.perk}>
-              <View style={[styles.perkIc, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(176,115,22,0.08)' }]}>
+              <View style={[styles.perkIc, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : '#ffffff' }]}>
                 {p.icon(theme.gold1)}
               </View>
               <Text style={[styles.perkText, { color: theme.textSoft }]}>{p.label}</Text>

@@ -24,6 +24,9 @@ import {
   ShreeYantraLogo, ZodiacWheel, SunArt, KundliArt, StarOrb, Ornament,
 } from '../components/icons/WelcomeArt';
 import { ServiceIcon, ServiceIconName } from '../components/icons/ServiceIcons';
+import { ZodiacIcon } from '../components/icons/ZodiacIcon';
+import { rashiImage } from '../components/icons/rashiImages';
+import { naamRashi } from '../lib/naamRashi';
 
 /* ── web background decorations: planets, gold glow, twinkle stars ──
    All are static SVG art — memoized so screen re-renders skip them. */
@@ -42,13 +45,13 @@ const Planet = React.memo(function Planet({ size, colors, style, opacity }: { si
   );
 });
 
-const GoldGlow = React.memo(function GoldGlow({ size, style, opacity = 0.16 }: { size: number; style: any; opacity?: number }) {
+const GoldGlow = React.memo(function GoldGlow({ size, style, opacity = 0.16, dark = true }: { size: number; style: any; opacity?: number; dark?: boolean }) {
   return (
     <Svg width={size} height={size} style={[{ position: 'absolute' }, style, { opacity }]} pointerEvents="none">
       <Defs>
         <RadialGradient id="gg" cx="50%" cy="50%" r="50%">
-          <Stop offset="0%" stopColor="#e9b850" stopOpacity={0.6} />
-          <Stop offset="65%" stopColor="#e9b850" stopOpacity={0} />
+          <Stop offset="0%" stopColor={dark ? '#e9b850' : '#6b4308'} stopOpacity={dark ? 0.6 : 0.32} />
+          <Stop offset="65%" stopColor={dark ? '#e9b850' : '#6b4308'} stopOpacity={0} />
         </RadialGradient>
       </Defs>
       <Circle cx={size / 2} cy={size / 2} r={size / 2} fill="url(#gg)" />
@@ -67,7 +70,7 @@ const ZODIAC = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '
 
 /** Exact port of the web `.bg-zodiac-left` — 3 rings + 12 spokes + 12 glyphs
     (gradient #e9b850→#6b4d10) spinning continuously (140s linear, like the web). */
-const BgZodiac = React.memo(function BgZodiac({ size }: { size: number }) {
+const BgZodiac = React.memo(function BgZodiac({ size, dark = true }: { size: number; dark?: boolean }) {
   const spin = React.useRef(new Animated.Value(0)).current;
   React.useEffect(() => {
     const loop = Animated.loop(
@@ -85,7 +88,7 @@ const BgZodiac = React.memo(function BgZodiac({ size }: { size: number }) {
         key={`s${i}`}
         x1={100 + Math.cos(a) * 54} y1={100 + Math.sin(a) * 54}
         x2={100 + Math.cos(a) * 96} y2={100 + Math.sin(a) * 96}
-        stroke="url(#bgz)" strokeWidth={1.1}
+        stroke="url(#bgz)" strokeWidth={dark ? 1.1 : 1.8}
       />
     );
   });
@@ -96,7 +99,7 @@ const BgZodiac = React.memo(function BgZodiac({ size }: { size: number }) {
         key={`g${i}`}
         x={100 + Math.cos(a) * 86} y={100 + Math.sin(a) * 86}
         textAnchor="middle" alignmentBaseline="central"
-        fontSize={11} fontWeight="bold" fill="#f3c75e"
+        fontSize={11} fontWeight="bold" fill={dark ? '#f3c75e' : '#5f3808'}
       >
         {g}
       </SvgText>
@@ -108,13 +111,13 @@ const BgZodiac = React.memo(function BgZodiac({ size }: { size: number }) {
       <Svg width={size} height={size} viewBox="0 0 200 200">
         <Defs>
           <SvgGrad id="bgz" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0%" stopColor="#e9b850" />
-            <Stop offset="100%" stopColor="#6b4d10" />
+            <Stop offset="0%" stopColor={dark ? '#e9b850' : '#70420a'} />
+            <Stop offset="100%" stopColor={dark ? '#6b4d10' : '#332006'} />
           </SvgGrad>
         </Defs>
-        <Circle cx={100} cy={100} r={96} fill="none" stroke="url(#bgz)" strokeWidth={1.4} />
-        <Circle cx={100} cy={100} r={74} fill="none" stroke="url(#bgz)" strokeWidth={1.2} />
-        <Circle cx={100} cy={100} r={54} fill="none" stroke="url(#bgz)" strokeWidth={1.2} />
+        <Circle cx={100} cy={100} r={96} fill="none" stroke="url(#bgz)" strokeWidth={dark ? 1.4 : 2.2} />
+        <Circle cx={100} cy={100} r={74} fill="none" stroke="url(#bgz)" strokeWidth={dark ? 1.2 : 1.8} />
+        <Circle cx={100} cy={100} r={54} fill="none" stroke="url(#bgz)" strokeWidth={dark ? 1.2 : 1.8} />
         {spokes}
         {glyphs}
       </Svg>
@@ -122,12 +125,48 @@ const BgZodiac = React.memo(function BgZodiac({ size }: { size: number }) {
   );
 });
 
+// Janam Patri + Naamkaran service poster (user-supplied) — shown as that card's icon.
+const PATRI_IMG = require('../../assets/janampatri-namkaran.png');
+function PatriArt({ size = 60 }: { size?: number }) {
+  return (
+    <Image
+      source={PATRI_IMG}
+      style={{ width: size, height: size, borderRadius: 10 }}
+      resizeMode="contain"
+    />
+  );
+}
+
+// Jyothishi ji (Vedic Astrologer) service poster (user-supplied) — that card's icon.
+const JYOTHISHI_IMG = require('../../assets/jyothishi.png');
+function JyothishiArt({ size = 60 }: { size?: number }) {
+  return (
+    <Image
+      source={JYOTHISHI_IMG}
+      style={{ width: size, height: size, borderRadius: 10 }}
+      resizeMode="contain"
+    />
+  );
+}
+
+// Kundli / Birth Chart card icon (user-supplied scroll + quill image).
+const KUNDLI_IMG = require('../../assets/kundli-card.png');
+function KundliPng({ size = 60 }: { size?: number }) {
+  return (
+    <Image
+      source={KUNDLI_IMG}
+      style={{ width: size, height: size, borderRadius: 10 }}
+      resizeMode="contain"
+    />
+  );
+}
+
 // HERO — 3-4 big vertical cards (existing design, untouched). The most-used services.
 const FEATURES = [
   { key: 'pred', title: 'My Rashifal', desc: 'YOUR personal horoscope — daily, weekly, monthly & yearly from your birth chart', tint: ['#3d2378', '#241452', '#1a0f3c'] as const, Art: SunArt, route: 'DailyPrediction' },
-  { key: 'kundli', title: 'Kundli / Birth Chart', desc: 'View your detailed birth chart and planetary positions', tint: ['#1f3d82', '#142a5c', '#0e1c44'] as const, Art: KundliArt, route: 'Kundli' },
-  { key: 'ai', title: 'Vedic Astrologer', desc: 'Ask personal questions using your chart and precise planetary data', tint: ['#4b2d73', '#2c194c', '#160c2b'] as const, Art: KundliArt, route: 'AiAstrologer' },
-  { key: 'patri', title: 'Janam Patri + Naamkaran', desc: 'Full kundli for a baby/anyone + lucky names + Vedic PDF export', tint: ['#6a1f3a', '#431229', '#250a17'] as const, Art: ZodiacWheel, route: 'JanamPatri' },
+  { key: 'kundli', title: 'Kundli / Birth Chart', desc: 'View your detailed birth chart and planetary positions', tint: ['#1f3d82', '#142a5c', '#0e1c44'] as const, Art: KundliPng, route: 'Kundli' },
+  { key: 'ai', title: 'Ask the Astrologer', desc: 'Ask personal questions using your chart and precise planetary data', tint: ['#4b2d73', '#2c194c', '#160c2b'] as const, Art: JyothishiArt, route: 'AiAstrologer' },
+  { key: 'patri', title: 'Janam Patri + Naamkaran', desc: 'Full kundli for a baby/anyone + lucky names + Vedic PDF export', tint: ['#6a1f3a', '#431229', '#250a17'] as const, Art: PatriArt, route: 'JanamPatri' },
 ];
 
 // ALL SERVICES — horizontal slider. Each card uses the SAME solid gradient
@@ -138,8 +177,16 @@ const SERVICES: { key: string; en: string; hi: string; subEn: string; subHi: str
   { key: 'milan', en: 'Kundli Milan', hi: 'कुंडली मिलान', subEn: 'Match two kundlis for marriage (36 guna)', subHi: 'विवाह हेतु दो कुंडली मिलान (36 गुण)', icon: 'milan', accent: '#f5a3ba', route: 'KundliMatch', tint: ['#9c2f54', '#5e1c38', '#2c0e1f'], lightTint: ['#fbe1ec', '#fdeef4', '#fff8fb'] },
   { key: 'panchang', en: 'Panchang', hi: 'पंचांग', subEn: 'Tithi, nakshatra & shubh muhurat', subHi: 'तिथि, नक्षत्र व शुभ मुहूर्त', icon: 'calendar', accent: '#f3cd7e', route: 'Panchang', tint: ['#9a6418', '#5c3a10', '#2e1d08'], lightTint: ['#fbeccf', '#fef5e2', '#fffbf2'] },
   { key: 'chog', en: 'Choghadiya', hi: 'चौघड़िया', subEn: 'Find the good time for any work', subHi: 'किसी भी काम का शुभ समय', icon: 'clock', accent: '#84e8b4', route: 'Choghadiya', tint: ['#1e7a54', '#11543a', '#0a2c20'], lightTint: ['#daf2e4', '#ebfaf1', '#f5fdf9'] },
-  { key: 'baby', en: 'Baby Names', hi: 'शिशु नाम', subEn: 'Lucky names with meaning for your baby', subHi: 'अर्थ सहित शिशु के शुभ नाम', icon: 'name', accent: '#8ce0e0', route: 'BabyNames', tint: ['#1f7373', '#114a4a', '#0a2626'], lightTint: ['#d8f0f0', '#e8f9f9', '#f4fdfd'] },
+  { key: 'baby', en: 'Child Name Finder', hi: 'शिशु के शुभ नाम', subEn: 'Lucky names with meaning for your child', subHi: 'अर्थ सहित बच्चे के सुंदर व शुभ नाम', icon: 'name', accent: '#8ce0e0', route: 'BabyNames', tint: ['#1f7373', '#114a4a', '#0a2626'], lightTint: ['#d8f0f0', '#e8f9f9', '#f4fdfd'] },
 ];
+
+const SERVICE_LIGHT_ACCENT: Record<string, string> = {
+  horoscope: '#6b3192',
+  milan: '#9b244b',
+  panchang: '#70420a',
+  chog: '#146b43',
+  baby: '#176c70',
+};
 
 const LIGHT_TINT: Record<string, readonly [string, string, string]> = {
   pred: ['#efe6fb', '#f4eeff', '#fbf7ff'],
@@ -175,17 +222,18 @@ function ServiceCard({ s, index, theme, lang, onPress }: { s: typeof SERVICES[nu
     ? (['#fce8a8', '#e9b850', '#a17613', '#f6d27a'] as const)
     : (['#f8ecd0', '#d49b2e', '#a66f12', '#efd37b'] as const);
   const innerTint = theme.isDark ? s.tint : s.lightTint;
+  const accent = theme.isDark ? s.accent : (SERVICE_LIGHT_ACCENT[s.key] || theme.gold1);
   return (
     <Animated.View style={{ opacity: a, transform: [{ translateY: a.interpolate({ inputRange: [0, 1], outputRange: [22, 0] }) }] }}>
       <Pressable onPress={onPress} style={({ pressed }) => [pressed && { transform: [{ scale: 0.95 }] }]}>
         <LinearGradient colors={ringColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.svcBorder}>
           <LinearGradient colors={innerTint} start={{ x: 0.1, y: 0 }} end={{ x: 0.6, y: 1 }} style={styles.svcInner}>
             <View style={styles.svcTopLine} />
-            <View style={[styles.svcIconRing, { borderColor: s.accent + 'aa', backgroundColor: theme.isDark ? 'rgba(0,0,0,0.32)' : s.accent + '20', shadowColor: s.accent }]}>
-              <ServiceIcon name={s.icon} color={s.accent} size={26} />
+            <View style={[styles.svcIconRing, { borderColor: accent + '99', backgroundColor: theme.isDark ? 'rgba(0,0,0,0.32)' : accent + '14', shadowColor: accent }]}>
+              <ServiceIcon name={s.icon} color={accent} size={26} />
             </View>
             <Text style={[styles.svcTitle, { color: theme.gold1 }]} numberOfLines={2}>{hi ? s.hi : s.en}</Text>
-            <Text style={[styles.svcDesc, { color: theme.isDark ? 'rgba(239,224,168,0.78)' : '#5a4a2a' }]} numberOfLines={3}>{hi ? s.subHi : s.subEn}</Text>
+            <Text style={[styles.svcDesc, { color: theme.isDark ? 'rgba(239,224,168,0.78)' : theme.textMuted }]} numberOfLines={3}>{hi ? s.subHi : s.subEn}</Text>
           </LinearGradient>
         </LinearGradient>
       </Pressable>
@@ -230,11 +278,23 @@ export function WelcomeScreen({ navigation }: any) {
       } catch (_) { /* card stays compact */ }
     })();
     return () => { on = false; };
-  }, []);
+    // refetch when language switches so the AI rashifal text re-renders in the new language
+  }, [lang]);
   const d = new Date();
   const todayLabel = `${t('home.today', 'Today')}, ${d.getDate()} ${(lang === 'hi' ? MON_HI : MON3)[d.getMonth()]} ${d.getFullYear()}`;
+  // "till 3:30 PM" / "3:30 PM तक" — when this tithi/anga ends (nextDay marked)
+  const angaEnd = (e?: { hm: string; nextDay: boolean }) =>
+    !e ? '' : (lang === 'hi'
+      ? `${e.hm}${e.nextDay ? ' (अगले दिन)' : ''} तक`
+      : `till ${e.hm}${e.nextDay ? ' (next day)' : ''}`);
   // hasPred = real AI rashifal loaded. _fallback / null → show honest state, NOT fabricated lucky numbers.
   const hasPred = !!(pred && !pred._fallback);
+  // user's moon-sign (rashi) → dynamic rashi PNG icon used across the home cards
+  // Rashi shown to the user = naam-rashi (from the name's first syllable, the Dainik-Bhaskar
+  // "rashi by name" method) when a name is known; else the birth-chart moon sign.
+  const rashiSign = naamRashi(user?.name) || (pred as any)?.basis?.moonSign || (panch as any)?.moon?.sign || null;
+  const rashiImg = rashiImage(rashiSign);
+  const rashiLabel = rashiSign ? String(rashiSign).toUpperCase() : '';
   // lucky chips only when we have a real prediction (no fake "7 / Gold")
   const bannerChips = hasPred
     ? [
@@ -245,15 +305,12 @@ export function WelcomeScreen({ navigation }: any) {
     : [];
 
   return (
-    <Screen>
-      <BrandHeader showEmblem={false} onMenu={openMenu} onBell={() => navigation.navigate('Notifications')} />
+    <Screen header={<BrandHeader showEmblem={false} onMenu={openMenu} onBell={() => navigation.navigate('Notifications')} />}>
 
-      {/* web bg decorations: planets (right/left), twinkle stars */}
+      {/* deep-black cosmic backdrop: twinkle stars only (planet blobs removed so the
+          background stays pure black and the spinning zodiac wheel reads clearly) */}
       {theme.isDark && (
         <View style={StyleSheet.absoluteFill} pointerEvents="none">
-          <Planet size={260} colors={['#4a3a1a', '#2a2010', '#0a0a18']} style={{ right: -120, top: 60 }} opacity={0.55} />
-          <Planet size={200} colors={['#3a2d18', '#1a1408', '#050510']} style={{ right: -80, top: 420 }} opacity={0.6} />
-          <Planet size={220} colors={['#4a3a18', '#2a2010', '#08081a']} style={{ left: -90, top: 980 }} opacity={0.5} />
           {STARS.map((s, i) => (
             <View key={i} style={[styles.twinkle, { top: s.top as any, left: s.left as any }]} />
           ))}
@@ -262,9 +319,9 @@ export function WelcomeScreen({ navigation }: any) {
 
       {/* gold glow + spinning zodiac-wheel watermark behind the brand (web .bg-zodiac-left) */}
       <View style={styles.watermark} pointerEvents="none">
-        <GoldGlow size={320} style={{ top: -10 }} />
-        <View style={{ opacity: 0.32 }}>
-          <BgZodiac size={272} />
+        <GoldGlow size={320} style={{ top: -10 }} dark={theme.isDark} opacity={theme.isDark ? 0.16 : 0.22} />
+        <View style={{ opacity: theme.isDark ? 0.6 : 0.88 }}>
+          <BgZodiac size={262} dark={theme.isDark} />
         </View>
       </View>
 
@@ -273,7 +330,7 @@ export function WelcomeScreen({ navigation }: any) {
         {brand.logoImage ? (
           <Image source={{ uri: avatarUrl(brand.logoImage) || undefined }} style={styles.logoImg} resizeMode="contain" />
         ) : (
-          <ShreeYantraLogo size={72} />
+          <ShreeYantraLogo size={72} dark={theme.isDark} />
         )}
         <GradientText style={styles.brandTitle}>{(brand.appName || 'Shree Yantra').toUpperCase()}</GradientText>
         <View style={styles.brandSubRow}>
@@ -284,7 +341,7 @@ export function WelcomeScreen({ navigation }: any) {
       </View>
 
       {/* Welcome block */}
-      <View style={[styles.welcomeBlock, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.025)' : '#ffffff', borderColor: theme.isDark ? 'rgba(201,150,46,0.12)' : 'rgba(176,115,22,0.22)' }]}>
+      <View style={[styles.welcomeBlock, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.025)' : '#ffffff', borderColor: theme.isDark ? 'rgba(201,150,46,0.12)' : theme.cardBorder }]}>
         <View style={{ flex: 1, minWidth: 0 }}>
           <View style={styles.welcomeTitleRow}>
             <GradientText style={styles.welcomeTitle}>{home.t('greeting', t('home.greeting', 'Welcome'))}, {firstName} </GradientText>
@@ -293,10 +350,12 @@ export function WelcomeScreen({ navigation }: any) {
           <Text style={[styles.welcomeSub, { color: theme.textSoft }]}>{home.t('subtitle', t('home.dailyHoroscope', 'Your Daily Horoscope'))}</Text>
         </View>
         <View style={styles.zodiacBadge}>
-          <View style={[styles.wzIcon, { borderColor: 'rgba(233,184,80,0.38)', backgroundColor: theme.isDark ? 'rgba(0,0,0,0.6)' : 'rgba(176,115,22,0.06)' }]}>
-            <Text style={{ fontSize: 26, color: theme.gold1, lineHeight: 30 }}>♌</Text>
+          <View style={[styles.wzIcon, { borderColor: theme.isDark ? 'rgba(233,184,80,0.38)' : theme.cardBorder, backgroundColor: theme.isDark ? '#000000' : '#ffffff' }]}>
+            {rashiImg
+              ? <Image source={rashiImg} style={{ width: 30, height: 30 }} resizeMode="contain" />
+              : <Text style={{ fontSize: 26, color: theme.gold1, lineHeight: 30 }}>♌</Text>}
           </View>
-          <Text style={[styles.wzLabel, { color: theme.gold2 }]}>LEO</Text>
+          {!!rashiLabel && <Text style={[styles.wzLabel, { color: theme.gold2 }]}>{rashiLabel}</Text>}
         </View>
       </View>
 
@@ -308,9 +367,9 @@ export function WelcomeScreen({ navigation }: any) {
         <LinearGradient
           colors={theme.isDark ? ['rgba(122,82,20,0.34)', 'rgba(28,20,10,0.5)'] : ['#fdf2d4', '#fffaf0']}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          style={[styles.panchCard, { borderColor: theme.isDark ? 'rgba(201,150,46,0.3)' : 'rgba(176,115,22,0.24)' }]}
+          style={[styles.panchCard, { borderColor: theme.isDark ? 'rgba(201,150,46,0.3)' : theme.cardBorder }]}
         >
-          <View style={[styles.panchIcon, { borderColor: 'rgba(243,205,126,0.55)', backgroundColor: theme.isDark ? 'rgba(0,0,0,0.4)' : 'rgba(176,115,22,0.07)' }]}>
+          <View style={[styles.panchIcon, { borderColor: theme.isDark ? 'rgba(243,205,126,0.55)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.4)' : 'rgba(95,56,8,0.08)' }]}>
             <ServiceIcon name="calendar" color={theme.gold1} size={26} />
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
@@ -321,7 +380,16 @@ export function WelcomeScreen({ navigation }: any) {
                 : (lang === 'hi' ? 'तिथि व नक्षत्र देखें' : 'View tithi & nakshatra')}
             </Text>
             <Text style={[styles.panchSub, { color: theme.isDark ? 'rgba(239,224,168,0.7)' : theme.textMuted }]} numberOfLines={1}>
-              {panch ? `🌅 ${panch.sunrise}   🌇 ${panch.sunset}${panch.masa ? `   ·   ${lang === 'hi' ? panch.masa.amanta.hi : panch.masa.amanta.en}` : ''}` : (lang === 'hi' ? 'शुभ मुहूर्त · राहु काल · व्रत-त्योहार' : 'Shubh muhurat · Rahu Kaal · vrat & festivals')}
+              {panch ? (
+                <>
+                  <Text style={{ color: theme.gold1, fontFamily: fonts.interSemi }}>
+                    {panch.tithi?.endsAt
+                      ? `⏳ ${lang === 'hi' ? 'तिथि' : 'Tithi'} ${angaEnd(panch.tithi.endsAt)}`
+                      : (lang === 'hi' ? 'तिथि व नक्षत्र' : 'Tithi & Nakshatra')}
+                  </Text>
+                  {panch.masa ? `   ·   ${lang === 'hi' ? panch.masa.amanta.hi : panch.masa.amanta.en}` : ''}
+                </>
+              ) : (lang === 'hi' ? 'शुभ मुहूर्त · राहु काल · व्रत-त्योहार' : 'Shubh muhurat · Rahu Kaal · vrat & festivals')}
             </Text>
           </View>
           <Chevron c={theme.gold1} size={18} />
@@ -337,7 +405,9 @@ export function WelcomeScreen({ navigation }: any) {
       <GoldBorderCard solidBlack style={{ marginTop: 14, overflow: 'hidden' }}>
         <View style={styles.horoInner}>
           <View style={styles.horoRow}>
-            <ZodiacWheel size={120} dark={theme.isDark} />
+            {rashiImg
+              ? <ZodiacIcon sign={rashiSign} size={112} theme={theme} />
+              : <ZodiacWheel size={120} dark={theme.isDark} />}
             <View style={{ flex: 1, minWidth: 0 }}>
               <View style={styles.dateRow}>
                 <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={theme.gold2} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
@@ -359,7 +429,7 @@ export function WelcomeScreen({ navigation }: any) {
           <Pressable
             onPress={() => { hTap(); navigation.navigate('DailyPrediction'); }}
             android_ripple={{ color: theme.ripple }}
-            style={({ pressed }) => [styles.horoBtn, { borderColor: 'rgba(246,210,122,0.5)', backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : 'rgba(176,115,22,0.08)' }, pressed && { transform: [{ scale: 0.98 }] }]}
+            style={({ pressed }) => [styles.horoBtn, { borderColor: theme.isDark ? 'rgba(246,210,122,0.5)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : 'rgba(95,56,8,0.08)' }, pressed && { transform: [{ scale: 0.98 }] }]}
           >
             <Text style={[styles.horoBtnText, { color: theme.gold1 }]}>{t('home.readFull', 'Read Full Prediction')}</Text>
             <Chevron c={theme.gold1} size={15} />
@@ -399,12 +469,18 @@ export function WelcomeScreen({ navigation }: any) {
                 {/* Inner = tinted content area */}
                 <LinearGradient colors={tint} start={{ x: 0.1, y: 0 }} end={{ x: 0.6, y: 1 }} style={styles.featureCardInner}>
                   <View style={styles.featureTop} />
-                  <View style={styles.featureIconBox}><f.Art size={60} /></View>
+                  <View style={styles.featureIconBox}>
+                    {f.key === 'pred' && rashiImg
+                      ? <Image source={rashiImg} style={{ width: 60, height: 60, borderRadius: 10 }} resizeMode="contain" />
+                      : f.key === 'pred'
+                        ? <SunArt size={60} dark={theme.isDark} />
+                        : <f.Art size={60} />}
+                  </View>
                   <View style={styles.featureTextCol}>
                     <Text style={[styles.featureTitle, { color: theme.gold1 }]}>{home.t(featTitle[f.key], t(`home.feat.${f.key}.title`, f.title))}</Text>
-                    <Text style={[styles.featureDesc, { color: theme.isDark ? 'rgba(216,203,168,0.75)' : '#5a4a2a' }]}>{home.t(featDesc[f.key], t(`home.feat.${f.key}.desc`, f.desc))}</Text>
+                    <Text style={[styles.featureDesc, { color: theme.isDark ? 'rgba(216,203,168,0.75)' : theme.textMuted }]}>{home.t(featDesc[f.key], t(`home.feat.${f.key}.desc`, f.desc))}</Text>
                   </View>
-                  <View style={[styles.chevronCircle, { borderColor: 'rgba(246,210,122,0.5)' }]}>
+                  <View style={[styles.chevronCircle, { borderColor: theme.isDark ? 'rgba(246,210,122,0.5)' : theme.cardBorder }]}>
                     <Chevron c={theme.gold1} size={14} />
                   </View>
                 </LinearGradient>
@@ -436,8 +512,8 @@ export function WelcomeScreen({ navigation }: any) {
       {/* Prediction banner */}
       <GoldBorderCard style={{ marginTop: 20, overflow: 'hidden' }}>
         <View style={styles.predBanner}>
-          <View style={[styles.predOrb, { borderColor: 'rgba(201,150,46,0.45)', backgroundColor: theme.isDark ? 'rgba(0,0,0,0.7)' : 'rgba(176,115,22,0.06)' }]}>
-            <StarOrb size={46} />
+          <View style={[styles.predOrb, { borderColor: theme.isDark ? 'rgba(201,150,46,0.45)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.7)' : '#ffffff' }]}>
+            <StarOrb size={46} dark={theme.isDark} />
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={[styles.predKicker, { color: theme.isDark ? 'rgba(233,184,80,0.72)' : theme.gold3 }]}>{t('home.todaysPrediction', "TODAY'S PREDICTION")}</Text>
@@ -454,7 +530,7 @@ export function WelcomeScreen({ navigation }: any) {
             </Text>
             <Pressable
               onPress={() => { hTap(); navigation.navigate('DailyPrediction'); }}
-              style={[styles.predBtn, { borderColor: 'rgba(246,210,122,0.5)', backgroundColor: theme.isDark ? 'rgba(0,0,0,0.7)' : 'rgba(176,115,22,0.07)' }]}
+              style={[styles.predBtn, { borderColor: theme.isDark ? 'rgba(246,210,122,0.5)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.7)' : 'rgba(95,56,8,0.07)' }]}
             >
               <Text style={[styles.predBtnText, { color: theme.gold1 }]}>{t('home.viewDetails', 'View Details')}</Text>
               <Chevron c={theme.gold1} size={13} />
@@ -476,10 +552,10 @@ export function WelcomeScreen({ navigation }: any) {
               key={row.label}
               onPress={() => { hTap(); navigation.navigate(row.route); }}
               android_ripple={{ color: theme.ripple }}
-              style={({ pressed }) => [styles.listRow, { borderBottomColor: theme.isDark ? 'rgba(201,150,46,0.10)' : 'rgba(176,115,22,0.14)' }, i === arr.length - 1 && { borderBottomWidth: 0 }, pressed && { transform: [{ scale: 0.985 }] }]}
+              style={({ pressed }) => [styles.listRow, { borderBottomColor: theme.isDark ? 'rgba(201,150,46,0.10)' : theme.line }, i === arr.length - 1 && { borderBottomWidth: 0 }, pressed && { transform: [{ scale: 0.985 }] }]}
             >
               <View style={styles.listLeft}>
-                <View style={[styles.listIc, { borderColor: row.danger ? 'rgba(245,100,100,0.25)' : 'rgba(246,210,122,0.20)', backgroundColor: row.danger ? 'rgba(245,100,100,0.06)' : (theme.isDark ? 'rgba(0,0,0,0.5)' : '#fdf3da') }]}>
+                <View style={[styles.listIc, { borderColor: row.danger ? 'rgba(245,100,100,0.25)' : (theme.isDark ? 'rgba(246,210,122,0.20)' : theme.cardBorder), backgroundColor: row.danger ? 'rgba(245,100,100,0.06)' : (theme.isDark ? 'rgba(0,0,0,0.5)' : '#fff7e5') }]}>
                   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={ic} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">{row.icon()}</Svg>
                 </View>
                 <Text style={[styles.listLabel, { color: theme.text }]}>{t(row.lkey, row.label)}</Text>
@@ -494,7 +570,7 @@ export function WelcomeScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  watermark: { position: 'absolute', top: 80, left: 0, right: 0, alignItems: 'center', zIndex: -1 },
+  watermark: { position: 'absolute', top: 13, left: 0, right: 0, alignItems: 'center', zIndex: -1 },
   twinkle: { position: 'absolute', width: 2, height: 2, borderRadius: 1, backgroundColor: '#ffe9b5', shadowColor: '#ffe9b5', shadowOpacity: 0.8, shadowRadius: 3, elevation: 2 },
 
   logoBlock: { alignItems: 'center', gap: 10, marginTop: 14, paddingVertical: 4 },

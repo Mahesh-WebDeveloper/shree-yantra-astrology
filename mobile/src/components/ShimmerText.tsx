@@ -24,8 +24,8 @@ interface Props {
  */
 export function ShimmerText({ children, style, baseColor, shineColor, duration = 1500, gap = 550 }: Props) {
   const { theme } = useTheme();
-  const dim = baseColor ?? (theme.isDark ? 'rgba(233,184,80,0.42)' : 'rgba(151,93,12,0.7)');
-  const shine = shineColor ?? (theme.isDark ? '#fff7e0' : '#f3d98a');
+  const dim = baseColor ?? (theme.isDark ? 'rgba(233,184,80,0.42)' : 'rgba(79,50,9,0.82)');
+  const shine = shineColor ?? (theme.isDark ? '#fff7e0' : '#8f5a12');
 
   const [w, setW] = useState(0);
   const x = useRef(new Animated.Value(0)).current;

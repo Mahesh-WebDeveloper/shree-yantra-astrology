@@ -45,6 +45,24 @@ const Chevron = ({ c }: { c: string }) => (
   </Svg>
 );
 
+/* प्राक्कथन (intro) / उपशम (conclusion) — audio-only cards from the Yatharth Geeta commentary. */
+function AudioRow({ media, queue, theme, label }: { media: MediaItem; queue: Track[]; theme: Theme; label: string }) {
+  return (
+    <View style={[styles.card, { borderColor: theme.isDark ? 'rgba(201,150,46,0.28)' : 'rgba(176,115,22,0.22)', backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : '#fffdf7' }]}>
+      <View style={[styles.num, { backgroundColor: 'transparent', borderWidth: 1, borderColor: theme.gold2 }]}>
+        <Text style={{ color: theme.goldText, fontSize: 18, fontFamily: fonts.devanagari }}>ॐ</Text>
+      </View>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text style={[styles.chName, { color: theme.text }]} numberOfLines={1}>{media.title.replace(/^Yatharth Geeta - /, '')}</Text>
+        <Text style={[styles.chMeaning, { color: theme.textMuted }]} numberOfLines={1}>
+          {label}{media.durationText ? ` · ${media.durationText}` : ''}
+        </Text>
+      </View>
+      <ListenBtn media={media} queue={queue} theme={theme} />
+    </View>
+  );
+}
+
 export function GitaScreen({ navigation }: any) {
   const { theme } = useTheme();
   const t = useT();
@@ -65,7 +83,7 @@ export function GitaScreen({ navigation }: any) {
     <Page title={t('gita.title', 'Bhagavad Gita')} onBack={() => { hTap(); navigation.goBack(); }}>
       {/* hero */}
       <View style={styles.hero}>
-        <View style={[styles.omCircle, { borderColor: 'rgba(201,150,46,0.5)', backgroundColor: theme.isDark ? 'rgba(0,0,0,0.5)' : 'rgba(176,115,22,0.05)' }]}>
+        <View style={[styles.omCircle, { borderColor: theme.isDark ? 'rgba(201,150,46,0.5)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.5)' : '#ffffff' }]}>
           <OmGlyph size={40} />
         </View>
         <GradientText style={styles.heroTitle}>{t('gita.title', 'Bhagavad Gita')}</GradientText>
@@ -77,6 +95,13 @@ export function GitaScreen({ navigation }: any) {
       )}
       {err && (
         <Text style={[styles.err, { color: theme.textMuted }]}>Content load nahi ho paya — internet check karein.</Text>
+      )}
+
+      {/* प्राक्कथन — opening/intro audio, shown BEFORE chapter 1 (natural book order) */}
+      {gita.prakkathan && (
+        <View style={{ marginBottom: 10 }}>
+          <AudioRow media={gita.prakkathan} queue={gita.queue} theme={theme} label={t('gita.audioBy', 'यथार्थ गीता · स्वामी अड़गड़ानंद')} />
+        </View>
       )}
 
       <View style={{ gap: 10 }}>
@@ -111,23 +136,10 @@ export function GitaScreen({ navigation }: any) {
         ))}
       </View>
 
-      {/* प्राक्कथन + उपशम — audio-only (intro/conclusion) */}
-      {(gita.prakkathan || gita.upasham) && (
-        <View style={{ gap: 10, marginTop: 10 }}>
-          {[gita.prakkathan, gita.upasham].filter(Boolean).map((m) => (
-            <View key={m!._id} style={[styles.card, { borderColor: theme.isDark ? 'rgba(201,150,46,0.28)' : 'rgba(176,115,22,0.22)', backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : '#fffdf7' }]}>
-              <View style={[styles.num, { backgroundColor: 'transparent', borderWidth: 1, borderColor: theme.gold2 }]}>
-                <Text style={{ color: theme.goldText, fontSize: 18, fontFamily: fonts.devanagari }}>ॐ</Text>
-              </View>
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={[styles.chName, { color: theme.text }]} numberOfLines={1}>{m!.title.replace(/^Yatharth Geeta - /, '')}</Text>
-                <Text style={[styles.chMeaning, { color: theme.textMuted }]} numberOfLines={1}>
-                  {t('gita.audioBy', 'यथार्थ गीता · स्वामी अड़गड़ानंद')}{m!.durationText ? ` · ${m!.durationText}` : ''}
-                </Text>
-              </View>
-              <ListenBtn media={m!} queue={gita.queue} theme={theme} />
-            </View>
-          ))}
+      {/* उपशम — concluding audio, shown AFTER all 18 chapters */}
+      {gita.upasham && (
+        <View style={{ marginTop: 10 }}>
+          <AudioRow media={gita.upasham} queue={gita.queue} theme={theme} label={t('gita.audioBy', 'यथार्थ गीता · स्वामी अड़गड़ानंद')} />
         </View>
       )}
     </Page>

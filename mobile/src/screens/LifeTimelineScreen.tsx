@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Pressable } from 'react-native';
 import { Page } from '../components/Page';
 import { GradientText } from '../components/GradientText';
+import { SaralVivaran } from '../components/SaralVivaran';
 import { useTheme } from '../theme/ThemeProvider';
 import { Theme, fonts } from '../theme/tokens';
 import { hTap } from '../lib/haptics';
@@ -135,6 +136,8 @@ export function LifeTimelineScreen({ navigation }: any) {
           <View>
             {visible.map((p, i) => <PeriodCard key={`${p.lord}-${p.fromAge}-${i}`} p={p} lang={lang} theme={theme} />)}
           </View>
+
+          <SaralVivaran text={data.saralVivaran} />
 
           <Text style={[styles.trust, { color: theme.textMuted }]}>🔒 {lang === 'hi' ? 'गणना वास्तविक ग्रह-स्थितियों (Lahiri) + शास्त्रीय विंशोत्तरी दशा — हर काल का फल ग्रह की वास्तविक स्थिति पर आधारित।' : 'Real planetary positions (Lahiri) + classical Vimshottari — each period reasoned from the planet\'s real placement.'}</Text>
           <View style={{ height: 8 }} />

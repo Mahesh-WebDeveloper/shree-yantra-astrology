@@ -75,6 +75,7 @@ router.post('/auth/register', authCtrl.register);
 router.post('/auth/login', authCtrl.login);
 router.post('/auth/request-otp', authCtrl.requestOtp);
 router.post('/auth/verify-otp', authCtrl.verifyOtp);
+router.post('/auth/google', authCtrl.google);
 router.get('/auth/me', requireAuth, authCtrl.me);
 router.post('/auth/set-password', requireAuth, authCtrl.setPassword);
 
@@ -218,6 +219,7 @@ router.post('/horoscope/personalized', horoscopeCtrl.personalized);
 // AI (Gemini) — VedAstro data + user info se rashifal/insights generate
 router.post('/ai/daily-prediction', aiCtrl.dailyPrediction);
 router.post('/ai/period-prediction', aiCtrl.periodPrediction);
+router.post('/ai/sign-rashifal', aiCtrl.signRashifal);
 router.post('/baby-names', aiCtrl.babyNames);
 router.post('/name-ask', aiCtrl.nameAsk);
 router.post('/ai/ask-astrologer', aiCtrl.askAstrologer);

@@ -177,10 +177,54 @@ async function verifyOtp({ phone, code, name }) {
   return { user, token: signToken(user), isNew, profileComplete };
 }
 
-// ── FUTURE STUBS (dashboard se enable hone par implement karna) ──────
-// async function requestOtp({ phone }) { /* SMS provider: MSG91/Twilio */ }
-// async function verifyOtp({ phone, code }) { /* verify + upsert user */ }
-// async function loginWithGoogle({ idToken }) { /* verify google token + upsert */ }
+// ── GOOGLE SIGN-IN ──────────────────────────────────────────────────
+// Frontend gives a Google ID token (from the native GoogleSignin SDK, webClientId).
+// We verify it DIRECTLY with Google (no extra npm dep), check the audience is OUR web
+// client, then find-or-create the user — same one-flow as OTP (login + register).
+async function loginWithGoogle({ idToken }) {
+  if (!idToken) throw new AuthError('Google token chahiye');
+  if (!env.google.clientId) throw new AuthError('Google login abhi configured nahi hai', 500);
+
+  let payload;
+  try {
+    const r = await fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(idToken));
+    if (!r.ok) throw new Error('bad status');
+    payload = await r.json();
+  } catch (_) {
+    throw new AuthError('Google verification fail — dobara try karein', 401);
+  }
+  // the token MUST be minted for our app, and the email must be verified
+  if (payload.aud !== env.google.clientId) throw new AuthError('Ye Google token kisi aur app ka hai', 401);
+  if (String(payload.email_verified) !== 'true') throw new AuthError('Google email verified nahi hai', 401);
+
+  const email = normEmail(payload.email);
+  const googleId = payload.sub;
+  const name = (payload.name && String(payload.name).trim()) || (email ? email.split('@')[0] : 'Friend');
+
+  let user = await User.findOne({ $or: [{ googleId }, ...(email ? [{ email }] : [])] });
+  let isNew = false;
+  if (!user) {
+    isNew = true;
+    user = await User.create({
+      name,
+      email,
+      googleId,
+      emailVerified: true,
+      providers: ['google'],
+      profile: payload.picture ? { avatar: payload.picture } : {},
+      lastLoginAt: new Date(),
+    });
+  } else {
+    if (!user.googleId) user.googleId = googleId;
+    if (!user.email && email) user.email = email;
+    user.emailVerified = true;
+    if (!user.providers.includes('google')) user.providers.push('google');
+    user.lastLoginAt = new Date();
+    await user.save();
+  }
+  const profileComplete = !!(user.profile && user.profile.dob);
+  return { user, token: signToken(user), isNew, profileComplete };
+}
 
 module.exports = {
   signToken,
@@ -189,6 +233,7 @@ module.exports = {
   loginWithPassword,
   requestOtp,
   verifyOtp,
+  loginWithGoogle,
   setPassword,
   getUserById,
   AuthError,

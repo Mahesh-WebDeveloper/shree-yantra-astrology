@@ -55,20 +55,23 @@ export const TABS: Tab[] = [
   { key: 'dosha', label: 'DOSHA' },
 ];
 
-/** House numbers 1–12, positioned exactly as the web SVG. */
+/** House numbers 1–12 — standard North-Indian layout: 4 diamonds (1,4,7,10) + 8
+ *  corner triangles, every house in its OWN region. Number sits in the upper part of
+ *  each region; planets render just below it (see toChartPlanetsBySign), so nothing
+ *  overlaps or hides in the centre (the old layout crammed 9–12 at the middle). */
 export const HOUSES: HouseLabel[] = [
-  { n: 1, x: 100, y: 48 },
-  { n: 2, x: 55, y: 58 },
-  { n: 3, x: 45, y: 100 },
-  { n: 4, x: 55, y: 142 },
-  { n: 5, x: 100, y: 155 },
-  { n: 6, x: 145, y: 142 },
-  { n: 7, x: 155, y: 100 },
-  { n: 8, x: 145, y: 58 },
-  { n: 9, x: 100, y: 100 },
-  { n: 10, x: 80, y: 86 },
-  { n: 11, x: 120, y: 86 },
-  { n: 12, x: 100, y: 120 },
+  { n: 1, x: 100, y: 40 },   // top diamond
+  { n: 2, x: 52, y: 28 },    // top-left triangle
+  { n: 3, x: 28, y: 54 },    // left-top triangle
+  { n: 4, x: 52, y: 92 },    // left diamond
+  { n: 5, x: 28, y: 142 },   // left-bottom triangle
+  { n: 6, x: 52, y: 168 },   // bottom-left triangle
+  { n: 7, x: 100, y: 128 },  // bottom diamond
+  { n: 8, x: 148, y: 168 },  // bottom-right triangle
+  { n: 9, x: 172, y: 142 },  // right-bottom triangle
+  { n: 10, x: 148, y: 92 },  // right diamond
+  { n: 11, x: 172, y: 54 },  // right-top triangle
+  { n: 12, x: 148, y: 28 },  // top-right triangle
 ];
 
 /** Planet glyphs placed within the chart. */

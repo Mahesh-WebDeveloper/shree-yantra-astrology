@@ -133,7 +133,7 @@ export function NotificationsScreen({ navigation }: any) {
     [tab, data]
   );
 
-  const dim = theme.isDark ? '#b89a5b' : '#8a6f3a';
+  const dim = theme.isDark ? '#b89a5b' : theme.textMuted;
 
   return (
     <Page
@@ -172,7 +172,7 @@ export function NotificationsScreen({ navigation }: any) {
 
       {sections.length === 0 ? (
         <View style={styles.empty}>
-          <View style={[styles.emptyIcon, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.06)' : 'rgba(176,115,22,0.05)' }]}>
+          <View style={[styles.emptyIcon, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.06)' : '#ffffff' }]}>
             <Svg width={34} height={34} viewBox="0 0 24 24" fill="none" stroke={theme.gold2} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
               <Path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><Path d="M13.7 21a2 2 0 0 1-3.4 0" /><Line x1={3} y1={3} x2={21} y2={21} />
             </Svg>
@@ -199,7 +199,7 @@ export function NotificationsScreen({ navigation }: any) {
                       pressed && { transform: [{ scale: 0.99 }], borderColor: theme.gold2 },
                     ]}
                   >
-                    <View style={[styles.icon, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : 'rgba(176,115,22,0.10)' }]}>
+                    <View style={[styles.icon, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : '#ffffff' }]}>
                       {ICONS[n.icon](theme.gold1)}
                     </View>
                     <View style={{ flex: 1, minWidth: 0 }}>

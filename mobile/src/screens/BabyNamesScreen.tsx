@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ActivityIndicator, ScrollView, Modal, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ActivityIndicator, ScrollView, Modal, TextInput, Animated, PanResponder } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { Page } from '../components/Page';
 import { GradientText } from '../components/GradientText';
@@ -164,7 +165,7 @@ export function BabyNamesScreen({ navigation }: any) {
 
   return (
     <Page
-      title={hi ? 'नाम खोजें' : 'Baby Names'}
+      title={hi ? 'शिशु के शुभ नाम' : 'Child Name Finder'}
       onBack={() => { hTap(); navigation.goBack(); }}
       right={(
         <View style={styles.heartWrap}>
@@ -363,13 +364,18 @@ export function BabyNamesScreen({ navigation }: any) {
         </Text>
       )}
 
-      {/* detail bottom sheet */}
-      <Modal visible={!!detail} transparent animationType="slide" onRequestClose={() => setDetail(null)}>
-        <Pressable style={styles.backdrop} onPress={() => setDetail(null)}>
-          <Pressable style={[styles.sheet, { backgroundColor: theme.isDark ? '#14110b' : '#fffdf6', borderColor: theme.gold2 + '66' }]} onPress={(e) => e.stopPropagation()}>
-            {!!detail && <NameDetail n={detail} hi={hi} theme={theme} saved={saved.has(detail.name.toLowerCase())} onSave={() => onToggleSave(detail)} onClose={() => setDetail(null)} />}
-          </Pressable>
-        </Pressable>
+      {/* detail bottom sheet — swipe-down to close, close button clears the nav bar */}
+      <Modal visible={!!detail} transparent animationType="slide" statusBarTranslucent onRequestClose={() => setDetail(null)}>
+        {!!detail && (
+          <DetailSheet
+            detail={detail}
+            hi={hi}
+            theme={theme}
+            saved={saved.has(detail.name.toLowerCase())}
+            onSave={() => onToggleSave(detail)}
+            onClose={() => setDetail(null)}
+          />
+        )}
       </Modal>
 
       {/* Name Helper (Q&A) sheet */}
@@ -430,14 +436,56 @@ export function BabyNamesScreen({ navigation }: any) {
   );
 }
 
+// Draggable bottom sheet: swipe down on the handle to dismiss; bottom padding clears the
+// Android navigation bar so the Close button is never hidden behind it.
+function DetailSheet({ detail, hi, theme, saved, onSave, onClose }: any) {
+  const insets = useSafeAreaInsets();
+  const translateY = useRef(new Animated.Value(0)).current;
+  // reset position whenever a different name is opened while the sheet stays mounted
+  useEffect(() => { translateY.setValue(0); }, [detail?.name]);
+  const pan = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_e, g) => g.dy > 6 && Math.abs(g.dy) > Math.abs(g.dx),
+      onPanResponderMove: (_e, g) => { if (g.dy > 0) translateY.setValue(g.dy); },
+      onPanResponderRelease: (_e, g) => {
+        if (g.dy > 110 || g.vy > 0.6) {
+          Animated.timing(translateY, { toValue: 700, duration: 180, useNativeDriver: true }).start(() => onClose());
+        } else {
+          Animated.spring(translateY, { toValue: 0, useNativeDriver: true, speed: 16, bounciness: 4 }).start();
+        }
+      },
+    })
+  ).current;
+  return (
+    <View style={styles.backdrop}>
+      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+      <Animated.View
+        style={[
+          styles.sheet,
+          {
+            backgroundColor: theme.isDark ? '#14110b' : '#fffdf6',
+            borderColor: theme.gold2 + '66',
+            paddingBottom: insets.bottom + 18,
+            transform: [{ translateY }],
+          },
+        ]}
+      >
+        <View {...pan.panHandlers} style={styles.grab}>
+          <View style={styles.handle} />
+        </View>
+        <NameDetail n={detail} hi={hi} theme={theme} saved={saved} onSave={onSave} onClose={onClose} />
+      </Animated.View>
+    </View>
+  );
+}
+
 function NameDetail({ n, hi, theme, saved, onSave, onClose }: any) {
   const num = n.numerology;
   const row = (label: string, value?: string | null) => value ? (
     <View style={styles.dRow}><Text style={[styles.dKey, { color: theme.textMuted }]}>{label}</Text><Text style={[styles.dVal, { color: theme.text }]}>{value}</Text></View>
   ) : null;
   return (
-    <ScrollView showsVerticalScrollIndicator={false}>
-      <View style={styles.handle} />
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 4 }}>
       <View style={{ alignItems: 'center', marginBottom: 6 }}>
         <GradientText style={styles.dName}>{n.name}</GradientText>
         {!!n.nameHi && <Text style={[styles.dNameHi, { color: theme.gold1 }]}>{n.nameHi}</Text>}
@@ -580,6 +628,7 @@ const styles = StyleSheet.create({
   // detail sheet
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' },
   sheet: { borderTopLeftRadius: 22, borderTopRightRadius: 22, borderWidth: 1, paddingHorizontal: 20, paddingTop: 10, paddingBottom: 26, maxHeight: '88%' },
+  grab: { alignSelf: 'stretch', alignItems: 'center', paddingTop: 4, paddingBottom: 2 },
   handle: { alignSelf: 'center', width: 42, height: 4, borderRadius: 2, backgroundColor: 'rgba(150,150,150,0.4)', marginBottom: 12 },
   dName: { fontFamily: fonts.cinzel, fontSize: 27, letterSpacing: 0.5 },
   dNameHi: { fontFamily: fonts.inter, fontSize: 17, marginTop: 2 },

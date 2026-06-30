@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { View, Text, StyleSheet, Pressable, ActivityIndicator, Image } from 'react-native';
 import Svg, { Circle, Line, Path, Polyline, Rect, G } from 'react-native-svg';
+import { rashiImage } from '../components/icons/rashiImages';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme/ThemeProvider';
 import { Theme, fonts, radii } from '../theme/tokens';
@@ -15,7 +16,8 @@ import { GoldTimePicker } from '../components/GoldTimePicker';
 import { CalendarIcon, ClockIcon, UserLine } from '../components/icons/ProfileIcons';
 import { hTap, hSelect } from '../lib/haptics';
 import { birthFromProfile } from '../lib/birth';
-import { getHoroscope, getPersonalizedHoroscope, HoroscopePeriod, HoroscopeSign, DailyPrediction, LocationSuggestion, resolveLocation } from '../lib/api';
+import { naamRashi } from '../lib/naamRashi';
+import { getHoroscope, getPersonalizedHoroscope, getSignRashifal, SignRashifal, HoroscopePeriod, HoroscopeSign, DailyPrediction, LocationSuggestion, resolveLocation } from '../lib/api';
 import { useLang, useT } from '../i18n/LanguageProvider';
 
 const PERIODS: HoroscopePeriod[] = ['daily', 'weekly', 'monthly', 'yearly'];
@@ -67,56 +69,11 @@ function ScoreRing({ score, color }: { score: number; color: string }) {
   );
 }
 
-function RashiIcon({ signKey, color, size = 56 }: { signKey: string; color: string; size?: number }) {
-  const sw = { stroke: color, strokeWidth: 2.4, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, fill: 'none' as const };
-  const common = <Circle cx={32} cy={32} r={28} stroke={color} strokeWidth={1.1} opacity={0.22} fill="none" />;
-  let mark: React.ReactNode;
-  switch (signKey) {
-    case 'aries':
-      mark = <Path {...sw} d="M18 44C18 26 29 19 32 34C35 19 46 26 46 44M32 34v13" />;
-      break;
-    case 'taurus':
-      mark = <><Path {...sw} d="M18 18c4 10 10 12 14 12s10-2 14-12" /><Circle {...sw} cx={32} cy={39} r={12} /></>;
-      break;
-    case 'gemini':
-      mark = <><Path {...sw} d="M20 18c8 4 16 4 24 0M20 46c8-4 16-4 24 0" /><Line {...sw} x1={24} y1={20} x2={24} y2={44} /><Line {...sw} x1={40} y1={20} x2={40} y2={44} /></>;
-      break;
-    case 'cancer':
-      mark = <><Path {...sw} d="M17 27c7-8 22-8 30-1" /><Path {...sw} d="M47 37c-7 8-22 8-30 1" /><Circle {...sw} cx={24} cy={27} r={5} /><Circle {...sw} cx={40} cy={37} r={5} /></>;
-      break;
-    case 'leo':
-      mark = <><Path {...sw} d="M25 44c11-8 20-19 8-25c-8-4-15 4-11 11" /><Path {...sw} d="M38 35c10 0 9 12 1 12" /><Circle cx={27} cy={28} r={3} fill={color} /></>;
-      break;
-    case 'virgo':
-      mark = <><Path {...sw} d="M18 20v25M28 20v25M38 20v25" /><Path {...sw} d="M18 24c4-5 10-5 10 3M28 24c4-5 10-5 10 3M38 43c10-2 10-15 0-18" /></>;
-      break;
-    case 'libra':
-      mark = <><Path {...sw} d="M18 42h28M16 49h32" /><Path {...sw} d="M23 35c0-8 18-8 18 0" /></>;
-      break;
-    case 'scorpio':
-      mark = <><Path {...sw} d="M17 20v24M27 20v24M37 20v18c0 7 7 8 10 3" /><Path {...sw} d="M44 41l4 1l-2 4" /><Path {...sw} d="M17 24c4-5 10-5 10 3M27 24c4-5 10-5 10 3" /></>;
-      break;
-    case 'sagittarius':
-      mark = <><Line {...sw} x1={19} y1={45} x2={45} y2={19} /><Polyline {...sw} points="34 18 45 19 46 30" /><Line {...sw} x1={24} y1={26} x2={38} y2={40} /></>;
-      break;
-    case 'capricorn':
-      mark = <><Path {...sw} d="M17 21c7-5 14-1 14 7v18" /><Path {...sw} d="M31 32c8-8 18-1 14 8c-3 8-16 7-16-2" /></>;
-      break;
-    case 'aquarius':
-      mark = <><Path {...sw} d="M16 25c4-4 8-4 12 0s8 4 12 0s6-4 8-2" /><Path {...sw} d="M16 39c4-4 8-4 12 0s8 4 12 0s6-4 8-2" /></>;
-      break;
-    case 'pisces':
-      mark = <><Path {...sw} d="M23 18c-9 9-9 19 0 28M41 18c9 9 9 19 0 28" /><Line {...sw} x1={18} y1={32} x2={46} y2={32} /></>;
-      break;
-    default:
-      mark = <Circle {...sw} cx={32} cy={32} r={14} />;
-  }
-  return (
-    <Svg width={size} height={size} viewBox="0 0 64 64">
-      {common}
-      <G>{mark}</G>
-    </Svg>
-  );
+// Illustrated rashi (zodiac) PNG icon. `dim` fades unselected signs in the picker grid.
+function RashiIcon({ signKey, size = 56, dim = false }: { signKey: string; size?: number; dim?: boolean }) {
+  const img = rashiImage(signKey);
+  if (!img) return null;
+  return <Image source={img} style={{ width: size, height: size, opacity: dim ? 0.42 : 1 }} resizeMode="contain" />;
 }
 
 function AreaBar({ area, color, track }: { area: { title: string; score: number; text: string }; color: string; track: string }) {
@@ -184,6 +141,10 @@ export function PredictionsScreen({ navigation }: any) {
   const [showOtherTime, setShowOtherTime] = useState(false);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const autoSelectedRef = useRef(false);
+  // AI-rich, period-scaled rashifal for the selected sign (sections + saral + conclusion)
+  const [aiR, setAiR] = useState<SignRashifal | null>(null);
+  const [aiRLoading, setAiRLoading] = useState(false);
 
   useEffect(() => {
     let on = true;
@@ -205,7 +166,14 @@ export function PredictionsScreen({ navigation }: any) {
   useEffect(() => {
     let on = true;
     birthFromProfile()
-      .then((birth) => birth ? getPersonalizedHoroscope(birth) : null)
+      .then((birth) => {
+        // default the selected rashi to the user's naam-rashi (by name's first syllable)
+        if (on && birth && !autoSelectedRef.current) {
+          const r = naamRashi((birth as any).name);
+          if (r) { autoSelectedRef.current = true; setSelectedKey(r.toLowerCase()); }
+        }
+        return birth ? getPersonalizedHoroscope(birth) : null;
+      })
       .then((r) => { if (on && r?.horoscope) setPersonal(r.horoscope); })
       .catch(() => {});
     return () => { on = false; };
@@ -213,6 +181,19 @@ export function PredictionsScreen({ navigation }: any) {
 
   const selected = useMemo(() => signs.find((s) => s.key === selectedKey) || signs[0], [signs, selectedKey]);
   const track = theme.isDark ? 'rgba(233,184,80,0.13)' : 'rgba(176,115,22,0.12)';
+
+  // Fetch the AI-rich rashifal for the selected sign + period (sections + saral + conclusion).
+  const signName = selected?.name;
+  useEffect(() => {
+    if (!signName) return;
+    let on = true;
+    setAiR(null); setAiRLoading(true);
+    getSignRashifal(signName, period, { moonSign: basis?.moon?.sign, sunSign: basis?.sun?.sign })
+      .then((r) => { if (on) setAiR(r); })
+      .catch(() => { if (on) setAiR(null); })
+      .finally(() => { if (on) setAiRLoading(false); });
+    return () => { on = false; };
+  }, [signName, period, lang]);
 
   const changePeriod = (p: HoroscopePeriod) => {
     if (p === period) return;
@@ -262,7 +243,7 @@ export function PredictionsScreen({ navigation }: any) {
     <Page title={lang === 'hi' ? 'राशिफल' : 'Horoscope'} onBack={() => { hTap(); navigation.goBack(); }}>
       <Card contentStyle={styles.hero}>
         <LinearGradient colors={theme.buttonGradient} style={styles.heroIcon}>
-          <RashiIcon signKey={selected?.key || 'aries'} color={theme.buttonInk} size={66} />
+          <RashiIcon signKey={selected?.key || 'aries'} size={66} />
         </LinearGradient>
         <GradientText style={styles.heroTitle}>{lang === 'hi' ? 'सटीक राशिफल' : 'Chart-Grounded Horoscope'}</GradientText>
         <Text style={[styles.heroSub, { color: theme.textSoft }]}>
@@ -405,7 +386,7 @@ export function PredictionsScreen({ navigation }: any) {
                       pressed && { transform: [{ scale: 0.96 }] },
                     ]}
                   >
-                    <RashiIcon signKey={s.key} color={on ? theme.gold1 : theme.goldDim} size={48} />
+                    <RashiIcon signKey={s.key} dim={!on} size={48} />
                     <Text style={[styles.signName, { color: on ? theme.gold1 : theme.text }]} numberOfLines={1}>{s.displayName}</Text>
                     <Text style={[styles.signDates, { color: theme.textMuted }]} numberOfLines={1}>{s.dates}</Text>
                   </Pressable>
@@ -420,7 +401,7 @@ export function PredictionsScreen({ navigation }: any) {
         <Card contentStyle={styles.detailCard}>
           <View style={styles.detailHead}>
             <View style={[styles.detailIcon, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? '#000' : '#fffdf7' }]}>
-              <RashiIcon signKey={selected.key} color={theme.gold1} size={72} />
+              <RashiIcon signKey={selected.key} size={72} />
             </View>
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={[styles.kicker, { color: theme.gold1 }]}>{selected.lord} • {selected.element}</Text>
@@ -432,6 +413,42 @@ export function PredictionsScreen({ navigation }: any) {
 
           <Text style={[styles.summary, { color: theme.textSoft }]}>{selected.plainSummary}</Text>
           <Text style={[styles.summaryStrong, { color: theme.text }]}>{selected.summary}</Text>
+
+          {/* AI-rich, period-scaled rashifal — each point + a simple-language explanation, then a conclusion */}
+          {aiRLoading && (
+            <View style={styles.aiLoading}>
+              <ActivityIndicator color={theme.gold1} />
+              <Text style={[styles.aiLoadingText, { color: theme.textMuted }]}>
+                {period === 'yearly'
+                  ? (lang === 'hi' ? 'पूरे वर्ष का गहन राशिफल तैयार हो रहा है…' : 'Preparing your deep year-long rashifal…')
+                  : (lang === 'hi' ? 'आपका विस्तृत राशिफल तैयार हो रहा है…' : 'Preparing your detailed rashifal…')}
+              </Text>
+            </View>
+          )}
+          {!!aiR && aiR.sections.length > 0 && (
+            <View style={{ marginTop: 14, gap: 13 }}>
+              {!!aiR.headline && <GradientText style={styles.aiHeadline}>{aiR.headline}</GradientText>}
+              {aiR.sections.map((sec, i) => (
+                <View key={i} style={[styles.aiSection, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(255,253,247,0.7)' }]}>
+                  {!!sec.heading && <Text style={[styles.aiSecHead, { color: theme.gold1 }]}>{sec.heading}</Text>}
+                  <Text style={[styles.aiSecText, { color: theme.text }]}>{sec.text}</Text>
+                  {!!sec.saral && (
+                    <View style={[styles.saralBox, { borderColor: theme.gold2 + '55', backgroundColor: theme.isDark ? 'rgba(233,184,80,0.07)' : 'rgba(244,195,74,0.12)' }]}>
+                      <Text style={[styles.saralLabel, { color: theme.gold1 }]}>🪔 {lang === 'hi' ? 'सरल भाषा में समझें' : 'In simple words'}</Text>
+                      <Text style={[styles.saralText, { color: theme.textSoft }]}>{sec.saral}</Text>
+                    </View>
+                  )}
+                </View>
+              ))}
+              {!!(aiR.conclusion?.text || aiR.conclusion?.saral) && (
+                <View style={[styles.conclusionBox, { borderColor: theme.gold2 + '66', backgroundColor: theme.isDark ? 'rgba(201,150,46,0.1)' : 'rgba(244,195,74,0.16)' }]}>
+                  <Text style={[styles.aiSecHead, { color: theme.gold1 }]}>{lang === 'hi' ? 'निष्कर्ष (सारांश)' : 'Conclusion'}</Text>
+                  {!!aiR.conclusion.text && <Text style={[styles.aiSecText, { color: theme.text }]}>{aiR.conclusion.text}</Text>}
+                  {!!aiR.conclusion.saral && <Text style={[styles.saralText, { color: theme.textSoft, marginTop: 8 }]}>{aiR.conclusion.saral}</Text>}
+                </View>
+              )}
+            </View>
+          )}
 
           <View style={styles.metaGrid}>
             {[
@@ -569,4 +586,16 @@ const styles = StyleSheet.create({
   remedyText: { fontFamily: fonts.inter, fontSize: 12.5, lineHeight: 19 },
   basisLine: { fontFamily: fonts.inter, fontSize: 11.8, lineHeight: 18, marginTop: 2 },
   sourceNote: { fontFamily: fonts.inter, fontSize: 11.5, lineHeight: 17, marginTop: 10 },
+
+  // AI-rich period rashifal (sections + saral + conclusion)
+  aiLoading: { alignItems: 'center', gap: 10, paddingVertical: 22 },
+  aiLoadingText: { fontFamily: fonts.inter, fontSize: 12.5, textAlign: 'center', lineHeight: 18 },
+  aiHeadline: { fontFamily: fonts.playfairBold, fontSize: 17, lineHeight: 23, marginBottom: 2 },
+  aiSection: { borderWidth: 1, borderRadius: 14, padding: 13 },
+  aiSecHead: { fontFamily: fonts.cinzelSemi, fontSize: 13, letterSpacing: 0.4, marginBottom: 6 },
+  aiSecText: { fontFamily: fonts.inter, fontSize: 13.3, lineHeight: 21 },
+  saralBox: { borderWidth: 1, borderRadius: 12, padding: 11, marginTop: 11 },
+  saralLabel: { fontFamily: fonts.interSemi, fontSize: 11.5, letterSpacing: 0.3, marginBottom: 4 },
+  saralText: { fontFamily: fonts.inter, fontSize: 12.8, lineHeight: 20 },
+  conclusionBox: { borderWidth: 1, borderRadius: 14, padding: 14 },
 });

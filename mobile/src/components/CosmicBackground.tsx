@@ -3,32 +3,38 @@ import { StyleSheet } from 'react-native';
 import Svg, { Defs, RadialGradient, Stop, Rect, Circle } from 'react-native-svg';
 import { useTheme } from '../theme/ThemeProvider';
 
-export function CosmicBackground() {
+// fixed star positions — hoisted so the array isn't re-created on every render
+const STARS = [
+  [47, 185, 0.9], [117, 118, 0.7], [273, 68, 0.7], [359, 320, 0.75],
+  [70, 506, 0.7], [250, 608, 0.55], [343, 726, 0.75], [23, 338, 0.6],
+] as const;
+
+// React.memo: this is rendered on EVERY screen. Without it, any parent re-render (loading
+// state, scroll, AI updates) re-builds the whole SVG. It has no props, so it now only
+// re-renders when the theme itself changes — big win for page/theme switching smoothness.
+export const CosmicBackground = React.memo(function CosmicBackground() {
   const { theme } = useTheme();
   if (!theme.isDark) {
     return (
       <Svg pointerEvents="none" style={StyleSheet.absoluteFill} width="100%" height="100%" viewBox="0 0 390 844" preserveAspectRatio="none">
         <Defs>
           <RadialGradient id="lg1" cx="18%" cy="5%" r="42%">
-            <Stop offset="0%" stopColor="#f6c84e" stopOpacity={0.5} />
-            <Stop offset="100%" stopColor="#fff8ea" stopOpacity={0} />
+            <Stop offset="0%" stopColor="#e6bd63" stopOpacity={0.16} />
+            <Stop offset="100%" stopColor="#ffffff" stopOpacity={0} />
           </RadialGradient>
           <RadialGradient id="lg2" cx="88%" cy="18%" r="38%">
-            <Stop offset="0%" stopColor="#eaa83c" stopOpacity={0.28} />
-            <Stop offset="100%" stopColor="#fff8ea" stopOpacity={0} />
+            <Stop offset="0%" stopColor="#b77b1b" stopOpacity={0.10} />
+            <Stop offset="100%" stopColor="#ffffff" stopOpacity={0} />
           </RadialGradient>
         </Defs>
-        <Rect width="390" height="844" fill="#fff8ea" />
+        <Rect width="390" height="844" fill="#ffffff" />
         <Rect width="390" height="844" fill="url(#lg1)" />
         <Rect width="390" height="844" fill="url(#lg2)" />
       </Svg>
     );
   }
 
-  const stars = [
-    [47, 185, 0.9], [117, 118, 0.7], [273, 68, 0.7], [359, 320, 0.75],
-    [70, 506, 0.7], [250, 608, 0.55], [343, 726, 0.75], [23, 338, 0.6],
-  ] as const;
+  const stars = STARS;
 
   return (
     <Svg pointerEvents="none" style={StyleSheet.absoluteFill} width="100%" height="100%" viewBox="0 0 390 844" preserveAspectRatio="none">
@@ -55,4 +61,4 @@ export function CosmicBackground() {
       ))}
     </Svg>
   );
-}
+});

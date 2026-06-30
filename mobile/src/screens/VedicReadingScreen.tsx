@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { Page } from '../components/Page';
 import { GradientText } from '../components/GradientText';
 import { SpeakButton } from '../components/SpeakButton';
+import { SaralVivaran } from '../components/SaralVivaran';
 import { useTheme } from '../theme/ThemeProvider';
 import { Theme, fonts, radii } from '../theme/tokens';
 import { hTap } from '../lib/haptics';
@@ -154,6 +155,8 @@ export function VedicReadingScreen({ navigation }: any) {
               <Text style={[styles.adviceText, { color: theme.text }]}>💛 {ex.advice}</Text>
             </View>
           )}
+
+          <SaralVivaran text={ex?.saralVivaran} />
 
           <Text style={[styles.trust, { color: theme.textMuted }]}>🔒 {lang === 'hi' ? 'गणना वास्तविक ग्रह-स्थितियों (Lahiri) · फलादेश शास्त्र-आधारित (BPHS/फलदीपिका/मानसागरी)।' : 'Chart from real planetary positions (Lahiri) · readings from classical texts (BPHS/Phaldeepika/Mansagari).'}</Text>
           <View style={{ height: 8 }} />

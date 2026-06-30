@@ -15,7 +15,7 @@ const mediaItemSchema = new mongoose.Schema(
     artist: { type: String, default: '', trim: true },
     category: {
       type: String,
-      enum: ['mantra', 'spiritual_music', 'bhajan'],
+      enum: ['mantra', 'spiritual_music', 'bhajan', 'aarti'],
       required: true,
       index: true,
     },

@@ -89,28 +89,29 @@ const PinIcon = ({ color, size = 12 }: { color: string; size?: number }) => (
 );
 
 /** Exact port of the web active-card yantra SVG (gold gradient rings + triangles). */
-const YantraArt = React.memo(({ size = 64 }: { size?: number }) => (
+const YantraArt = React.memo(({ size = 64, dark = true }: { size?: number; dark?: boolean }) => (
   <Svg width={size} height={size} viewBox="0 0 120 120" fill="none">
     <Defs>
       <SvgGrad id="cgGold" x1="0" y1="0" x2="1" y2="1">
-        <Stop offset="0" stopColor="#fce8a8" />
-        <Stop offset="0.5" stopColor="#e9b850" />
-        <Stop offset="1" stopColor="#a17613" />
+        <Stop offset="0" stopColor={dark ? '#fce8a8' : '#70420a'} />
+        <Stop offset="0.5" stopColor={dark ? '#e9b850' : '#5f3808'} />
+        <Stop offset="1" stopColor={dark ? '#a17613' : '#332006'} />
       </SvgGrad>
     </Defs>
-    <Circle cx={60} cy={60} r={56} stroke="url(#cgGold)" strokeWidth={1.5} strokeDasharray="2 4" />
-    <Circle cx={60} cy={60} r={48} stroke="url(#cgGold)" strokeWidth={1} />
-    <Circle cx={60} cy={60} r={32} stroke="url(#cgGold)" strokeWidth={1} opacity={0.6} />
-    <Path d="M60 12 L96 78 H24 Z" stroke="url(#cgGold)" strokeWidth={1.5} />
-    <Path d="M60 108 L24 42 H96 Z" stroke="url(#cgGold)" strokeWidth={1.5} />
-    <Path d="M60 28 L80 64 H40 Z" stroke="url(#cgGold)" strokeWidth={1} />
-    <Path d="M60 92 L40 56 H80 Z" stroke="url(#cgGold)" strokeWidth={1} />
-    <Circle cx={60} cy={60} r={4} fill="url(#cgGold)" />
+    {!dark && <Circle cx={60} cy={60} r={57} fill="#ffffff" opacity={0.86} />}
+    <Circle cx={60} cy={60} r={56} stroke="url(#cgGold)" strokeWidth={dark ? 1.5 : 2.3} strokeDasharray="2 4" />
+    <Circle cx={60} cy={60} r={48} stroke="url(#cgGold)" strokeWidth={dark ? 1 : 1.7} />
+    <Circle cx={60} cy={60} r={32} stroke="url(#cgGold)" strokeWidth={dark ? 1 : 1.7} opacity={dark ? 0.6 : 0.95} />
+    <Path d="M60 12 L96 78 H24 Z" stroke="url(#cgGold)" strokeWidth={dark ? 1.5 : 2.4} />
+    <Path d="M60 108 L24 42 H96 Z" stroke="url(#cgGold)" strokeWidth={dark ? 1.5 : 2.4} />
+    <Path d="M60 28 L80 64 H40 Z" stroke="url(#cgGold)" strokeWidth={dark ? 1 : 1.7} />
+    <Path d="M60 92 L40 56 H80 Z" stroke="url(#cgGold)" strokeWidth={dark ? 1 : 1.7} />
+    <Circle cx={60} cy={60} r={dark ? 4 : 5} fill="url(#cgGold)" />
   </Svg>
 ));
 
 /** Pulsing gold radial glow behind the yantra (web .cg-yantra::before, 3s alternate). */
-function YantraGlow({ size }: { size: number }) {
+function YantraGlow({ size, dark = true }: { size: number; dark?: boolean }) {
   const a = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.loop(
@@ -126,8 +127,8 @@ function YantraGlow({ size }: { size: number }) {
       <Svg width={size} height={size}>
         <Defs>
           <RadialGradient id="ygl" cx="50%" cy="50%" r="50%">
-            <Stop offset="0%" stopColor="#eecb7a" stopOpacity={0.4} />
-            <Stop offset="70%" stopColor="#eecb7a" stopOpacity={0} />
+            <Stop offset="0%" stopColor={dark ? '#eecb7a' : '#5f3808'} stopOpacity={dark ? 0.4 : 0.16} />
+            <Stop offset="70%" stopColor={dark ? '#eecb7a' : '#5f3808'} stopOpacity={0} />
           </RadialGradient>
         </Defs>
         <Circle cx={size / 2} cy={size / 2} r={size / 2} fill="url(#ygl)" />
@@ -506,8 +507,7 @@ export function ChoghadiyaScreen({ navigation }: any) {
   const goldDim = theme.goldDim;
 
   return (
-    <Screen>
-      <BrandHeader onMenu={openMenu} onBell={() => navigation.navigate('Notifications')} />
+    <Screen header={<BrandHeader onMenu={openMenu} onBell={() => navigation.navigate('Notifications')} />}>
 
       {/* cg-header: ornament ✦ CHOGHADIYA ✦ ornament + subtitle + date pill */}
       <View style={styles.cgHeader}>
@@ -546,8 +546,8 @@ export function ChoghadiyaScreen({ navigation }: any) {
         style={[
           styles.activeCard,
           {
-            backgroundColor: theme.isDark ? 'rgba(2,2,4,0.96)' : '#fffdf6',
-            borderColor: theme.isDark ? 'rgba(238,203,122,0.42)' : 'rgba(176,115,22,0.34)',
+            backgroundColor: theme.isDark ? 'rgba(2,2,4,0.96)' : '#ffffff',
+            borderColor: theme.isDark ? 'rgba(238,203,122,0.42)' : theme.cardBorder,
           },
         ]}
       >
@@ -566,7 +566,7 @@ export function ChoghadiyaScreen({ navigation }: any) {
         )}
         <LinearGradient
           pointerEvents="none"
-          colors={['transparent', 'rgba(252,232,168,0.72)', 'transparent']}
+          colors={theme.isDark ? ['transparent', 'rgba(252,232,168,0.72)', 'transparent'] : ['transparent', 'rgba(95,56,8,0.28)', 'transparent']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.activeTopLine}
@@ -579,16 +579,16 @@ export function ChoghadiyaScreen({ navigation }: any) {
               <Text style={[styles.activeLabel, { color: goldDim }]}>{isToday && active ? tr('cg.currentlyActive', 'CURRENTLY ACTIVE') : tr('cg.dayBegins', 'DAY BEGINS WITH')}</Text>
             </View>
             <View style={styles.activeRow}>
-              <View style={styles.yantraWrap}>
-                <YantraGlow size={90} />
-                <YantraArt size={62} />
+              <View style={[styles.yantraWrap, { backgroundColor: theme.isDark ? 'transparent' : '#ffffff', borderColor: theme.isDark ? 'transparent' : theme.cardBorder, borderWidth: theme.isDark ? 0 : 1 }]}>
+                <YantraGlow size={90} dark={theme.isDark} />
+                <YantraArt size={62} dark={theme.isDark} />
               </View>
               <View style={styles.activeInfo}>
                 <View style={styles.activeNameRow}>
                   <Text style={[styles.activeName, { color: hAccent, textShadowColor: hAccent, textShadowRadius: 14, textShadowOffset: { width: 0, height: 0 } }]}>{aPeriod(highlight.name, lang).toUpperCase()}</Text>
                   <CheckIcon color={hAccent} />
                 </View>
-                <View style={[styles.timeRow, { backgroundColor: theme.isDark ? 'rgba(0,0,0,0.4)' : 'rgba(176,115,22,0.07)' }]}>
+                <View style={[styles.timeRow, { backgroundColor: theme.isDark ? 'rgba(0,0,0,0.4)' : 'rgba(95,56,8,0.07)' }]}>
                   <ClockIcon color={theme.goldText} size={12} />
                   <Text style={[styles.activeTime, { color: theme.goldText }]}>{fmtTime(highlight.start)} - {fmtTime(highlight.end)}</Text>
                 </View>
@@ -599,7 +599,7 @@ export function ChoghadiyaScreen({ navigation }: any) {
             active={isToday ? active : undefined}
             durMin={durMin}
             accent={hAccent}
-            track={theme.isDark ? 'rgba(255,255,255,0.12)' : 'rgba(176,115,22,0.18)'}
+            track={theme.isDark ? 'rgba(255,255,255,0.12)' : 'rgba(95,56,8,0.18)'}
             textColor={theme.text}
             mutedColor={theme.textMuted}
           />
@@ -618,9 +618,9 @@ export function ChoghadiyaScreen({ navigation }: any) {
         <LinearGradient
           colors={theme.isDark ? ['rgba(238,203,122,0.18)', 'rgba(20,15,6,0.5)'] : ['#fdf2d4', '#fffaf0']}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          style={[styles.muhuratCta, { borderColor: theme.isDark ? 'rgba(238,203,122,0.4)' : 'rgba(176,115,22,0.3)' }]}
+          style={[styles.muhuratCta, { borderColor: theme.isDark ? 'rgba(238,203,122,0.4)' : theme.cardBorder }]}
         >
-          <View style={[styles.muhuratIcon, { borderColor: 'rgba(238,203,122,0.55)', backgroundColor: theme.isDark ? 'rgba(0,0,0,0.4)' : 'rgba(176,115,22,0.07)' }]}>
+          <View style={[styles.muhuratIcon, { borderColor: theme.isDark ? 'rgba(238,203,122,0.55)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.4)' : '#ffffff' }]}>
             <Sparkle color={theme.goldText} size={18} />
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
@@ -821,7 +821,7 @@ const styles = StyleSheet.create({
   activeTopLine: { position: 'absolute', top: 0, left: '12%', right: '12%', height: 1 },
   activeBody: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   activeRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 4 },
-  yantraWrap: { width: 64, height: 64, alignItems: 'center', justifyContent: 'center' },
+  yantraWrap: { width: 64, height: 64, borderRadius: 22, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   activeInfo: { flex: 1, minWidth: 0 },
   activeLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   activeLabel: { fontFamily: fonts.interSemi, fontSize: 10, letterSpacing: 1.4 },

@@ -32,7 +32,9 @@ export const STRINGS: Record<string, { en: string; hi: string }> = {
   'nav.panchang': { en: 'Panchang', hi: 'पंचांग' },
   'nav.janamPatri': { en: 'Janam Patri', hi: 'जन्म पत्रिका' },
   'nav.brihatKundli': { en: 'Brihat Kundli', hi: 'बृहत कुंडली' },
-  'nav.babyNames': { en: 'Baby Names', hi: 'बच्चे का नाम' },
+  'brihat.title': { en: 'Brihat Kundli Report', hi: 'बृहत कुंडली रिपोर्ट' },
+  'brihat.entrySub': { en: 'Charts, varga, dasha, dosha, transits and domain-wise advanced report', hi: 'कुंडली, वर्ग, दशा, दोष, गोचर और जीवन-क्षेत्र आधारित विस्तृत रिपोर्ट' },
+  'nav.babyNames': { en: 'Child Name Finder', hi: 'शिशु के शुभ नाम' },
   'nav.aiAstrologer': { en: 'Vedic Astrologer', hi: 'ज्योतिषी जी' },
   'nav.kundli': { en: 'Kundli', hi: 'कुंडली' },
   'nav.choghadiya': { en: 'Choghadiya', hi: 'चौघड़िया' },
@@ -83,12 +85,15 @@ export const STRINGS: Record<string, { en: string; hi: string }> = {
   'home.feat.pred.desc': { en: 'YOUR personal horoscope — daily, weekly, monthly & yearly from your birth chart', hi: 'आपका व्यक्तिगत राशिफल — अपनी जन्म कुंडली से दैनिक, साप्ताहिक, मासिक व वार्षिक' },
   'home.feat.horoscope.title': { en: 'Rashifal · 12 Signs', hi: 'राशिफल · 12 राशियाँ' },
   'home.feat.horoscope.desc': { en: "Today's horoscope for any of the 12 zodiac signs (yourself or family)", hi: 'किसी भी राशि का आज का राशिफल (अपना या परिवार का)' },
-  'home.feat.ai.title': { en: 'Vedic Astrologer', hi: 'ज्योतिषी जी' },
+  'home.feat.ai.title': { en: 'Ask the Astrologer', hi: 'ज्योतिषी से प्रश्न पूछें' },
   'home.feat.ai.desc': { en: 'Ask personal questions using your chart and precise planetary data', hi: 'अपनी कुंडली और सटीक ग्रह डेटा के आधार पर प्रश्न पूछें' },
   'home.feat.kundli.title': { en: 'Kundli / Birth Chart', hi: 'कुंडली / जन्म कुंडली' },
   'home.feat.kundli.desc': { en: 'View your detailed birth chart and planetary positions', hi: 'अपनी विस्तृत जन्म कुंडली और ग्रहों की स्थिति देखें' },
   'home.feat.chog.title': { en: 'Choghadiya Muhurat', hi: 'चौघड़िया मुहूर्त' },
   'home.feat.chog.desc': { en: 'Find auspicious timings for important work and decisions', hi: 'महत्वपूर्ण कार्यों के लिए शुभ मुहूर्त जानें' },
+  'home.feat.patri.title': { en: 'Janam Patri + Naamkaran', hi: 'जन्म पत्रिका + नामकरण' },
+  'home.feat.patri.desc': { en: 'Full kundli for a baby/anyone + lucky names + Vedic PDF export', hi: 'शिशु/किसी की भी पूरी कुंडली + शुभ नाम + वैदिक PDF' },
+  'lib.dynamicAarti': { en: 'AARTI', hi: 'आरती' },
 
   // ── auth (mobile + OTP) ──
   'auth.enterMobileSub': { en: "We'll send a one-time code to verify your number", hi: 'आपके नंबर की पुष्टि के लिए हम एक OTP भेजेंगे' },
@@ -165,6 +170,9 @@ export const STRINGS: Record<string, { en: string; hi: string }> = {
   'ai.emptyText': { en: 'For best results, complete your birth date, birth time, and birth place in profile. The app will use that context automatically.', hi: 'बेहतर परिणाम के लिए प्रोफाइल में जन्म तिथि, जन्म समय और जन्म स्थान पूरा करें। ऐप उस संदर्भ का उपयोग अपने आप करेगा।' },
   'ai.question': { en: 'Question', hi: 'प्रश्न' },
   'ai.loading': { en: "Reading your chart and today's panchang...", hi: 'आपकी कुंडली और आज का पंचांग पढ़ा जा रहा है...' },
+  'ai.retry': { en: 'TRY AGAIN', hi: 'फिर प्रयास करें' },
+  'ai.retryMessage': { en: 'The answer is taking longer than expected. Please tap retry and the app will try again.', hi: 'उत्तर आने में अपेक्षा से अधिक समय लग रहा है। फिर प्रयास करें, ऐप दोबारा कोशिश करेगा।' },
+  'ai.unavailable': { en: 'Could not get an answer. Please try again.', hi: 'अभी उत्तर नहीं मिल पाया। कृपया फिर प्रयास करें।' },
   'ai.answer': { en: 'Answer', hi: 'उत्तर' },
   'ai.basis': { en: 'Calculation basis', hi: 'गणना का आधार' },
   'ai.remedies': { en: 'Suggested remedies', hi: 'सुझाए गए उपाय' },
@@ -184,6 +192,7 @@ export const STRINGS: Record<string, { en: string; hi: string }> = {
   // ── subscribe ──
   'sub.unlock': { en: 'Unlock Premium Predictions & Remedies', hi: 'प्रीमियम राशिफल और उपाय अनलॉक करें' },
   'sub.cta': { en: 'SUBSCRIBE NOW', hi: 'अभी सब्सक्राइब करें' },
+  'sub.skip': { en: 'Skip for now — I’ll subscribe later', hi: 'अभी रहने दें — बाद में सब्सक्राइब करूँगा' },
   'sub.secure': { en: '100% Secure', hi: '100% सुरक्षित' },
   'sub.secureSub': { en: 'Your data is safe with us', hi: 'आपका डेटा हमारे पास सुरक्षित है' },
   'sub.accurate': { en: 'Accurate Prediction', hi: 'सटीक भविष्यवाणी' },
@@ -271,8 +280,8 @@ export const STRINGS: Record<string, { en: string; hi: string }> = {
   'forecast.entrySub': { en: 'Year-by-year Sade Sati & Jupiter transit effects', hi: 'साल-दर-साल साढ़े साती व गुरु गोचर का फल' },
 
   // ── Baby Names ──
-  'babynames.title': { en: 'Baby Names', hi: 'बच्चे का नाम' },
-  'babynames.heading': { en: 'Find a Baby Name', hi: 'बच्चे का नाम खोजें' },
+  'babynames.title': { en: 'Child Name Finder', hi: 'शिशु के शुभ नाम' },
+  'babynames.heading': { en: 'Find a Child Name', hi: 'बच्चे का नाम खोजें' },
   'babynames.cta': { en: 'Suggest Names', hi: 'नाम सुझाएँ' },
 
   // ── Remedies (Upaay) ──
@@ -304,6 +313,7 @@ export const STRINGS: Record<string, { en: string; hi: string }> = {
   'kundli.showAdvanced': { en: 'SHOW ADVANCED CHARTS', hi: 'उन्नत चार्ट दिखाएँ' },
   'kundli.hideAdvanced': { en: 'HIDE ADVANCED CHARTS', hi: 'उन्नत चार्ट छिपाएँ' },
   'kundli.chartLoading': { en: 'Preparing divisional charts...', hi: 'विभागीय कुंडली तैयार हो रही है...' },
+  'kundli.chartLoadingMore': { en: 'Loading more charts…', hi: 'और कुंडलियाँ लोड हो रही हैं…' },
   'kundli.chartUnavailable': { en: 'Divisional charts are unavailable right now.', hi: 'विभागीय कुंडली अभी उपलब्ध नहीं है।' },
   'kundli.askChartAi': { en: 'Explain this', hi: 'विस्तार से समझें' },
   'kundli.whatItShows': { en: 'What it shows', hi: 'यह क्या दिखाता है' },
@@ -324,6 +334,7 @@ export const STRINGS: Record<string, { en: string; hi: string }> = {
   'lib.filter.mantras': { en: 'MANTRAS', hi: 'मंत्र' },
   'lib.filter.scriptures': { en: 'SCRIPTURES', hi: 'ग्रंथ' },
   'lib.filter.music': { en: 'MUSIC', hi: 'संगीत' },
+  'lib.filter.bhajans': { en: 'BHAJANS', hi: 'भजन' },
   'lib.filter.saved': { en: 'SAVED', hi: 'सहेजे' },
 
   // ── profile menu rows ──

@@ -6,6 +6,7 @@ import { OnboardingScreen } from '../screens/OnboardingScreen';
 import { SignInScreen } from '../screens/SignInScreen';
 import { RegisterScreen } from '../screens/RegisterScreen';
 import { PhoneAuthScreen } from '../screens/PhoneAuthScreen';
+import { LanguageSelectScreen } from '../screens/LanguageSelectScreen';
 import { BirthDetailsScreen } from '../screens/BirthDetailsScreen';
 import { DailyPredictionScreen } from '../screens/DailyPredictionScreen';
 import { AiAstrologerScreen } from '../screens/AiAstrologerScreen';
@@ -46,6 +47,8 @@ import { VedicReadingScreen } from '../screens/VedicReadingScreen';
 import { LifeTimelineScreen } from '../screens/LifeTimelineScreen';
 import { JanamPatriScreen } from '../screens/JanamPatriScreen';
 import { BrihatKundliScreen } from '../screens/BrihatKundliScreen';
+import { KundliLearnScreen } from '../screens/KundliLearnScreen';
+import { ExampleKundliScreen } from '../screens/ExampleKundliScreen';
 import { TransitForecastScreen } from '../screens/TransitForecastScreen';
 import { BabyNamesScreen } from '../screens/BabyNamesScreen';
 import { stackSpec, forSharedAxisX, forFadeThrough } from './transitions';
@@ -57,6 +60,9 @@ export function RootNavigator() {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
+        // PERF: freeze covered/blurred stack screens — a theme toggle or state change
+        // only re-renders the screen on top, not every screen underneath.
+        freezeOnBlur: true,
         // keep the page below mounted so its exit half of the shared-axis plays
         detachPreviousScreen: false,
         transitionSpec: stackSpec,
@@ -78,6 +84,7 @@ export function RootNavigator() {
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         <Stack.Screen name="PhoneAuth" component={PhoneAuthScreen} />
+        <Stack.Screen name="LanguageSelect" component={LanguageSelectScreen} />
         <Stack.Screen name="BirthDetails" component={BirthDetailsScreen} />
         <Stack.Screen name="SignIn" component={SignInScreen} />
         <Stack.Screen name="Register" component={RegisterScreen} />
@@ -117,6 +124,8 @@ export function RootNavigator() {
       <Stack.Screen name="LifeTimeline" component={LifeTimelineScreen} />
       <Stack.Screen name="JanamPatri" component={JanamPatriScreen} />
       <Stack.Screen name="BrihatKundli" component={BrihatKundliScreen} />
+      <Stack.Screen name="KundliLearn" component={KundliLearnScreen} />
+      <Stack.Screen name="ExampleKundli" component={ExampleKundliScreen} />
       <Stack.Screen name="TransitForecast" component={TransitForecastScreen} />
       <Stack.Screen name="BabyNames" component={BabyNamesScreen} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />

@@ -73,7 +73,7 @@ const menuIcon = (k: RowIcon, color: string) => {
 /* shared gold-bordered icon tile */
 function IcCircle({ children, theme }: { children: React.ReactNode; theme: Theme }) {
   return (
-    <View style={[styles.icCircle, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.5)' : 'rgba(176,115,22,0.06)' }]}>
+    <View style={[styles.icCircle, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.5)' : '#ffffff' }]}>
       {children}
     </View>
   );
@@ -180,7 +180,7 @@ export function ProfileScreen({ navigation }: any) {
     hTap();
     dialog('Log out?', 'You will need to sign in again to access your profile.', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Log Out', style: 'destructive', onPress: () => { clearAuth(); navigation.navigate('SignIn'); } },
+      { text: 'Log Out', style: 'destructive', onPress: () => { clearAuth(); navigation.reset({ index: 0, routes: [{ name: 'PhoneAuth' }] }); } },
     ]);
   };
 
@@ -203,8 +203,7 @@ export function ProfileScreen({ navigation }: any) {
   };
 
   return (
-    <Screen>
-      <BrandHeader onMenu={openMenu} onBell={() => navigation.navigate('Notifications')} />
+    <Screen header={<BrandHeader onMenu={openMenu} onBell={() => navigation.navigate('Notifications')} />}>
 
       {/* HERO */}
       <Card solidBlack style={styles.heroOuter} contentStyle={styles.hero}>

@@ -1,6 +1,11 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useWindowDimensions } from 'react-native';
+import { useSharedValue, withSpring, withTiming, runOnJS, SharedValue } from 'react-native-reanimated';
 import { createAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from 'expo-audio';
 import { TRACKS, Track } from '../data/library';
+
+// shared spring for the player sheet open/close + interactive drag
+export const SHEET_SPRING = { damping: 26, stiffness: 240, mass: 0.8 } as const;
 
 interface PlayerCtx {
   track: Track | null;
@@ -20,6 +25,14 @@ interface PlayerCtx {
   /** full-screen player visibility */
   expanded: boolean;
   setExpanded: (v: boolean) => void;
+  /** shared sheet offset (px from open): 0 = full open, screenH = closed.
+   *  Driven interactively by the mini-bar drag and the full-player drag. */
+  sheetY: SharedValue<number>;
+  /** screen height (the closed offset) */
+  screenH: number;
+  /** animate the full player open / closed */
+  openSheet: () => void;
+  closeSheet: () => void;
 }
 
 const Ctx = createContext<PlayerCtx | null>(null);
@@ -32,6 +45,21 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [queue, setQueue] = useState<Track[]>([]);
   const [expanded, setExpanded] = useState(false);
   const finishedRef = useRef<string | null>(null); // auto-advance dedupe
+
+  const { height: screenH } = useWindowDimensions();
+  const sheetY = useSharedValue(screenH); // start closed (off-screen bottom)
+
+  const openSheet = useCallback(() => {
+    setExpanded(true);
+    sheetY.value = screenH;                      // start from the bottom…
+    sheetY.value = withSpring(0, SHEET_SPRING);  // …spring up to full
+  }, [screenH, sheetY]);
+
+  const closeSheet = useCallback(() => {
+    sheetY.value = withTiming(screenH, { duration: 230 }, (finished) => {
+      if (finished) runOnJS(setExpanded)(false);
+    });
+  }, [screenH, sheetY]);
 
   useEffect(() => {
     // background playback ON — long audio (Gita chapters/bhajans) screen-lock par bhi chalta rahe
@@ -119,6 +147,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     loading: !!track && !!(status as any) && ((status as any).isBuffering === true || (status as any).isLoaded === false),
     expanded,
     setExpanded,
+    sheetY,
+    screenH,
+    openSheet,
+    closeSheet,
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

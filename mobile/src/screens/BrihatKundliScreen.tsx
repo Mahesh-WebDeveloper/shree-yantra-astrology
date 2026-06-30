@@ -610,6 +610,13 @@ export function BrihatKundliScreen({ navigation }: any) {
     }
   };
 
+  // when the user switches language AFTER a report is shown, regenerate it so the AI
+  // body text (not just the bilingual titles) re-renders in the chosen language.
+  useEffect(() => {
+    if (report && !busy) generate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lang]);
+
   const exportPdf = async () => {
     if (exporting || !report) return;
     setExporting(true);
@@ -637,7 +644,7 @@ export function BrihatKundliScreen({ navigation }: any) {
         end={{ x: 1, y: 1 }}
         style={[styles.hero, { borderColor: theme.cardBorder }]}
       >
-        <View style={[styles.heroIcon, { borderColor: theme.gold2 + '88', backgroundColor: theme.isDark ? 'rgba(0,0,0,0.42)' : '#fff8e8' }]}>
+        <View style={[styles.heroIcon, { borderColor: theme.isDark ? theme.gold2 + '88' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.42)' : '#ffffff' }]}>
           <BookIcon color={theme.gold1} size={30} />
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>

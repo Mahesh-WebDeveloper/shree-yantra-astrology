@@ -5,11 +5,46 @@
  */
 import { Lang } from './strings';
 
+const normalizeTerm = (name: string) => name
+  .replace(/([a-z])([A-Z])/g, '$1 $2')
+  .replace(/\d+[A-Z]?$/i, '')
+  .replace(/\s+/g, ' ')
+  .trim();
+
 const pick = (map: Record<string, string>, name: string | undefined, lang: Lang) => {
   if (!name) return name || '';
   if (lang !== 'hi') return name;
-  return map[name] || map[name.trim()] || name;
+  const clean = normalizeTerm(name);
+  const foundKey = Object.keys(map).find((key) => key.toLowerCase() === clean.toLowerCase());
+  return map[name] || map[name.trim()] || map[clean] || (foundKey ? map[foundKey] : name);
 };
+
+const YOGA_WORD_HI: Record<string, string> = {
+  Gaja: 'गज', Gaj: 'गज', Kesari: 'केसरी', Gajakesari: 'गज केसरी',
+  Budhaditya: 'बुधादित्य', Budha: 'बुध', Aditya: 'आदित्य',
+  Raj: 'राज', Raja: 'राज', Dhana: 'धन', Sunapha: 'सुनफा',
+  Anapha: 'अनफा', Durudhara: 'दुरुधरा', Chandra: 'चंद्र',
+  Mangal: 'मंगल', Vipreet: 'विपरीत', Viparita: 'विपरीत',
+  Neecha: 'नीच', Bhanga: 'भंग', Ruchaka: 'रुचक',
+  Bhadra: 'भद्र', Hamsa: 'हंस', Malavya: 'मालव्य',
+  Sasa: 'शश', Sasha: 'शश', Kemadruma: 'केमद्रुम',
+  Kendra: 'केंद्र', Trikona: 'त्रिकोण', Panch: 'पंच',
+  Mahapurush: 'महापुरुष', Mahapurusha: 'महापुरुष',
+  Lakshmi: 'लक्ष्मी', Yoga: 'योग',
+};
+
+const yogaFallbackHi = (name: string | undefined) => {
+  const clean = normalizeTerm(name || '').replace(/\bYoga\b/i, '').trim();
+  if (!clean) return 'योग';
+  const translated = clean
+    .split(/\s+/)
+    .map((word) => YOGA_WORD_HI[word] || YOGA_WORD_HI[word.replace(/[^A-Za-z]/g, '')] || word)
+    .join(' ')
+    .trim();
+  return translated.endsWith('योग') ? translated : translated + ' योग';
+};
+
+const yogaDetailFallbackHi = 'इस योग से कुंडली में शुभ प्रभाव, क्षमता और सकारात्मक परिणाम के संकेत मिलते हैं।';
 
 // Choghadiya periods
 const PERIOD: Record<string, string> = {
@@ -19,6 +54,7 @@ const PERIOD: Record<string, string> = {
 const TAG: Record<string, string> = {
   Auspicious: 'शुभ', Neutral: 'सामान्य', Inauspicious: 'अशुभ',
   Good: 'अच्छा', Bad: 'अशुभ', Active: 'सक्रिय', Upcoming: 'आगामी', Present: 'मौजूद', Clear: 'मुक्त',
+  Strong: 'प्रबल', Forming: 'बन रहा है', Favourable: 'अनुकूल', Favorable: 'अनुकूल', Watch: 'ध्यान दें', Low: 'कम',
 };
 // Planets
 const PLANET: Record<string, string> = {
@@ -49,6 +85,47 @@ const ACTIVITY: Record<string, string> = {
   vehicle: 'वाहन खरीद', money: 'धन हस्तांतरण', travel: 'यात्रा', social: 'सोशल मीडिया पोस्ट',
   interview: 'इंटरव्यू / मीटिंग', worship: 'पूजा / प्रार्थना',
 };
+
+// Kundli doshas
+const DOSHA: Record<string, string> = {
+  'Mangal Dosha': 'मंगल दोष', 'Manglik Dosha': 'मांगलिक दोष', 'Kaal Sarp Dosha': 'काल सर्प दोष',
+  'Kaal Sarpa Dosha': 'काल सर्प दोष', 'Sade Sati': 'साढ़े साती', 'Shani Dhaiya': 'शनि ढैय्या',
+  'Pitra Dosha': 'पितृ दोष', 'Pitru Dosha': 'पितृ दोष', 'Guru Chandal Dosha': 'गुरु चांडाल दोष',
+  'Grahan Dosha': 'ग्रहण दोष', 'Kemadruma Dosha': 'केमद्रुम दोष', 'Angarak Dosha': 'अंगारक दोष',
+  'Shrapit Dosha': 'श्रापित दोष', 'Nadi Dosha': 'नाड़ी दोष',
+};
+// Kundli yogas (raja/dhana/mahapurusha etc.)
+const YOGA: Record<string, string> = {
+  'Gaj Kesari Yoga': 'गज केसरी योग', 'Gajakesari Yoga': 'गज केसरी योग', 'Budhaditya Yoga': 'बुधादित्य योग',
+  'Raj Yoga': 'राज योग', 'Raja Yoga': 'राज योग', 'Dhana Yoga': 'धन योग', 'Sunapha Yoga': 'सुनफा योग',
+  'Anapha Yoga': 'अनफा योग', 'Durudhara Yoga': 'दुरुधरा योग', 'Chandra Mangal Yoga': 'चंद्र-मंगल योग',
+  'Vipreet Raj Yoga': 'विपरीत राज योग', 'Viparita Raja Yoga': 'विपरीत राज योग',
+  'Neecha Bhanga Raja Yoga': 'नीच भंग राज योग', 'Ruchaka Yoga': 'रुचक योग', 'Bhadra Yoga': 'भद्र योग',
+  'Hamsa Yoga': 'हंस योग', 'Malavya Yoga': 'मालव्य योग', 'Sasa Yoga': 'शश योग', 'Sasha Yoga': 'शश योग',
+  'Kemadruma Yoga': 'केमद्रुम योग', 'Kendra Trikona Raja Yoga': 'केंद्र त्रिकोण राज योग',
+  'Panch Mahapurush Yoga': 'पंच महापुरुष योग', 'Lakshmi Yoga': 'लक्ष्मी योग',
+};
+// short standard phrases used in dosha/yoga detail + sources
+const PHRASE: Record<string, string> = {
+  'Mars not in dosha houses': 'मंगल दोष भावों में नहीं है', 'Not formed in your chart': 'आपकी कुंडली में नहीं बना',
+  'Present in your chart': 'आपकी कुंडली में मौजूद है', 'Planetary positions': 'ग्रह स्थिति',
+  'running now': 'अभी चल रही है', 'Beneficial yoga present in your chart': 'आपकी कुंडली में शुभ योग मौजूद है',
+};
+
+export const aDosha = (n: string | undefined, lang: Lang) => pick(DOSHA, n, lang);
+export const aYoga = (n: string | undefined, lang: Lang) => {
+  if (!n) return n || '';
+  if (lang !== 'hi') return normalizeTerm(n);
+  const translated = pick(YOGA, n, lang);
+  return translated === n ? yogaFallbackHi(n) : translated;
+};
+export const aYogaDetail = (n: string | undefined, lang: Lang) => {
+  if (!n) return n || '';
+  if (lang !== 'hi') return n;
+  const translated = pick(PHRASE, n, lang);
+  return translated === n ? yogaDetailFallbackHi : translated;
+};
+export const aPhrase = (n: string | undefined, lang: Lang) => pick(PHRASE, n, lang);
 
 export const aPeriod = (n: string | undefined, lang: Lang) => pick(PERIOD, n, lang);
 export const aTag = (n: string | undefined, lang: Lang) => pick(TAG, n, lang);

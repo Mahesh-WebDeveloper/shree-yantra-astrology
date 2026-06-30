@@ -8,9 +8,10 @@ const env = require('../config/env');
 const crypto = require('crypto');
 const AiCache = require('../models/AiCache');
 const Settings = require('../models/Settings');
-const { getKundli, getDasha, getPanchang } = require('./vedastro.service');
+const { getKundli, getDasha, getPanchang, getGochar } = require('./vedastro.service');
 const { getVargaCharts } = require('./varga.service');
-const { nameNumerology } = require('../utils/numerology');
+const { nameNumerology, birthNumerology } = require('../utils/numerology');
+const { sadeSatiTimeline } = require('../utils/sadeSati');
 const { filterLocalNames, firstSoundMatches } = require('../utils/nameMatch');
 const { fetchT } = require('../utils/httpFetch');
 
@@ -389,13 +390,22 @@ const pad2 = (n) => (n < 10 ? '0' : '') + n;
 const todayStr = () => { const n = new Date(); return `${pad2(n.getDate())}/${pad2(n.getMonth() + 1)}/${n.getFullYear()}`; };
 const birthSig = (i) => `${i.dob}|${i.tob}|${i.place || `${i.lat},${i.lng}`}`;
 
+// Global AI prompt version — bump to invalidate ALL cached AI text at once.
+// 'sx1' = added the SARAL SAMJHAO beginner-friendly directive to every reading.
+// 'sx2' = also explain hard Sanskrit/spiritual terms in scripture/shloka readings.
+// 'sx3' = added a dedicated "saralVivaran" plain-language section to every reading.
+// 'sx4' = Sade Sati now gets DETERMINISTIC start/end dates (no AI date hallucination).
+// 'sx5' = prompt: never confuse Sade Sati (transit) with the Shani Mahadasha (dasha).
+const PROMPT_VERSION = 'sx7';
+
 async function cached(key, type, producer) {
-  const hit = await AiCache.findOne({ cacheKey: key });
+  const vkey = `${PROMPT_VERSION}|${key}`;
+  const hit = await AiCache.findOne({ cacheKey: vkey });
   if (hit) return hit.data;
   const data = await producer();
   // AI down/quota fallback ko cache MAT karo (warna quota aane par bhi chipka rahega)
   if (!(data && data._fallback)) {
-    try { await AiCache.findOneAndUpdate({ cacheKey: key }, { cacheKey: key, type, data }, { upsert: true }); } catch (_) {}
+    try { await AiCache.findOneAndUpdate({ cacheKey: vkey }, { cacheKey: vkey, type, data }, { upsert: true }); } catch (_) {}
   }
   return data;
 }
@@ -454,10 +464,27 @@ async function buildContext(input) {
 
 // ── 1) DAILY PREDICTION (roz naya — date se cache) ──
 const langOf = (input) => (input && input.lang === 'hi' ? 'hi' : 'en');
+// ── SARAL SAMJHAO — beginner-friendly directive added to EVERY AI reading ──
+// The app is used by normal people who know NOTHING about astrology (not only
+// astrologers). So every technical term must come WITH a plain-words meaning +
+// a tiny real-life example. Appended to writeIn() → reaches all chart features.
+const SIMPLIFY_EN =
+  ' BEGINNER-FRIENDLY (VERY IMPORTANT — this app is used by ordinary people who know NOTHING about astrology, not only astrologers): whenever you use ANY technical astrology term — e.g. planet/graha, sign/rashi, house/bhava, house-lord, dasha/antardasha, nakshatra, yoga, dosha, lagna/ascendant, gochar/transit, exalted/debilitated/retrograde/combust, varga/divisional chart, Sade Sati — NEVER leave it unexplained. Right there, add its meaning in very simple everyday words AND a tiny real-life example a common person relates to. Keep the technical term (for accuracy) but always pair it with the plain meaning in brackets, e.g. "...your 10th house (the area of career and public image — your job, status and the work people know you for)...". Explain each term the first time it appears, keep it natural (not repetitive), warm and easy to read.';
+const SIMPLIFY_HI =
+  ' आम आदमी के लिए सरल (बहुत ज़रूरी — यह ऐप सिर्फ़ ज्योतिषी नहीं, ऐसे सामान्य लोग भी इस्तेमाल करते हैं जिन्हें ज्योतिष का कोई ज्ञान नहीं है): जब भी कोई तकनीकी ज्योतिषीय शब्द आए — जैसे ग्रह, राशि, भाव (घर), भावेश/स्वामी, दशा/अंतर्दशा, नक्षत्र, योग, दोष, लग्न, गोचर, उच्च/नीच/वक्री/अस्त, वर्ग कुंडली, साढ़ेसाती — उसे कभी बिना समझाए मत छोड़ो। वहीं पर बहुत आसान रोज़मर्रा की भाषा में उसका मतलब और एक छोटा-सा असल ज़िंदगी का उदाहरण भी दो जिससे आम व्यक्ति तुरंत समझ जाए। तकनीकी शब्द भी रखो (सटीकता के लिए) और साथ में कोष्ठक में आसान मतलब भी दो, जैसे "...आपका दशम भाव (यानी करियर और समाज में पहचान का घर — आपकी नौकरी, पद और जिस काम से लोग आपको जानते हैं)..."। हर शब्द को पहली बार आने पर ही समझाओ, बार-बार नहीं; लेखन गर्मजोशी भरा और सरल रखो।';
+// For scripture/shloka explanations (Gita/Ramayan/Veda/RCM/daily-shloka) — explain
+// any hard Sanskrit/spiritual concept simply, for readers with no shastra background.
+const SIMPLIFY_SCRIPTURE_HI =
+  'महत्वपूर्ण — आम पाठक के लिए: यदि कोई कठिन संस्कृत/शास्त्रीय/आध्यात्मिक शब्द आए (जैसे आत्मा, कर्म, धर्म, मोक्ष, गुण, प्रकृति, यज्ञ, माया, इन्द्रिय, स्थितप्रज्ञ आदि), तो उसे बिना समझाए मत छोड़ो — वहीं बहुत आसान रोज़मर्रा की भाषा में उसका मतलब और एक छोटा-सा जीवन का उदाहरण भी दो, ताकि जिस व्यक्ति को शास्त्रों की कोई जानकारी नहीं है, वह भी आसानी से गहराई तक समझ जाए।';
+// A dedicated "saralVivaran" output field every reading should include — a full,
+// stand-alone plain-language explanation section for non-technical / non-educated users.
+const SARAL_FIELD_HI = '"saralVivaran":"इस पूरे विश्लेषण का सार बहुत ही आसान, रोज़मर्रा की हिंदी में लिखो — जैसे किसी ऐसे अपने को समझा रहे हो जिसे ज्योतिष का बिल्कुल ज्ञान नहीं है। 5-8 वाक्य, कोई कठिन शब्द नहीं; हर मुख्य बात को एक छोटे, असल-ज़िंदगी के उदाहरण के साथ समझाओ, और अंत में हौसला बढ़ाने वाली एक पंक्ति।"';
+const SARAL_FIELD_EN = '"saralVivaran":"a complete, stand-alone summary of this whole reading in very simple everyday language — as if explaining to a close one who has ZERO astrology knowledge. 5-8 sentences, no hard words; explain each main point with a small real-life example, and end with one encouraging line."';
+const saralField = (lang) => (lang === 'hi' ? SARAL_FIELD_HI : SARAL_FIELD_EN);
 const writeIn = (lang) =>
   lang === 'hi'
-    ? 'VERY IMPORTANT: Write ALL text values in PURE, SIMPLE HINDI using DEVANAGARI script ONLY (शुद्ध हिंदी). Do NOT use Hinglish or Roman/English letters inside the Hindi text (only keep unavoidable proper nouns/numbers). Keep JSON keys in English. Be specific to the data, warm and natural — like a kind Hindi-speaking astrologer.'
-    : 'Write in simple, positive English (an average Indian user reads it). Be specific to the data, not generic.';
+    ? 'VERY IMPORTANT: Write ALL text values in PURE, SIMPLE HINDI using DEVANAGARI script ONLY (शुद्ध हिंदी). Do NOT use Hinglish or Roman/English letters inside the Hindi text (only keep unavoidable proper nouns/numbers). Keep JSON keys in English. Be specific to the data, warm and natural — like a kind Hindi-speaking astrologer.' + SIMPLIFY_HI
+    : 'Write in simple, positive English (an average Indian user reads it). Be specific to the data, not generic.' + SIMPLIFY_EN;
 
 const fixedMoods = ['Energy', 'Love', 'Career', 'Health'];
 const fixedAreas = ['Love', 'Career', 'Finance', 'Health'];
@@ -653,6 +680,7 @@ Return STRICT JSON only. Keep mood labels EXACTLY "Energy", "Love", "Career", "H
  "luckyTime":"<a short good-time window today, e.g. 'After 4 PM' or '6-8 AM'>",
  "advice":"one short do/avoid tip for today",
  "confidence": <0.4-0.95>,
+ ${saralField(lang)},
  "sourceNote":"short note: based on precise chart/panchang data (do NOT mention AI)"
 }`;
     let out; let aiFailed = false;
@@ -661,6 +689,7 @@ Return STRICT JSON only. Keep mood labels EXACTLY "Energy", "Love", "Career", "H
     const shaped = ensureDailyShape(out, ctx, lang);
     return {
       ...shaped,
+      saralVivaran: asText(out.saralVivaran),
       ...(aiFailed ? { _fallback: true } : {}),
       generatedFor: ctx.today ? ctx.today.date : todayStr(),
       basis: {
@@ -797,30 +826,86 @@ function compactVargaCharts(varga) {
   }));
 }
 
+// Deterministic Saturn / Sade Sati / Dhaiya status — COMPUTED from the gochar engine,
+// never guessed by the AI. This is the single source of truth for any Shani question.
+function saturnStatusFrom(gochar) {
+  if (!gochar) return null;
+  const sat = (gochar.transits || []).find((t) => t.planet === 'Saturn') || null;
+  const ss = gochar.sadeSati || {};
+  let status, statusHi;
+  if (ss.active) {
+    status = `Sade Sati is ACTIVE — ${ss.phase}`;
+    statusHi = `साढ़े साती चल रही है — ${ss.phaseHi}`;
+  } else if (ss.dhaiya) {
+    status = 'Shani Dhaiya (small panoti) is ACTIVE';
+    statusHi = 'शनि की ढैय्या (छोटी पनौती) चल रही है';
+  } else {
+    status = 'Neither Sade Sati nor Dhaiya is active right now';
+    statusHi = 'अभी न साढ़े साती है और न ढैय्या';
+  }
+  // DETERMINISTIC dates — scanned from the ephemeris (NEVER guessed by AI). This is what
+  // stopped the "Sade Sati ended today" hallucination: the AI now gets exact start/end months.
+  const tl = (() => { try { return sadeSatiTimeline(gochar.natalMoonSign, new Date()); } catch (_) { return null; } })();
+  return {
+    asOfDate: gochar.date || null,
+    natalMoonSign: gochar.natalMoonSign || null,
+    saturnTransitSign: sat ? sat.sign : null,
+    saturnHouseFromMoon: sat ? sat.houseFromMoon : null,
+    saturnIsRetrograde: sat ? sat.isRetrograde : null,
+    status,
+    statusHi,
+    // EXACT windows (month-year). currentSadeSati = the one running now (null if none);
+    // nextSadeSati = the upcoming one. Use these verbatim — do NOT estimate any other date.
+    currentSadeSati: tl && tl.current ? `${tl.current.start} → ${tl.current.end}` : null,
+    nextSadeSati: tl && tl.next ? `${tl.next.start} → ${tl.next.end}` : null,
+    sadeSatiActive: tl ? tl.active : (ss.active || false),
+    dhaiyaActive: tl ? tl.dhaiya : (ss.dhaiya || false),
+  };
+}
+
 async function askAstrologer(input) {
   const lang = langOf(input);
   const question = String(input.question || '').trim();
   if (!question) throw Object.assign(new Error('Question chahiye'), { status: 400 });
   if (question.length > 900) throw Object.assign(new Error('Question 900 characters se chhota rakhein'), { status: 400 });
-  const key = `ask|v3|${birthSig(input)}|${todayStr()}|${lang}|${questionKey(question)}`;
+  const key = `ask|v4|${birthSig(input)}|${todayStr()}|${lang}|${questionKey(question)}`;
   return cached(key, 'ask-astrologer', async () => {
-    const ctx = await buildContext(input);
-    let vargaContext = [];
-    try {
-      const varga = await getVargaCharts(input, { charts: chartsForQuestion(question) });
-      vargaContext = compactVargaCharts(varga);
-    } catch (_) {
-      // Varga context is helpful, but the main D1/dasha/panchang answer can still work without it.
-    }
-    const prompt = `You are Shree Yantra's AI Vedic astrologer. Answer the user's question with trust, clarity, and humility.
+    // Pull the user's COMPLETE kundli in parallel: natal chart+dasha+panchang (buildContext),
+    // full Vimshottari dasha timeline, live gochar (transits + Sade Sati/Dhaiya), and varga charts.
+    const [ctx, dashaTimeline, gochar, varga] = await Promise.all([
+      buildContext(input),
+      getDasha(input).catch(() => null),
+      getGochar(input).catch(() => null),
+      getVargaCharts(input, { charts: chartsForQuestion(question) }).catch(() => null),
+    ]);
+    const vargaContext = varga ? compactVargaCharts(varga) : [];
+    const saturnStatus = saturnStatusFrom(gochar);
+    // DETERMINISTIC numerology (mulank/bhagyank) from DOB — so "mera mulank?" gets REAL data, never a guess.
+    const numerology = (() => { try { return birthNumerology(input.dob, ctx.name); } catch (_) { return null; } })();
+    const currentTransits = gochar && Array.isArray(gochar.transits)
+      ? gochar.transits.map((t) => ({ planet: t.planet, sign: t.sign, houseFromMoon: t.houseFromMoon, houseFromLagna: t.houseFromLagna, isRetrograde: t.isRetrograde }))
+      : [];
+    const dashaList = dashaTimeline && Array.isArray(dashaTimeline.dasha)
+      ? dashaTimeline.dasha.slice(0, 7).map((d) => ({ lord: d.lord, start: d.start, end: d.end, durationText: d.durationText }))
+      : (ctx.dasha ? [ctx.dasha] : []);
+
+    const prompt = `You are Shree Yantra's AI Vedic astrologer. Answer the user's question with trust, clarity, and humility — like a warm, wise personal jyotishi.
 
 GROUND RULES:
-- Use ONLY the real Vedic chart / Panchang data below as the astrological ground source.
-- If a required data point is missing, say that it is unavailable instead of inventing it.
-- Do not claim guaranteed accuracy, medical diagnosis, legal/financial certainty, or fixed destiny.
-- Give practical, spiritual, culturally respectful guidance.
-- Keep answer personal to the user profile and question.
+- SCOPE (very important): You ONLY help with Vedic astrology & this app's topics — the user's kundli/horoscope/rashifal, planets/dashas/yogas/doshas, Sade Sati & transits, panchang/muhurat, remedies/upaay, numerology/mulank, kundli matching, baby names, festivals, mantras & spirituality. If the question is OFF-TOPIC (e.g. product/mobile prices like iPhone, shopping, general knowledge, news, sports, politics, coding, math, current affairs, or anything NOT about astrology/spirituality), DO NOT answer it and DO NOT make something up. Instead, in the user's language, warmly decline in 1-2 sentences — say you are a Vedic astrology assistant and can only help with jyotish/kundli matters — and invite them to ask an astrology question (suggest 1-2 examples like "aaj ka rashifal" or "mera career kaisa rahega"). For an off-topic question return ONLY: a polite redirect in "answer", empty "sections" [], empty "remedies" [], a couple of astrology "followUpQuestions", and confidence 0.3. Stay on scope no matter how the question is phrased.
+- Use ONLY the real Vedic chart / Panchang / transit data in "REAL ASTRO CONTEXT JSON" below as the astrological ground source. Never invent or change any chart fact.
+- NEVER recompute or guess the Lagna (Ascendant), planet houses, Moon sign, or Saturn status yourself. They are pre-computed below from a precise ephemeris. Use them verbatim.
+- If a required data point is missing/null, say it is unavailable instead of inventing it.
+- Do not claim guaranteed accuracy, medical diagnosis, or fixed destiny. Be practical, spiritual, culturally respectful.
 - Keep JSON keys in English.
+- NEVER reveal anything technical/internal to the user: do NOT mention "JSON", "data", "context", "field", "not provided to me", "system", code, or any error. You are a human jyotishi, not a program. If something is genuinely NOT in the data, do NOT guess and do NOT expose it as an error — instead warmly say (in the user's language) that for that specific detail you'd need a bit more (e.g. exact birth time/place) or that it isn't part of this reading, and give whatever you CAN from the real data.
+
+DIRECT-ANSWER RULES (the user hates vague replies — answer the EXACT question first):
+1. SATURN / SADE SATI / SHANI / DHAIYA / "shani kab lagega/utrega/khatam hoga": Use the "saturnStatus" object as the ONLY source of truth. CRITICAL — DO NOT CONFUSE TWO DIFFERENT THINGS: (a) SADE SATI / DHAIYA is Saturn's TRANSIT (gochar) over the 12th/1st/2nd (or 4th/8th) sign from the natal Moon (~7.5 yrs) — its dates live ONLY in saturnStatus.currentSadeSati / nextSadeSati. (b) The SHANI MAHADASHA is a completely separate Vimshottari dasha period (in dashaTimeline) and has NOTHING to do with Sade Sati dates. If the user asks about SADE SATI, answer ONLY with the Sade Sati transit window from saturnStatus — NEVER answer a Sade Sati question with the Shani Mahadasha years (e.g. do not say Sade Sati ends in 2040 just because the Saturn mahadasha does). State plainly in the FIRST 1-2 sentences: the natal Moon sign, Saturn's CURRENT transit sign, and the exact status. ABSOLUTE DATE RULE (to avoid wrong info): you may ONLY use the dates in saturnStatus.currentSadeSati and saturnStatus.nextSadeSati VERBATIM. NEVER calculate, estimate, round or invent ANY Sade Sati / Dhaiya date yourself. — If saturnStatus.sadeSatiActive is true: say Sade Sati is running and give its window from "currentSadeSati" (e.g. "from X to Y"). — If sadeSatiActive is false but dhaiyaActive is true: clearly say this is SHANI DHAIYA (small panoti), NOT Sade Sati, and that the NEXT Sade Sati is "nextSadeSati". — If both are false: say neither is running now and the next Sade Sati is "nextSadeSati". — If a needed date field is null/missing: say you don't have that exact date here and suggest checking the Kundli's Sade Sati / transit section — do NOT make up a date. Never say "it varies" or give only theory.
+2. DASHA / "kab" timing questions: Use "dashaTimeline" — name the exact mahadasha lord(s) and their start–end dates that answer the question.
+3. ALWAYS state the user's Lagna (ascendant) and Moon sign correctly from the context whenever relevant; never omit or alter them.
+4. MULANK / NUMEROLOGY ("mera mulank/bhagyank kya hai", lucky number): use the "numerology" object ONLY — mulank = numerology.psychic (reduced day-of-birth), bhagyank = numerology.destiny (reduced full DOB). State the number + its meaning. NEVER guess a number; if numerology is null, warmly say you need the exact birth date.
+5. Always directly answer what was asked in the first 2 sentences, THEN explain.
 
 USER QUESTION:
 ${question}
@@ -831,22 +916,29 @@ ${JSON.stringify({
   birth: ctx.birth,
   ascendant: ctx.ascendant,
   moonSign: ctx.moonSign,
-  dasha: ctx.dasha,
+  currentMahadasha: ctx.dasha,
+  dashaTimeline: dashaList,
   yogas: ctx.yogas,
   doshas: ctx.doshas,
   planets: ctx.planets,
+  saturnStatus,
+  currentTransits,
+  numerology, // mulank (psychic/day number) + bhagyank (destiny/full-DOB number) — deterministic
   today: ctx.today,
   vargaCharts: vargaContext,
 }, null, 2)}
 
 ${writeIn(lang)}
-WRITING STYLE (make it feel like a warm, wise personal astrologer — not robotic):
-- "answer": a warm, direct 4-6 sentence summary that speaks to the user personally.
-- "sections": 3 to 6 well-titled sections, EACH 2-4 sentences, specific to THIS chart (name the actual sign/house/planet/yoga you used). Pick headings that fit the question (e.g. Personality, Career & Money, Relationships, Health, Strengths, Cautions, Timing).
-- Be encouraging and practical; explain WHY (which graha/yoga) in simple words so the user trusts it.
+WRITING STYLE — give TWO LAYERS for every point (MANY users have ZERO astrology knowledge, so always explain in plain words too):
+- "answer": warm, DIRECT 4-6 sentences. First directly answer the exact question (apply DIRECT-ANSWER RULES) in SIMPLE everyday language a non-technical person instantly understands, then reassure.
+- "sections": 3 to 6 well-titled sections. EACH section's "text" MUST do BOTH, in this order:
+   (a) TECHNICAL BASIS — name the exact astrological factor used (which graha / house / sign / yoga / transit / dasha) — the precise reason.
+   (b) SIMPLE MEANING — then re-explain the SAME thing in very easy, everyday words, starting that part on a new line with "${lang === 'hi' ? 'आसान भाषा में:' : 'In simple words:'}" so someone with no astrology knowledge fully understands what it means for their real life.
+- "vedastroBasis": short PRECISE technical facts actually used (e.g. "Saturn transit Pisces = 8th from Moon (Leo) → Dhaiya"), bullet style.
+- Be warm, encouraging, practical. NEVER leave jargon without its simple explanation.
 Return STRICT JSON only:
 {
- "answer":"warm personal 4-6 sentence summary",
+ "answer":"warm personal 4-6 sentence summary that DIRECTLY answers the question first",
  "sections":[{"title":"short heading","text":"2-4 sentence explanation that names the actual chart factor used"}],
  "vedastroBasis":["bullet-like facts used from the chart context"],
  "remedies":[{"title":"optional remedy","body":"simple practical steps","timing":"best timing","mantra":"optional mantra"}],
@@ -943,6 +1035,7 @@ ${hint ? `\nसंदर्भ हेतु (केवल तुम्हार�
 - "anuvad": इस पाठ का सरल हिंदी अनुवाद/अर्थ (2-4 वाक्य), जैसे आम पाठक को आसानी से समझ आए।
 - "katha": इस प्रसंग को एक छोटी, रोचक कहानी/कथा की तरह सरल भाषा में समझाओ — संदर्भ, भाव और दृश्य ऐसे कि पाठक को लगे जैसे कोई कथावाचक प्रेम से समझा रहा हो (3-5 वाक्य)।
 - "seekh": इस पाठ से हमें जीवन में क्या शिक्षा/सीख मिलती है — व्यावहारिक और प्रेरक (2-3 वाक्य)।
+${SIMPLIFY_SCRIPTURE_HI}
 केवल शुद्ध हिंदी देवनागरी में लिखो, रोमन/अंग्रेज़ी अक्षर मत डालो (अनिवार्य संज्ञाओं/नामों को छोड़कर)। JSON keys अंग्रेज़ी में रखो।
 STRICT JSON लौटाओ: {"anuvad":"...","katha":"...","seekh":"..."}`;
     const out = await callAI(prompt, { json: true });
@@ -1027,6 +1120,7 @@ ${english ? `English (संदर्भ हेतु): ${english}` : ''}
 - "vyakhya": विस्तृत व्याख्या — इसका गहरा भाव, संदर्भ और संदेश सरल भाषा में (4-6 वाक्य)। ऐसे जैसे गुरु प्रेम से समझा रहे हों।
 - "jeevanUpyog": आज के दैनिक जीवन में इसे कैसे अपनाएँ — व्यावहारिक, सम्बन्धित उदाहरणों के साथ (3-5 वाक्य)।
 - "seekh": आज का एक पंक्ति का प्रेरक संदेश/सीख।
+${SIMPLIFY_SCRIPTURE_HI}
 केवल शुद्ध हिंदी देवनागरी में लिखो (अनिवार्य नामों को छोड़कर), रोमन अक्षर मत डालो। JSON keys अंग्रेज़ी में।
 STRICT JSON लौटाओ: {"anuvad":"...","vyakhya":"...","jeevanUpyog":"...","seekh":"..."}`;
     const out = await callAI(prompt, { json: true });
@@ -1060,7 +1154,7 @@ Explain warmly and practically (not scary, not blindly positive — honest and b
 - "strengths": array of 2-4 short points — the areas where they match well (name the relevant koota in simple words, e.g. mental bond, nature, health/progeny).
 - "cautions": array of 1-3 short points — areas to be mindful of (low-scoring kootas, Nadi/Bhakoot/Mangal if relevant). If everything is fine, give gentle general advice instead.
 - "advice": ONE practical, hopeful sentence on how to make the relationship work (and note that an astrologer can suggest remedies if needed).
-Return STRICT JSON: {"verdict":"...","summary":"...","strengths":["..."],"cautions":["..."],"advice":"..."}`;
+Return STRICT JSON: {"verdict":"...","summary":"...","strengths":["..."],"cautions":["..."],"advice":"...",${saralField(L)}}`;
     const out = await callAI(prompt, { json: true });
     return {
       verdict: asText(out.verdict),
@@ -1068,6 +1162,7 @@ Return STRICT JSON: {"verdict":"...","summary":"...","strengths":["..."],"cautio
       strengths: asList(out.strengths).map(asText).filter(Boolean).slice(0, 4),
       cautions: asList(out.cautions).map(asText).filter(Boolean).slice(0, 3),
       advice: asText(out.advice),
+      saralVivaran: asText(out.saralVivaran),
       aiAssisted: true,
     };
   });
@@ -1088,12 +1183,13 @@ Explain what is happening for this person RIGHT NOW, grounded ONLY in the data a
 - "summary": 3-4 simple sentences — the overall current planetary weather for this person and what to focus on.
 - "highlights": array of 2-4 items, each {"planet":"Saturn/Jupiter/Rahu/Ketu","text":"1 simple sentence on what THIS transit means for them now"}.
 - "advice": ONE practical, hopeful sentence (mention an astrologer can suggest remedies if a hard transit like Sade Sati is on).
-Return STRICT JSON: {"summary":"...","highlights":[{"planet":"...","text":"..."}],"advice":"..."}`;
+Return STRICT JSON: {"summary":"...","highlights":[{"planet":"...","text":"..."}],"advice":"...",${saralField(L)}}`;
     const out = await callAI(prompt, { json: true });
     return {
       summary: asText(out.summary),
       highlights: asList(out.highlights).map((h) => ({ planet: asText(h && h.planet), text: asText(h && h.text) })).filter((h) => h.text).slice(0, 4),
       advice: asText(out.advice),
+      saralVivaran: asText(out.saralVivaran),
       aiAssisted: true,
     };
   });
@@ -1117,11 +1213,12 @@ Be honest and reassuring — remedies SUPPORT, but self-effort (karma) and good 
 - "gemWhy": 1-2 simple sentences — why this gemstone suits them (Lagna lord). If no gem, return "".
 - "scriptureNote": 1-2 sentences — a relevant teaching from the Bhagavad Gita or Ramayan about faith + self-effort (e.g. karma yoga), tying it to using remedies with sincerity. Keep it authentic and simple.
 - "advice": ONE practical, hopeful sentence (note that a gemstone should be worn only after consulting an astrologer).
-Return STRICT JSON: {"summary":"...","gemWhy":"...","scriptureNote":"...","advice":"..."}`;
+Return STRICT JSON: {"summary":"...","gemWhy":"...","scriptureNote":"...","advice":"...",${saralField(L)}}`;
     const out = await callAI(prompt, { json: true });
     return {
       summary: asText(out.summary), gemWhy: asText(out.gemWhy),
-      scriptureNote: asText(out.scriptureNote), advice: asText(out.advice), aiAssisted: true,
+      scriptureNote: asText(out.scriptureNote), advice: asText(out.advice),
+      saralVivaran: asText(out.saralVivaran), aiAssisted: true,
     };
   });
 }
@@ -1164,6 +1261,7 @@ Return STRICT JSON only. Area titles EXACTLY "Love","Career","Finance","Health".
  "highlights":[${meta.hl} items as {"label":"...","text":"..."} — ${meta.hlWhat}],
  "remedies":[{"title":"remedy","body":"why & how simply","priority":"high|medium|low"}],
  "advice":"one key guidance line for this ${period}",
+ ${saralField(lang)},
  "sourceNote":"short note (do NOT mention AI)"
 }`;
     let out; let aiFailed = false;
@@ -1184,6 +1282,7 @@ Return STRICT JSON only. Area titles EXACTLY "Love","Career","Finance","Health".
       highlights: asList(out.highlights).map((h) => ({ label: asText(h && h.label), text: asText(h && h.text) })).filter((h) => h.text),
       remedies: asList(out.remedies).map((r) => ({ title: asText(r && r.title), body: asText(r && r.body), priority: asText(r && r.priority) })).filter((r) => r.title),
       advice: asText(out.advice),
+      saralVivaran: asText(out.saralVivaran),
       sourceNote: asText(out.sourceNote) || 'Based on your precise birth chart, dasha and transits.',
       aiAssisted: true,
     };
@@ -1202,9 +1301,9 @@ Classical findings: ${list || 'general chart'}.
 Write a warm, premium, NON-fatalistic introduction that ties these together — do NOT invent new predictions, only synthesize the findings above. ${writeIn(L)}
 - "summary": 4-6 sentences — an encouraging overview of this person's chart blending personality, key strength and life direction (grounded in the findings).
 - "advice": ONE practical, hopeful guidance line.
-Return STRICT JSON: {"summary":"...","advice":"..."}`;
+Return STRICT JSON: {"summary":"...","advice":"...",${saralField(L)}}`;
     const out = await callAI(prompt, { json: true });
-    return { summary: asText(out.summary), advice: asText(out.advice), aiAssisted: true };
+    return { summary: asText(out.summary), advice: asText(out.advice), saralVivaran: asText(out.saralVivaran), aiAssisted: true };
   });
 }
 
@@ -1222,13 +1321,14 @@ ${lines}
 
 ${writeIn(L)}
 For EACH planet return: "effect" (2-3 sentences on what this multi-year period brings for THIS person, citing the house/sign), "good" (one key benefit / what to do), "caution" (one risk / what to avoid), "remedy" (one simple remedy).
-Return STRICT JSON: an object keyed by planet name, e.g. {"Venus":{"effect":"...","good":"...","caution":"...","remedy":"..."}, "Sun":{...}, ...} — include every planet listed above.`;
+Return STRICT JSON: an object keyed by planet name, e.g. {"Venus":{"effect":"...","good":"...","caution":"...","remedy":"..."}, "Sun":{...}, ...} — include every planet listed above. ALSO add ONE extra top-level key (alongside the planet keys): ${saralField(L)} — a simple overall explanation of the person's whole dasha (life-period) journey for a complete beginner.`;
     const out = await callAI(prompt, { json: true });
     const res = {};
     (periods || []).forEach((p) => {
       const o = out && out[p.lord];
       if (o) res[p.lord] = { effect: asText(o.effect), good: asText(o.good), caution: asText(o.caution), remedy: asText(o.remedy) };
     });
+    res.saralVivaran = asText(out && out.saralVivaran);
     return res;
   });
 }
@@ -1295,7 +1395,7 @@ async function generateNames(filters = {}) {
   const nakshatra = asText(filters.nakshatra);
   const rashi = asText(filters.rashi);
 
-  const key = `names|v4|${g}|${startArr.join(',')}|${origin.toLowerCase()}|${theme.toLowerCase()}|${words.toLowerCase()}|${lengthPref}|${count}|${cand.toLowerCase()}`;
+  const key = `names|v6|${g}|${startArr.join(',')}|${origin.toLowerCase()}|${theme.toLowerCase()}|${words.toLowerCase()}|${lengthPref}|${count}|${cand.toLowerCase()}`;
   return cached(key, 'name-engine', async () => {
     const lenRule = lengthPref === 'short' ? 'Keep names SHORT (3-4 letters / 1-2 syllables).'
       : lengthPref === 'medium' ? 'Names of MEDIUM length (5-7 letters / 2-3 syllables).'
@@ -1310,6 +1410,13 @@ async function generateNames(filters = {}) {
     ].filter(Boolean).join('\n');
 
     const prompt = `You are an expert Indian / Vedic baby-naming consultant. Suggest ${count} beautiful, REAL, positive-meaning names.
+
+REALNESS RULES (CRITICAL — the user hates fake/awkward names):
+- Suggest ONLY real, well-established, commonly-used Indian baby names that real families actually use today — the kind found on popular baby-name websites and heard in real life.
+- NEVER invent, coin, fabricate, or make up a name. NEVER create new Sanskrit-sounding words. NEVER output rare, obscure, or awkward-sounding names.
+- Prefer popular, trending, widely-recognized, easy-to-pronounce names over uncommon ones.
+- Give each name's TRUE, well-known meaning. If you are not fully sure a name is REAL and actually used, or you are unsure of its real meaning, DO NOT include that name — replace it with a more common one.
+- Every name must be genuinely beautiful and something parents would be proud to use.
 ${constraints}
 ${nakshatra || rashi ? `Astrology context (for tone only): Janma Nakshatra ${nakshatra || '-'}, Rashi ${rashi || '-'}.` : ''}
 Provide every name's meaning in BOTH English (meaning) and Hindi/Devanagari (meaningHi), and the candidate reason in both English (reason) and Hindi (reasonHi).
@@ -1320,11 +1427,26 @@ Return STRICT JSON:
  "names":[{"name":"...","nameHi":"...","meaning":"...","meaningHi":"...","origin":"...","gender":"boy|girl|unisex","pronunciation":"...","themes":["..."]} ... ${count} items]${cand ? `,
  "candidate":{"name":"${cand}","nameHi":"...","meaning":"...","meaningHi":"...","origin":"...","suitable":true,"reason":"1 line","reasonHi":"1 line (Hindi)","alternatives":["..."]}` : ''}
 }`;
-    // Try AI; if it is down / rate-limited (or returns too few), fall back to the
-    // curated local dataset so names ALWAYS appear. Numerology is computed in code either way.
-    const out = await callAI(prompt, { json: true }).catch(() => null);
-    const names = out ? asList(out.names).map(enrichName).filter(Boolean).slice(0, count) : [];
-
+    // PHASE 2 — DB-FIRST for plain browse (letter/gender/origin/length): serve the large
+    // curated dataset (real, fast, offline, fake-proof). The AI is only used for
+    // theme/word-blend/candidate queries, or to TOP UP when the dataset has too few matches.
+    const isBrowse = !theme && !words && !cand;
+    let names = [];
+    if (isBrowse) {
+      names = filterLocalNames({ gender: filters.gender, startWith: startArr, origin, lengthPref, count })
+        .map(enrichName).filter(Boolean);
+    }
+    let out = null;
+    if (!isBrowse || names.length < count) {
+      out = await callAI(prompt, { json: true }).catch(() => null);
+      if (out) {
+        const seen = new Set(names.map((n) => n.name.toLowerCase()));
+        asList(out.names).map(enrichName).filter(Boolean).forEach((n) => {
+          if (!seen.has(n.name.toLowerCase())) { names.push(n); seen.add(n.name.toLowerCase()); }
+        });
+      }
+    }
+    // guaranteed non-empty: broad curated top-up if still short
     let usedLocal = false;
     if (names.length < Math.min(6, count)) {
       usedLocal = true;
@@ -1334,6 +1456,7 @@ Return STRICT JSON:
         .forEach((n) => { if (!seen.has(n.name.toLowerCase())) { names.push(n); seen.add(n.name.toLowerCase()); } });
     }
     const finalNames = names.slice(0, count);
+    const servedFromDb = isBrowse && !out; // browse fully satisfied by the curated dataset
 
     let candidate = null;
     if (cand) {
@@ -1370,9 +1493,9 @@ Return STRICT JSON:
         };
       }
     }
-    const result = { names: finalNames, candidate, count: finalNames.length, aiAssisted: !!out, source: out ? (usedLocal ? 'mixed' : 'ai') : 'local' };
-    // don't cache a pure-local fallback — retry AI once quota returns
-    if (!out) result._fallback = true;
+    const result = { names: finalNames, candidate, count: finalNames.length, aiAssisted: !!out, source: servedFromDb ? 'curated' : (out ? (usedLocal ? 'mixed' : 'ai') : 'local') };
+    // cache curated/browse results; only retry AI for NON-browse queries when the AI was down
+    if (!out && !isBrowse) result._fallback = true;
     return result;
   });
 }
@@ -1453,17 +1576,58 @@ ${lines || 'No major slow-planet events in this window.'}
 ${writeIn(L)}
 - "summary": 3-4 sentences on the overall transit weather across this period (Saturn Sade Sati/Dhaiya impact + Jupiter's supportive years).
 - "notes": array of {"year":<number>,"text":"1 simple sentence for that year"} for the NOTABLE years listed above (max 10).
-Return STRICT JSON: {"summary":"...","notes":[{"year":2026,"text":"..."}]}`;
+Return STRICT JSON: {"summary":"...","notes":[{"year":2026,"text":"..."}],${saralField(L)}}`;
     const out = await callAI(prompt, { json: true });
     return {
       summary: asText(out.summary),
       notes: asList(out.notes).map((n) => ({ year: Number(n && n.year), text: asText(n && n.text) })).filter((n) => n.year && n.text),
+      saralVivaran: asText(out.saralVivaran),
+    };
+  });
+}
+
+// ── SIGN RASHIFAL (12-rashi page) — AI-rich, period-SCALED horoscope for ONE zodiac sign.
+// Every section carries the main reading + a "saral" simple-language explanation with an
+// example; ends with a conclusion (निष्कर्ष). weekly > daily, monthly > weekly, yearly = deep. ──
+const SIGN_HI = { Aries: 'मेष', Taurus: 'वृषभ', Gemini: 'मिथुन', Cancer: 'कर्क', Leo: 'सिंह', Virgo: 'कन्या', Libra: 'तुला', Scorpio: 'वृश्चिक', Sagittarius: 'धनु', Capricorn: 'मकर', Aquarius: 'कुंभ', Pisces: 'मीन' };
+async function generateSignRashifal({ sign, period, lang, moonTransit, sunTransit }) {
+  const L = lang === 'hi' ? 'hi' : 'en';
+  const P = ['daily', 'weekly', 'monthly', 'yearly'].includes(period) ? period : 'daily';
+  const now = new Date();
+  const bucket = P === 'yearly' ? `${now.getFullYear()}` : P === 'monthly' ? `${now.getFullYear()}-${pad2(now.getMonth() + 1)}` : P === 'weekly' ? isoWeekKey(now) : todayStr();
+  const key = `signrashifal|v1|${sign}|${P}|${bucket}|${L}`;
+  return cached(key, 'sign-rashifal', async () => {
+    const meta = {
+      daily: { secs: '3', span: L === 'hi' ? 'आज' : 'today', depth: 'a focused day-ahead reading' },
+      weekly: { secs: '4', span: L === 'hi' ? 'इस सप्ताह' : 'this week', depth: 'a richer week-ahead reading, clearly more detailed than a single day' },
+      monthly: { secs: '6', span: L === 'hi' ? 'इस महीने' : 'this month', depth: 'a deep month-long reading, more detailed than a week, covered phase by phase (start / middle / end)' },
+      yearly: { secs: '8', span: L === 'hi' ? 'इस वर्ष' : 'this year', depth: 'a thorough, deeply-analysed YEAR-LONG outlook — the most detailed of all: cover every life area (self & health, career & money, love & relationships, family & home, education/growth, travel, spirituality), quarter by quarter, and the major slow-planet (Saturn/Jupiter) themes for the whole year' },
+    }[P];
+    const prompt = `You are an expert Vedic astrologer writing a ${P.toUpperCase()} RASHIFAL (horoscope) for the ${sign} (${SIGN_HI[sign] || sign}) moon sign (rashi). Produce ${meta.depth}.
+Use deep astrological reasoning grounded in this sign's classical nature + ruling planet and the CURRENT transit context: Moon currently in ${moonTransit || 'its current sign'}, Sun in ${sunTransit || 'its current sign'}. Be specific to ${sign}, honest, practical, encouraging and NON-fatalistic. Do NOT invent exact calendar dates — speak in general timeframes (early/mid/late, quarters).
+${writeIn(L)}
+VERY IMPORTANT STRUCTURE — for EVERY section give TWO things:
+- "text": the main astrology reading (specific to ${sign} for ${meta.span}).
+- "saral": the SAME point re-explained in very simple everyday ${L === 'hi' ? 'Hindi' : 'English'} with ONE small real-life example, so a person with NO astrology knowledge fully understands it.
+Return STRICT JSON only:
+{
+ "headline": "a short ${meta.span} headline for ${sign}",
+ "sections": [ ${meta.secs} items, each {"heading":"section title (e.g. Career & Money / करियर व धन)","text":"2-5 sentence main reading","saral":"simple explanation + a tiny real-life example"} ],
+ "conclusion": {"text":"overall ${P} conclusion / निष्कर्ष (3-4 sentences drawing it all together)","saral":"the WHOLE rashifal summed up in very simple words, ending with one encouraging line"}
+}`;
+    const out = await callAI(prompt, { json: true });
+    return {
+      sign, period: P, range: bucket,
+      headline: asText(out.headline),
+      sections: asList(out.sections).map((s) => ({ heading: asText(s && s.heading), text: asText(s && s.text), saral: asText(s && s.saral) })).filter((s) => s.text),
+      conclusion: { text: asText(out.conclusion && out.conclusion.text), saral: asText(out.conclusion && out.conclusion.saral) },
+      aiAssisted: true,
     };
   });
 }
 
 module.exports = {
-  generateDailyPrediction, generatePeriodPrediction, generateTraditionalReading, generateDashaPhala, generateNames, generateNameSuggestions, generateBabyNames, answerNameQuestion, generateTransitForecast, askAstrologer, generateInsights, generateChoghadiyaMessage, generateMuhuratPick,
+  generateDailyPrediction, generatePeriodPrediction, generateTraditionalReading, generateDashaPhala, generateNames, generateNameSuggestions, generateBabyNames, answerNameQuestion, generateTransitForecast, askAstrologer, generateInsights, generateChoghadiyaMessage, generateMuhuratPick, generateSignRashifal,
   generateRcmExplanation, generateGitaExplanation, generateRamayanExplanation, generateRigvedaExplanation,
   generateVedaExplanation, generateDailyShlokaExplain, generateMatchExplanation, generateGocharExplanation,
   generateRemediesExplanation,

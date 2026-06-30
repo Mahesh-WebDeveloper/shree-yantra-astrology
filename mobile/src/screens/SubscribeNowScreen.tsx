@@ -117,7 +117,8 @@ const PANEL_GRAD = ['rgba(22,14,42,0.72)', 'rgba(8,6,8,0.86)'] as const;
    so the full-bleed background never rescales/jitters on input focus */
 const SCREEN = Dimensions.get('screen');
 
-export function SubscribeNowScreen({ navigation }: any) {
+export function SubscribeNowScreen({ navigation, route }: any) {
+  const onboarding = !!route?.params?.onboarding;
   const dialog = useDialog();
   const insets = useSafeAreaInsets();
   const sub = useScreen('subscribe'); // admin-managed content
@@ -207,6 +208,12 @@ export function SubscribeNowScreen({ navigation }: any) {
               <Text style={styles.noteText}>{sub.t('subtitle', 'Unlock Premium Predictions & Remedies')}</Text>
               <Sparkle />
             </View>
+
+            {onboarding && (
+              <Pressable onPress={() => { hPress(); navigation.replace('BirthDetails'); }} hitSlop={8} style={styles.skipBtn}>
+                <Text style={styles.skipText}>{t('sub.skip', 'Skip for now — I’ll subscribe later')}</Text>
+              </Pressable>
+            )}
           </View>
         </View>
 
@@ -275,4 +282,6 @@ const styles = StyleSheet.create({
   badgeIcon: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(245,199,86,0.10)', borderWidth: 1, borderColor: 'rgba(245,199,86,0.35)', marginBottom: 6 },
   badgeTitle: { fontFamily: fonts.interSemi, fontSize: 12.5, color: '#fff5d6', letterSpacing: 0.3, textAlign: 'center', marginBottom: 4, lineHeight: 15 },
   badgeSub: { fontFamily: fonts.inter, fontSize: 11, color: '#b9a978', textAlign: 'center', lineHeight: 15 },
+  skipBtn: { alignSelf: 'center', marginTop: 14, paddingVertical: 8, paddingHorizontal: 14 },
+  skipText: { fontFamily: fonts.interSemi, fontSize: 13, color: '#c9b27a', textDecorationLine: 'underline', letterSpacing: 0.2 },
 });

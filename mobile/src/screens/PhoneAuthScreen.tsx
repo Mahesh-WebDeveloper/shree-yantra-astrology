@@ -12,14 +12,26 @@ import { TextField } from '../components/TextField';
 import { OmGlyph } from '../components/icons/OmGlyph';
 import { hPress, hError, hSuccess, hTap } from '../lib/haptics';
 import { useDialog } from '../components/DialogProvider';
-import { requestOtp, verifyOtp } from '../lib/api';
+import { requestOtp, verifyOtp, googleLogin } from '../lib/api';
 import { saveAuth } from '../lib/auth';
 import { track } from '../lib/analytics';
-import { useT } from '../i18n/LanguageProvider';
+import { useT, useLang } from '../i18n/LanguageProvider';
+
+// Google web OAuth client ID (audience the backend verifies against)
+const GOOGLE_WEB_CLIENT_ID = '946405354801-crhr95aq5fq7nlhhl8r0i6nr4aveoqme.apps.googleusercontent.com';
 
 const PhoneIcon = ({ color }: { color: string }) => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
     <Path d="M22 16.92V21a1 1 0 0 1-1.11 1A19.94 19.94 0 0 1 2 4.11 1 1 0 0 1 3 3h4a1 1 0 0 1 1 .75l1.5 6a1 1 0 0 1-.27 1L7 13a16 16 0 0 0 4 4l2.25-2.23a1 1 0 0 1 1-.27l6 1.5A1 1 0 0 1 22 17z" />
+  </Svg>
+);
+
+const GoogleG = () => (
+  <Svg width={20} height={20} viewBox="0 0 48 48">
+    <Path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8a12 12 0 1 1 7.9-21l5.7-5.7A20 20 0 1 0 24 44c11 0 19.5-8 19.5-20 0-1.3-.1-2.3-.4-3.5z" />
+    <Path fill="#FF3D00" d="M6.3 14.7l6.6 4.8A12 12 0 0 1 24 12c3 0 5.8 1.1 7.9 3l5.7-5.7A20 20 0 0 0 6.3 14.7z" />
+    <Path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2A12 12 0 0 1 12.7 28l-6.5 5A20 20 0 0 0 24 44z" />
+    <Path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3a12 12 0 0 1-4.1 5.6l6.2 5.2C39.9 35.6 44 30.5 44 24c0-1.3-.1-2.3-.4-3.5z" />
   </Svg>
 );
 
@@ -31,6 +43,7 @@ export function PhoneAuthScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
 
   const t = useT();
+  const { lang } = useLang();
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
@@ -49,7 +62,7 @@ export function PhoneAuthScreen({ navigation }: any) {
 
   const sendOtp = async () => {
     hPress();
-    if (digits.length < 10) { hError(); dialog('Mobile number', 'Apna 10-digit mobile number daalein.'); return; }
+    if (digits.length < 10) { hError(); dialog(lang === 'hi' ? 'मोबाइल नंबर' : 'Mobile Number', lang === 'hi' ? 'कृपया 10-अंकीय मोबाइल नंबर दर्ज करें।' : 'Please enter a 10-digit mobile number.'); return; }
     if (busy) return;
     setBusy(true);
     try {
@@ -77,8 +90,9 @@ export function PhoneAuthScreen({ navigation }: any) {
       await saveAuth(r.token, r.user);
       track(r.isNew ? 'register' : 'login', undefined, { method: 'otp' });
       hSuccess();
-      // profile adhura (DOB nahi) → birth-details wizard, warna seedha app
-      navigation.replace(r.profileComplete ? 'Main' : 'BirthDetails');
+      // NEW registration → language → subscription → birth-details onboarding.
+      // Existing user: profile adhura (DOB nahi) → birth-details, warna seedha app.
+      navigation.replace(r.isNew ? 'LanguageSelect' : (r.profileComplete ? 'Main' : 'BirthDetails'));
     } catch (e: any) {
       hError();
       setCode('');
@@ -92,6 +106,38 @@ export function PhoneAuthScreen({ navigation }: any) {
     const clean = t.replace(/\D/g, '').slice(0, OTP_LEN);
     setCode(clean);
     if (clean.length === OTP_LEN) verify(clean);
+  };
+
+  // Google one-tap sign-in. The native module isn't in Expo Go → lazy-require + guard,
+  // so testing in Expo Go shows a friendly note instead of crashing. Works in the built APK.
+  const onGoogle = async () => {
+    hTap();
+    let GoogleSignin: any;
+    try {
+      GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;
+    } catch (_) { GoogleSignin = null; }
+    if (!GoogleSignin) {
+      dialog(lang === 'hi' ? 'Google साइन-इन' : 'Google Sign-In', lang === 'hi' ? 'Google लॉगिन ऐप के बने हुए APK में चलता है (Expo Go में नहीं)।' : 'Google sign-in works in the built app (not in Expo Go).');
+      return;
+    }
+    try {
+      setBusy(true);
+      GoogleSignin.configure({ webClientId: GOOGLE_WEB_CLIENT_ID, offlineAccess: false });
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      const info: any = await GoogleSignin.signIn();
+      const idToken = info?.data?.idToken || info?.idToken;
+      if (!idToken) throw new Error('No Google token');
+      const r = await googleLogin(idToken);
+      await saveAuth(r.token, r.user);
+      track(r.isNew ? 'register' : 'login', undefined, { method: 'google' });
+      hSuccess();
+      navigation.replace(r.isNew ? 'LanguageSelect' : (r.profileComplete ? 'Main' : 'BirthDetails'));
+    } catch (e: any) {
+      const cancelled = e?.code === '-5' || /cancel/i.test(String(e?.message || e?.code || ''));
+      if (!cancelled) { hError(); dialog(lang === 'hi' ? 'Google साइन-इन विफल' : 'Google Sign-In failed', e?.message || (lang === 'hi' ? 'दोबारा प्रयास करें।' : 'Please try again.')); }
+    } finally {
+      setBusy(false);
+    }
   };
 
   const gold = theme.gold1;
@@ -200,7 +246,7 @@ export function PhoneAuthScreen({ navigation }: any) {
           </View>
         )}
 
-        {/* email fallback — prominent button so it's easy to spot */}
+        {/* Google one-tap (works in the built APK; in Expo Go it shows a friendly note) */}
         <View style={styles.altWrap}>
           <View style={styles.divider}>
             <View style={[styles.line, { backgroundColor: theme.line }]} />
@@ -208,19 +254,17 @@ export function PhoneAuthScreen({ navigation }: any) {
             <View style={[styles.line, { backgroundColor: theme.line }]} />
           </View>
           <Pressable
-            onPress={() => { hTap(); navigation.navigate('SignIn'); }}
+            onPress={onGoogle}
+            disabled={busy}
             android_ripple={{ color: theme.ripple }}
             style={({ pressed }) => [
               styles.altBtn,
               { borderColor: theme.isDark ? 'rgba(201,150,46,0.5)' : 'rgba(176,115,22,0.4)', backgroundColor: theme.isDark ? 'rgba(0,0,0,0.6)' : '#fffdf7' },
-              pressed && { transform: [{ scale: 0.98 }], backgroundColor: theme.isDark ? 'rgba(233,184,80,0.08)' : 'rgba(176,115,22,0.06)' },
+              pressed && { transform: [{ scale: 0.98 }] },
             ]}
           >
-            <Svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke={theme.gold1} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-              <Path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
-              <Path d="m22 6-10 7L2 6" />
-            </Svg>
-            <Text style={[styles.altBtnText, { color: theme.gold1 }]}>{t('auth.useEmail', 'Continue with Email & Password')}</Text>
+            <GoogleG />
+            <Text style={[styles.altBtnText, { color: theme.gold1 }]}>{lang === 'hi' ? 'Google से जारी रखें' : 'Continue with Google'}</Text>
           </Pressable>
         </View>
       </KeyboardAwareScroll>

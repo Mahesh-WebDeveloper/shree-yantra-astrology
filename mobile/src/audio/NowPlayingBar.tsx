@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { runOnJS, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts } from '../theme/tokens';
-import { usePlayer } from './PlayerProvider';
+import { usePlayer, SHEET_SPRING } from './PlayerProvider';
 import { PlayIcon, PauseIcon, PrevIcon, NextIcon, CloseIcon, Equalizer, BookmarkIcon } from './PlayerIcons';
 import { toggleSaved, useLibraryStore } from '../lib/libraryStore';
 import { hSelect } from '../lib/haptics';
@@ -13,36 +13,35 @@ import { hSelect } from '../lib/haptics';
 export function NowPlayingBar({ hasBottomNav = true }: { hasBottomNav?: boolean }) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
-  const { track, isPlaying, position, duration, toggle, next, prev, stop, setExpanded } = usePlayer();
+  const { track, isPlaying, position, duration, toggle, next, prev, stop, setExpanded, openSheet, sheetY, screenH } = usePlayer();
   const { width } = useWindowDimensions();
   const { saved } = useLibraryStore();
   const compact = width < 380;
 
-  // Big-music-player style: bar docked rehti hai; swipe UP => full player khulta hai.
-  // Drag karne par sirf halka follow (feedback), bar idhar-udhar float NAHI hoti.
-  const dragFeedback = useSharedValue(0);
-
+  // Big-music-player style: bar docked rehti hai; swipe UP par PURA full player finger ke
+  // saath upar uthta (height grow) hai aur release par smooth spring se khulta hai.
   const pan = Gesture.Pan()
     .activeOffsetY([-10, 10])
     .failOffsetX([-28, 28])
+    .onStart(() => {
+      // mount the full player just off-screen so it can follow the finger up
+      sheetY.value = screenH;
+      runOnJS(setExpanded)(true);
+    })
     .onUpdate((event) => {
-      // upar drag -> bar thoda follow kare (max 56px); neeche drag -> halka resist
-      dragFeedback.value = event.translationY < 0
-        ? Math.max(-56, event.translationY * 0.6)
-        : Math.min(8, event.translationY * 0.1);
+      // drag up (translationY < 0) raises the sheet from the bottom, interactively
+      sheetY.value = Math.max(0, Math.min(screenH, screenH + event.translationY));
     })
     .onEnd((event) => {
-      const open = event.translationY < -56 || event.velocityY < -650;
-      dragFeedback.value = withTiming(0, { duration: 180 });
-      if (open) runOnJS(setExpanded)(true);
-    })
-    .onFinalize(() => {
-      dragFeedback.value = withTiming(0, { duration: 180 });
+      const open = event.translationY < -screenH * 0.16 || event.velocityY < -650;
+      if (open) {
+        sheetY.value = withSpring(0, { ...SHEET_SPRING, velocity: event.velocityY });
+      } else {
+        sheetY.value = withTiming(screenH, { duration: 200 }, (finished) => {
+          if (finished) runOnJS(setExpanded)(false);
+        });
+      }
     });
-
-  const barAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: dragFeedback.value }],
-  }));
 
   if (!track) return null;
 
@@ -53,7 +52,7 @@ export function NowPlayingBar({ hasBottomNav = true }: { hasBottomNav?: boolean 
   return (
     <View style={[styles.wrap, { bottom: dockBottom }]} pointerEvents="box-none">
       <GestureDetector gesture={pan}>
-        <Animated.View
+        <View
           style={[
             styles.bar,
             compact && styles.barCompact,
@@ -61,7 +60,6 @@ export function NowPlayingBar({ hasBottomNav = true }: { hasBottomNav?: boolean 
               backgroundColor: theme.isDark ? 'rgba(14,14,22,0.97)' : 'rgba(255,251,243,0.98)',
               borderColor: theme.cardBorder,
             },
-            barAnimStyle,
           ]}
         >
           <View style={[styles.handle, { backgroundColor: theme.cardBorder }]} />
@@ -69,7 +67,7 @@ export function NowPlayingBar({ hasBottomNav = true }: { hasBottomNav?: boolean 
             <View style={[styles.progressFill, { width: `${pct}%`, backgroundColor: theme.gold1 }]} />
           </View>
 
-          <Pressable style={styles.expandZone} onPress={() => setExpanded(true)} hitSlop={4}>
+          <Pressable style={styles.expandZone} onPress={openSheet} hitSlop={4}>
             <View style={[styles.art, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : 'rgba(176,115,22,0.10)' }]}>
               {isPlaying ? <Equalizer color={theme.gold1} playing /> : <Text style={[styles.om, { color: theme.gold1 }]}>ॐ</Text>}
             </View>
@@ -94,7 +92,7 @@ export function NowPlayingBar({ hasBottomNav = true }: { hasBottomNav?: boolean 
             <BookmarkIcon color={isSaved ? theme.gold1 : theme.textMuted} active={isSaved} />
           </Pressable>
           <Pressable onPress={stop} hitSlop={8} style={styles.btn}><CloseIcon color={theme.textMuted} /></Pressable>
-        </Animated.View>
+        </View>
       </GestureDetector>
     </View>
   );

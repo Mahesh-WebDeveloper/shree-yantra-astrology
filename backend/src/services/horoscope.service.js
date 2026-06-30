@@ -126,7 +126,27 @@ function luckyColor(sign) {
   return byLord[sign.lord] || 'Gold';
 }
 
+// Period-specific content so weekly/monthly/yearly are genuinely RICHER and DIFFERENT
+// from the daily card (earlier only the lead word changed). Plain, beginner-friendly.
+function periodPack(period, lang) {
+  const HI = {
+    daily: { span: 'आज', plain: 'आज की सरल बात: काम सोच-समझकर करें, जल्दबाज़ी न करें, और शुभ समय देखकर शुरुआत करें।', outlook: '', areaTail: '', doExtra: [], avoidExtra: [], remedyWhen: 'आज' },
+    weekly: { span: 'इस सप्ताह', plain: 'इस सप्ताह (यानी आने वाले 7 दिन) की सरल सलाह: शुरुआती दिन योजना बनाने के लिए अच्छे हैं, बीच के दिन मेहनत और बातचीत के लिए, और अंत के दिन ज़रूरी काम पूरे करने के लिए। सब एक साथ करने की बजाय काम बाँटकर करें।', outlook: 'पूरे सप्ताह ग्रहों की चाल रोज़ थोड़ी-थोड़ी बदलती है, इसलिए हर दिन एक जैसा नहीं रहेगा — कुछ दिन तेज़ी के और कुछ दिन आराम व सोच-विचार के रहेंगे।', areaTail: ' इस पूरे सप्ताह इसी दिशा में छोटे-छोटे कदम उठाते रहें।', doExtra: ['सप्ताह की शुरुआत में पूरे हफ्ते की एक छोटी योजना बना लें'], avoidExtra: ['पूरे हफ्ते का काम किसी एक ही दिन में निपटाने की कोशिश'], remedyWhen: 'इस सप्ताह रोज़' },
+    monthly: { span: 'इस महीने', plain: 'इस महीने की सरल सलाह: महीने को तीन हिस्सों में बाँटकर देखें — शुरुआत (नई शुरुआत व योजना), मध्य (मेहनत व प्रगति), और अंत (परिणाम व समेटना)। बड़े बदलाव एक ही दिन में नहीं, धीरे-धीरे आएँगे, इसलिए धैर्य रखें।', outlook: 'महीने भर में सूर्य और दूसरे ग्रह राशि बदलते हैं, जिससे अलग-अलग समय पर जीवन के अलग हिस्से (जैसे काम, धन, रिश्ते) ज़्यादा सक्रिय रहेंगे — हर सप्ताह का अपना रंग होगा।', areaTail: ' इस महीने इस क्षेत्र पर लगातार ध्यान देने से अच्छा परिणाम बन सकता है।', doExtra: ['महीने की शुरुआत में 2-3 मुख्य लक्ष्य तय करें', 'महीने के बीच में अपनी प्रगति की एक बार समीक्षा करें'], avoidExtra: ['पूरा महीना टालमटोल करके अंत में जल्दबाज़ी करना'], remedyWhen: 'इस महीने नियमित' },
+    yearly: { span: 'इस वर्ष', plain: 'इस वर्ष की सरल सलाह: यह पूरे साल की बड़ी तस्वीर है। साल को चार तिमाहियों/मौसमों में बाँटकर देखें — हर तिमाही में जीवन का कोई एक हिस्सा (करियर, रिश्ते, सेहत, धन) ज़्यादा महत्वपूर्ण रहेगा। बड़े फैसले सोच-समझकर और सही समय देखकर लें।', outlook: 'साल भर में बड़े ग्रह (जैसे गुरु/बृहस्पति और शनि) राशि बदलते हैं और लंबे समय तक असर डालते हैं — यही आपके साल के मुख्य मोड़ (अवसर और सीख) तय करते हैं।', areaTail: ' इस वर्ष इस क्षेत्र में धीरे पर पक्की प्रगति की उम्मीद रखें।', doExtra: ['साल की शुरुआत में एक बड़ा लक्ष्य और कुछ छोटे कदम तय करें', 'हर 2-3 महीने में अपनी दिशा जाँचते रहें'], avoidExtra: ['पूरे साल का फैसला किसी एक बुरे दिन के मूड में लेना'], remedyWhen: 'इस वर्ष नियमित रूप से' },
+  };
+  const EN = {
+    daily: { span: 'today', plain: 'In simple words for today: act thoughtfully, don’t rush, and start important things at a calm, auspicious time.', outlook: '', areaTail: '', doExtra: [], avoidExtra: [], remedyWhen: 'today' },
+    weekly: { span: 'this week', plain: 'Simple guidance for the week (the next 7 days): the first days suit planning, the middle days suit effort and conversations, and the last days suit finishing pending work. Spread tasks out instead of doing everything at once.', outlook: 'Across the week the planets shift a little each day, so not every day will feel the same — some days bring speed, others are better for rest and reflection.', areaTail: ' Keep taking small steps in this direction through the week.', doExtra: ['Make a small week-long plan at the start of the week'], avoidExtra: ['Trying to clear the whole week’s load in a single day'], remedyWhen: 'daily this week' },
+    monthly: { span: 'this month', plain: 'Simple guidance for the month: split it into three parts — start (fresh starts & planning), middle (effort & progress), and end (results & wrapping up). Big changes come gradually, not in a day, so stay patient.', outlook: 'Through the month the Sun and other planets change signs, so different areas (work, money, relationships) become more active at different times — each week will have its own flavour.', areaTail: ' Steady focus on this area through the month can bring a good result.', doExtra: ['Set 2-3 main goals at the start of the month', 'Review your progress once mid-month'], avoidExtra: ['Procrastinating all month and rushing at the end'], remedyWhen: 'regularly this month' },
+    yearly: { span: 'this year', plain: 'Simple guidance for the year: this is the big-picture view. Split the year into four quarters/seasons — in each, one part of life (career, relationships, health, money) matters most. Take big decisions calmly and at the right time.', outlook: 'Through the year the big planets (like Jupiter and Saturn) change signs and act over long periods — these set the main turning points (opportunities and lessons) of your year.', areaTail: ' Expect slow but solid progress in this area this year.', doExtra: ['Set one big goal and a few small steps at the start of the year', 'Check your direction every 2-3 months'], avoidExtra: ['Deciding the whole year based on one bad day’s mood'], remedyWhen: 'regularly this year' },
+  };
+  const key = period === 'weekly' ? 'weekly' : period === 'monthly' ? 'monthly' : period === 'yearly' ? 'yearly' : 'daily';
+  return (lang === 'hi' ? HI : EN)[key];
+}
+
 function buildSign(sign, panchang, period, lang) {
+  const pk = periodPack(period, lang);
   const moonHouse = houseFrom(panchang.moon && panchang.moon.sign, sign.name);
   const sunHouse = houseFrom(panchang.sun && panchang.sun.sign, sign.name);
   const mi = moonImpact(moonHouse);
@@ -148,17 +168,17 @@ function buildSign(sign, panchang, period, lang) {
       displayName,
       score,
       headline: `${displayName} के लिए ${mi.quality === 'caution' ? 'सावधानी और संतुलन' : 'अच्छा संकेत'}`,
-      summary: `${lead} चंद्र गोचर आपकी राशि से ${moonHouse || '-'}वें भाव में है, जो ${mi.hi} है। ${tithi ? `${tithi} तिथि` : 'आज का पंचांग'} और ${nak ? `${nak} नक्षत्र` : 'चंद्र स्थिति'} को ध्यान में रखकर जरूरी काम शांत मन से करें। ${elementAdvice(sign.element, lang)}`,
-      plainSummary: `${displayName} राशि वालों के लिए आज मुख्य बात है: काम सोचकर करें, जल्दबाजी न करें, और सही समय देखकर शुरुआत करें।`,
+      summary: `${lead} चंद्र गोचर आपकी राशि से ${moonHouse || '-'}वें भाव में है, जो ${mi.hi} है। ${tithi ? `${tithi} तिथि` : 'आज का पंचांग'} और ${nak ? `${nak} नक्षत्र` : 'चंद्र स्थिति'} को ध्यान में रखकर जरूरी काम शांत मन से करें। ${elementAdvice(sign.element, lang)}${pk.outlook ? ' ' + pk.outlook : ''}`,
+      plainSummary: `${displayName} राशि के लिए — ${pk.plain}`,
       areas: [
         { key: 'love', title: 'रिश्ते', score: love, text: love >= 72 ? 'बातचीत मधुर रहेगी, पुराने मतभेद हल हो सकते हैं।' : 'रिश्तों में बात संभालकर रखें और प्रतिक्रिया देने से पहले सोचें।' },
         { key: 'career', title: 'काम', score: career, text: career >= 72 ? 'काम आगे बढ़ाने और निर्णय लेने के लिए समय उपयोगी है।' : 'काम में धैर्य रखें और अधूरे कार्य पहले पूरे करें।' },
         { key: 'finance', title: 'धन', score: finance, text: finance >= 72 ? 'योजना बनाकर लिया गया आर्थिक निर्णय लाभ दे सकता है।' : 'बड़े खर्च या जोखिम भरे निर्णय फिलहाल सोचकर लें।' },
         { key: 'health', title: 'स्वास्थ्य', score: health, text: health >= 72 ? 'ऊर्जा ठीक रहेगी, दिनचर्या बनाए रखें।' : 'आराम, पानी और भोजन पर ध्यान दें।' },
       ],
-      doList: ['महत्वपूर्ण काम सुबह या शांत समय में करें', 'वाणी को मधुर रखें', 'छोटा दान या सेवा करें'],
-      avoidList: ['जल्दबाजी में निर्णय', 'बहस और कटु शब्द', 'अशुभ समय में नई शुरुआत'],
-      remedy: `अपने राशि स्वामी ${sign.lord} के लिए ${mantra.text} ${mantra.count} जप करें।`,
+      doList: ['महत्वपूर्ण काम सुबह या शांत समय में करें', 'वाणी को मधुर रखें', 'छोटा दान या सेवा करें', ...pk.doExtra],
+      avoidList: ['जल्दबाजी में निर्णय', 'बहस और कटु शब्द', 'अशुभ समय में नई शुरुआत', ...pk.avoidExtra],
+      remedy: `अपने राशि स्वामी ${sign.lord} के लिए ${pk.remedyWhen} ${mantra.text} ${mantra.count} जप करें।`,
       mantra,
       luckyColor: luckyColor(sign),
       luckyNumber: ((SIGN_INDEX[sign.name] + moonHouse + 3) % 9) + 1,
@@ -177,17 +197,17 @@ function buildSign(sign, panchang, period, lang) {
     displayName,
     score,
     headline: mi.quality === 'caution' ? `${displayName}: move with patience` : `${displayName}: useful momentum`,
-    summary: `${lead}, the Moon transit is ${moonHouse || '-'} houses from ${displayName}, which is ${mi.en}. ${tithi ? `${tithi} tithi` : 'Today’s panchang'} and ${nak ? `${nak} nakshatra` : 'the lunar transit'} suggest using timing wisely. ${elementAdvice(sign.element, lang)}`,
-    plainSummary: `For ${displayName}, the simple guidance is to act with timing, avoid rushing, and keep decisions practical.`,
+    summary: `${lead}, the Moon transit is ${moonHouse || '-'} houses from ${displayName}, which is ${mi.en}. ${tithi ? `${tithi} tithi` : 'Today’s panchang'} and ${nak ? `${nak} nakshatra` : 'the lunar transit'} suggest using timing wisely. ${elementAdvice(sign.element, lang)}${pk.outlook ? ' ' + pk.outlook : ''}`,
+    plainSummary: `For ${displayName} — ${pk.plain}`,
     areas: [
       { key: 'love', title: 'Love', score: love, text: love >= 72 ? 'Warm communication can improve closeness and clear old tension.' : 'Keep your tone soft and avoid reacting quickly.' },
       { key: 'career', title: 'Career', score: career, text: career >= 72 ? 'Good time to move priority work forward with confidence.' : 'Stay patient and complete pending work first.' },
       { key: 'finance', title: 'Finance', score: finance, text: finance >= 72 ? 'Planned financial steps can work better than impulse spending.' : 'Avoid risky commitments and review expenses.' },
       { key: 'health', title: 'Health', score: health, text: health >= 72 ? 'Energy is steady; keep your routine clean.' : 'Support your body with rest, hydration, and simple food.' },
     ],
-    doList: ['Start important work in a calm window', 'Speak clearly and kindly', 'Do a small act of service'],
-    avoidList: ['Rushed decisions', 'Arguments and harsh words', 'New beginnings during inauspicious windows'],
-    remedy: `Chant ${mantra.text} ${mantra.count} for your sign lord ${sign.lord}.`,
+    doList: ['Start important work in a calm window', 'Speak clearly and kindly', 'Do a small act of service', ...pk.doExtra],
+    avoidList: ['Rushed decisions', 'Arguments and harsh words', 'New beginnings during inauspicious windows', ...pk.avoidExtra],
+    remedy: `Chant ${mantra.text} ${mantra.count} ${pk.remedyWhen} for your sign lord ${sign.lord}.`,
     mantra,
     luckyColor: luckyColor(sign),
     luckyNumber: ((SIGN_INDEX[sign.name] + moonHouse + 3) % 9) + 1,
@@ -209,7 +229,7 @@ async function publicHoroscope(input = {}) {
   const lng = input.lng != null ? Number(input.lng) : DEFAULT_PLACE.lng;
   const place = input.place || DEFAULT_PLACE.place;
   const tz = input.tz || DEFAULT_PLACE.tz;
-  const cacheKey = `horoscope|v1|${period}|${date}|${lat},${lng}|${lang}`;
+  const cacheKey = `horoscope|v2|${period}|${date}|${lat},${lng}|${lang}`;
 
   return cached(cacheKey, async () => {
     const panchang = await getPanchang({ lat, lng, place, date, tz });

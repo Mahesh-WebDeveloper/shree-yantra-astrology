@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import Svg, { Rect, Line, Text as SvgText } from 'react-native-svg';
+import Svg, { Rect, Line, G, Text as SvgText } from 'react-native-svg';
 import { fonts } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { ApiPlanet } from '../lib/api';
+import { ChartExplainModal } from './ChartExplainModal';
+import { ExplainView, explainHouse, explainPlanet } from '../data/jyotish';
 
 export type ChartStyle = 'north' | 'south' | 'east';
 const SIGN = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
@@ -11,8 +13,6 @@ const SIGN_ABBR = ['Ar', 'Ta', 'Ge', 'Cn', 'Le', 'Vi', 'Li', 'Sc', 'Sg', 'Cp', '
 const SIGN_ABBR_HI = ['मे', 'वृ', 'मि', 'क', 'सिं', 'कन्', 'तु', 'वृश्', 'ध', 'मक', 'कुं', 'मी'];
 const AB: Record<string, string> = { Sun: 'Su', Moon: 'Mo', Mars: 'Ma', Mercury: 'Me', Jupiter: 'Ju', Venus: 'Ve', Saturn: 'Sa', Rahu: 'Ra', Ketu: 'Ke' };
 const AB_HI: Record<string, string> = { Sun: 'सू', Moon: 'चं', Mars: 'मं', Mercury: 'बु', Jupiter: 'गु', Venus: 'शु', Saturn: 'श', Rahu: 'रा', Ketu: 'के' };
-const DEV = '०१२३४५६७८९';
-const toDev = (n: number) => String(n).replace(/[0-9]/g, (x) => DEV[+x]);
 const hnum = (h?: string) => { const m = String(h || '').match(/\d+/); return m ? Number(m[0]) : null; };
 const planetAb = (p: string, hi: boolean) => (hi ? AB_HI[p] : AB[p]) || p.slice(0, 2);
 
@@ -24,25 +24,31 @@ const HPOS: Record<number, [number, number]> = {
 // South-Indian fixed 4x4 sign cells
 const SCELL: Record<number, [number, number]> = { 11: [0, 0], 0: [0, 1], 1: [0, 2], 2: [0, 3], 3: [1, 3], 4: [2, 3], 5: [3, 3], 6: [3, 2], 7: [3, 1], 8: [3, 0], 9: [2, 0], 10: [1, 0] };
 
-export function VedicChart({ planets, ascendant, style, lang = 'en', size = 300 }: {
-  planets: ApiPlanet[]; ascendant?: string | null; style: ChartStyle; lang?: 'en' | 'hi'; size?: number;
+export function VedicChart({ planets, ascendant, style, lang = 'en', size = 300, interactive = true }: {
+  planets: ApiPlanet[]; ascendant?: string | null; style: ChartStyle; lang?: 'en' | 'hi'; size?: number; interactive?: boolean;
 }) {
   const { theme } = useTheme();
+  const [view, setView] = useState<ExplainView | null>(null);
   const stroke = theme.gold2;
-  const numFill = theme.isDark ? '#e9b850' : '#9a6c12';
-  const pFill = theme.isDark ? '#f6d27a' : '#7a510e';
-  const sFill = theme.isDark ? '#d6b05c' : '#8a6f3a';
+  const numFill = theme.isDark ? '#e9b850' : theme.gold1;
+  const chipBg = theme.isDark ? '#0c0c18' : '#ffffff';
+  const pFill = theme.isDark ? '#f6d27a' : theme.goldText;
+  const sFill = theme.isDark ? '#d6b05c' : theme.textSoft;
   const hi = lang === 'hi';
   const lagnaIdx = ascendant != null ? SIGN.indexOf(ascendant) : -1;
-  const num = (n: number) => (hi ? toDev(n) : String(n));
+  const num = (n: number) => String(n); // chart numerals always English (both languages)
 
-  // group planets by house (north) and by sign-index (south/east)
+  const openHouse = (h: number) => interactive && setView(explainHouse(planets, ascendant, h, lang));
+  const openPlanet = (p: string) => interactive && setView(explainPlanet(planets, ascendant, p, lang));
+  const houseOfSignIdx = (si: number) => (lagnaIdx >= 0 ? ((si - lagnaIdx + 12) % 12) + 1 : si + 1);
+
+  // group FULL planet names by house (north) and by sign-index (south/east)
   const byHouse: Record<number, string[]> = {};
   const bySign: Record<number, string[]> = {};
   (planets || []).forEach((p) => {
     if (!p.sign) return;
-    const si = SIGN.indexOf(p.sign); if (si >= 0) (bySign[si] = bySign[si] || []).push(planetAb(p.planet, hi));
-    const h = hnum(p.house); if (h) (byHouse[h] = byHouse[h] || []).push(planetAb(p.planet, hi));
+    const si = SIGN.indexOf(p.sign); if (si >= 0) (bySign[si] = bySign[si] || []).push(p.planet);
+    const h = hnum(p.house); if (h) (byHouse[h] = byHouse[h] || []).push(p.planet);
   });
 
   const diamondLines = (
@@ -56,11 +62,22 @@ export function VedicChart({ planets, ascendant, style, lang = 'en', size = 300 
       <Line x1={10} y1={100} x2={100} y2={10} stroke={stroke} strokeWidth={1} />
     </>
   );
-  const tokens = (arr: string[], cx: number, cy: number) =>
-    arr.map((ab, i) => (
-      <SvgText key={`${ab}${i}`} x={cx + ((i % 2) * 18 - (arr.length > 1 ? 9 : 0))} y={cy + 9 + Math.floor(i / 2) * 9}
-        fontFamily={fonts.cinzel} fontWeight="700" fontSize={8} fill={pFill} textAnchor="middle">{ab}</SvgText>
-    ));
+
+  // planet tokens — each tappable (full name → explain)
+  const tokens = (names: string[], cx: number, cy: number) =>
+    names.map((name, i) => {
+      const ab = planetAb(name, hi);
+      const tx = cx + ((i % 2) * 18 - (names.length > 1 ? 9 : 0));
+      const ty = cy + 12 + Math.floor(i / 2) * 9;
+      const w = ab.length * 4.6 + 4;
+      return (
+        <G key={`${name}${i}`} onPress={() => openPlanet(name)}>
+          <Rect x={tx - w / 2 - 3} y={ty - 9} width={w + 6} height={13} rx={2.2} fill="transparent" />
+          <Rect x={tx - w / 2} y={ty - 7} width={w} height={9} rx={2.2} fill={chipBg} opacity={0.9} />
+          <SvgText x={tx} y={ty} fontFamily={fonts.cinzel} fontWeight="700" fontSize={8} fill={pFill} textAnchor="middle">{ab}</SvgText>
+        </G>
+      );
+    });
 
   return (
     <View style={[styles.wrap, { width: size, height: size }]}>
@@ -75,7 +92,10 @@ export function VedicChart({ planets, ascendant, style, lang = 'en', size = 300 
               const isLag = idx === lagnaIdx;
               return (
                 <React.Fragment key={si}>
-                  <SvgText x={x0 + 4} y={y0 + 11} fontFamily={fonts.cinzelSemi} fontWeight="700" fontSize={8} fill={isLag ? pFill : sFill} textAnchor="start">{(hi ? SIGN_ABBR_HI : SIGN_ABBR)[idx]}{isLag ? ' ◹' : ''}</SvgText>
+                  <G onPress={() => openHouse(houseOfSignIdx(idx))}>
+                    <Rect x={x0} y={y0} width={45} height={18} fill="transparent" />
+                    <SvgText x={x0 + 4} y={y0 + 11} fontFamily={fonts.cinzelSemi} fontWeight="700" fontSize={8} fill={isLag ? pFill : sFill} textAnchor="start">{(hi ? SIGN_ABBR_HI : SIGN_ABBR)[idx]}{isLag ? ' ◹' : ''}</SvgText>
+                  </G>
                   {tokens(bySign[idx] || [], x0 + 22, y0 + 16)}
                 </React.Fragment>
               );
@@ -85,11 +105,13 @@ export function VedicChart({ planets, ascendant, style, lang = 'en', size = 300 
           <>
             {diamondLines}
             {Array.from({ length: 12 }).map((_, h) => {
-              const si = h; // east: fixed signs by region (Aries top)
-              const [x, y] = HPOS[h + 1]; const isLag = si === lagnaIdx;
+              const si = h; const [x, y] = HPOS[h + 1]; const isLag = si === lagnaIdx;
               return (
                 <React.Fragment key={`e${h}`}>
-                  <SvgText x={x} y={y} fontFamily={fonts.cinzelSemi} fontWeight="700" fontSize={8} fill={isLag ? pFill : sFill} textAnchor="middle">{(hi ? SIGN_ABBR_HI : SIGN_ABBR)[si]}{isLag ? ' ◹' : ''}</SvgText>
+                  <G onPress={() => openHouse(houseOfSignIdx(si))}>
+                    <Rect x={x - 14} y={y - 9} width={28} height={16} fill="transparent" />
+                    <SvgText x={x} y={y} fontFamily={fonts.cinzelSemi} fontWeight="700" fontSize={8} fill={isLag ? pFill : sFill} textAnchor="middle">{(hi ? SIGN_ABBR_HI : SIGN_ABBR)[si]}{isLag ? ' ◹' : ''}</SvgText>
+                  </G>
                   {tokens(bySign[si] || [], x, y)}
                 </React.Fragment>
               );
@@ -101,16 +123,22 @@ export function VedicChart({ planets, ascendant, style, lang = 'en', size = 300 
             {Array.from({ length: 12 }).map((_, k) => {
               const h = k + 1; const [x, y] = HPOS[h];
               const rashi = lagnaIdx >= 0 ? ((lagnaIdx + h - 1) % 12) + 1 : h;
+              const lbl = num(rashi); const nw = lbl.length * 6 + 5;
               return (
                 <React.Fragment key={`n${h}`}>
-                  <SvgText x={x} y={y} fontFamily={fonts.cinzelSemi} fontWeight="700" fontSize={9} fill={numFill} textAnchor="middle">{num(rashi)}</SvgText>
                   {tokens(byHouse[h] || [], x, y)}
+                  <G onPress={() => openHouse(h)}>
+                    <Rect x={x - nw / 2 - 4} y={y - 11} width={nw + 8} height={15} rx={2.4} fill="transparent" />
+                    <Rect x={x - nw / 2} y={y - 8} width={nw} height={11} rx={2.4} fill={chipBg} opacity={0.95} />
+                    <SvgText x={x} y={y} fontFamily={fonts.cinzelSemi} fontWeight="700" fontSize={9} fill={numFill} textAnchor="middle">{lbl}</SvgText>
+                  </G>
                 </React.Fragment>
               );
             })}
           </>
         )}
       </Svg>
+      <ChartExplainModal view={view} lang={lang} onClose={() => setView(null)} />
     </View>
   );
 }

@@ -30,7 +30,7 @@ export function TextField({
   const liftAboveKeyboard = useKeyboardAwareFocus();
 
   const invalid = !!error;
-  const borderColor = invalid ? 'rgba(245,100,100,0.65)' : focused ? theme.gold2 : (theme.isDark ? 'rgba(201,150,46,0.35)' : 'rgba(151,93,12,0.5)');
+  const borderColor = invalid ? 'rgba(245,100,100,0.65)' : focused ? theme.gold2 : (theme.isDark ? 'rgba(201,150,46,0.35)' : theme.cardBorder);
 
   return (
     <View>
@@ -39,7 +39,7 @@ export function TextField({
         style={[
           styles.field,
           {
-            backgroundColor: invalid ? (theme.isDark ? 'rgba(36,12,18,0.55)' : 'rgba(255,238,238,0.95)') : (theme.isDark ? (focused ? 'rgba(0,0,0,0.78)' : 'rgba(0,0,0,0.70)') : '#fffdf7'),
+            backgroundColor: invalid ? (theme.isDark ? 'rgba(36,12,18,0.55)' : '#fff2f2') : (theme.isDark ? (focused ? 'rgba(0,0,0,0.78)' : 'rgba(0,0,0,0.70)') : '#ffffff'),
             borderColor,
             shadowColor: theme.isDark ? '#000000' : '#5c3f12',
             shadowOpacity: theme.isDark ? 0.45 : 0.1,
@@ -61,7 +61,7 @@ export function TextField({
               value={value}
               onChangeText={onChangeText}
               placeholder={placeholder}
-              placeholderTextColor={theme.isDark ? 'rgba(216,203,168,0.42)' : 'rgba(95,77,45,0.7)'}
+              placeholderTextColor={theme.isDark ? 'rgba(216,203,168,0.42)' : theme.textMuted}
               secureTextEntry={hide}
               keyboardType={keyboardType}
               autoCapitalize={autoCapitalize}
@@ -78,7 +78,7 @@ export function TextField({
           </View>
         </View>
       </Pressable>
-      {invalid && <Text style={[styles.error]}>{error}</Text>}
+      {invalid && <Text style={[styles.error, { color: theme.isDark ? '#ff9d9d' : theme.red }]}>{error}</Text>}
     </View>
   );
 }

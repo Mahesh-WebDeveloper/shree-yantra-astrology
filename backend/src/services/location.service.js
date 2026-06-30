@@ -181,6 +181,115 @@ async function searchNominatim({ query, lang, country, limit }) {
   return out;
 }
 
+// ── Photon (photon.komoot.io) — free OSM typeahead, typo-tolerant, returns coords.
+// Best source for tiny Indian villages / tehsils. Each suggestion already carries
+// lat/lng so picking it is instant and free (no extra details call).
+const INDIA_BBOX = '68.0,6.0,97.5,37.5'; // minLon,minLat,maxLon,maxLat
+const INDIA_CENTER = { lat: '22.6', lon: '79.0' };
+
+// rank settlements first (city > town > village > hamlet > locality), admin areas after
+function photonRank(p) {
+  const v = clean(p.osm_value).toLowerCase();
+  const placeOrder = { city: 0, town: 1, municipality: 1, village: 2, hamlet: 3, suburb: 3, quarter: 3, locality: 4, isolated_dwelling: 5 };
+  if (p.osm_key === 'place') return placeOrder[v] != null ? placeOrder[v] : 6;
+  if (p.osm_key === 'boundary' && v === 'administrative') return 7; // district / state / tehsil
+  return 9;
+}
+
+function normalizePhotonFeature(f) {
+  const p = (f && f.properties) || {};
+  const coords = (f && f.geometry && f.geometry.coordinates) || [];
+  const lng = num(coords[0]);
+  const lat = num(coords[1]);
+  if (lat == null || lng == null) return null;
+  const cc = clean(p.countrycode).toUpperCase();
+  if (cc && cc !== 'IN') return null;               // India only
+  if (!cc && clean(p.country) && clean(p.country) !== 'India') return null;
+  const name = clean(p.name || p.city || p.county || p.locality);
+  if (!name) return null;
+  const areaParts = [
+    p.city && p.city !== name ? p.city : '',
+    p.district || p.county || '',
+    p.state || '',
+    p.country || 'India',
+  ].map(clean).filter(Boolean);
+  const secondaryText = Array.from(new Set(areaParts)).join(', ');
+  const out = {
+    id: `photon:${clean(p.osm_type)}:${p.osm_id != null ? p.osm_id : `${lat},${lng}`}`,
+    provider: 'photon',
+    placeId: String(p.osm_id || ''),
+    mainText: name,
+    secondaryText,
+    description: [name, secondaryText].filter(Boolean).join(', '),
+    lat,
+    lng,
+    type: clean(p.osm_value || p.type),
+  };
+  Object.defineProperty(out, '_rank', { value: photonRank(p), enumerable: false });
+  return out;
+}
+
+async function callPhoton(query, limit) {
+  const qs = new URLSearchParams({
+    q: query,
+    limit: String(Math.min(Math.max(Number(limit) || 8, 1), 12)),
+    lang: 'en',
+    lat: INDIA_CENTER.lat,
+    lon: INDIA_CENTER.lon,
+    bbox: INDIA_BBOX,
+  });
+  return fetchJson(`${env.maps.photonUrl}?${qs.toString()}`, { headers: { 'User-Agent': USER_AGENT } });
+}
+
+async function searchPhoton({ query, lang, country, limit }) {
+  if (!env.maps.photonEnabled) return [];
+  const key = cacheKey(['photon-search', countryCode(country), langCode(lang), limit, query]);
+  if (SEARCH_CACHE.has(key)) return SEARCH_CACHE.get(key);
+  let json = null;
+  try {
+    json = await callPhoton(query, limit);
+  } catch (e) {
+    console.warn('[location] Photon failed:', e.message);
+    return [];
+  }
+  let out = (json && Array.isArray(json.features) ? json.features : [])
+    .map(normalizePhotonFeature)
+    .filter(Boolean);
+  out.sort((a, b) => (a._rank - b._rank)); // settlements first
+  out = out.slice(0, 10);
+  SEARCH_CACHE.set(key, out);
+  return out;
+}
+
+// merge several suggestion lists, dedupe by name + first area token, and prefer the
+// entry that already has coordinates (so picking it is free + instant).
+function dedupeKey(s) {
+  const main = clean(s.mainText).toLowerCase();
+  const area = clean(s.secondaryText).toLowerCase().split(',')[0].trim();
+  return `${main}|${area}`;
+}
+function mergeSuggestions(lists, limit) {
+  const map = new Map();
+  const order = [];
+  for (const list of lists) {
+    for (const s of (list || [])) {
+      const k = dedupeKey(s);
+      const existing = map.get(k);
+      if (!existing) { map.set(k, s); order.push(k); }
+      else if ((existing.lat == null || existing.lng == null) && s.lat != null && s.lng != null) { map.set(k, s); }
+    }
+  }
+  return order.map((k) => map.get(k)).slice(0, Math.min(Math.max(Number(limit) || 6, 1), 10));
+}
+
+// light auto-correct used only when nothing was found: collapse repeated letters
+// ("aagolai" → "agolai", "khannna" → "khana"). Applied as a fallback query so it
+// never harms a query that already returned results.
+function correctedQuery(q) {
+  const c = clean(q).replace(/([a-zA-Zऀ-ॿ])\1+/g, '$1');
+  return c && c.toLowerCase() !== clean(q).toLowerCase() ? c : '';
+}
+
 function normalizeGoogleSuggestion(s) {
   const p = s.placePrediction;
   if (!p) return null;
@@ -273,11 +382,33 @@ async function getGooglePlaceDetails(placeId, lang) {
 async function searchLocations({ query, lang = 'en', country = DEFAULT_COUNTRY, limit = 6 }) {
   const q = clean(query);
   if (q.length < 3) return [];
+
+  // 1) Google (primary when enabled + quota left) — best ranking for towns/cities.
+  let google = [];
   if (googleEnabled()) {
-    const google = await searchGoogle({ query: q, lang, country, limit });
-    if (google && google.length) return google;
+    const g = await searchGoogle({ query: q, lang, country, limit });
+    if (g && g.length) google = g;
   }
-  return searchNominatim({ query: q, lang, country, limit });
+
+  // 2) Photon (free OSM typeahead) — ALWAYS, so tiny villages/tehsils surface even
+  //    when Google misses them, and so picks come pre-locked with coordinates.
+  const photon = await searchPhoton({ query: q, lang, country, limit });
+
+  // 2b) Auto-correct: if the query has doubled letters ("aagolai" → "agolai"), also
+  //     fetch the corrected spelling so the intended village still appears.
+  const fixed = correctedQuery(q);
+  const photonFixed = fixed ? await searchPhoton({ query: fixed, lang, country, limit }) : [];
+
+  // Google first (ranking), then Photon (villages), then corrected matches; duplicates
+  // are deduped and upgraded to the coord-locked entry.
+  const merged = mergeSuggestions([google, photon, photonFixed], limit);
+  if (merged.length) return merged;
+
+  // 3) Nominatim — deepest fallback (original, then corrected spelling).
+  const nominatim = await searchNominatim({ query: q, lang, country, limit });
+  if (nominatim.length) return nominatim;
+  if (fixed) return searchNominatim({ query: fixed, lang, country, limit });
+  return [];
 }
 
 async function resolveLocation({ provider, placeId, query, description, lat, lng, lang = 'en', country = DEFAULT_COUNTRY }) {
@@ -314,8 +445,19 @@ async function resolveLocation({ provider, placeId, query, description, lat, lng
     }
   }
 
+  const photon = await searchPhoton({ query: q, lang, country, limit: 1 });
+  if (photon[0] && photon[0].lat != null && photon[0].lng != null) return photon[0];
+
   const nominatim = await searchNominatim({ query: q, lang, country, limit: 1 });
   if (nominatim[0]) return nominatim[0];
+
+  const fixed = correctedQuery(q);
+  if (fixed) {
+    const ph2 = await searchPhoton({ query: fixed, lang, country, limit: 1 });
+    if (ph2[0] && ph2[0].lat != null && ph2[0].lng != null) return ph2[0];
+    const nm2 = await searchNominatim({ query: fixed, lang, country, limit: 1 });
+    if (nm2[0]) return nm2[0];
+  }
   throw Object.assign(new Error(`Place nahi mila: ${q}`), { status: 404 });
 }
 

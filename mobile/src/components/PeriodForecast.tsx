@@ -6,6 +6,7 @@ import { useLang } from '../i18n/LanguageProvider';
 import { birthFromProfile } from '../lib/birth';
 import { getPeriodPrediction, PeriodPrediction, PredPeriod } from '../lib/api';
 import { SpeakButton } from './SpeakButton';
+import { SaralVivaran } from './SaralVivaran';
 
 const DEFAULT_BIRTH = { dob: '01-01-2000', tob: '06:42', tz: '+05:30', place: 'Jaipur' };
 const AREA_HI: Record<string, string> = { Love: 'प्रेम', Career: 'करियर', Finance: 'धन', Health: 'स्वास्थ्य' };
@@ -51,7 +52,8 @@ export function PeriodForecast({ period }: { period: PredPeriod }) {
       }
     })();
     return () => { on = false; };
-  }, [period]);
+    // refetch on language switch too, so the AI forecast text re-renders in the new language
+  }, [period, lang]);
 
   const pLabel = period === 'year' ? (lang === 'hi' ? 'इस वर्ष' : 'this year') : period === 'month' ? (lang === 'hi' ? 'इस महीने' : 'this month') : (lang === 'hi' ? 'इस सप्ताह' : 'this week');
 
@@ -150,6 +152,8 @@ export function PeriodForecast({ period }: { period: PredPeriod }) {
           <Text style={[styles.adviceText, { color: theme.text }]}>💛 {data.advice}</Text>
         </View>
       )}
+
+      <SaralVivaran text={data.saralVivaran} />
 
       <Text style={[styles.trust, { color: theme.textMuted }]}>🔒 {lang === 'hi' ? 'आपकी जन्म कुंडली, दशा व गोचर पर आधारित।' : 'Based on your birth chart, dasha & transits.'}</Text>
       <View style={{ height: 8 }} />

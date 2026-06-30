@@ -8,6 +8,11 @@ export function navTo(name: string, params?: object) {
   if (navigationRef.isReady()) (navigationRef as any).navigate(name, params);
 }
 
+/** Reset the whole stack to a single screen (used on logout → back to Phone+OTP). */
+export function resetTo(name: string) {
+  if (navigationRef.isReady()) (navigationRef as any).reset({ index: 0, routes: [{ name }] });
+}
+
 /** Name of the currently focused route (tab name or stack screen name). */
 export function currentRouteName(): string | undefined {
   if (!navigationRef.isReady()) return undefined;

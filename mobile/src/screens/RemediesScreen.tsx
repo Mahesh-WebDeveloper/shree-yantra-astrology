@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ActivityIndicator, Pressable } from 'react-nati
 import { Page } from '../components/Page';
 import { GradientText } from '../components/GradientText';
 import { SpeakButton } from '../components/SpeakButton';
+import { SaralVivaran } from '../components/SaralVivaran';
 import { useTheme } from '../theme/ThemeProvider';
 import { Theme, fonts, radii } from '../theme/tokens';
 import { hTap } from '../lib/haptics';
@@ -157,6 +158,8 @@ export function RemediesScreen({ navigation }: any) {
               <Text style={[styles.adviceText, { color: theme.text }]}>💛 {ex.advice}</Text>
             </View>
           )}
+
+          <SaralVivaran text={ex?.saralVivaran} />
 
           <Text style={[styles.trust, { color: theme.textMuted }]}>🔒 {lang === 'hi' ? 'उपाय शास्त्र-आधारित · गणना वास्तविक ग्रह-स्थितियों से।' : 'Remedies are scripture-based · calculated from real planetary positions.'}</Text>
           <View style={{ height: 8 }} />

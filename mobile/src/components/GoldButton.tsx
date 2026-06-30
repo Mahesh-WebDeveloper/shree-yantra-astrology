@@ -47,7 +47,7 @@ export function GoldButton({ label, onPress, variant = 'primary', style, icon, t
           styles.base,
           compact && styles.baseCompact,
           {
-            backgroundColor: theme.isDark ? 'rgba(0,0,0,0.6)' : '#fffdf7',
+            backgroundColor: theme.isDark ? 'rgba(0,0,0,0.6)' : '#ffffff',
             borderColor: theme.cardBorder,
             borderWidth: 1,
             opacity: pressed ? 0.94 : 1,
@@ -68,7 +68,7 @@ export function GoldButton({ label, onPress, variant = 'primary', style, icon, t
       style={({ pressed }) => [
         styles.primaryWrap,
         {
-          shadowColor: theme.isDark ? '#000000' : '#8a5b10',
+          shadowColor: theme.isDark ? '#000000' : '#3d2809',
           opacity: pressed ? 0.96 : 1,
           transform: [{ scale: pressed ? 0.97 : 1 }],
         },
