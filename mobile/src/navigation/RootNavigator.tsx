@@ -49,6 +49,8 @@ import { JanamPatriScreen } from '../screens/JanamPatriScreen';
 import { BrihatKundliScreen } from '../screens/BrihatKundliScreen';
 import { KundliLearnScreen } from '../screens/KundliLearnScreen';
 import { ExampleKundliScreen } from '../screens/ExampleKundliScreen';
+import { MuhuratScreen } from '../screens/MuhuratScreen';
+import { MuhuratFinderScreen } from '../screens/MuhuratFinderScreen';
 import { TransitForecastScreen } from '../screens/TransitForecastScreen';
 import { BabyNamesScreen } from '../screens/BabyNamesScreen';
 import { stackSpec, forSharedAxisX, forFadeThrough } from './transitions';
@@ -126,6 +128,8 @@ export function RootNavigator() {
       <Stack.Screen name="BrihatKundli" component={BrihatKundliScreen} />
       <Stack.Screen name="KundliLearn" component={KundliLearnScreen} />
       <Stack.Screen name="ExampleKundli" component={ExampleKundliScreen} />
+      <Stack.Screen name="Muhurat" component={MuhuratScreen} />
+      <Stack.Screen name="MuhuratFinder" component={MuhuratFinderScreen} />
       <Stack.Screen name="TransitForecast" component={TransitForecastScreen} />
       <Stack.Screen name="BabyNames" component={BabyNamesScreen} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />

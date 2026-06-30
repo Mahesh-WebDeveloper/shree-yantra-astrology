@@ -177,6 +177,7 @@ const SERVICES: { key: string; en: string; hi: string; subEn: string; subHi: str
   { key: 'milan', en: 'Kundli Milan', hi: 'कुंडली मिलान', subEn: 'Match two kundlis for marriage (36 guna)', subHi: 'विवाह हेतु दो कुंडली मिलान (36 गुण)', icon: 'milan', accent: '#f5a3ba', route: 'KundliMatch', tint: ['#9c2f54', '#5e1c38', '#2c0e1f'], lightTint: ['#fbe1ec', '#fdeef4', '#fff8fb'] },
   { key: 'panchang', en: 'Panchang', hi: 'पंचांग', subEn: 'Tithi, nakshatra & shubh muhurat', subHi: 'तिथि, नक्षत्र व शुभ मुहूर्त', icon: 'calendar', accent: '#f3cd7e', route: 'Panchang', tint: ['#9a6418', '#5c3a10', '#2e1d08'], lightTint: ['#fbeccf', '#fef5e2', '#fffbf2'] },
   { key: 'chog', en: 'Choghadiya', hi: 'चौघड़िया', subEn: 'Find the good time for any work', subHi: 'किसी भी काम का शुभ समय', icon: 'clock', accent: '#84e8b4', route: 'Choghadiya', tint: ['#1e7a54', '#11543a', '#0a2c20'], lightTint: ['#daf2e4', '#ebfaf1', '#f5fdf9'] },
+  { key: 'muhurat', en: 'Shubh Muhurat', hi: 'शुभ मुहूर्त', subEn: 'Best day & time for griha pravesh, vivah…', subHi: 'गृह प्रवेश, विवाह आदि का शुभ दिन व समय', icon: 'calendar', accent: '#f3cd7e', route: 'Muhurat', tint: ['#9a6418', '#5c3a10', '#2e1d08'], lightTint: ['#fbeccf', '#fef5e2', '#fffbf2'] },
   { key: 'baby', en: 'Child Name Finder', hi: 'शिशु के शुभ नाम', subEn: 'Lucky names with meaning for your child', subHi: 'अर्थ सहित बच्चे के सुंदर व शुभ नाम', icon: 'name', accent: '#8ce0e0', route: 'BabyNames', tint: ['#1f7373', '#114a4a', '#0a2626'], lightTint: ['#d8f0f0', '#e8f9f9', '#f4fdfd'] },
 ];
 
@@ -185,6 +186,7 @@ const SERVICE_LIGHT_ACCENT: Record<string, string> = {
   milan: '#9b244b',
   panchang: '#70420a',
   chog: '#146b43',
+  muhurat: '#70420a',
   baby: '#176c70',
 };
 

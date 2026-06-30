@@ -434,6 +434,48 @@ export interface PanchangResponse {
 }
 export const getPanchang = (input: { place?: string; lat?: number; lng?: number; date?: string; tz?: string }) =>
   post<PanchangResponse>('/api/panchang', input);
+
+// ── Shubh Muhurat (auspicious timing finder) ──
+export interface MuhuratCategory {
+  key: string;
+  name: { en: string; hi: string };
+  emoji: string;
+  art?: string;
+  group: string;
+  blurb: { en: string; hi: string };
+  nameBased: boolean;
+  why?: { en: string; hi: string };
+}
+export interface MuhuratItem {
+  date: string;
+  dmy: string;
+  weekday: string;
+  weekdayHi?: string;
+  tithi: { num: number; name: string; hi?: string; paksha: string; pakshaHi?: string };
+  nakshatra: { num: number; name: string; hi?: string; pada: number };
+  yoga?: { name: string; hi?: string };
+  score: number;
+  reasons: { en: string; hi: string; good: boolean }[];
+  chandraHouse?: number | null;
+  tara?: { en: string; hi: string } | null;
+  time: { abhijit: { name: string; start: string; end: string } | null; windows: { name: string; start: string; end: string }[]; rahuKaal: { start: string; end: string } | null };
+  sunrise: string;
+  sunset: string;
+}
+export interface MuhuratResult {
+  category: MuhuratCategory & { bestLagna?: string[] | null };
+  method: { en: string; hi: string };
+  nameRashi?: string | null;
+  janmaNakshatra?: number | null;
+  scanned: number;
+  items: MuhuratItem[];
+}
+export const getMuhuratCategories = () => get<{ items: MuhuratCategory[] }>('/api/muhurat/categories');
+export const findMuhurat = (input: {
+  category: string; date?: string; month?: number; year?: number; months?: number;
+  place?: string; lat?: number; lng?: number; tz?: string; nameRashi?: string | null;
+  birth?: { date?: string; time?: string; place?: string; lat?: number; lng?: number; tz?: string } | null;
+}) => post<MuhuratResult>('/api/muhurat/find', input);
 export interface PanchangFestivalDay {
   date: string;
   weekday: string;

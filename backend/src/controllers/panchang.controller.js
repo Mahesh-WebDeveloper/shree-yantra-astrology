@@ -25,6 +25,16 @@ const fromDMY = (value) => {
   const [dd, mm, yy] = String(value).split('/').map(Number);
   return new Date(yy, mm - 1, dd);
 };
+// tolerant parse of whatever date format an item carries (DD/MM/YYYY, YYYY-MM-DD, "DD Mon YYYY")
+const itemTime = (s) => {
+  const str = String(s || '').trim();
+  let m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3]).getTime();
+  m = str.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{2,4})/);
+  if (m) { let y = +m[3]; if (y < 100) y += 2000; return new Date(y, +m[2] - 1, +m[1]).getTime(); }
+  const t = Date.parse(str);
+  return Number.isFinite(t) ? t : 0;
+};
 const weekdayName = (dateObj) => ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dateObj.getDay()];
 const weekdayNameHi = (dateObj) => ['रविवार', 'सोमवार', 'मंगलवार', 'बुधवार', 'गुरुवार', 'शुक्रवार', 'शनिवार'][dateObj.getDay()];
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -341,7 +351,7 @@ exports.searchPanchangFestivalDates = asyncHandler(async (req, res) => {
       const ai = await callAI(`You are a precise Hindu Panchang assistant. Identify the festival, vrat or observance the user means and its upcoming date(s).
 User query: "${String(query).trim()}".
 Start date (today): ${toDMY(start)} in DD/MM/YYYY.
-Return STRICT JSON only: {"found": boolean, "nameEn": string, "nameHi": string, "type": "festival" or "vrat" or "observance", "dates": ["DD/MM/YYYY", ...up to 2 upcoming dates on/after the start date], "guidanceEn": string, "guidanceHi": string, "whyEn": string, "whyHi": string}.
+Return STRICT JSON only: {"found": boolean, "nameEn": string, "nameHi": string, "type": "festival" or "vrat" or "observance", "dates": ["DD/MM/YYYY"] (ONLY the single NEXT upcoming date on/after the start date — exactly one date, not future years), "guidanceEn": string, "guidanceHi": string, "whyEn": string, "whyHi": string}.
 Only include dates you are reasonably confident about. If it is NOT a real Hindu festival/vrat/observance, return {"found": false}.`, { json: true });
       if (ai && ai.found && Array.isArray(ai.dates)) {
         const obsKey = `ai-${String(query).trim().toLowerCase().replace(/[^a-z0-9]/g, '')}`.slice(0, 40) || 'ai-festival';
@@ -353,7 +363,7 @@ Only include dates you are reasonably confident about. If it is NOT a real Hindu
           guidance: { en: ai.guidanceEn || '', hi: ai.guidanceHi || ai.guidanceEn || '' },
         };
         const why = { en: ai.whyEn || '', hi: ai.whyHi || ai.whyEn || '' };
-        for (const dmy of ai.dates.slice(0, 2)) {
+        for (const dmy of ai.dates.slice(0, 1)) {
           if (!/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(String(dmy)) || fromDMY(dmy) < start) continue;
           const item = await festivalItemFromDate({ festival: { key: obsKey, name: observance.name, guidance: observance.guidance, why }, dmy, lat, lng, place, tz });
           item.observances = [observance];
@@ -364,7 +374,19 @@ Only include dates you are reasonably confident about. If it is NOT a real Hindu
     } catch (_) { /* AI fallback optional — empty result is fine */ }
   }
 
-  res.json({ query: query || '', from: toDMY(start), years, location: place || `${lat},${lng}`, items, errors });
+  // De-duplicate: each distinct festival/vrat must appear ONCE — keep only its NEXT
+  // (earliest upcoming) occurrence, so the same festival never shows for 2 years.
+  // Distinct festivals (e.g. Holi vs Holika Dahan) have different keys → both kept.
+  const byFestival = new Map();
+  for (const it of items) {
+    const obs = (it.observances && it.observances[0]) || {};
+    const k = String(obs.key || (obs.name && (obs.name.en || obs.name.hi)) || it.date).toLowerCase().trim();
+    const prev = byFestival.get(k);
+    if (!prev || itemTime(it.date) < itemTime(prev.date)) byFestival.set(k, it);
+  }
+  const dedupedItems = Array.from(byFestival.values()).sort((a, b) => itemTime(a.date) - itemTime(b.date));
+
+  res.json({ query: query || '', from: toDMY(start), years, location: place || `${lat},${lng}`, items: dedupedItems, errors });
 });
 
 // POST /api/panchang/festival-detail { place|lat+lng, date, key?, query?, lang?, ai?:boolean }

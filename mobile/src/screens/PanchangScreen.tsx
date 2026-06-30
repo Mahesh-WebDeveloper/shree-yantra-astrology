@@ -24,8 +24,9 @@ const pad = (n: number) => (n < 10 ? '0' : '') + n;
 const toDMY = (d: Date) => `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const MON_HI = ['जन', 'फ़र', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुल', 'अग', 'सित', 'अक्तू', 'नव', 'दिस'];
-const DEV = '०१२३४५६७८९';
-const toDev = (n: number | string) => String(n).replace(/[0-9]/g, (d) => DEV[+d]);
+// Force English (Latin) numerals everywhere — convert any Devanagari digit (०-९) the
+// backend may return inside Hindi strings (durations, times…) back to 0-9.
+const toEng = (v: unknown) => String(v ?? '').replace(/[०-९]/g, (d) => String(d.charCodeAt(0) - 0x0966));
 const safeText = (value: unknown): string => {
   if (value == null) return '';
   if (typeof value === 'string') return value;
@@ -63,14 +64,15 @@ const Arrow = ({ dir, c }: { dir: 'l' | 'r'; c: string }) => (
 function endLabel(e: AngaEnd | undefined, lang: 'en' | 'hi') {
   if (!e) return '';
   const nd = e.nextDay ? (lang === 'hi' ? ' (अगले दिन)' : ' (next day)') : '';
-  return lang === 'hi' ? `${e.hm}${nd} तक` : `upto ${e.hm}${nd}`;
+  const hm = toEng(e.hm);
+  return lang === 'hi' ? `${hm}${nd} तक` : `upto ${hm}${nd}`;
 }
 
 function AngCard({ label, value, num, sub, end, theme, lang }: { label: string; value: string; num?: number; sub?: string; end?: AngaEnd; theme: Theme; lang: 'en' | 'hi' }) {
   return (
     <View style={[styles.ang, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(255,253,247,0.85)' }]}>
-      <Text style={[styles.angLabel, { color: theme.gold2 }]}>{label}{num ? `  ${lang === 'hi' ? toDev(num) : num}` : ''}</Text>
-      <Text style={[styles.angValue, { color: theme.text }]} numberOfLines={1}>{value || '—'}</Text>
+      <Text style={[styles.angLabel, { color: theme.gold2 }]}>{label}{num ? `  ${num}` : ''}</Text>
+      <Text style={[styles.angValue, { color: theme.text }]} numberOfLines={1}>{toEng(value) || '—'}</Text>
       {!!sub && <Text style={[styles.angSub, { color: theme.textMuted }]} numberOfLines={1}>{sub}</Text>}
       {!!end && <Text style={[styles.angEnd, { color: theme.gold1 }]} numberOfLines={1}>{endLabel(end, lang)}</Text>}
     </View>
@@ -84,7 +86,7 @@ function PeriodRow({ p, color, theme, lang }: { p: PanchangPeriod; color: string
       <View style={styles.periodHead}>
         <View style={[styles.dot, { backgroundColor: color }]} />
         <Text style={[styles.periodName, { color: theme.text }]}>{p.name}</Text>
-        <Text style={[styles.periodTime, { color: theme.textSoft }]}>{p.start} – {p.end}</Text>
+        <Text style={[styles.periodTime, { color: theme.textSoft }]}>{toEng(p.start)} – {toEng(p.end)}</Text>
       </View>
       {!!g && <Text style={[styles.periodGuide, { color: theme.textMuted }]}>{g.bad ? '⛔ ' : '✓ '}{lang === 'hi' ? g.hi : g.en}</Text>}
     </View>
@@ -139,7 +141,7 @@ function FestivalDetail({ detail, selected, mode, error, theme, lang }: { detail
           <Text style={[styles.detailMarkText, { color: theme.gold1 }]}>{mode === 'ai' && detail?.ai ? 'AI' : 'Om'}</Text>
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.detailKicker, { color: theme.gold2 }]}>{selected.date} · {lang === 'hi' ? (selected.weekdayHi || selected.weekday) : selected.weekday}</Text>
+          <Text style={[styles.detailKicker, { color: theme.gold2 }]}>{toEng(selected.date)} · {lang === 'hi' ? (selected.weekdayHi || selected.weekday) : selected.weekday}</Text>
           <Text style={[styles.detailTitle, { color: theme.text }]}>{detail?.title || L(selected.obs.name)}</Text>
         </View>
       </View>
@@ -159,7 +161,7 @@ function FestivalDetail({ detail, selected, mode, error, theme, lang }: { detail
           ].filter((x) => !!x.value).map((x) => (
             <View key={x.label} style={[styles.metaPill, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.025)' : 'rgba(255,253,247,0.76)' }]}>
               <Text style={[styles.metaLabel, { color: theme.textMuted }]}>{x.label}</Text>
-              <Text style={[styles.metaValue, { color: theme.text }]} numberOfLines={1}>{x.value}</Text>
+              <Text style={[styles.metaValue, { color: theme.text }]} numberOfLines={1}>{toEng(x.value)}</Text>
             </View>
           ))}
         </View>
@@ -180,7 +182,7 @@ function FestivalDetail({ detail, selected, mode, error, theme, lang }: { detail
                   <Text style={[styles.periodName, { color: theme.text }]}>{m.name}</Text>
                   {!!m.advice && <Text style={[styles.obsText, { color: theme.textMuted }]} numberOfLines={2}>{m.advice}</Text>}
                 </View>
-                <Text style={[styles.periodTime, { color: theme.gold2 }]}>{m.start} - {m.end}</Text>
+                <Text style={[styles.periodTime, { color: theme.gold2 }]}>{toEng(m.start)} - {toEng(m.end)}</Text>
               </View>
             ))}
           </View>
@@ -307,8 +309,8 @@ export function PanchangScreen({ navigation }: any) {
   const dLabel = `${date.getDate()} ${MON[date.getMonth()]} ${date.getFullYear()}`;
   const weekday = data ? (lang === 'hi' ? (data.weekdayHi || data.weekday) : data.weekday) : '';
   const L = (o?: { en: string; hi: string } | null) => (o ? (lang === 'hi' ? o.hi : o.en) : '');
-  const tm = (p?: { hm12: string; hm24: string } | null, fallback?: string | null) => (p ? (lang === 'hi' ? p.hm24 : p.hm12) : (fallback || '—'));
-  const dur = (d?: { text: string; hi: string } | null) => (d ? (lang === 'hi' ? d.hi : d.text) : '—');
+  const tm = (p?: { hm12: string; hm24: string } | null, fallback?: string | null) => toEng(p ? (lang === 'hi' ? p.hm24 : p.hm12) : (fallback || '—'));
+  const dur = (d?: { text: string; hi: string } | null) => toEng(d ? (lang === 'hi' ? d.hi : d.text) : '—');
   const festivalRows = useMemo<FestivalRow[]>(() => {
     const q = festivalQuery.trim();
     // When searching (q>=2) we use the backend search results AS-IS — the server
@@ -361,7 +363,7 @@ export function PanchangScreen({ navigation }: any) {
       <View style={[styles.nav, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(255,253,247,0.85)' }]}>
         <Pressable onPress={() => shift(-1)} hitSlop={10} style={styles.navBtn}><Arrow dir="l" c={theme.gold1} /></Pressable>
         <Pressable onPress={today} style={{ flex: 1, alignItems: 'center' }}>
-          <Text style={[styles.navDate, { color: theme.text }]}>{dLabel}</Text>
+          <GradientText style={styles.navDate}>{dLabel}</GradientText>
           <Text style={[styles.navWd, { color: theme.gold2 }]}>{weekday}{isToday ? `  ·  ${lang === 'hi' ? 'आज' : 'Today'}` : ''}</Text>
         </Pressable>
         <Pressable onPress={() => shift(1)} hitSlop={10} style={styles.navBtn}><Arrow dir="r" c={theme.gold1} /></Pressable>
@@ -372,19 +374,35 @@ export function PanchangScreen({ navigation }: any) {
 
       {data && !loading && (
         <View style={{ gap: 14 }}>
-          {/* calendar ribbon */}
-          <View style={styles.ribbon}>
-            {!!data.samvat && <Text style={[styles.ribbonItem, { color: theme.textMuted }]}>{lang === 'hi' ? 'विक्रम सं.' : 'Vikram'} <Text style={{ color: theme.gold1 }}>{lang === 'hi' ? toDev(data.samvat.vikram) : data.samvat.vikram}{data.samvatsara ? ` ${data.samvatsara}` : ''}</Text></Text>}
-            {!!data.masa && <Text style={[styles.ribbonItem, { color: theme.textMuted }]}>{lang === 'hi' ? 'मास' : 'Masa'} <Text style={{ color: theme.gold1 }}>{L(data.masa.amanta)}</Text></Text>}
-            {!!data.ritu && <Text style={[styles.ribbonItem, { color: theme.textMuted }]}>{lang === 'hi' ? 'ऋतु' : 'Ritu'} <Text style={{ color: theme.gold1 }}>{L(data.ritu)}</Text></Text>}
-            {!!data.ayana && <Text style={[styles.ribbonItem, { color: theme.gold1 }]}>{L(data.ayana)}</Text>}
-          </View>
-          <View style={styles.locRow}>
-            <Text style={[styles.loc, { color: theme.textMuted }]} numberOfLines={1}>📍 {data.location}  ·  🌅 {data.sunrise}  ·  🌇 {data.sunset}</Text>
-            {/* dev-only source hint — blue = local ephemeris, green = VedAstro (no text) */}
-            {!!data.provider && <View style={[styles.provDot, { backgroundColor: data.provider === 'local' ? '#6fa8dc' : '#3ec77a' }]} />}
+          {/* calendar ribbon — Vikram Samvat · Masa · Ritu · Ayana, all on ONE line */}
+          <Text style={[styles.ribbonLine, { color: theme.textMuted }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+            {!!data.samvat && <>{lang === 'hi' ? 'विक्रम सं. ' : 'Vikram '}<Text style={{ color: theme.gold1 }}>{data.samvat.vikram}{data.samvatsara ? ` ${data.samvatsara}` : ''}</Text></>}
+            {!!data.masa && <>{'   ·   '}{lang === 'hi' ? 'मास ' : 'Masa '}<Text style={{ color: theme.gold1 }}>{L(data.masa.amanta)}</Text></>}
+            {!!data.ritu && <>{'   ·   '}{lang === 'hi' ? 'ऋतु ' : 'Ritu '}<Text style={{ color: theme.gold1 }}>{L(data.ritu)}</Text></>}
+            {!!data.ayana && <>{'   ·   '}<Text style={{ color: theme.gold1 }}>{L(data.ayana)}</Text></>}
+          </Text>
+          {/* location — responsive gold pill; wraps cleanly on small screens / long names */}
+          <View style={styles.locWrap}>
+            <View style={[styles.locPill, { borderColor: theme.gold2 + '55', backgroundColor: theme.isDark ? 'rgba(214,160,59,0.10)' : 'rgba(214,160,59,0.12)' }]}>
+              <Text style={styles.locPin}>📍</Text>
+              <Text style={[styles.locName, { color: theme.text }]} numberOfLines={2}>{data.location}</Text>
+              {/* source hint — blue = local ephemeris, green = VedAstro */}
+              {!!data.provider && <View style={[styles.provDot, { backgroundColor: data.provider === 'local' ? '#6fa8dc' : '#3ec77a' }]} />}
+            </View>
           </View>
 
+          {/* 5 angas with end-times — shown FIRST (the core of the panchang) */}
+          <Text style={[styles.h, { color: theme.gold1 }]}>{lang === 'hi' ? 'पंचांग — पाँच अंग' : 'Panchang — Five Limbs'}</Text>
+          <View style={styles.grid}>
+            <AngCard label={lang === 'hi' ? 'तिथि' : 'Tithi'} num={data.tithi?.num} value={lang === 'hi' ? (data.tithi?.hi || data.tithi?.name) : data.tithi?.name} sub={lang === 'hi' ? data.tithi?.pakshaHi : (data.tithi?.paksha ? `${data.tithi.paksha} Paksha` : '')} end={data.tithi?.endsAt} theme={theme} lang={lang} />
+            <AngCard label={lang === 'hi' ? 'नक्षत्र' : 'Nakshatra'} num={data.nakshatra?.num} value={lang === 'hi' ? (data.nakshatra?.hi || data.nakshatra?.name) : data.nakshatra?.name} sub={data.nakshatra?.pada ? `${lang === 'hi' ? 'पाद' : 'Pada'} ${data.nakshatra.pada}` : ''} end={data.nakshatra?.endsAt} theme={theme} lang={lang} />
+            <AngCard label={lang === 'hi' ? 'योग' : 'Yoga'} num={data.yoga?.num} value={lang === 'hi' ? (data.yoga?.hi || data.yoga?.name) : data.yoga?.name} end={data.yoga?.endsAt} theme={theme} lang={lang} />
+            <AngCard label={lang === 'hi' ? 'करण' : 'Karana'} value={lang === 'hi' ? (data.karana?.hi || data.karana?.name) : data.karana?.name} end={data.karana?.endsAt} theme={theme} lang={lang} />
+            <AngCard label={lang === 'hi' ? 'वार' : 'Vaar'} value={weekday} theme={theme} lang={lang} />
+            <AngCard label={lang === 'hi' ? 'चंद्र राशि' : 'Moon Sign'} value={data.moon?.sign ? aSign(data.moon.sign, lang) : '—'} theme={theme} lang={lang} />
+          </View>
+
+          {/* sunrise / sunset & day timings — now BELOW the five limbs */}
           <View style={styles.timingGrid}>
             <TimingTile label={lang === 'hi' ? 'सूर्योदय' : 'Sunrise'} value={tm(data.timings?.sunrise, data.sunrise)} sub={lang === 'hi' ? 'दिन की शुरुआत' : 'Panchang day starts'} theme={theme} />
             <TimingTile label={lang === 'hi' ? 'सूर्यास्त' : 'Sunset'} value={tm(data.timings?.sunset, data.sunset)} sub={lang === 'hi' ? 'दिन समाप्त' : 'Day closes'} theme={theme} />
@@ -400,17 +418,6 @@ export function PanchangScreen({ navigation }: any) {
               <Text style={[styles.bhadraTxt, { color: '#e0a92e' }]}>⚠ {lang === 'hi' ? 'भद्रा (विष्टि करण) सक्रिय — शुभ कार्य व यात्रा से बचें।' : 'Bhadra (Vishti Karana) active — avoid auspicious work & travel.'}</Text>
             </View>
           )}
-
-          {/* 5 angas with end-times */}
-          <Text style={[styles.h, { color: theme.gold1 }]}>{lang === 'hi' ? 'पंचांग — पाँच अंग' : 'Panchang — Five Limbs'}</Text>
-          <View style={styles.grid}>
-            <AngCard label={lang === 'hi' ? 'तिथि' : 'Tithi'} num={data.tithi?.num} value={lang === 'hi' ? (data.tithi?.hi || data.tithi?.name) : data.tithi?.name} sub={lang === 'hi' ? data.tithi?.pakshaHi : (data.tithi?.paksha ? `${data.tithi.paksha} Paksha` : '')} end={data.tithi?.endsAt} theme={theme} lang={lang} />
-            <AngCard label={lang === 'hi' ? 'नक्षत्र' : 'Nakshatra'} num={data.nakshatra?.num} value={lang === 'hi' ? (data.nakshatra?.hi || data.nakshatra?.name) : data.nakshatra?.name} sub={data.nakshatra?.pada ? `${lang === 'hi' ? 'पाद' : 'Pada'} ${lang === 'hi' ? toDev(data.nakshatra.pada) : data.nakshatra.pada}` : ''} end={data.nakshatra?.endsAt} theme={theme} lang={lang} />
-            <AngCard label={lang === 'hi' ? 'योग' : 'Yoga'} num={data.yoga?.num} value={lang === 'hi' ? (data.yoga?.hi || data.yoga?.name) : data.yoga?.name} end={data.yoga?.endsAt} theme={theme} lang={lang} />
-            <AngCard label={lang === 'hi' ? 'करण' : 'Karana'} value={lang === 'hi' ? (data.karana?.hi || data.karana?.name) : data.karana?.name} end={data.karana?.endsAt} theme={theme} lang={lang} />
-            <AngCard label={lang === 'hi' ? 'वार' : 'Vaar'} value={weekday} theme={theme} lang={lang} />
-            <AngCard label={lang === 'hi' ? 'चंद्र राशि' : 'Moon Sign'} value={data.moon?.sign ? aSign(data.moon.sign, lang) : '—'} theme={theme} lang={lang} />
-          </View>
 
           {!!(data.observances || []).length && (
             <View style={[styles.card, { borderColor: '#d6a03b66', backgroundColor: theme.isDark ? 'rgba(214,160,59,0.08)' : 'rgba(214,160,59,0.10)' }]}>
@@ -454,7 +461,7 @@ export function PanchangScreen({ navigation }: any) {
                           <FestivalThumb row={f} lang={lang} />
                           <View style={styles.festivalBody}>
                             <Text style={[styles.festivalTitle, { color: theme.text }]} numberOfLines={2}>{L(f.obs.name)}</Text>
-                            {!!tithiText && <Text style={[styles.festivalMeta, { color: theme.textMuted }]} numberOfLines={2}>{tithiText}</Text>}
+                            {!!tithiText && <Text style={[styles.festivalMeta, { color: theme.textMuted }]} numberOfLines={2}>{toEng(tithiText)}</Text>}
                             <Text style={[styles.festivalHint, { color: theme.textMuted }]} numberOfLines={2}>{L(f.obs.guidance)}</Text>
                           </View>
                         </Pressable>
@@ -506,16 +513,17 @@ export function PanchangScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   nav: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: 14, padding: 8, marginBottom: 14 },
   navBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  navDate: { fontFamily: fonts.cinzelSemi, fontSize: 16 },
-  navWd: { fontFamily: fonts.interSemi, fontSize: 12, marginTop: 2 },
+  navDate: { fontFamily: fonts.cinzelSemi, fontSize: 18, lineHeight: 24 },
+  navWd: { fontFamily: fonts.interSemi, fontSize: 12, marginTop: 3 },
   center: { paddingVertical: 50, alignItems: 'center', gap: 12 },
   loadTxt: { fontFamily: fonts.inter, fontSize: 12.5 },
   err: { fontFamily: fonts.inter, fontSize: 13, textAlign: 'center', paddingVertical: 30 },
 
-  ribbon: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 12 },
-  ribbonItem: { fontFamily: fonts.inter, fontSize: 12 },
-  locRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
-  loc: { fontFamily: fonts.inter, fontSize: 12, textAlign: 'center' },
+  ribbonLine: { fontFamily: fonts.inter, fontSize: 12.5, textAlign: 'center', letterSpacing: 0.2 },
+  locWrap: { alignItems: 'center', paddingHorizontal: 4 },
+  locPill: { flexDirection: 'row', alignItems: 'center', gap: 7, borderWidth: 1, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7, maxWidth: '100%' },
+  locPin: { fontSize: 13 },
+  locName: { flexShrink: 1, fontFamily: fonts.interSemi, fontSize: 13.5, letterSpacing: 0.2, textAlign: 'center' },
   provDot: { width: 8, height: 8, borderRadius: 4, opacity: 0.8 },
   timingGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 9 },
   timeTile: { width: '48.5%', minHeight: 74, borderWidth: 1, borderRadius: 12, padding: 10, justifyContent: 'center' },
