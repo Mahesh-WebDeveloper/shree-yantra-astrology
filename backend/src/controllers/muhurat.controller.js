@@ -13,14 +13,14 @@ const fromDMY = (v) => {
 exports.listCategories = asyncHandler(async (req, res) => {
   res.json({
     items: MUHURAT_CATEGORIES.map((c) => ({
-      key: c.key, name: c.name, emoji: c.emoji, art: c.art, group: c.group, blurb: c.blurb, nameBased: c.nameBased, why: c.why,
+      key: c.key, name: c.name, emoji: c.emoji, art: c.art, group: c.group, blurb: c.blurb, nameBased: c.nameBased, why: c.why, requires: c.requires,
     })),
   });
 });
 
 // POST /api/muhurat/find { category, date?|month+year?, months?, place|lat+lng, tz?, nameRashi?, birth? }
 exports.find = asyncHandler(async (req, res) => {
-  const { category, date, month, year, months, place, lat, lng, tz, nameRashi, birth } = req.body || {};
+  const { category, date, month, year, months, place, lat, lng, tz, nameRashi, birth, nameRashi2, birth2 } = req.body || {};
   if (!category) return res.status(400).json({ error: 'category chahiye' });
   if (place == null && (lat == null || lng == null)) return res.status(400).json({ error: 'place YA lat+lng chahiye' });
 
@@ -40,6 +40,8 @@ exports.find = asyncHandler(async (req, res) => {
     tz: tz || '+05:30',
     nameRashi,
     birth,
+    nameRashi2,
+    birth2,
   });
   res.json(result);
 });

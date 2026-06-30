@@ -24,6 +24,9 @@ const cat = (o) => ({
   avoidBhadra: true,
   avoidPanchak: false,
   nameBased: true,
+  // Dynamic form contract → frontend shows exactly these inputs.
+  // location + month are ALWAYS required. name/birth: 'none' | 'optional' | 'required'.
+  requires: { name: 'optional', birth: 'optional', couple: false },
   ...o,
 });
 
@@ -78,14 +81,16 @@ const MUHURAT_CATEGORIES = [
     blurb: { en: 'Wedding — start of married life', hi: 'विवाह — नए जीवन की शुरुआत' },
     goodNakshatras: ['Rohini', 'Mrigashira', 'Magha', 'Uttara Phalguni', 'Hasta', 'Swati', 'Anuradha', 'Mula', 'Uttara Ashadha', 'Uttara Bhadrapada', 'Revati'],
     goodTithis: [2, 3, 5, 7, 10, 11, 13],
-    avoidPurnima: false,
-    why: { en: 'Vivah muhurat aligns tithi, nakshatra and lagna for a harmonious married life.', hi: 'विवाह-मुहूर्त सुखी दाम्पत्य हेतु तिथि, नक्षत्र व लग्न का मेल देखता है।' },
+    avoidPurnima: false, nameBased: false,
+    requires: { name: 'none', birth: 'required', couple: true },
+    why: { en: 'Vivah muhurat aligns tithi, nakshatra and lagna for a harmonious married life. Needs both bride & groom birth details.', hi: 'विवाह-मुहूर्त सुखी दाम्पत्य हेतु तिथि, नक्षत्र व लग्न का मेल देखता है। वर-वधू दोनों के जन्म विवरण चाहिए।' },
   }),
   cat({
     key: 'sagai', group: 'family', emoji: '💐', art: 'engagement',
     name: { en: 'Engagement (Sagai)', hi: 'सगाई / रोका' },
     blurb: { en: 'Fixing the alliance', hi: 'रिश्ता तय करना' },
     goodNakshatras: pool('lightGood', 'softGood', 'fixedGood', 'Swati', 'Mrigashira'),
+    requires: { name: 'optional', birth: 'optional', couple: true },
     why: { en: 'An auspicious engagement time blesses the new relationship.', hi: 'शुभ सगाई-समय नए रिश्ते को शुभता देता है।' },
   }),
   cat({
@@ -93,15 +98,24 @@ const MUHURAT_CATEGORIES = [
     name: { en: 'Naamkaran', hi: 'नामकरण संस्कार' },
     blurb: { en: 'Naming ceremony of a newborn', hi: 'नवजात का नामकरण' },
     goodNakshatras: pool('lightGood', 'movableGood', 'softGood', 'fixedGood', 'Punarvasu'),
-    why: { en: 'Naamkaran on a favourable star supports the child’s good fortune.', hi: 'शुभ नक्षत्र में नामकरण शिशु के सौभाग्य में सहायक होता है।' },
+    nameBased: false, requires: { name: 'none', birth: 'required', couple: false },
+    why: { en: 'Naamkaran uses the baby’s birth details (name is being decided), on a favourable star for good fortune.', hi: 'नामकरण शिशु के जन्म विवरण से देखा जाता है (नाम अभी रखना है), शुभ नक्षत्र में सौभाग्य हेतु।' },
   }),
   cat({
     key: 'mundan', group: 'family', emoji: '✂️', art: 'mundan',
     name: { en: 'Mundan', hi: 'मुंडन संस्कार' },
     blurb: { en: 'First hair-cutting ceremony', hi: 'पहली बार बाल उतारना' },
     goodNakshatras: ['Ashwini', 'Mrigashira', 'Punarvasu', 'Pushya', 'Hasta', 'Chitra', 'Swati', 'Jyeshtha', 'Shravana', 'Dhanishtha', 'Shatabhisha', 'Revati'],
-    avoidPanchak: true,
+    avoidPanchak: true, nameBased: false, requires: { name: 'none', birth: 'required', couple: false },
     why: { en: 'Mundan on a suitable nakshatra is traditionally chosen for the child’s health.', hi: 'उपयुक्त नक्षत्र में मुंडन शिशु के स्वास्थ्य हेतु शुभ माना जाता है।' },
+  }),
+  cat({
+    key: 'annaprashan', group: 'family', emoji: '🥣', art: 'baby',
+    name: { en: 'Annaprashan', hi: 'अन्नप्राशन' },
+    blurb: { en: 'Baby’s first solid food', hi: 'शिशु का पहला अन्न' },
+    goodNakshatras: pool('lightGood', 'movableGood', 'softGood', 'fixedGood', 'Punarvasu'),
+    nameBased: false, requires: { name: 'none', birth: 'required', couple: false },
+    why: { en: 'Annaprashan on a benefic star supports the child’s health and nourishment.', hi: 'शुभ नक्षत्र में अन्नप्राशन शिशु के स्वास्थ्य व पोषण हेतु शुभ है।' },
   }),
 
   // ── Education & career ───────────────────────────────────────────────────
@@ -127,6 +141,14 @@ const MUHURAT_CATEGORIES = [
     goodVaars: [1, 3, 4, 5, 0],
     why: { en: 'An auspicious launch supports profit, reputation and steady growth.', hi: 'शुभ आरंभ लाभ, प्रतिष्ठा और निरंतर वृद्धि में सहायक है।' },
   }),
+  cat({
+    key: 'office', group: 'career', emoji: '🏢', art: 'office',
+    name: { en: 'Office Opening', hi: 'ऑफिस आरंभ' },
+    blurb: { en: 'New office inauguration', hi: 'नए कार्यालय का उद्घाटन' },
+    goodNakshatras: pool('fixedGood', 'lightGood', 'Anuradha', 'Chitra', 'Swati', 'Dhanishtha'),
+    goodVaars: [1, 3, 4, 5],
+    why: { en: 'Opening an office at a steady, benefic time supports growth and teamwork.', hi: 'स्थिर शुभ समय में ऑफिस आरंभ वृद्धि व सहयोग में सहायक है।' },
+  }),
 
   // ── Finance & spiritual ──────────────────────────────────────────────────
   cat({
@@ -144,6 +166,20 @@ const MUHURAT_CATEGORIES = [
     goodNakshatras: pool('lightGood', 'fixedGood', 'softGood', 'Punarvasu', 'Shravana'),
     avoidPurnima: false,
     why: { en: 'A pure, benefic window deepens the merit of worship and rituals.', hi: 'शुद्ध शुभ समय पूजा-अनुष्ठान का पुण्य बढ़ाता है।' },
+  }),
+  cat({
+    key: 'murti-sthapana', group: 'spiritual', emoji: '🛕', art: 'temple',
+    name: { en: 'Murti Sthapana', hi: 'मूर्ति स्थापना' },
+    blurb: { en: 'Installing a deity / pran pratishtha', hi: 'देव-प्रतिमा / प्राण प्रतिष्ठा' },
+    goodNakshatras: pool('fixedGood', 'lightGood', 'softGood', 'Punarvasu', 'Shravana', 'Rohini'),
+    why: { en: 'Pran-pratishtha on a sattvic, fixed star anchors lasting divine presence.', hi: 'सात्विक स्थिर नक्षत्र में प्राण-प्रतिष्ठा स्थायी दिव्यता का आधार है।' },
+  }),
+  cat({
+    key: 'yagya', group: 'spiritual', emoji: '🔥', art: 'havan',
+    name: { en: 'Yagya / Havan', hi: 'यज्ञ / हवन' },
+    blurb: { en: 'Fire ritual, griha-shanti', hi: 'हवन, गृह-शांति' },
+    goodNakshatras: pool('lightGood', 'fixedGood', 'Pushya', 'Punarvasu', 'Anuradha', 'Shravana'),
+    why: { en: 'A benefic window strengthens the sankalp and merit of the fire ritual.', hi: 'शुभ समय हवन के संकल्प व पुण्य को बल देता है।' },
   }),
 ];
 
