@@ -10,6 +10,7 @@ import { useT, useLang } from '../i18n/LanguageProvider';
 import { aPlanet } from '../i18n/astro';
 import { birthFromProfile } from '../lib/birth';
 import { getLifeTimeline, LifeTimelineResponse, DashaPeriod } from '../lib/api';
+import { useAutoScroll } from '../lib/useAutoScroll';
 
 const DEFAULT_BIRTH = { dob: '01-01-2000', tob: '06:42', tz: '+05:30', place: 'Jaipur' };
 const GLYPH: Record<string, string> = { Sun: '☉', Moon: '☽', Mars: '♂', Mercury: '☿', Jupiter: '♃', Venus: '♀', Saturn: '♄', Rahu: '☊', Ketu: '☋' };
@@ -87,6 +88,7 @@ export function LifeTimelineScreen({ navigation }: any) {
   const { theme } = useTheme();
   const { lang } = useLang();
   const t = useT();
+  const { scrollRef, onResultsLayout, scrollToResults } = useAutoScroll();
   const [data, setData] = useState<LifeTimelineResponse | null>(null);
   const [err, setErr] = useState(false);
   const [showPast, setShowPast] = useState(false);
@@ -95,7 +97,7 @@ export function LifeTimelineScreen({ navigation }: any) {
     let on = true;
     (async () => {
       const b = await birthFromProfile().catch(() => null);
-      try { const r = await getLifeTimeline((b || DEFAULT_BIRTH) as any); if (on) setData(r); }
+      try { const r = await getLifeTimeline((b || DEFAULT_BIRTH) as any); if (on) { setData(r); scrollToResults(); } }
       catch (_) { if (on) setErr(true); }
     })();
     return () => { on = false; };
@@ -106,12 +108,12 @@ export function LifeTimelineScreen({ navigation }: any) {
   const pastCount = periods.filter((p) => p.past).length;
 
   return (
-    <Page title={t('timeline.title', 'Life Timeline')} onBack={() => { hTap(); navigation.goBack(); }}>
+    <Page title={t('timeline.title', 'Life Timeline')} onBack={() => { hTap(); navigation.goBack(); }} scrollRef={scrollRef}>
       {!data && !err && <View style={styles.center}><ActivityIndicator color={theme.gold1} /><Text style={[styles.load, { color: theme.textMuted }]}>{lang === 'hi' ? 'दशा-काल गणना हो रही है…' : 'Computing your dasha periods…'}</Text></View>}
       {err && <Text style={[styles.err, { color: theme.textMuted }]}>{lang === 'hi' ? 'लोड नहीं हो पाया — इंटरनेट जाँचें।' : 'Could not load — check internet.'}</Text>}
 
       {data && (
-        <View style={{ gap: 14 }}>
+        <View style={{ gap: 14 }} onLayout={onResultsLayout}>
           <View style={styles.hero}>
             <GradientText style={styles.heroTitle}>{t('timeline.heading', lang === 'hi' ? 'जीवन दशा-काल' : 'Vimshottari Dasha')}</GradientText>
             <Text style={[styles.heroSub, { color: theme.textMuted }]}>{lang === 'hi' ? 'वर्तमान आयु' : 'Current age'} ~{data.currentAge}</Text>

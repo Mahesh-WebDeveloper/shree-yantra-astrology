@@ -17,6 +17,7 @@ import { hTap, hSelect, hSuccess, hError } from '../lib/haptics';
 import { useT, useLang } from '../i18n/LanguageProvider';
 import { useDialog } from '../components/DialogProvider';
 import { getKundliMatch, LocationSuggestion, MatchResponse, MatchKoota, resolveLocation } from '../lib/api';
+import { useAutoScroll } from '../lib/useAutoScroll';
 
 const pad = (n: number) => (n < 10 ? '0' : '') + n;
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -159,6 +160,7 @@ export function MatchScreen({ navigation }: any) {
   const { lang } = useLang();
   const t = useT();
   const dialog = useDialog();
+  const { scrollRef, onResultsLayout, scrollToResults } = useAutoScroll();
   const [boy, setBoy] = useState<PersonState>(EMPTY);
   const [girl, setGirl] = useState<PersonState>(EMPTY);
   const [busy, setBusy] = useState(false);
@@ -184,6 +186,7 @@ export function MatchScreen({ navigation }: any) {
       const res = await getKundliMatch(boyBirth, girlBirth);
       hSuccess();
       setResult(res);
+      scrollToResults();
     } catch (e: any) {
       hError();
       dialog(lang === 'hi' ? 'मिलान विफल' : 'Match failed', e?.message || (lang === 'hi' ? 'कृपया दोबारा प्रयास करें।' : 'Please try again.'));
@@ -198,7 +201,7 @@ export function MatchScreen({ navigation }: any) {
   const vColor = result ? verdictColor(result.milan.verdict) : theme.gold1;
 
   return (
-    <Page title={t('match.title', 'Kundli Milan')} onBack={() => { hTap(); navigation.goBack(); }}>
+    <Page title={t('match.title', 'Kundli Milan')} onBack={() => { hTap(); navigation.goBack(); }} scrollRef={scrollRef}>
       {!result && (
         <>
           <View style={styles.intro}>
@@ -222,7 +225,7 @@ export function MatchScreen({ navigation }: any) {
       )}
 
       {result && (
-        <View style={{ gap: 16 }}>
+        <View style={{ gap: 16 }} onLayout={onResultsLayout}>
           {/* score hero */}
           <View style={[styles.hero, { borderColor: vColor + '66', backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(255,253,247,0.8)' }]}>
             <Text style={[styles.heroNames, { color: theme.text }]} numberOfLines={1}>

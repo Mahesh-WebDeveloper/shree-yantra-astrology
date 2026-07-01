@@ -11,6 +11,7 @@ import { useT, useLang } from '../i18n/LanguageProvider';
 import { aSign, aPlanet } from '../i18n/astro';
 import { birthFromProfile } from '../lib/birth';
 import { getGochar, GocharResponse, TransitPlanet } from '../lib/api';
+import { useAutoScroll } from '../lib/useAutoScroll';
 
 const DEFAULT_BIRTH = { lat: 26.9124, lng: 75.7873, dob: '01-01-2000', tob: '06:42', tz: '+05:30', place: 'Jaipur' };
 const GLYPH: Record<string, string> = { Sun: '☉', Moon: '☽', Mars: '♂', Mercury: '☿', Jupiter: '♃', Venus: '♀', Saturn: '♄', Rahu: '☊', Ketu: '☋' };
@@ -49,6 +50,7 @@ export function GocharScreen({ navigation }: any) {
   const { theme } = useTheme();
   const { lang } = useLang();
   const t = useT();
+  const { scrollRef, onResultsLayout, scrollToResults } = useAutoScroll();
   const [data, setData] = useState<GocharResponse | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
@@ -58,7 +60,7 @@ export function GocharScreen({ navigation }: any) {
       const birth = (await birthFromProfile()) || DEFAULT_BIRTH;
       try {
         const r = await getGochar(birth as any);
-        if (on) setData(r);
+        if (on) { setData(r); scrollToResults(); }
       } catch (e: any) {
         if (on) setErr(e?.message || 'load failed');
       }
@@ -73,12 +75,12 @@ export function GocharScreen({ navigation }: any) {
   const exText = (planet: string) => (ex?.highlights || []).find((h) => h.planet === planet)?.text;
 
   return (
-    <Page title={t('gochar.title', 'Gochar · Transits')} onBack={() => { hTap(); navigation.goBack(); }}>
+    <Page title={t('gochar.title', 'Gochar · Transits')} onBack={() => { hTap(); navigation.goBack(); }} scrollRef={scrollRef}>
       {!data && !err && <View style={styles.center}><ActivityIndicator color={theme.gold1} /><Text style={[styles.loading, { color: theme.textMuted }]}>{lang === 'hi' ? 'ग्रहों की स्थिति लाई जा रही है…' : 'Fetching live planet positions…'}</Text></View>}
       {err && <Text style={[styles.err, { color: theme.textMuted }]}>{lang === 'hi' ? 'लोड नहीं हो पाया — इंटरनेट जाँचें।' : 'Could not load — check internet.'}</Text>}
 
       {data && (
-        <View style={{ gap: 16 }}>
+        <View style={{ gap: 16 }} onLayout={onResultsLayout}>
           {/* header */}
           <View style={styles.hero}>
             <GradientText style={styles.heroTitle}>{t('gochar.heading', lang === 'hi' ? 'आज का गोचर' : "Today's Transits")}</GradientText>

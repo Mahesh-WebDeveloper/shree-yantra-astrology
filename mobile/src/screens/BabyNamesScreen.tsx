@@ -13,6 +13,7 @@ import { hTap, hSelect, hError } from '../lib/haptics';
 import { useLang } from '../i18n/LanguageProvider';
 import { useDialog } from '../components/DialogProvider';
 import { getBabyNames, askNameQuestion, NameEngineResponse, NameItem } from '../lib/api';
+import { useAutoScroll } from '../lib/useAutoScroll';
 import { subscribeShortlist, toggleShortlist, loadShortlist } from '../lib/nameShortlist';
 
 type ChatMsg = { role: 'user' | 'bot'; text: string; suggestions?: NameItem[]; source?: string };
@@ -61,6 +62,7 @@ export function BabyNamesScreen({ navigation }: any) {
   const { lang } = useLang();
   const hi = lang === 'hi';
   const dialog = useDialog();
+  const { scrollRef, onResultsLayout, scrollToResults } = useAutoScroll();
 
   const [mode, setMode] = useState<Mode>('letter');
   const [gender, setGender] = useState<typeof GENDERS[number]>('Boy');
@@ -155,6 +157,7 @@ export function BabyNamesScreen({ navigation }: any) {
         count: 18,
       });
       setData(r);
+      scrollToResults();
     } catch (e: any) { hError(); dialog(hi ? 'त्रुटि' : 'Error', e?.message || 'Try again'); }
     finally { setBusy(false); }
   };
@@ -167,6 +170,7 @@ export function BabyNamesScreen({ navigation }: any) {
     <Page
       title={hi ? 'शिशु के शुभ नाम' : 'Child Name Finder'}
       onBack={() => { hTap(); navigation.goBack(); }}
+      scrollRef={scrollRef}
       right={(
         <View style={styles.heartWrap}>
           <Heart filled={viewSaved} color={theme.gold1} />
@@ -333,7 +337,7 @@ export function BabyNamesScreen({ navigation }: any) {
 
       {/* result grid */}
       {list.length > 0 && (
-        <View style={styles.grid}>
+        <View style={styles.grid} onLayout={onResultsLayout}>
           {list.map((n, i) => {
             const isSaved = saved.has(n.name.toLowerCase());
             return (

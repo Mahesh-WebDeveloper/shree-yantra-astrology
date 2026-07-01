@@ -11,6 +11,7 @@ import { useT, useLang } from '../i18n/LanguageProvider';
 import { aSign } from '../i18n/astro';
 import { birthFromProfile } from '../lib/birth';
 import { getTransitForecast, TransitForecastResponse, TransitYear } from '../lib/api';
+import { useAutoScroll } from '../lib/useAutoScroll';
 
 const DEFAULT_BIRTH = { dob: '01-01-2000', tob: '06:42', tz: '+05:30', place: 'Jaipur' };
 const kindColor = (k?: string) => (k === 'good' ? '#3ec77a' : k === 'caution' ? '#e06a5a' : '#e0a92e');
@@ -49,6 +50,7 @@ export function TransitForecastScreen({ navigation }: any) {
   const { theme } = useTheme();
   const { lang } = useLang();
   const t = useT();
+  const { scrollRef, onResultsLayout, scrollToResults } = useAutoScroll();
   const [data, setData] = useState<TransitForecastResponse | null>(null);
   const [err, setErr] = useState(false);
 
@@ -56,19 +58,19 @@ export function TransitForecastScreen({ navigation }: any) {
     let on = true;
     (async () => {
       const b = await birthFromProfile().catch(() => null);
-      try { const r = await getTransitForecast((b || DEFAULT_BIRTH) as any); if (on) setData(r); }
+      try { const r = await getTransitForecast((b || DEFAULT_BIRTH) as any); if (on) { setData(r); scrollToResults(); } }
       catch (_) { if (on) setErr(true); }
     })();
     return () => { on = false; };
   }, []);
 
   return (
-    <Page title={t('forecast.title', 'Year Forecast')} onBack={() => { hTap(); navigation.goBack(); }}>
+    <Page title={t('forecast.title', 'Year Forecast')} onBack={() => { hTap(); navigation.goBack(); }} scrollRef={scrollRef}>
       {!data && !err && <View style={styles.center}><ActivityIndicator color={theme.gold1} /><Text style={[styles.load, { color: theme.textMuted }]}>{lang === 'hi' ? 'साल-दर-साल गोचर गणना हो रही है…' : 'Computing year-by-year transits…'}</Text></View>}
       {err && <Text style={[styles.err, { color: theme.textMuted }]}>{lang === 'hi' ? 'लोड नहीं हो पाया — इंटरनेट जाँचें।' : 'Could not load — check internet.'}</Text>}
 
       {data && (
-        <View style={{ gap: 14 }}>
+        <View style={{ gap: 14 }} onLayout={onResultsLayout}>
           <View style={styles.hero}>
             <GradientText style={styles.heroTitle}>{t('forecast.heading', lang === 'hi' ? 'साल-दर-साल गोचर-फल' : 'Year-by-Year Forecast')}</GradientText>
             <Text style={[styles.heroSub, { color: theme.textMuted }]}>{data.fromYear}–{data.toYear}{data.moonSign ? ` · ${lang === 'hi' ? 'चंद्र' : 'Moon'} ${aSign(data.moonSign, lang)}` : ''}</Text>

@@ -16,6 +16,7 @@ import { fonts, radii } from '../theme/tokens';
 import { hError, hSelect, hSuccess, hTap } from '../lib/haptics';
 import { birthFromProfile } from '../lib/birth';
 import { ApiDosha, ApiPlanet, BrihatAshtakavarga, BrihatAvakhada, BrihatDomain, BrihatJaimini, BrihatKp, BrihatKundliResponse, BrihatLalKitab, BrihatNumerology, BrihatSection, BrihatShadbala, BrihatVarshphal, DashaResponse, getBrihatKundli, LifeTimelineResponse, LocationSuggestion, NumberCard, RemediesResponse, resolveLocation, YogaItem } from '../lib/api';
+import { useAutoScroll } from '../lib/useAutoScroll';
 import { useDialog } from '../components/DialogProvider';
 import { useLang, useT } from '../i18n/LanguageProvider';
 import { aSign } from '../i18n/astro';
@@ -551,6 +552,7 @@ export function BrihatKundliScreen({ navigation }: any) {
   const { lang } = useLang();
   const t = useT();
   const dialog = useDialog();
+  const { scrollRef, onResultsLayout, scrollToResults } = useAutoScroll();
   const [dob, setDob] = useState(todayDob());
   const [tob, setTob] = useState('06:00');
   const [place, setPlace] = useState('');
@@ -602,6 +604,7 @@ export function BrihatKundliScreen({ navigation }: any) {
       const result = await getBrihatKundli({ dob: dob.trim(), tob: tob.trim(), tz: '+05:30', place: finalPlace, ...coords });
       setReport(result);
       hSuccess();
+      scrollToResults();
     } catch (e: any) {
       hError();
       dialog('Brihat Kundli', e?.message || (lang === 'hi' ? 'रिपोर्ट नहीं बन पाई — कृपया पुनः प्रयास करें।' : 'Could not generate the report — please try again.'));
@@ -637,7 +640,7 @@ export function BrihatKundliScreen({ navigation }: any) {
   const s = report?.summary;
 
   return (
-    <Page title={title} onBack={() => { hTap(); navigation.goBack(); }}>
+    <Page title={title} onBack={() => { hTap(); navigation.goBack(); }} scrollRef={scrollRef}>
       <LinearGradient
         colors={theme.isDark ? ['#251404', '#080604', '#000000'] : ['#fff4d6', '#fffaf0']}
         start={{ x: 0, y: 0 }}
@@ -690,7 +693,7 @@ export function BrihatKundliScreen({ navigation }: any) {
       </ShellCard>
 
       {!!report && (
-        <View style={styles.report}>
+        <View style={styles.report} onLayout={onResultsLayout}>
           <ShellCard glow>
             <Text style={[styles.kicker, { color: theme.goldText }]}>REPORT SUMMARY</Text>
             <GradientText style={styles.reportTitle}>{tx(report.title, lang)}</GradientText>

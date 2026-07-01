@@ -11,6 +11,7 @@ import { useT, useLang } from '../i18n/LanguageProvider';
 import { aSign } from '../i18n/astro';
 import { birthFromProfile } from '../lib/birth';
 import { getVedicReading, VedicReadingResponse, ReadingPrediction } from '../lib/api';
+import { useAutoScroll } from '../lib/useAutoScroll';
 
 const DEFAULT_BIRTH = { dob: '01-01-2000', tob: '06:42', tz: '+05:30', place: 'Jaipur' };
 
@@ -41,6 +42,7 @@ export function VedicReadingScreen({ navigation }: any) {
   const { theme } = useTheme();
   const { lang } = useLang();
   const t = useT();
+  const { scrollRef, onResultsLayout, scrollToResults } = useAutoScroll();
   const [data, setData] = useState<VedicReadingResponse | null>(null);
   const [err, setErr] = useState(false);
 
@@ -48,7 +50,7 @@ export function VedicReadingScreen({ navigation }: any) {
     let on = true;
     (async () => {
       const b = await birthFromProfile().catch(() => null);
-      try { const r = await getVedicReading((b || DEFAULT_BIRTH) as any); if (on) setData(r); }
+      try { const r = await getVedicReading((b || DEFAULT_BIRTH) as any); if (on) { setData(r); scrollToResults(); } }
       catch (_) { if (on) setErr(true); }
     })();
     return () => { on = false; };
@@ -72,12 +74,12 @@ export function VedicReadingScreen({ navigation }: any) {
   ];
 
   return (
-    <Page title={t('reading.title', 'Vedic Reading')} onBack={() => { hTap(); navigation.goBack(); }}>
+    <Page title={t('reading.title', 'Vedic Reading')} onBack={() => { hTap(); navigation.goBack(); }} scrollRef={scrollRef}>
       {!data && !err && <View style={styles.center}><ActivityIndicator color={theme.gold1} /><Text style={[styles.load, { color: theme.textMuted }]}>{lang === 'hi' ? 'शास्त्रीय फलादेश तैयार हो रहा है…' : 'Preparing your classical reading…'}</Text></View>}
       {err && <Text style={[styles.err, { color: theme.textMuted }]}>{lang === 'hi' ? 'लोड नहीं हो पाया — इंटरनेट जाँचें।' : 'Could not load — check internet.'}</Text>}
 
       {data && (
-        <View style={{ gap: 14 }}>
+        <View style={{ gap: 14 }} onLayout={onResultsLayout}>
           {/* header */}
           <View style={styles.hero}>
             <GradientText style={styles.heroTitle}>{t('reading.heading', lang === 'hi' ? 'पारंपरिक फलादेश' : 'Traditional Reading')}</GradientText>

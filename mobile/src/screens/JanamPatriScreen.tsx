@@ -13,6 +13,7 @@ import { UserLine, CalendarIcon, ClockIcon } from '../components/icons/ProfileIc
 import { useTheme } from '../theme/ThemeProvider';
 import { Theme, fonts, radii } from '../theme/tokens';
 import { hTap, hSelect, hSuccess, hError } from '../lib/haptics';
+import { useAutoScroll } from '../lib/useAutoScroll';
 import { useT, useLang } from '../i18n/LanguageProvider';
 import { aSign } from '../i18n/astro';
 import { useDialog } from '../components/DialogProvider';
@@ -97,6 +98,7 @@ export function JanamPatriScreen({ navigation }: any) {
   const { lang } = useLang();
   const t = useT();
   const dialog = useDialog();
+  const { scrollRef, onResultsLayout, scrollToResults } = useAutoScroll();
   const [name, setName] = useState('');
   const [gender, setGender] = useState<typeof GENDERS[number]>('Male');
   const [dob, setDob] = useState<Date | null>(null);
@@ -146,6 +148,7 @@ export function JanamPatriScreen({ navigation }: any) {
       setReading(rd); setNames(nm); setTimeline(tl); setRemedies(rm); setGochar(gc); setVarga(vg);
       setTransitForecast(tf);
       hSuccess();
+      scrollToResults();
     } catch (e: any) {
       hError(); dialog(lang === 'hi' ? 'त्रुटि' : 'Error', e?.message || (lang === 'hi' ? 'फिर प्रयास करें।' : 'Please try again.'));
     } finally { setBusy(false); }
@@ -181,7 +184,7 @@ export function JanamPatriScreen({ navigation }: any) {
   const hasReport = !!(kundli || reading);
 
   return (
-    <Page title={t('patri.title', 'Janam Patri')} onBack={() => { hTap(); navigation.goBack(); }}>
+    <Page title={t('patri.title', 'Janam Patri')} onBack={() => { hTap(); navigation.goBack(); }} scrollRef={scrollRef}>
       {/* ── input ── */}
       <View style={[styles.card, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(255,253,247,0.8)' }]}>
         <View style={styles.intro}>
@@ -222,7 +225,7 @@ export function JanamPatriScreen({ navigation }: any) {
 
       {/* ── report ── */}
       {hasReport && !busy && (
-        <View style={{ gap: 14, marginTop: 14 }}>
+        <View style={{ gap: 14, marginTop: 14 }} onLayout={onResultsLayout}>
           <View style={styles.center}>
             <Text style={[styles.om, { color: theme.gold2 }]}>॥ श्री गणेशाय नमः ॥</Text>
             <GradientText style={styles.repName}>{name.trim() || (lang === 'hi' ? 'जन्म पत्रिका' : 'Janam Patri')}</GradientText>
