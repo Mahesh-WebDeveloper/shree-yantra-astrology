@@ -590,6 +590,17 @@ const MASA = [
 const SAMVATSARA = ['Prabhava', 'Vibhava', 'Shukla', 'Pramoda', 'Prajapati', 'Angirasa', 'Shrimukha', 'Bhava', 'Yuva', 'Dhata', 'Ishvara', 'Bahudhanya', 'Pramathi', 'Vikrama', 'Vrisha', 'Chitrabhanu', 'Svabhanu', 'Tarana', 'Parthiva', 'Vyaya', 'Sarvajit', 'Sarvadhari', 'Virodhi', 'Vikriti', 'Khara', 'Nandana', 'Vijaya', 'Jaya', 'Manmatha', 'Durmukhi', 'Hevilambi', 'Vilambi', 'Vikari', 'Sharvari', 'Plava', 'Shubhakrit', 'Shobhakrit', 'Krodhi', 'Vishvavasu', 'Parabhava', 'Plavanga', 'Kilaka', 'Saumya', 'Sadharana', 'Virodhikrit', 'Paridhavi', 'Pramadi', 'Ananda', 'Rakshasa', 'Nala', 'Pingala', 'Kalayukti', 'Siddharthi', 'Raudra', 'Durmati', 'Dundubhi', 'Rudhirodgari', 'Raktakshi', 'Krodhana', 'Akshaya'];
 
 const norm360 = (x) => ((x % 360) + 360) % 360;
+const civilKey = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const localNowParts = (tzMin, now = new Date()) => {
+  const shifted = new Date(now.getTime() + tzMin * 60000);
+  return {
+    year: shifted.getUTCFullYear(),
+    month: shifted.getUTCMonth() + 1,
+    day: shifted.getUTCDate(),
+    minutes: shifted.getUTCHours() * 60 + shifted.getUTCMinutes() + shifted.getUTCSeconds() / 60,
+    key: `${shifted.getUTCFullYear()}-${pad2(shifted.getUTCMonth() + 1)}-${pad2(shifted.getUTCDate())}`,
+  };
+};
 // "minutes from local midnight of dateObj" → VedAstro StdTime string (handles next-day rollover)
 function stdAtMinutes(dateObj, minutes, tz) {
   const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate(), 0, 0, 0, 0);
@@ -806,6 +817,26 @@ function localPanchangPrimitives({ dateObj, tz, lat, lng, includeTransitions, in
   };
 }
 
+function localElementsAtMinute({ dateObj, tz, lat, lng, minute, includeTransitions }) {
+  const tzMin = eph.parseTzMin(tz);
+  const midUTC = eph.localMidnightUTC(dateObj, tzMin);
+  const atUTC = new Date(midUTC.getTime() + minute * 60000);
+  const sunLon = eph.siderealLon('Sun', atUTC);
+  const moonLon = eph.siderealLon('Moon', atUTC);
+  const sun = { lon: sunLon, ...signNakFromLon(sunLon) };
+  const moon = { lon: moonLon, ...signNakFromLon(moonLon) };
+  const elements = computePanchangElements(sunLon, moonLon);
+  let endTimes = null;
+  if (includeTransitions && elements && elements._raw) {
+    const lonsAt = (min) => {
+      const d = new Date(midUTC.getTime() + min * 60000);
+      return { sun: eph.siderealLon('Sun', d), moon: eph.siderealLon('Moon', d) };
+    };
+    try { endTimes = endTimesFromSampler(minute, elements._raw, lonsAt); } catch (_) { endTimes = null; }
+  }
+  attachEndTimes(elements, endTimes);
+  return { sun, moon, elements, endTimes };
+}
 // VEDASTRO provider — fallback (only if the local ephemeris ever fails).
 async function vedastroPanchangPrimitives({ dateObj, dstr, tz, location, ayan, includeTransitions, includeMoonTimes }) {
   const calcBody = { Time: { StdTime: `12:00 ${dstr} ${tz}`, Location: location }, Ayanamsa: ayan };
@@ -877,8 +908,10 @@ async function vedastroPanchangPrimitives({ dateObj, dstr, tz, location, ayan, i
 }
 
 async function getPanchang(input) {
-  let { lat, lng, place, date, tz } = input; // date: 'DD/MM/YYYY' (optional → today)
+  let { lat, lng, place, date, tz } = input; // date: 'DD/MM/YYYY' (optional -> today in requested timezone)
   tz = tz || '+05:30';
+  const tzMin = eph.parseTzMin(tz);
+  const nowParts = localNowParts(tzMin);
   const includeTransitions = input.includeTransitions !== false;
   const includeMoonTimes = input.includeMoonTimes !== false;
   if ((lat == null || lng == null) && place) {
@@ -892,25 +925,58 @@ async function getPanchang(input) {
   const location = { Name: place || 'Place', Latitude: Number(lat), Longitude: Number(lng) };
 
   let dateObj, dstr = date;
-  if (dstr) { const [dd, mm, yy] = dstr.split('/').map(Number); dateObj = new Date(yy, mm - 1, dd); }
-  else { dateObj = new Date(); dstr = `${pad2(dateObj.getDate())}/${pad2(dateObj.getMonth() + 1)}/${dateObj.getFullYear()}`; }
-  const noon = `12:00 ${dstr} ${tz}`;
+  if (dstr) {
+    const [dd, mm, yy] = dstr.split('/').map(Number);
+    dateObj = new Date(yy, mm - 1, dd);
+  } else {
+    dateObj = new Date(nowParts.year, nowParts.month - 1, nowParts.day);
+    dstr = `${pad2(nowParts.day)}/${pad2(nowParts.month)}/${nowParts.year}`;
+  }
+  const isSelectedToday = civilKey(dateObj) === nowParts.key;
 
   const detailMode = `${includeTransitions ? 'end' : 'noend'}|${includeMoonTimes ? 'moon' : 'nomoon'}`;
   const cacheKey = `${dstr}|${lat},${lng}|${ayan}|${detailMode}`;
-  const cHit = PANCHANG_CACHE.get(cacheKey);
-  if (cHit) return cHit;
+  if (!isSelectedToday) {
+    const cHit = PANCHANG_CACHE.get(cacheKey);
+    if (cHit) return cHit;
+  }
 
-  // Astronomy primitives — LOCAL ephemeris first (instant, accurate, no rate limit);
-  // VedAstro only as fallback if the local engine ever fails. This is what makes
-  // Panchang load reliably (was ~30 VedAstro calls/req → blew the 15/min free tier).
+  // Astronomy primitives: sunrise-based panchang is preserved for vrata/festival rules.
+  // If the selected date is today, display limbs are recalculated at the current local minute,
+  // so an expired tithi like Pratipada after 7:38 AM is not shown as the active tithi.
   let prim;
   try {
     prim = localPanchangPrimitives({ dateObj, tz, lat, lng, includeTransitions, includeMoonTimes });
   } catch (eLocal) {
     prim = await vedastroPanchangPrimitives({ dateObj, dstr, tz, location, ayan, includeTransitions, includeMoonTimes });
   }
-  const { srMin, ssMin, srStd, ssStd, mrStd, msStd, sun, moon, elements, endTimes } = prim;
+  const { srMin, ssMin, srStd, ssStd, mrStd, msStd } = prim;
+  const sunriseSun = prim.sun;
+  const sunriseMoon = prim.moon;
+  const sunriseElements = prim.elements;
+  const sunriseEndTimes = prim.endTimes;
+
+  let displaySun = sunriseSun;
+  let displayMoon = sunriseMoon;
+  let displayElements = sunriseElements;
+  let displayEndTimes = sunriseEndTimes;
+  let currentTime = null;
+  if (isSelectedToday) {
+    try {
+      const current = localElementsAtMinute({ dateObj, tz, lat, lng, minute: nowParts.minutes, includeTransitions });
+      if (current && current.elements) {
+        displaySun = current.sun;
+        displayMoon = current.moon;
+        displayElements = current.elements;
+        displayEndTimes = current.endTimes;
+        currentTime = minToParts(nowParts.minutes);
+      }
+    } catch (_) {
+      currentTime = null;
+    }
+  }
+  const elements = displayElements || sunriseElements;
+  const endTimes = displayEndTimes || sunriseEndTimes;
 
   // inauspicious periods (day ko 8 hisson me)
   const wd = dateObj.getDay();
@@ -929,7 +995,8 @@ async function getPanchang(input) {
   ];
 
   // Ritu (season) + Ayana from Sun's sidereal sign; Samvat from Gregorian (approx around Chaitra new-year)
-  const sIdx = sun.sign != null ? SIGN_INDEX[sun.sign] : null;
+  const sIdx = displaySun && displaySun.sign != null ? SIGN_INDEX[displaySun.sign] : null;
+  const sunriseSIdx = sunriseSun && sunriseSun.sign != null ? SIGN_INDEX[sunriseSun.sign] : sIdx;
   const RITU = [
     { en: 'Vasanta', hi: 'वसंत' }, { en: 'Grishma', hi: 'ग्रीष्म' }, { en: 'Grishma', hi: 'ग्रीष्म' },
     { en: 'Varsha', hi: 'वर्षा' }, { en: 'Varsha', hi: 'वर्षा' }, { en: 'Sharad', hi: 'शरद' },
@@ -942,14 +1009,21 @@ async function getPanchang(input) {
   const samvat = { vikram: gy + (gm >= 3 ? 57 : 56), shaka: gy - (gm >= 3 ? 78 : 79) };
   const samvatsara = SAMVATSARA[((samvat.shaka + 11) % 60 + 60) % 60];
 
-  // Lunar month (Masa): Amanta = Sun's sidereal sign (verified: Mithuna→Jyeshtha);
-  // Purnimanta = +1 month during Krishna paksha (north convention).
+  // Lunar month (Masa): display month follows active tithi; observance rules keep sunrise tithi/month.
   const isKrishna = elements && elements.tithi && elements.tithi.paksha === 'Krishna';
+  const sunriseIsKrishna = sunriseElements && sunriseElements.tithi && sunriseElements.tithi.paksha === 'Krishna';
   const masa = sIdx == null ? null : {
     amanta: MASA[sIdx],
     purnimanta: MASA[(sIdx + (isKrishna ? 1 : 0)) % 12],
   };
-  const observances = buildPanchangObservances(elements, masa);
+  const sunriseMasa = sunriseSIdx == null ? masa : {
+    amanta: MASA[sunriseSIdx],
+    purnimanta: MASA[(sunriseSIdx + (sunriseIsKrishna ? 1 : 0)) % 12],
+  };
+  const observances = buildPanchangObservances(sunriseElements, sunriseMasa);
+  if (elements && elements.karana && elements.karana.isBhadra && !observances.some((o) => o.key === 'bhadra')) {
+    observances.push(...buildPanchangObservances({ ...sunriseElements, karana: elements.karana }, sunriseMasa).filter((o) => o.key === 'bhadra'));
+  }
 
   const result = {
     date: dstr,
@@ -969,9 +1043,15 @@ async function getPanchang(input) {
       daylight: durationInfo(dayLen),
       night: durationInfo(1440 - dayLen),
     },
-    sun: { sign: sun.sign, nakshatra: sun.nakshatra },
-    moon: { sign: moon.sign, nakshatra: moon.nakshatra },
-    ...elements, // tithi, nakshatra, yoga, karana (with hi + endsAt + isBhadra)
+    currentTime,
+    isCurrent: !!currentTime,
+    sun: { sign: displaySun && displaySun.sign, nakshatra: displaySun && displaySun.nakshatra },
+    moon: { sign: displayMoon && displayMoon.sign, nakshatra: displayMoon && displayMoon.nakshatra },
+    ...elements, // current active limbs for today; sunrise limbs for past/future dates
+    sunriseTithi: sunriseElements && sunriseElements.tithi,
+    sunriseNakshatra: sunriseElements && sunriseElements.nakshatra,
+    sunriseYoga: sunriseElements && sunriseElements.yoga,
+    sunriseKarana: sunriseElements && sunriseElements.karana,
     masa,
     ritu,
     ayana,
@@ -988,9 +1068,9 @@ async function getPanchang(input) {
     calculation: {
       dayStartsAt: 'sunrise',
       ayanamsa: ayan,
-      fiveLimbs: 'Sun/Moon sidereal longitude at local sunrise',
+      fiveLimbs: currentTime ? 'Sun/Moon sidereal longitude at current local time' : 'Sun/Moon sidereal longitude at local sunrise',
       endTimes: endTimes ? 'longitude crossing refined by resampling' : 'not available',
-      observanceRule: 'sunrise tithi/month rule; complex festival puja muhurat needs dedicated rule checks',
+      observanceRule: 'sunrise tithi/month rule; active tithi is recalculated for today',
     },
     ayanamsa: ayan,
     provider: prim.provider,
@@ -999,11 +1079,11 @@ async function getPanchang(input) {
       : 'Real planetary positions (Lahiri) + classical Panchang',
   };
   const hasAnyEndTime = !!(endTimes && (endTimes.tithi || endTimes.karana || endTimes.nakshatra || endTimes.yoga));
-  if (!includeTransitions || hasAnyEndTime) PANCHANG_CACHE.set(cacheKey, result);
+  if (!isSelectedToday && (!includeTransitions || hasAnyEndTime)) PANCHANG_CACHE.set(cacheKey, result);
   return result;
 }
 
-// ════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
 //  GOCHAR (TRANSITS) — abhi grah kahan, natal Moon/Lagna se house, Sade Sati
 // ════════════════════════════════════════════════════════════════════
 // Transit positions = current planet signs (global at an instant).

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, ActivityIndicator, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ActivityIndicator, TextInput, AppState } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Page } from '../components/Page';
@@ -284,6 +284,23 @@ export function PanchangScreen({ navigation }: any) {
 
   useEffect(() => load(date, place), [date, place, load]);
 
+  // Auto-update the CURRENT tithi/time without a manual refresh: when viewing TODAY,
+  // silently re-fetch every 60s and whenever the app returns to the foreground, so a
+  // new tithi appears on its own the moment the previous one ends.
+  const isTodayNow = () => toDMY(date) === toDMY(new Date());
+  useEffect(() => {
+    if (!isTodayNow()) return;
+    let on = true;
+    const refresh = () => {
+      getPanchang({ place, date: toDMY(date), tz: '+05:30' })
+        .then((r) => { if (on) setData(r); })
+        .catch(() => {});
+    };
+    const id = setInterval(refresh, 60000);
+    const sub = AppState.addEventListener('change', (s) => { if (s === 'active') refresh(); });
+    return () => { on = false; clearInterval(id); sub.remove(); };
+  }, [date, place]);
+
   useEffect(() => {
     const q = festivalQuery.trim();
     if (q.length < 2) {
@@ -311,6 +328,13 @@ export function PanchangScreen({ navigation }: any) {
   const L = (o?: { en: string; hi: string } | null) => (o ? (lang === 'hi' ? o.hi : o.en) : '');
   const tm = (p?: { hm12: string; hm24: string } | null, fallback?: string | null) => toEng(p ? (lang === 'hi' ? p.hm24 : p.hm12) : (fallback || '—'));
   const dur = (d?: { text: string; hi: string } | null) => toEng(d ? (lang === 'hi' ? d.hi : d.text) : '—');
+  const tithiPaksha = data ? (lang === 'hi' ? data.tithi?.pakshaHi : (data.tithi?.paksha ? `${data.tithi.paksha} Paksha` : '')) : '';
+  const sunriseTithiDiff = !!(data?.isCurrent && data?.sunriseTithi && data?.tithi && data.sunriseTithi.num !== data.tithi.num);
+  const sunriseTithiName = data?.sunriseTithi ? (lang === 'hi' ? (data.sunriseTithi.hi || data.sunriseTithi.name) : data.sunriseTithi.name) : '';
+  const sunriseTithiSub = sunriseTithiDiff && sunriseTithiName
+    ? `${lang === 'hi' ? 'सूर्योदय पर' : 'At sunrise'} ${sunriseTithiName}`
+    : '';
+  const activeTithiSub = [tithiPaksha, sunriseTithiSub].filter(Boolean).join(' · ');
   const festivalRows = useMemo<FestivalRow[]>(() => {
     const q = festivalQuery.trim();
     // When searching (q>=2) we use the backend search results AS-IS — the server
@@ -394,7 +418,7 @@ export function PanchangScreen({ navigation }: any) {
           {/* 5 angas with end-times — shown FIRST (the core of the panchang) */}
           <Text style={[styles.h, { color: theme.gold1 }]}>{lang === 'hi' ? 'पंचांग — पाँच अंग' : 'Panchang — Five Limbs'}</Text>
           <View style={styles.grid}>
-            <AngCard label={lang === 'hi' ? 'तिथि' : 'Tithi'} num={data.tithi?.num} value={lang === 'hi' ? (data.tithi?.hi || data.tithi?.name) : data.tithi?.name} sub={lang === 'hi' ? data.tithi?.pakshaHi : (data.tithi?.paksha ? `${data.tithi.paksha} Paksha` : '')} end={data.tithi?.endsAt} theme={theme} lang={lang} />
+            <AngCard label={lang === 'hi' ? 'तिथि' : 'Tithi'} num={data.tithi?.num} value={lang === 'hi' ? (data.tithi?.hi || data.tithi?.name) : data.tithi?.name} sub={activeTithiSub} end={data.tithi?.endsAt} theme={theme} lang={lang} />
             <AngCard label={lang === 'hi' ? 'नक्षत्र' : 'Nakshatra'} num={data.nakshatra?.num} value={lang === 'hi' ? (data.nakshatra?.hi || data.nakshatra?.name) : data.nakshatra?.name} sub={data.nakshatra?.pada ? `${lang === 'hi' ? 'पाद' : 'Pada'} ${data.nakshatra.pada}` : ''} end={data.nakshatra?.endsAt} theme={theme} lang={lang} />
             <AngCard label={lang === 'hi' ? 'योग' : 'Yoga'} num={data.yoga?.num} value={lang === 'hi' ? (data.yoga?.hi || data.yoga?.name) : data.yoga?.name} end={data.yoga?.endsAt} theme={theme} lang={lang} />
             <AngCard label={lang === 'hi' ? 'करण' : 'Karana'} value={lang === 'hi' ? (data.karana?.hi || data.karana?.name) : data.karana?.name} end={data.karana?.endsAt} theme={theme} lang={lang} />
