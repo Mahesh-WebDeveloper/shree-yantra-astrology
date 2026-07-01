@@ -20,14 +20,19 @@ exports.listCategories = asyncHandler(async (req, res) => {
 
 // POST /api/muhurat/find { category, date?|month+year?, months?, place|lat+lng, tz?, nameRashi?, birth? }
 exports.find = asyncHandler(async (req, res) => {
-  const { category, date, month, year, months, place, lat, lng, tz, nameRashi, birth, nameRashi2, birth2 } = req.body || {};
+  const { category, date, month, year, months, place, lat, lng, tz, nameRashi, birth, nameRashi2, birth2, targetDate } = req.body || {};
   if (!category) return res.status(400).json({ error: 'category chahiye' });
   if (place == null && (lat == null || lng == null)) return res.status(400).json({ error: 'place YA lat+lng chahiye' });
 
-  let fromDate = fromDMY(date);
-  if (!fromDate && month && year) fromDate = new Date(Number(year), Number(month) - 1, 1);
-  if (!fromDate) fromDate = new Date();
   const today = new Date(); today.setHours(0, 0, 0, 0);
+  // When the user picks an exact date, scan the whole window from TODAY up to it,
+  // so the list shows the best of that range and `target` = the chosen date itself.
+  let fromDate = fromDMY(date);
+  if (targetDate) fromDate = today;
+  else {
+    if (!fromDate && month && year) fromDate = new Date(Number(year), Number(month) - 1, 1);
+    if (!fromDate) fromDate = new Date();
+  }
   if (fromDate < today) fromDate = today; // never suggest a past muhurat
 
   const result = await findMuhurat({
@@ -42,6 +47,7 @@ exports.find = asyncHandler(async (req, res) => {
     birth,
     nameRashi2,
     birth2,
+    targetDate: targetDate && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(String(targetDate)) ? String(targetDate) : undefined,
   });
   res.json(result);
 });

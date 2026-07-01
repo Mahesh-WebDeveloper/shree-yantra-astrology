@@ -541,6 +541,8 @@ export interface MuhuratItem {
   flags: { rahuKaal: string; durmuhurat: string; bhadra: boolean; panchak: boolean; choghadiya: string | null };
   sunrise: string;
   sunset: string;
+  ok?: boolean;        // false when a chosen `target` date is itself inauspicious
+  reject?: Bi;         // reason the target date is not auspicious
 }
 export interface MuhuratResult {
   category: MuhuratCategory;
@@ -549,12 +551,13 @@ export interface MuhuratResult {
   janmaNakshatra?: number | null;
   scanned: number;
   best: MuhuratItem | null;
+  target?: MuhuratItem | null;   // the user's chosen date (scored even if not auspicious)
   items: MuhuratItem[];
 }
 export interface MuhuratBirthInput { date?: string; time?: string; place?: string; lat?: number; lng?: number; tz?: string }
 export const getMuhuratCategories = () => get<{ items: MuhuratCategory[] }>('/api/muhurat/categories');
 export const findMuhurat = (input: {
-  category: string; date?: string; month?: number; year?: number; months?: number;
+  category: string; date?: string; month?: number; year?: number; months?: number; targetDate?: string;
   place?: string; lat?: number; lng?: number; tz?: string;
   nameRashi?: string | null; birth?: MuhuratBirthInput | null;
   nameRashi2?: string | null; birth2?: MuhuratBirthInput | null;

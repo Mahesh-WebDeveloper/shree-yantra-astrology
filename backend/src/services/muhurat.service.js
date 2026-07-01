@@ -157,7 +157,24 @@ function ratingLabel(score) {
   return { en: 'Fair', hi: 'सामान्य' };
 }
 
-async function findMuhurat({ category, fromDate, months = 3, place, lat, lng, tz = '+05:30', nameRashi, birth, nameRashi2, birth2 }) {
+function mkItem(p, dmy, s) {
+  const moonIdx = p.moon && p.moon.sign ? SIGN_IDX[p.moon.sign] : null;
+  return {
+    date: p.date || dmy, dmy, weekday: p.weekday, weekdayHi: p.weekdayHi,
+    tithi: p.tithi, nakshatra: p.nakshatra,
+    yoga: p.yoga ? { name: p.yoga.name, hi: p.yoga.hi } : null,
+    karana: p.karana ? { name: p.karana.name, hi: p.karana.hi } : null,
+    moonSign: p.moon && p.moon.sign ? { en: p.moon.sign, hi: moonIdx != null ? SIGN_HI[moonIdx] : p.moon.sign } : null,
+    score: s.score, rating: ratingLabel(s.score), breakdown: s.breakdown,
+    chandra: s.chandra != null ? { house: s.chandra, label: s.chandraLabel } : null,
+    tara: s.tara ? { en: s.tara.en, hi: s.tara.hi, label: { en: 'Excellent', hi: 'उत्तम' } } : null,
+    time: s.time,
+    flags: { rahuKaal: 'removed', durmuhurat: 'removed', bhadra: false, panchak: false, choghadiya: s.time.abhijit ? 'Abhijit' : null },
+    sunrise: p.sunrise, sunset: p.sunset, ok: true,
+  };
+}
+
+async function findMuhurat({ category, fromDate, months = 3, place, lat, lng, tz = '+05:30', nameRashi, birth, nameRashi2, birth2, targetDate }) {
   const rule = CATEGORY_BY_KEY[category];
   if (!rule) { const e = new Error('Unknown muhurat category'); e.status = 400; throw e; }
 
@@ -180,29 +197,7 @@ async function findMuhurat({ category, fromDate, months = 3, place, lat, lng, tz
     try {
       const p = await getPanchang({ place, lat, lng, date: dmy, tz, includeTransitions: false, includeMoonTimes: false });
       const s = scoreDay(p, rule, ctx);
-      if (s.ok) {
-        const moonIdx = p.moon && p.moon.sign ? SIGN_IDX[p.moon.sign] : null;
-        results.push({
-          date: p.date || dmy,
-          dmy,
-          weekday: p.weekday,
-          weekdayHi: p.weekdayHi,
-          tithi: p.tithi,
-          nakshatra: p.nakshatra,
-          yoga: p.yoga ? { name: p.yoga.name, hi: p.yoga.hi } : null,
-          karana: p.karana ? { name: p.karana.name, hi: p.karana.hi } : null,
-          moonSign: p.moon && p.moon.sign ? { en: p.moon.sign, hi: moonIdx != null ? SIGN_HI[moonIdx] : p.moon.sign } : null,
-          score: s.score,
-          rating: ratingLabel(s.score),
-          breakdown: s.breakdown,
-          chandra: s.chandra != null ? { house: s.chandra, label: s.chandraLabel } : null,
-          tara: s.tara ? { en: s.tara.en, hi: s.tara.hi, label: { en: 'Excellent', hi: 'उत्तम' } } : null,
-          time: s.time,
-          flags: { rahuKaal: 'removed', durmuhurat: 'removed', bhadra: false, panchak: false, choghadiya: s.time.abhijit ? 'Abhijit' : null },
-          sunrise: p.sunrise,
-          sunset: p.sunset,
-        });
-      }
+      if (s.ok) results.push(mkItem(p, dmy, s));
     } catch (_) { /* skip */ }
     cur.setDate(cur.getDate() + 1);
     await wait(3);
@@ -211,7 +206,22 @@ async function findMuhurat({ category, fromDate, months = 3, place, lat, lng, tz
   results.sort((a, b) => (b.score - a.score) || (Number(a.dmy.split('/').reverse().join('')) - Number(b.dmy.split('/').reverse().join(''))));
   const top = results.slice(0, 12);
 
+  // the user's CHOSEN date — scored even if it is not itself auspicious, so we can
+  // say "your date is/ isn't good" while the list shows the best of the whole range.
+  let target = null;
+  if (targetDate) {
+    try {
+      const p = await getPanchang({ place, lat, lng, date: targetDate, tz, includeTransitions: false, includeMoonTimes: false });
+      const s = scoreDay(p, rule, ctx);
+      target = s.ok ? mkItem(p, targetDate, s) : {
+        dmy: targetDate, date: p.date || targetDate, weekday: p.weekday, weekdayHi: p.weekdayHi,
+        tithi: p.tithi, nakshatra: p.nakshatra, ok: false, reject: s.reject,
+      };
+    } catch (_) { /* ignore */ }
+  }
+
   return {
+    target,
     category: { key: rule.key, name: rule.name, emoji: rule.emoji, group: rule.group, why: rule.why, blurb: rule.blurb, bestLagna: rule.bestLagna || null, nameBased: rule.nameBased, requires: rule.requires },
     method: {
       en: 'Composite 0-100 score from the day’s real Panchang (tithi, vaar, nakshatra, yoga, karana) with Rahu-Kaal/Bhadra/Panchak removed' + (ctx.nameRashi ? ', plus Chandrabal from your naam-rashi' : '') + (janmaNak ? ', plus Tara Bal from your janma nakshatra' : '') + '.',

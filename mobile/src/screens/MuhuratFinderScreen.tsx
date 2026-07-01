@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, ActivityIndicator, Share, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Polyline } from 'react-native-svg';
@@ -232,6 +232,8 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
   const [busy, setBusy] = useState(false);
   const [pickedDate, setPickedDate] = useState<Date | null>(null); // "pick any date" via app calendar
   const [showWhenPicker, setShowWhenPicker] = useState(false);
+  const scrollRef = useRef<any>(null);
+  const resultsY = useRef(0);
 
   useEffect(() => {
     birthFromProfile().then((b: any) => {
@@ -268,25 +270,52 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
 
   const onFind = async () => {
     hTap(); setError(null); setResult(null); setOpen(null); setLoading(true);
-    // pickedDate (app calendar) → scan a focused window from that date; else month chip / whole year
+    // pickedDate → scan the FULL window from TODAY up to the chosen date (targetDate),
+    // so the list is the best of that range and `target` = the chosen date itself.
     const isYear = !pickedDate && sel === 'year';
-    const mo = pickedDate ? { month: pickedDate.getMonth() + 1, year: pickedDate.getFullYear() } : (isYear ? { month: new Date().getMonth() + 1, year: new Date().getFullYear() } : months[sel as number]);
+    let payload: any;
+    if (pickedDate) {
+      const daysAhead = Math.ceil((pickedDate.getTime() - Date.now()) / 86400000);
+      const scanMonths = Math.max(1, Math.min(6, Math.ceil(daysAhead / 30) + 1));
+      payload = { targetDate: fmtDob(pickedDate), months: scanMonths };
+    } else if (isYear) {
+      payload = { month: new Date().getMonth() + 1, year: new Date().getFullYear(), months: 6 };
+    } else {
+      const mo = months[sel as number];
+      payload = { month: mo.month, year: mo.year, months: 3 };
+    }
     try {
       const res = await findMuhurat({
-        category: categoryKey,
-        date: pickedDate ? fmtDob(pickedDate) : undefined,
-        month: mo.month, year: mo.year, months: pickedDate ? 2 : (isYear ? 6 : 3),
+        category: categoryKey, ...payload,
         place: loc?.place || placeText || undefined, lat: loc?.lat, lng: loc?.lng,
         nameRashi: req.name !== 'none' ? rashi : null,
         birth: birthPayload(birth1), birth2: req.couple ? birthPayload(birth2) : null,
       });
       setResult(res);
-      if (!res.items.length) setError(lang === 'hi' ? 'इस अवधि में कोई शुभ मुहूर्त नहीं मिला — आगे का महीना चुनें।' : 'No auspicious muhurat here — try a later month.');
+      if (!res.items.length && !res.target) setError(lang === 'hi' ? 'इस अवधि में कोई शुभ मुहूर्त नहीं मिला — आगे का महीना चुनें।' : 'No auspicious muhurat here — try a later month.');
+      // auto-scroll to the results so the user lands on them
+      setTimeout(() => {
+        const s = scrollRef.current;
+        if (s?.scrollToPosition) s.scrollToPosition(0, Math.max(0, resultsY.current - 8), true);
+        else if (s?.scrollTo) s.scrollTo({ y: Math.max(0, resultsY.current - 8), animated: true });
+      }, 350);
     } catch { setError(lang === 'hi' ? 'मुहूर्त गणना नहीं हो पाई — इंटरनेट जाँचें।' : 'Could not compute — check internet.'); }
     finally { setLoading(false); }
   };
 
   const catTitle = lang === 'hi' ? (cat?.name.hi || 'मुहूर्त') : (cat?.name.en || 'Muhurat');
+  // Ask the app's AI astrologer, pre-filled with THIS muhurat's context (the AI also
+  // uses the user's saved birth chart automatically).
+  const askJyotishi = () => {
+    hTap();
+    const b = result?.best; const tg = result?.target;
+    const bStr = b ? `${b.dmy} (${b.weekday}, ${b.time.abhijit ? b.time.abhijit.start + '-' + b.time.abhijit.end : ''}, score ${b.score}/100)` : '';
+    const place = loc?.place || placeText || '';
+    const q = lang === 'hi'
+      ? `${catTitle} के लिए ${place} में मुहूर्त पूछना है। ऐप ने सर्वश्रेष्ठ दिन ${bStr} बताया है${tg ? `, और मेरी चुनी तारीख ${tg.dmy} ${tg.ok ? 'भी शुभ है' : 'शुभ नहीं है'}` : ''}. क्या यह सही है, इस दिन क्या ध्यान रखूँ, और कोई सरल उपाय बताइए?`
+      : `I want a muhurat for ${catTitle} in ${place}. The app suggests the best day ${bStr}${tg ? `, and my chosen date ${tg.dmy} is ${tg.ok ? 'also good' : 'not auspicious'}` : ''}. Is this right, what should I keep in mind, and any simple remedy?`;
+    navigation.navigate('AiAstrologer', { question: q });
+  };
   const sharePdf = async () => {
     if (!result || busy) return; setBusy(true);
     try {
@@ -312,7 +341,7 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
   };
 
   return (
-    <Page title={catTitle} onBack={() => { hTap(); navigation.goBack(); }}>
+    <Page title={catTitle} onBack={() => { hTap(); navigation.goBack(); }} scrollRef={scrollRef}>
       {/* compact category header (small) */}
       <LinearGradient colors={cat?.colors || ['#eab94f', '#9f6b16']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.catHero}>
         <Text style={styles.catEmoji}>{cat?.emoji || '🕉'}</Text>
@@ -409,8 +438,27 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
       )}
       {!!error && !loading && <Text style={[styles.err, { color: theme.textMuted }]}>{error}</Text>}
 
-      {!!result && !loading && !!result.best && (
-        <View style={{ marginTop: 16 }}>
+      {!!result && !loading && (!!result.best || !!result.target) && (
+        <View style={{ marginTop: 16 }} onLayout={(e) => { resultsY.current = e.nativeEvent.layout.y; }}>
+          {/* plain-language intro for everyone */}
+          <Text style={[styles.introLine, { color: theme.textSoft }]}>{lang === 'hi' ? '✨ नीचे आपके लिए सबसे शुभ दिन दिए हैं — सबसे ऊपर वाला सबसे अच्छा है। किसी भी दिन पर टैप करके पूरी जानकारी देखें।' : '✨ Below are the most auspicious days for you — the top one is best. Tap any day for full details.'}</Text>
+
+          {/* the user's CHOSEN date */}
+          {!!result.target && (
+            <View style={{ marginBottom: 6 }}>
+              <Text style={[styles.sectionH, { color: theme.goldText, marginTop: 2 }]}>{lang === 'hi' ? '📌 आपकी चुनी तारीख' : '📌 Your chosen date'}</Text>
+              {result.target.ok ? (
+                <HeroBest item={result.target} lang={lang} theme={theme} place={loc?.place || placeText} periodLabel={lang === 'hi' ? 'आपकी चुनी तारीख शुभ है' : 'Your chosen date is auspicious'} expanded={open === result.target.dmy} onToggle={() => setOpen(open === result.target!.dmy ? null : result.target!.dmy)} />
+              ) : (
+                <View style={[styles.targetBad, { borderColor: '#e0a92e88', backgroundColor: theme.isDark ? 'rgba(224,169,46,0.10)' : 'rgba(224,169,46,0.12)' }]}>
+                  <Text style={[styles.targetBadDate, { color: theme.text }]}>{(() => { const p = dmyParts(result.target.dmy); return `${p.d} ${(lang === 'hi' ? MON_HI : MON_FULL)[(p.m - 1) % 12]} ${p.y}`; })()} · {lang === 'hi' ? (result.target.weekdayHi || WD_HI[result.target.weekday] || result.target.weekday) : result.target.weekday}</Text>
+                  <Text style={[styles.targetBadMsg, { color: '#c98a2a' }]}>⚠ {lang === 'hi' ? 'इस दिन शुभ मुहूर्त नहीं' : 'Not auspicious this day'}{result.target.reject ? ` — ${lang === 'hi' ? result.target.reject.hi : result.target.reject.en}` : ''}</Text>
+                  <Text style={[styles.targetBadHint, { color: theme.textMuted }]}>{lang === 'hi' ? 'नीचे दिए शुभ दिनों में से कोई चुनें।' : 'Please pick one of the auspicious days below.'}</Text>
+                </View>
+              )}
+            </View>
+          )}
+
           {/* confidence badge */}
           <View style={[styles.conf, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(62,199,122,0.06)' : 'rgba(62,199,122,0.08)' }]}>
             <Text style={[styles.confH, { color: theme.isDark ? '#8fe0ad' : '#2c8a52' }]}>{lang === 'hi' ? 'इनसे गणना की गई' : 'Calculated using'}</Text>
@@ -421,9 +469,12 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
             </View>
           </View>
 
-          <View style={{ marginTop: 14 }}>
-            <HeroBest item={result.best} lang={lang} theme={theme} place={loc?.place || placeText} periodLabel={periodLabel} expanded={open === result.best.dmy} onToggle={() => setOpen(open === result.best!.dmy ? null : result.best!.dmy)} />
-          </View>
+          {!!result.best && (!result.target || result.target.dmy !== result.best.dmy) && (
+            <View style={{ marginTop: 14 }}>
+              {!!result.target && <Text style={[styles.sectionH, { color: theme.goldText }]}>{lang === 'hi' ? '🏆 इस अवधि का सर्वश्रेष्ठ दिन' : '🏆 Best day in this range'}</Text>}
+              <HeroBest item={result.best} lang={lang} theme={theme} place={loc?.place || placeText} periodLabel={pickedDate ? (lang === 'hi' ? `आज से ${fmtDob(pickedDate)} तक सर्वश्रेष्ठ` : `Best up to ${fmtDob(pickedDate)}`) : periodLabel} expanded={open === result.best.dmy} onToggle={() => setOpen(open === result.best!.dmy ? null : result.best!.dmy)} />
+            </View>
+          )}
 
           {/* actions */}
           <View style={styles.actions}>
@@ -435,9 +486,13 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
           </View>
 
           {/* calendar — always shown so the user can pick the best muhurat BY DATE */}
-          <Text style={[styles.sectionH, { color: theme.goldText }]}>{lang === 'hi' ? '📅 कैलेंडर में शुभ दिन' : '📅 Auspicious days on Calendar'}</Text>
-          <MuhuratCalendar items={result.items} bestDmy={result.best.dmy} lang={lang} selected={open} onPick={(dmy) => { hTap(); ease(); setOpen(open === dmy ? null : dmy); }} />
-          {!!open && open !== result.best.dmy && (() => { const it = result.items.find((x) => x.dmy === open); return it ? <View style={{ marginTop: 12 }}><RankCard item={it} rank={result.items.indexOf(it) + 1} lang={lang} theme={theme} expanded onToggle={() => setOpen(null)} /></View> : null; })()}
+          {result.items.length > 0 && (
+            <>
+              <Text style={[styles.sectionH, { color: theme.goldText }]}>{lang === 'hi' ? '📅 कैलेंडर में शुभ दिन' : '📅 Auspicious days on Calendar'}</Text>
+              <MuhuratCalendar items={result.items} bestDmy={result.best?.dmy} lang={lang} selected={open} onPick={(dmy) => { hTap(); ease(); setOpen(open === dmy ? null : dmy); }} />
+              {!!open && open !== result.best?.dmy && open !== result.target?.dmy && (() => { const it = result.items.find((x) => x.dmy === open); return it ? <View style={{ marginTop: 12 }}><RankCard item={it} rank={result.items.indexOf(it) + 1} lang={lang} theme={theme} expanded onToggle={() => setOpen(null)} /></View> : null; })()}
+            </>
+          )}
 
           {result.items.length > 1 && (
             <>
@@ -449,6 +504,16 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
               </View>
             </>
           )}
+
+          {/* ask the app's AI astrologer with this context */}
+          <Pressable onPress={askJyotishi} style={({ pressed }) => [styles.askBtn, { borderColor: theme.gold1, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(255,247,224,0.9)', opacity: pressed ? 0.9 : 1 }]}>
+            <Text style={styles.askEmoji}>🙏</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.askTitle, { color: theme.text }]}>{lang === 'hi' ? 'कोई संदेह? ज्योतिषी से पूछें' : 'Any doubt? Ask the Jyotishi'}</Text>
+              <Text style={[styles.askSub, { color: theme.textMuted }]}>{lang === 'hi' ? 'AI ज्योतिषी आपकी कुंडली + इस मुहूर्त के आधार पर जवाब देगा' : 'AI astrologer answers using your chart + this muhurat'}</Text>
+            </View>
+            <Text style={[styles.askArrow, { color: theme.gold1 }]}>›</Text>
+          </Pressable>
 
           <Text style={[styles.disclaimer, { color: theme.textMuted }]}>{lang === 'hi' ? '🔒 स्कोर शास्त्रीय नियमों पर आधारित है। बड़े कार्य हेतु विद्वान से लग्न-शुद्धि भी करा लें।' : '🔒 The score follows classical rules. For major events, also confirm the lagna with a pandit.'}</Text>
         </View>
@@ -501,6 +566,16 @@ const styles = StyleSheet.create({
   loadTxt: { fontFamily: fonts.inter, fontSize: 12.5, textAlign: 'center', paddingHorizontal: 30, lineHeight: 18 },
   err: { fontFamily: fonts.inter, fontSize: 13, textAlign: 'center', paddingVertical: 26, lineHeight: 19 },
 
+  introLine: { fontFamily: fonts.inter, fontSize: 12.5, lineHeight: 19, marginBottom: 12 },
+  targetBad: { borderWidth: 1, borderRadius: 16, padding: 14 },
+  targetBadDate: { fontFamily: fonts.playfairBold, fontSize: 16 },
+  targetBadMsg: { fontFamily: fonts.interSemi, fontSize: 13, marginTop: 6 },
+  targetBadHint: { fontFamily: fonts.inter, fontSize: 11.5, marginTop: 5, lineHeight: 16 },
+  askBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1.4, borderRadius: 16, padding: 14, marginTop: 20 },
+  askEmoji: { fontSize: 24 },
+  askTitle: { fontFamily: fonts.playfairBold, fontSize: 15 },
+  askSub: { fontFamily: fonts.inter, fontSize: 11.5, lineHeight: 16, marginTop: 2 },
+  askArrow: { fontFamily: fonts.playfairBold, fontSize: 24 },
   conf: { borderWidth: 1, borderRadius: 14, padding: 12 },
   confH: { fontFamily: fonts.interSemi, fontSize: 11, letterSpacing: 0.6, textTransform: 'uppercase' },
   confChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
