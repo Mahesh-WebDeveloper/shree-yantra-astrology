@@ -18,11 +18,11 @@ function CatCard({ cat, onPress }: { cat: MuhuratCat; onPress: () => void }) {
   return (
     <Animated.View style={{ width: '48%', transform: [{ scale }] }}>
       <Pressable onPress={() => { hTap(); onPress(); }} onPressIn={() => to(0.97)} onPressOut={() => to(1)}>
-        <LinearGradient colors={['#15100a', '#000000']} start={{ x: 0, y: 0 }} end={{ x: 0.9, y: 1 }} style={styles.card}>
-          {/* top-corner gold glow */}
-          <LinearGradient colors={['rgba(233,184,80,0.22)', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0.85, y: 0.7 }} style={styles.sheen} />
+        <View style={styles.card}>
+          {/* top-corner gold glow over the pure-black card */}
+          <LinearGradient colors={['rgba(233,184,80,0.20)', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0.85, y: 0.7 }} style={styles.sheen} />
           <View style={styles.iconBadge}>
-            <MuhuratIcon k={cat.key} color="#f0c65e" size={30} />
+            <MuhuratIcon k={cat.key} color="#f0c65e" size={28} />
           </View>
           <Text style={styles.cardName} numberOfLines={2}>{lang === 'hi' ? cat.name.hi : cat.name.en}</Text>
           <Text style={styles.cardBlurb} numberOfLines={2}>{lang === 'hi' ? cat.blurb.hi : cat.blurb.en}</Text>
@@ -31,7 +31,7 @@ function CatCard({ cat, onPress }: { cat: MuhuratCat; onPress: () => void }) {
               <Text style={styles.nameTagTxt}>🌙 {lang === 'hi' ? 'नाम से भी' : 'By name'}</Text>
             </View>
           )}
-        </LinearGradient>
+        </View>
       </Pressable>
     </Animated.View>
   );
@@ -86,11 +86,11 @@ const styles = StyleSheet.create({
 
   groupTitle: { fontFamily: fonts.cinzelSemi, fontSize: 13.5, letterSpacing: 1, marginBottom: 12 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12 },
-  card: { borderWidth: 1, borderColor: 'rgba(233,184,80,0.34)', borderRadius: 18, padding: 15, minHeight: 148, overflow: 'hidden', justifyContent: 'flex-end' },
+  card: { borderWidth: 1, borderColor: 'rgba(233,184,80,0.34)', borderRadius: 18, padding: 15, minHeight: 158, overflow: 'hidden', backgroundColor: '#000000', justifyContent: 'flex-start' },
   sheen: { position: 'absolute', top: 0, left: 0, right: 0, height: 90 },
-  iconBadge: { position: 'absolute', top: 14, left: 14, width: 50, height: 50, borderRadius: 25, borderWidth: 1, borderColor: 'rgba(233,184,80,0.4)', backgroundColor: 'rgba(233,184,80,0.10)', alignItems: 'center', justifyContent: 'center' },
-  cardName: { fontFamily: fonts.playfairBold, fontSize: 16, lineHeight: 20, color: '#fce8a8', marginTop: 40 },
-  cardBlurb: { fontFamily: fonts.inter, fontSize: 11, lineHeight: 15, color: 'rgba(246,210,122,0.68)', marginTop: 3 },
+  iconBadge: { width: 48, height: 48, borderRadius: 24, borderWidth: 1, borderColor: 'rgba(233,184,80,0.4)', backgroundColor: 'rgba(233,184,80,0.08)', alignItems: 'center', justifyContent: 'center' },
+  cardName: { fontFamily: fonts.playfairBold, fontSize: 16, lineHeight: 20, color: '#fce8a8', marginTop: 16 },
+  cardBlurb: { fontFamily: fonts.inter, fontSize: 11, lineHeight: 15, color: 'rgba(246,210,122,0.68)', marginTop: 4 },
   nameTag: { alignSelf: 'flex-start', marginTop: 10, borderWidth: 1, borderColor: 'rgba(233,184,80,0.4)', backgroundColor: 'rgba(233,184,80,0.10)', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
   nameTagTxt: { fontFamily: fonts.interSemi, fontSize: 8.5, letterSpacing: 0.3, color: '#e9b850' },
 
