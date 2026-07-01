@@ -67,7 +67,27 @@ function timeWindows(p) {
 }
 
 // ── composite 0-100 scoring with a per-factor breakdown ──
-function scoreDay(p, rule, ctx) {
+// Festival days that are traditionally the BEST for buying (vehicle/gold/electronics
+// /property), regardless of the ordinary tithi/nakshatra score. Dhanteras date is
+// verified (Dhanteras 2026 = 06/11/2026). Add more verified dates over time.
+const SPECIAL_BUY_DATES = {
+  '06/11/2026': { en: 'Dhanteras', hi: 'धनतेरस' },
+};
+function isAkshayaTritiya(p) {
+  const masa = p.masa && p.masa.amanta && p.masa.amanta.en;
+  return masa === 'Vaishakha' && p.tithi && /shukla/i.test(p.tithi.paksha) && p.tithi.name === 'Tritiya';
+}
+// Pushya nakshatra (esp Guru-Pushya on Thu, Ravi-Pushya on Sun) is the classic
+// "buy anything" nakshatra. 100% detectable from the panchang.
+function pushyaSpecial(p) {
+  if (norm(p.nakshatra && p.nakshatra.name) !== 'pushya') return null;
+  const wd = WEEKDAY_IDX[norm(p.weekday)];
+  if (wd === 4) return { en: 'Guru Pushya', hi: 'गुरु पुष्य' };
+  if (wd === 0) return { en: 'Ravi Pushya', hi: 'रवि पुष्य' };
+  return { en: 'Pushya Nakshatra', hi: 'पुष्य नक्षत्र' };
+}
+
+function scoreDay(p, rule, ctx, dmy) {
   // hard rejects first
   if (rule.avoidBhadra && (p.bhadra || (p.karana && p.karana.isBhadra))) return { ok: false, reject: { en: 'Bhadra active', hi: 'भद्रा सक्रिय' } };
   const tnum = inPakshaTithi(p.tithi && p.tithi.num);
@@ -137,8 +157,19 @@ function scoreDay(p, rule, ctx) {
   add('panchak', 'No Panchak', 'पंचक नहीं', 5, 5);
   add('window', tw.abhijit ? 'Abhijit Muhurat available' : 'Daytime window', tw.abhijit ? 'अभिजीत मुहूर्त उपलब्ध' : 'दिन का शुभ समय', tw.abhijit ? 5 : 3, 5);
 
-  const score = applicable > 0 ? Math.round((got / applicable) * 1000) / 10 : 0;
-  return { ok: true, score, breakdown: br, chandra, chandraLabel, tara, time: tw, vaarGood };
+  let score = applicable > 0 ? Math.round((got / applicable) * 1000) / 10 : 0;
+
+  // Festival / Pushya boost for BUY categories → these are the days people actually
+  // buy on (Dhanteras, Akshaya Tritiya, Guru/Ravi Pushya), so surface them at the top.
+  let special = null;
+  if (rule.purchase) {
+    special = (dmy && SPECIAL_BUY_DATES[dmy]) || pushyaSpecial(p) || (isAkshayaTritiya(p) ? { en: 'Akshaya Tritiya', hi: 'अक्षय तृतीया' } : null);
+    if (special) {
+      br.push({ key: 'special', en: `${special.en} — highly auspicious for buying`, hi: `${special.hi} — खरीदारी के लिए अति शुभ`, pts: 15, max: 15, ok: true });
+      score = Math.min(100, Math.max(score, 97));
+    }
+  }
+  return { ok: true, score, breakdown: br, chandra, chandraLabel, tara, time: tw, vaarGood, special };
 }
 
 async function janmaNakshatraFrom(birth) {
@@ -170,6 +201,7 @@ function mkItem(p, dmy, s) {
     tara: s.tara ? { en: s.tara.en, hi: s.tara.hi, label: { en: 'Excellent', hi: 'उत्तम' } } : null,
     time: s.time,
     flags: { rahuKaal: 'removed', durmuhurat: 'removed', bhadra: false, panchak: false, choghadiya: s.time.abhijit ? 'Abhijit' : null },
+    special: s.special || null,
     sunrise: p.sunrise, sunset: p.sunset, ok: true,
   };
 }
@@ -196,15 +228,21 @@ async function findMuhurat({ category, fromDate, months = 3, place, lat, lng, tz
     const dmy = toDMY(cur);
     try {
       const p = await getPanchang({ place, lat, lng, date: dmy, tz, includeTransitions: false, includeMoonTimes: false });
-      const s = scoreDay(p, rule, ctx);
+      const s = scoreDay(p, rule, ctx, dmy);
       if (s.ok) results.push(mkItem(p, dmy, s));
     } catch (_) { /* skip */ }
     cur.setDate(cur.getDate() + 1);
     await wait(3);
   }
 
-  results.sort((a, b) => (b.score - a.score) || (Number(a.dmy.split('/').reverse().join('')) - Number(b.dmy.split('/').reverse().join(''))));
-  const top = results.slice(0, 12);
+  const dateKey = (x) => Number(x.dmy.split('/').reverse().join(''));
+  // Special buy-days (Dhanteras / Guru-Ravi Pushya / Akshaya Tritiya) are ALWAYS kept
+  // and shown first (soonest first) for purchase categories — the days people actually
+  // buy on — so they never get pushed out by the many high-scoring ordinary days.
+  const specials = results.filter((r) => r.special).sort((a, b) => dateKey(a) - dateKey(b));
+  const regular = results.filter((r) => !r.special).sort((a, b) => (b.score - a.score) || (dateKey(a) - dateKey(b)));
+  const seen = new Set(specials.map((s) => s.dmy));
+  const top = [...specials, ...regular.filter((r) => !seen.has(r.dmy))].slice(0, Math.max(12, specials.length + 4));
 
   // the user's CHOSEN date — scored even if it is not itself auspicious, so we can
   // say "your date is/ isn't good" while the list shows the best of the whole range.
@@ -212,7 +250,7 @@ async function findMuhurat({ category, fromDate, months = 3, place, lat, lng, tz
   if (targetDate) {
     try {
       const p = await getPanchang({ place, lat, lng, date: targetDate, tz, includeTransitions: false, includeMoonTimes: false });
-      const s = scoreDay(p, rule, ctx);
+      const s = scoreDay(p, rule, ctx, targetDate);
       target = s.ok ? mkItem(p, targetDate, s) : {
         dmy: targetDate, date: p.date || targetDate, weekday: p.weekday, weekdayHi: p.weekdayHi,
         tithi: p.tithi, nakshatra: p.nakshatra, ok: false, reject: s.reject,

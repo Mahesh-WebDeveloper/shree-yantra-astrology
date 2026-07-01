@@ -48,6 +48,7 @@ export const MUHURAT_GROUPS: MuhuratGroup[] = [
     items: [
       { key: 'vyapar', emoji: '🏪', name: b('Shop Opening', 'दुकान आरंभ'), blurb: b('Open a shop / launch', 'दुकान / आरंभ'), nameBased: true, req: R('optional', 'optional'), colors: ['#eab94f', '#9f6b16'] },
       { key: 'office', emoji: '🏢', name: b('Office Opening', 'ऑफिस आरंभ'), blurb: b('New office inauguration', 'कार्यालय उद्घाटन'), nameBased: true, req: R('optional', 'optional'), colors: ['#cf9f5a', '#7a531c'] },
+      { key: 'new-business', emoji: '🚀', name: b('New Business', 'नया व्यवसाय'), blurb: b('Launch a new venture', 'नया व्यवसाय आरंभ'), nameBased: true, req: R('optional', 'optional'), colors: ['#8fce9f', '#2f7a4a'] },
       { key: 'naukari', emoji: '💼', name: b('New Job', 'नई नौकरी'), blurb: b('Joining a new job', 'नौकरी ज्वॉइन'), nameBased: true, req: R('optional', 'optional'), colors: ['#9ac0e0', '#3a6a96'] },
       { key: 'vidyarambh', emoji: '📖', name: b('Vidyarambh', 'विद्यारंभ'), blurb: b('Start of education', 'शिक्षा शुभारंभ'), nameBased: false, req: R('none', 'required'), colors: ['#8fce9f', '#347a4a'] },
     ],
@@ -56,6 +57,7 @@ export const MUHURAT_GROUPS: MuhuratGroup[] = [
     key: 'finance', title: b('Finance', 'धन व निवेश'),
     items: [
       { key: 'dhan-nivesh', emoji: '💰', name: b('Gold / Investment', 'सोना / निवेश'), blurb: b('Valuables & investing', 'मूल्यवान वस्तु व निवेश'), nameBased: true, req: R('optional', 'optional'), colors: ['#e7c44a', '#9a7410'] },
+      { key: 'electronics', emoji: '📱', name: b('Electronics / Gadget', 'इलेक्ट्रॉनिक्स / गैजेट'), blurb: b('Mobile, laptop, TV', 'मोबाइल, लैपटॉप, टीवी'), nameBased: true, req: R('optional', 'optional'), colors: ['#7fb1e0', '#2f5f8f'] },
     ],
   },
   {

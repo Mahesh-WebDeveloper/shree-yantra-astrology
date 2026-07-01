@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ActivityIndicator, Share, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ActivityIndicator, Share, Linking, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Polyline } from 'react-native-svg';
 import * as Print from 'expo-print';
@@ -137,6 +137,7 @@ function HeroBest({ item, lang, theme, expanded, onToggle, place, periodLabel }:
       <LinearGradient colors={['#fce8a8', '#e9b850', '#b87f1a']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
         {['✦', '✦', '✦'].map((s, i) => <Text key={i} style={[styles.spark, [{ top: 10, right: 14 }, { top: 40, right: 40, fontSize: 9 }, { bottom: 60, left: 16, fontSize: 8 }][i]]}>{s}</Text>)}
         <Text style={styles.heroCrown}>🏆 {periodLabel}</Text>
+        {!!item.special && <View style={styles.heroSpecial}><Text style={styles.heroSpecialTxt}>⭐ {lang === 'hi' ? item.special.hi : item.special.en} — {lang === 'hi' ? 'खरीदारी के लिए अति शुभ' : 'best day to buy'}</Text></View>}
         {/* DATE = biggest */}
         <Text style={styles.heroDate}>{dateStr}</Text>
         <Text style={styles.heroWd}>{wd}</Text>
@@ -178,7 +179,7 @@ function RankCard({ item, rank, lang, theme, expanded, onToggle }: any) {
         <View style={{ flex: 1, minWidth: 0 }}>
           <View style={styles.rankHeadRow}>
             <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={[styles.rankWd, { color: theme.text }]} numberOfLines={1}>{wd}</Text>
+              <Text style={[styles.rankWd, { color: theme.text }]} numberOfLines={1}>{wd}{item.special ? <Text style={{ color: theme.gold1, fontFamily: fonts.interBold }}>  ⭐ {lang === 'hi' ? item.special.hi : item.special.en}</Text> : null}</Text>
               <Text style={[styles.rankRating, { color: theme.gold2 }]} numberOfLines={1}>{lang === 'hi' ? item.rating.hi : item.rating.en}{item.time.abhijit ? ` · 🕐 ${item.time.abhijit.start}` : ''}</Text>
             </View>
             <View style={[styles.scorePill, { backgroundColor: item.score >= 92 ? 'rgba(62,199,122,0.14)' : 'rgba(233,184,80,0.16)', borderColor: item.score >= 92 ? '#3ec77a66' : theme.gold2 + '66' }]}>
@@ -330,13 +331,28 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
     const msg = `🏆 ${catTitle} — ${lang === 'hi' ? 'सर्वश्रेष्ठ मुहूर्त' : 'Best Muhurat'}\n📅 ${d} ${MON[(m - 1) % 12]} ${y} (${b.weekday})\n🕐 ${b.time.abhijit ? `${b.time.abhijit.start} – ${b.time.abhijit.end}` : ''}\n⭐ ${b.score}/100 ${b.rating.en}\n📍 ${loc?.place || placeText || ''}`;
     try { await Share.share({ message: msg }); } catch {}
   };
-  const addToCal = async () => {
-    if (!result?.best || busy) return; setBusy(true);
+  // Open the calendar DIRECTLY with the event pre-filled (Google Calendar template
+  // URL → opens the calendar app/web ready to save). Falls back to an .ics share.
+  const addToCal = async (item?: MuhuratItem | null) => {
+    const b = item || result?.best; if (!b || busy) return; setBusy(true);
     try {
-      const ics = buildIcs(result.best, `${catTitle} Muhurat`, loc?.place || placeText || '');
-      const uri = `${FileSystem.cacheDirectory}muhurat.ics`;
-      await FileSystem.writeAsStringAsync(uri, ics, { encoding: FileSystem.EncodingType.UTF8 });
-      if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'text/calendar', dialogTitle: lang === 'hi' ? 'कैलेंडर में जोड़ें' : 'Add to Calendar' });
+      const p2 = (n: number) => (n < 10 ? '0' : '') + n;
+      const { d, m, y } = dmyParts(b.dmy);
+      const s = (b.time.abhijit ? parse12(b.time.abhijit.start) : null) || { h: 9, m: 0 };
+      const e = (b.time.abhijit ? parse12(b.time.abhijit.end) : null) || { h: 10, m: 0 };
+      const stamp = (hh: number, mm: number) => `${y}${p2(m)}${p2(d)}T${p2(hh)}${p2(mm)}00`;
+      const url = `https://calendar.google.com/calendar/render?action=TEMPLATE`
+        + `&text=${encodeURIComponent(`${catTitle} ${lang === 'hi' ? 'मुहूर्त' : 'Muhurat'}`)}`
+        + `&dates=${stamp(s.h, s.m)}/${stamp(e.h, e.m)}`
+        + `&details=${encodeURIComponent(`${lang === 'hi' ? 'शुभ मुहूर्त' : 'Shubh Muhurat'} — ${b.score}/100`)}`
+        + `&location=${encodeURIComponent(loc?.place || placeText || '')}`;
+      const opened = await Linking.canOpenURL(url).then((ok) => (ok ? Linking.openURL(url).then(() => true) : false)).catch(() => false);
+      if (!opened) {
+        const ics = buildIcs(b, `${catTitle} Muhurat`, loc?.place || placeText || '');
+        const uri = `${FileSystem.cacheDirectory}muhurat.ics`;
+        await FileSystem.writeAsStringAsync(uri, ics, { encoding: FileSystem.EncodingType.UTF8 });
+        if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'text/calendar', dialogTitle: lang === 'hi' ? 'कैलेंडर में जोड़ें' : 'Add to Calendar' });
+      }
     } catch {} finally { setBusy(false); }
   };
 
@@ -478,7 +494,7 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
 
           {/* actions */}
           <View style={styles.actions}>
-            {[['📥', lang === 'hi' ? 'PDF' : 'PDF', sharePdf], ['↗', lang === 'hi' ? 'शेयर' : 'Share', shareText], ['📅', lang === 'hi' ? 'रिमाइंडर' : 'Reminder', addToCal]].map(([ic, lbl, fn]: any) => (
+            {[['📄', lang === 'hi' ? 'PDF' : 'PDF', sharePdf], ['📤', lang === 'hi' ? 'शेयर' : 'Share', shareText], ['🔔', lang === 'hi' ? 'रिमाइंडर' : 'Reminder', () => addToCal()]].map(([ic, lbl, fn]: any) => (
               <Pressable key={lbl} onPress={fn} style={[styles.actBtn, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.08)' : '#fff' }]}>
                 <Text style={styles.actIc}>{ic}</Text><Text style={[styles.actTxt, { color: theme.gold1 }]}>{lbl}</Text>
               </Pressable>
@@ -590,6 +606,8 @@ const styles = StyleSheet.create({
   hero: { borderRadius: 24, padding: 20, overflow: 'hidden', borderWidth: 2, borderColor: '#fff3cf' },
   spark: { position: 'absolute', color: 'rgba(255,255,255,0.9)', fontSize: 12 },
   heroCrown: { fontFamily: fonts.interBold, fontSize: 12.5, color: '#3a2602', letterSpacing: 0.5 },
+  heroSpecial: { alignSelf: 'flex-start', marginTop: 6, backgroundColor: 'rgba(58,38,2,0.16)', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  heroSpecialTxt: { fontFamily: fonts.interBold, fontSize: 11, color: '#2a1c00' },
   heroDate: { fontFamily: fonts.playfairBold, fontSize: 30, lineHeight: 36, color: '#2a1c00', marginTop: 8 },
   heroWd: { fontFamily: fonts.interSemi, fontSize: 14, color: '#4a3204', marginTop: 1 },
   heroTime: { fontFamily: fonts.interBold, fontSize: 18, color: '#2a1c00', marginTop: 8 },

@@ -32,8 +32,11 @@ export function MuhuratCalendar({ items, bestDmy, lang, onPick, selected }: {
   // range of months that actually contain results (for prev/next bounds)
   const bounds = useMemo(() => {
     const keys = items.map((it) => { const p = dmyParts(it.dmy); return p.y * 12 + (p.m - 1); });
-    return { min: Math.min(...keys), max: Math.max(...keys) };
-  }, [items]);
+    const minK = keys.length ? Math.min(...keys) : first.y * 12 + (first.m - 1);
+    const maxK = keys.length ? Math.max(...keys) : minK;
+    // allow browsing a FULL year forward even if some months have no recommended days
+    return { min: minK, max: Math.max(maxK, minK + 11) };
+  }, [items, first.y, first.m]);
   const cursor = view.y * 12 + (view.m - 1);
   const shift = (d: number) => {
     const n = Math.max(bounds.min, Math.min(bounds.max, cursor + d));

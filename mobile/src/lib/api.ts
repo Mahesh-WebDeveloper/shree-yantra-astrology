@@ -539,6 +539,7 @@ export interface MuhuratItem {
   tara?: { en: string; hi: string; label: Bi } | null;
   time: { abhijit: MuhuratWindow | null; brahma?: MuhuratWindow | null; windows: MuhuratWindow[]; rahuKaal: { start: string; end: string } | null };
   flags: { rahuKaal: string; durmuhurat: string; bhadra: boolean; panchak: boolean; choghadiya: string | null };
+  special?: Bi | null; // festival buy-day badge (Dhanteras / Pushya / Akshaya Tritiya)
   sunrise: string;
   sunset: string;
   ok?: boolean;        // false when a chosen `target` date is itself inauspicious

@@ -60,14 +60,14 @@ const MUHURAT_CATEGORIES = [
     why: { en: 'A strong foundation muhurat supports a safe, well-built and lasting structure.', hi: 'शुभ भूमि-पूजन सुरक्षित, मजबूत और टिकाऊ निर्माण का आधार बनाता है।' },
   }),
   cat({
-    key: 'property-buy', group: 'property', emoji: '📜', art: 'deed',
+    key: 'property-buy', group: 'property', emoji: '📜', art: 'deed', purchase: true,
     name: { en: 'Property / Registry', hi: 'संपत्ति / रजिस्ट्री' },
     blurb: { en: 'Buying land or property, registration', hi: 'ज़मीन/संपत्ति खरीद व रजिस्ट्री' },
     goodNakshatras: pool('fixedGood', 'Rohini', 'Pushya', 'Hasta', 'Chitra', 'Anuradha', 'Dhanishtha', 'Shatabhisha'),
     why: { en: 'Buying property at a favourable time supports a secure, dispute-free asset.', hi: 'शुभ समय में संपत्ति खरीद सुरक्षित व विवाद-रहित स्वामित्व में सहायक होती है।' },
   }),
   cat({
-    key: 'vehicle', group: 'property', emoji: '🚗', art: 'vehicle',
+    key: 'vehicle', group: 'property', emoji: '🚗', art: 'vehicle', purchase: true,
     name: { en: 'Vehicle Purchase', hi: 'वाहन खरीद' },
     blurb: { en: 'New car / bike delivery & first puja', hi: 'नई कार/बाइक डिलीवरी व पूजा' },
     goodNakshatras: pool('lightGood', 'movableGood', 'softGood', 'fixedGood'),
@@ -149,15 +149,31 @@ const MUHURAT_CATEGORIES = [
     goodVaars: [1, 3, 4, 5],
     why: { en: 'Opening an office at a steady, benefic time supports growth and teamwork.', hi: 'स्थिर शुभ समय में ऑफिस आरंभ वृद्धि व सहयोग में सहायक है।' },
   }),
+  cat({
+    key: 'new-business', group: 'career', emoji: '🚀', art: 'shop',
+    name: { en: 'New Business Start', hi: 'नया व्यवसाय' },
+    blurb: { en: 'Launch a new venture', hi: 'नया व्यवसाय आरंभ' },
+    goodNakshatras: ['Ashwini', 'Pushya', 'Hasta', 'Chitra', 'Swati', 'Anuradha', 'Shravana', 'Dhanishtha', 'Uttara Phalguni', 'Uttara Ashadha', 'Uttara Bhadrapada', 'Rohini'],
+    goodVaars: [1, 3, 4, 5, 0],
+    why: { en: 'A strong start-day supports steady growth, profit and reputation for a new venture.', hi: 'शुभ आरंभ-दिन नए व्यवसाय की स्थिर वृद्धि, लाभ व प्रतिष्ठा में सहायक है।' },
+  }),
 
   // ── Finance & spiritual ──────────────────────────────────────────────────
   cat({
-    key: 'dhan-nivesh', group: 'finance', emoji: '💰', art: 'wealth',
+    key: 'dhan-nivesh', group: 'finance', emoji: '💰', art: 'wealth', purchase: true,
     name: { en: 'Buying Gold / Investment', hi: 'सोना खरीद / निवेश' },
     blurb: { en: 'Gold, valuables & new investments', hi: 'सोना, मूल्यवान वस्तु व निवेश' },
     goodNakshatras: ['Ashwini', 'Rohini', 'Pushya', 'Hasta', 'Chitra', 'Swati', 'Anuradha', 'Shravana', 'Dhanishtha', 'Revati', 'Uttara Phalguni', 'Uttara Ashadha', 'Uttara Bhadrapada'],
     goodVaars: [1, 3, 4, 5, 0],
     why: { en: 'Buying or investing at a wealth-friendly time is believed to grow “akshaya” (never-decreasing) prosperity.', hi: 'धन-अनुकूल समय में खरीद/निवेश “अक्षय” समृद्धि का प्रतीक माना जाता है।' },
+  }),
+  cat({
+    key: 'electronics', group: 'finance', emoji: '📱', art: 'wealth', purchase: true,
+    name: { en: 'Electronics / Gadget', hi: 'इलेक्ट्रॉनिक्स / गैजेट' },
+    blurb: { en: 'Mobile, laptop, TV & devices', hi: 'मोबाइल, लैपटॉप, टीवी व उपकरण' },
+    goodNakshatras: ['Ashwini', 'Rohini', 'Pushya', 'Hasta', 'Chitra', 'Swati', 'Anuradha', 'Shravana', 'Dhanishtha', 'Revati', 'Uttara Phalguni', 'Uttara Ashadha'],
+    goodVaars: [1, 3, 4, 5, 0],
+    why: { en: 'A favourable day (esp. Pushya/Dhanteras) for a new device is chosen for long, trouble-free use.', hi: 'नए उपकरण के लिए शुभ दिन (खासकर पुष्य/धनतेरस) लंबे व सुखद उपयोग हेतु चुना जाता है।' },
   }),
   cat({
     key: 'puja', group: 'spiritual', emoji: '🪔', art: 'puja',
