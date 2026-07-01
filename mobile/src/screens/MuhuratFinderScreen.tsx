@@ -346,8 +346,11 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
         + `&dates=${stamp(s.h, s.m)}/${stamp(e.h, e.m)}`
         + `&details=${encodeURIComponent(`${lang === 'hi' ? 'शुभ मुहूर्त' : 'Shubh Muhurat'} — ${b.score}/100`)}`
         + `&location=${encodeURIComponent(loc?.place || placeText || '')}`;
-      const opened = await Linking.canOpenURL(url).then((ok) => (ok ? Linking.openURL(url).then(() => true) : false)).catch(() => false);
-      if (!opened) {
+      // Open the calendar directly. Don't gate on canOpenURL — on Android 11+ it
+      // returns false for https due to package visibility, wrongly forcing the .ics path.
+      try {
+        await Linking.openURL(url);
+      } catch {
         const ics = buildIcs(b, `${catTitle} Muhurat`, loc?.place || placeText || '');
         const uri = `${FileSystem.cacheDirectory}muhurat.ics`;
         await FileSystem.writeAsStringAsync(uri, ics, { encoding: FileSystem.EncodingType.UTF8 });
@@ -595,7 +598,7 @@ const styles = StyleSheet.create({
   conf: { borderWidth: 1, borderRadius: 14, padding: 12 },
   confH: { fontFamily: fonts.interSemi, fontSize: 11, letterSpacing: 0.6, textTransform: 'uppercase' },
   confChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
-  confTag: { fontFamily: fonts.inter, fontSize: 10, borderWidth: 1, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3, overflow: 'hidden' },
+  confTag: { fontFamily: fonts.inter, fontSize: 10, lineHeight: 16, borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingTop: Platform.OS === 'ios' ? 3 : 1, paddingBottom: Platform.OS === 'ios' ? 3 : 2, textAlign: 'center', textAlignVertical: 'center', overflow: 'hidden' },
 
   viewToggle: { flexDirection: 'row', gap: 8, marginTop: 14 },
   vBtn: { flex: 1, borderWidth: 1, borderRadius: 12, paddingVertical: 9, alignItems: 'center' },

@@ -50,7 +50,6 @@ export const MUHURAT_GROUPS: MuhuratGroup[] = [
       { key: 'office', emoji: '🏢', name: b('Office Opening', 'ऑफिस आरंभ'), blurb: b('New office inauguration', 'कार्यालय उद्घाटन'), nameBased: true, req: R('optional', 'optional'), colors: ['#cf9f5a', '#7a531c'] },
       { key: 'new-business', emoji: '🚀', name: b('New Business', 'नया व्यवसाय'), blurb: b('Launch a new venture', 'नया व्यवसाय आरंभ'), nameBased: true, req: R('optional', 'optional'), colors: ['#8fce9f', '#2f7a4a'] },
       { key: 'naukari', emoji: '💼', name: b('New Job', 'नई नौकरी'), blurb: b('Joining a new job', 'नौकरी ज्वॉइन'), nameBased: true, req: R('optional', 'optional'), colors: ['#9ac0e0', '#3a6a96'] },
-      { key: 'vidyarambh', emoji: '📖', name: b('Vidyarambh', 'विद्यारंभ'), blurb: b('Start of education', 'शिक्षा शुभारंभ'), nameBased: false, req: R('none', 'required'), colors: ['#8fce9f', '#347a4a'] },
     ],
   },
   {
