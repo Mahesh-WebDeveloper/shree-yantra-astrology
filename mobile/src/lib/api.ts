@@ -558,7 +558,7 @@ export interface MuhuratResult {
 export interface MuhuratBirthInput { date?: string; time?: string; place?: string; lat?: number; lng?: number; tz?: string }
 export const getMuhuratCategories = () => get<{ items: MuhuratCategory[] }>('/api/muhurat/categories');
 export const findMuhurat = (input: {
-  category: string; date?: string; month?: number; year?: number; months?: number; targetDate?: string;
+  category: string; date?: string; month?: number; year?: number; months?: number; targetDate?: string; toDate?: string;
   place?: string; lat?: number; lng?: number; tz?: string;
   nameRashi?: string | null; birth?: MuhuratBirthInput | null;
   nameRashi2?: string | null; birth2?: MuhuratBirthInput | null;

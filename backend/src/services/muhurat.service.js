@@ -206,13 +206,22 @@ function mkItem(p, dmy, s) {
   };
 }
 
-async function findMuhurat({ category, fromDate, months = 3, place, lat, lng, tz = '+05:30', nameRashi, birth, nameRashi2, birth2, targetDate }) {
+async function findMuhurat({ category, fromDate, months = 3, place, lat, lng, tz = '+05:30', nameRashi, birth, nameRashi2, birth2, targetDate, toDate }) {
   const rule = CATEGORY_BY_KEY[category];
   if (!rule) { const e = new Error('Unknown muhurat category'); e.status = 400; throw e; }
 
   const start = fromDate instanceof Date ? new Date(fromDate) : new Date();
   start.setHours(0, 0, 0, 0);
-  const days = Math.max(20, Math.min(186, Math.round(Number(months) * 31) || 93));
+  // If a precise end date is given (e.g. "only August" → last day of Aug), scan EXACTLY
+  // that window. Otherwise fall back to the months→days estimate.
+  let days;
+  if (toDate) {
+    const [ed, em, ey] = String(toDate).split('/').map(Number);
+    const end = new Date(ey, em - 1, ed); end.setHours(0, 0, 0, 0);
+    days = Math.max(1, Math.min(186, Math.round((end - start) / 86400000) + 1));
+  } else {
+    days = Math.max(20, Math.min(186, Math.round(Number(months) * 31) || 93));
+  }
   const janmaNak = await janmaNakshatraFrom(birth);
   const janmaNak2 = await janmaNakshatraFrom(birth2);
   const ctx = {

@@ -276,14 +276,17 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
     const isYear = !pickedDate && sel === 'year';
     let payload: any;
     if (pickedDate) {
-      const daysAhead = Math.ceil((pickedDate.getTime() - Date.now()) / 86400000);
-      const scanMonths = Math.max(1, Math.min(6, Math.ceil(daysAhead / 30) + 1));
-      payload = { targetDate: fmtDob(pickedDate), months: scanMonths };
+      // scan TODAY → chosen date; the chosen date is also the `target` card
+      payload = { targetDate: fmtDob(pickedDate), toDate: fmtDob(pickedDate) };
     } else if (isYear) {
-      payload = { month: new Date().getMonth() + 1, year: new Date().getFullYear(), months: 6 };
+      // rest of THIS calendar year (today → 31 Dec) so it never spills into next year
+      const y = new Date().getFullYear();
+      payload = { month: new Date().getMonth() + 1, year: y, toDate: `31/12/${y}` };
     } else {
+      // a specific month → scan ONLY that month (1st … last day), so results stay in it
       const mo = months[sel as number];
-      payload = { month: mo.month, year: mo.year, months: 3 };
+      const last = new Date(mo.year, mo.month, 0).getDate();
+      payload = { month: mo.month, year: mo.year, toDate: `${String(last).padStart(2, '0')}/${String(mo.month).padStart(2, '0')}/${mo.year}` };
     }
     try {
       const res = await findMuhurat({
