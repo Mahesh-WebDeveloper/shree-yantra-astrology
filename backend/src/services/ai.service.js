@@ -1626,8 +1626,60 @@ Return STRICT JSON only:
   });
 }
 
+// Numerology interpretation. The numbers are computed DETERMINISTICALLY in
+// numerology.service.js and passed in here as immutable facts — the AI only writes the
+// human-readable meaning and NEVER computes or invents a number.
+async function generateNumerologyReading({ profile, lang = 'hi' } = {}) {
+  if (!profile || !profile.mulank) { const e = new Error('numerology profile required'); e.status = 400; throw e; }
+  const L = lang === 'hi' ? 'hi' : 'en';
+  const pl = (p) => (p ? (L === 'hi' ? p.hi : p.en) : '');
+  const facts = {
+    name: profile.name || '',
+    mulank: `${profile.mulank.final} (${pl(profile.mulank.planet)})`,
+    bhagyank: `${profile.bhagyank.final} (${pl(profile.bhagyank.planet)})`,
+    namank: `${profile.namank.final} (${pl(profile.namank.planet)})`,
+    soulUrge: profile.soulUrge.final,
+    personality: profile.personality.final,
+    personalYear: profile.personalYear.final,
+    loShuMissing: profile.loShu.missing,
+    loShuPresentArrows: (profile.loShu.presentArrows || []).map((a) => (L === 'hi' ? a.hi : a.en)),
+    isMasterMulank: profile.mulank.isMaster,
+    hasKarmicDebt: [profile.mulank, profile.bhagyank, profile.namank].some((x) => x.isKarmic),
+  };
+  const key = `numerology|${L}|${profile.dob}|${(profile.name || '').toLowerCase()}|m${facts.mulank}|b${facts.bhagyank}|n${facts.namank}|py${facts.personalYear}|miss${facts.loShuMissing.join('')}`;
+  return cached(key, 'numerology', async () => {
+    const prompt = `You are an experienced Indian (Vedic + Chaldean) numerologist. You are given a person's ALREADY-COMPUTED numerology numbers. Use ONLY these numbers and their planets. NEVER invent, recompute, or state any number that is not in this DATA. If something is not in the DATA, do not mention it.
+
+DATA (immutable — do not change any number):
+${JSON.stringify(facts, null, 2)}
+
+Return STRICT JSON only:
+{
+ "mulank": {"title": "short heading", "meaning": "what this Driver number + its planet says about inner nature", "traits": ["3-5 short traits"], "health": "1 line general wellbeing tendency"},
+ "bhagyank": {"title": "short heading", "meaning": "life-path / career direction from this Destiny number + planet", "career": ["2-4 suited directions"]},
+ "namank": {"title": "short heading", "meaning": "how the name vibration supports or challenges the core numbers"},
+ "personalYear": {"title": "short heading", "meaning": "theme of the current personal year ${facts.personalYear} and one simple focus"},
+ "loShu": {"strengths": "what the present planes/arrows give", "gaps": "what the missing numbers (${facts.loShuMissing.join(', ') || 'none'}) suggest to work on", "remedies": ["2-4 simple, safe remedies — charity/mantra/colour/habit; do NOT advise an expensive gemstone as the first step"]},
+ "summary": "4-6 line overall guidance tying the numbers together",
+ ${saralField(L)}
+}
+${writeIn(L)}`;
+    const out = await callAI(prompt, { json: true });
+    return {
+      mulank: out.mulank || null,
+      bhagyank: out.bhagyank || null,
+      namank: out.namank || null,
+      personalYear: out.personalYear || null,
+      loShu: out.loShu || null,
+      summary: asText(out.summary),
+      saralVivaran: asText(out.saralVivaran),
+      aiAssisted: true,
+    };
+  });
+}
+
 module.exports = {
-  generateDailyPrediction, generatePeriodPrediction, generateTraditionalReading, generateDashaPhala, generateNames, generateNameSuggestions, generateBabyNames, answerNameQuestion, generateTransitForecast, askAstrologer, generateInsights, generateChoghadiyaMessage, generateMuhuratPick, generateSignRashifal,
+  generateDailyPrediction, generatePeriodPrediction, generateTraditionalReading, generateDashaPhala, generateNames, generateNameSuggestions, generateBabyNames, answerNameQuestion, generateTransitForecast, askAstrologer, generateInsights, generateChoghadiyaMessage, generateMuhuratPick, generateSignRashifal, generateNumerologyReading,
   generateRcmExplanation, generateGitaExplanation, generateRamayanExplanation, generateRigvedaExplanation,
   generateVedaExplanation, generateDailyShlokaExplain, generateMatchExplanation, generateGocharExplanation,
   generateRemediesExplanation,

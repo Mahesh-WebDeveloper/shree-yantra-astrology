@@ -19,6 +19,7 @@ const { createReading, createNameSuggestions } = require('../controllers/reading
 const { createLifeTimeline } = require('../controllers/lifeTimeline.controller');
 const { createTransitForecast } = require('../controllers/transitForecast.controller');
 const { createBrihatKundli } = require('../controllers/brihatKundli.controller');
+const numerologyCtrl = require('../controllers/numerology.controller');
 const horoscopeCtrl = require('../controllers/horoscope.controller');
 const aiCtrl = require('../controllers/ai.controller');
 const authCtrl = require('../controllers/auth.controller');
@@ -60,7 +61,7 @@ const aiLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Too many requests. Please wait a moment and try again. · बहुत अधिक अनुरोध — कृपया थोड़ी देर बाद प्रयास करें।' },
 });
-router.use(['/ai', '/baby-names', '/name-ask', '/match', '/gochar', '/remedies', '/vedic-reading', '/life-timeline', '/transit-forecast', '/name-suggestions', '/brihat-kundli'], aiLimiter);
+router.use(['/ai', '/baby-names', '/name-ask', '/match', '/gochar', '/remedies', '/vedic-reading', '/life-timeline', '/transit-forecast', '/name-suggestions', '/brihat-kundli', '/numerology/interpret'], aiLimiter);
 
 router.get('/health', health);
 
@@ -216,6 +217,10 @@ router.post('/name-suggestions', createNameSuggestions);
 router.post('/life-timeline', createLifeTimeline);
 router.post('/transit-forecast', createTransitForecast);
 router.post('/brihat-kundli', createBrihatKundli);
+// numerology (100% local deterministic math; interpret uses AI to explain only)
+router.post('/numerology/profile', numerologyCtrl.profile);
+router.post('/numerology/interpret', numerologyCtrl.interpret);
+router.post('/numerology/check-number', numerologyCtrl.checkNumber);
 router.get('/horoscope', horoscopeCtrl.publicList);
 router.post('/horoscope/personalized', horoscopeCtrl.personalized);
 

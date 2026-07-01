@@ -1019,6 +1019,40 @@ export interface RemediesResponse {
 }
 export const getRemedies = (input: KundliInput) => post<RemediesResponse>('/api/remedies', { ...input, lang: apiLang });
 
+// ── Numerology (100% local deterministic math on the backend; interpret uses AI to explain only) ──
+export interface NumBi { en: string; hi: string }
+export interface NumBiList { en: string[]; hi: string[] }
+export interface NumReduced { final: number; compound: number; isMaster: boolean; isKarmic: boolean }
+export interface NumWithPlanet extends NumReduced { planet: NumBi | null; remedy?: NumBi | null }
+export interface LoShuArrow { key: string; en: string; hi: string }
+export interface NumRelation { key: 'friend' | 'enemy' | 'neutral'; en: string; hi: string }
+export interface NumerologyProfile {
+  name: string; dob: string; system: string;
+  mulank: NumWithPlanet; bhagyank: NumWithPlanet;
+  namank: NumWithPlanet & { pythagorean: number };
+  soulUrge: NumReduced; personality: NumReduced; personalYear: NumReduced;
+  loShu: { counts: Record<string, number>; positions: Record<string, [number, number]>; missing: number[]; presentArrows: LoShuArrow[]; missingArrows: LoShuArrow[] };
+  lucky: { numbers: number[]; colors: NumBiList; days: NumBiList; gem: NumBi } | null;
+  nameCorrection: { currentNamank: number; relationToDriver: NumRelation; relationToDestiny: NumRelation; isHarmonious: boolean; suggestedNameNumbers: number[]; note: NumBi } | null;
+  disclaimer: NumBi;
+}
+export interface NumerologyReading {
+  mulank?: { title?: string; meaning?: string; traits?: string[]; health?: string } | null;
+  bhagyank?: { title?: string; meaning?: string; career?: string[] } | null;
+  namank?: { title?: string; meaning?: string } | null;
+  personalYear?: { title?: string; meaning?: string } | null;
+  loShu?: { strengths?: string; gaps?: string; remedies?: string[] } | null;
+  summary?: string; saralVivaran?: string; aiAssisted?: boolean;
+}
+export interface NumberCheck { userMulank: number; input: string; numberTotal: number; planet: NumBi | null; relation: NumRelation }
+
+export const getNumerologyProfile = (input: { name?: string; dob: string }) =>
+  post<{ profile: NumerologyProfile }>('/api/numerology/profile', input);
+export const getNumerologyReading = (input: { name?: string; dob: string }) =>
+  post<{ profile: NumerologyProfile; reading: NumerologyReading }>('/api/numerology/interpret', { ...input, lang: apiLang }, 'POST', 30000);
+export const checkNumerologyNumber = (input: { number: string; mulank?: number; dob?: string }) =>
+  post<NumberCheck>('/api/numerology/check-number', input);
+
 // ── Traditional Vedic Reading (classical phala-kathan) ──
 export interface BiText { en: string; hi: string }
 export interface ReadingJanma {

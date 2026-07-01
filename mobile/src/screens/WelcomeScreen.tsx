@@ -179,6 +179,7 @@ const SERVICES: { key: string; en: string; hi: string; subEn: string; subHi: str
   { key: 'chog', en: 'Choghadiya', hi: 'चौघड़िया', subEn: 'Find the good time for any work', subHi: 'किसी भी काम का शुभ समय', icon: 'clock', accent: '#84e8b4', route: 'Choghadiya', tint: ['#1e7a54', '#11543a', '#0a2c20'], lightTint: ['#daf2e4', '#ebfaf1', '#f5fdf9'] },
   { key: 'muhurat', en: 'Shubh Muhurat', hi: 'शुभ मुहूर्त', subEn: 'Best day & time for griha pravesh, vivah…', subHi: 'गृह प्रवेश, विवाह आदि का शुभ दिन व समय', icon: 'calendar', accent: '#f3cd7e', route: 'Muhurat', tint: ['#9a6418', '#5c3a10', '#2e1d08'], lightTint: ['#fbeccf', '#fef5e2', '#fffbf2'] },
   { key: 'baby', en: 'Child Name Finder', hi: 'शिशु के शुभ नाम', subEn: 'Lucky names with meaning for your child', subHi: 'अर्थ सहित बच्चे के सुंदर व शुभ नाम', icon: 'name', accent: '#8ce0e0', route: 'BabyNames', tint: ['#1f7373', '#114a4a', '#0a2626'], lightTint: ['#d8f0f0', '#e8f9f9', '#f4fdfd'] },
+  { key: 'numerology', en: 'Numerology', hi: 'अंकशास्त्र', subEn: 'Mulank, Bhagyank, Lo Shu grid & lucky numbers', subHi: 'मूलांक, भाग्यांक, लो-शु ग्रिड व शुभ अंक', icon: 'name', accent: '#cbb1f2', route: 'Numerology', tint: ['#4a2f7a', '#2f1d54', '#160d2c'], lightTint: ['#ebe1fb', '#f4eefe', '#faf7ff'] },
 ];
 
 const SERVICE_LIGHT_ACCENT: Record<string, string> = {
@@ -188,6 +189,7 @@ const SERVICE_LIGHT_ACCENT: Record<string, string> = {
   chog: '#146b43',
   muhurat: '#70420a',
   baby: '#176c70',
+  numerology: '#5b2f92',
 };
 
 const LIGHT_TINT: Record<string, readonly [string, string, string]> = {
