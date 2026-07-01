@@ -223,7 +223,7 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
   const [name, setName] = useState('');
   const [placeText, setPlaceText] = useState('');
   const [loc, setLoc] = useState<{ place?: string; lat?: number; lng?: number } | null>(null);
-  const [sel, setSel] = useState<'year' | number>('year');
+  const [sel, setSel] = useState<'r3' | 'r6' | 'year' | number>('r3');
   const [birth1, setBirth1] = useState<any>({ dob: null, time: '', placeText: '', loc: null });
   const [birth2, setBirth2] = useState<any>({ dob: null, time: '', placeText: '', loc: null });
   const [result, setResult] = useState<MuhuratResult | null>(null);
@@ -264,29 +264,35 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
 
   const periodLabel = useMemo(() => {
     if (pickedDate) return lang === 'hi' ? `${fmtDob(pickedDate)} के आसपास सर्वश्रेष्ठ` : `Best around ${fmtDob(pickedDate)}`;
+    if (sel === 'r3') return lang === 'hi' ? 'अगले 3 महीने का सर्वश्रेष्ठ' : 'Best in the next 3 months';
+    if (sel === 'r6') return lang === 'hi' ? 'अगले 6 महीने का सर्वश्रेष्ठ' : 'Best in the next 6 months';
     if (sel === 'year') return lang === 'hi' ? `${new Date().getFullYear()} का सर्वश्रेष्ठ मुहूर्त` : `Best Muhurat of ${new Date().getFullYear()}`;
-    const mo = months[sel];
+    const mo = months[sel as number];
     return lang === 'hi' ? `${(MON_HI)[mo.month - 1]} का सर्वश्रेष्ठ` : `Best of ${MON_FULL[mo.month - 1]}`;
   }, [sel, months, lang, pickedDate]);
 
   const onFind = async () => {
-    hTap(); setError(null); setResult(null); setOpen(null); setLoading(true);
-    // pickedDate → scan the FULL window from TODAY up to the chosen date (targetDate),
-    // so the list is the best of that range and `target` = the chosen date itself.
-    const isYear = !pickedDate && sel === 'year';
+    hTap(); setError(null); setOpen(null);
+    // ── validation ──
+    if (!(loc?.place || placeText.trim())) { setError(lang === 'hi' ? 'कृपया पहले स्थान चुनें।' : 'Please choose a location first.'); return; }
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+    if (pickedDate && pickedDate < todayStart) { setError(lang === 'hi' ? 'कृपया आज या आगे की तारीख चुनें।' : 'Please pick today or a future date.'); return; }
+    setResult(null); setLoading(true);
+
+    // Build the exact scan window. Every option resolves to [fromDate(today/1st) … toDate].
     let payload: any;
     if (pickedDate) {
-      // scan TODAY → chosen date; the chosen date is also the `target` card
-      payload = { targetDate: fmtDob(pickedDate), toDate: fmtDob(pickedDate) };
-    } else if (isYear) {
-      // rest of THIS calendar year (today → 31 Dec) so it never spills into next year
+      payload = { targetDate: fmtDob(pickedDate), toDate: fmtDob(pickedDate) };            // today → chosen date, chosen date = target
+    } else if (sel === 'r3' || sel === 'r6') {
+      const end = new Date(); end.setMonth(end.getMonth() + (sel === 'r3' ? 3 : 6));
+      payload = { toDate: fmtDob(end) };                                                    // next 3 / 6 months from today
+    } else if (sel === 'year') {
       const y = new Date().getFullYear();
-      payload = { month: new Date().getMonth() + 1, year: y, toDate: `31/12/${y}` };
+      payload = { toDate: `31/12/${y}` };                                                   // rest of this year (today → 31 Dec)
     } else {
-      // a specific month → scan ONLY that month (1st … last day), so results stay in it
       const mo = months[sel as number];
       const last = new Date(mo.year, mo.month, 0).getDate();
-      payload = { month: mo.month, year: mo.year, toDate: `${String(last).padStart(2, '0')}/${String(mo.month).padStart(2, '0')}/${mo.year}` };
+      payload = { month: mo.month, year: mo.year, toDate: `${String(last).padStart(2, '0')}/${String(mo.month).padStart(2, '0')}/${mo.year}` }; // only that month
     }
     try {
       const res = await findMuhurat({
@@ -381,7 +387,19 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
 
         <View>
           <Text style={[styles.label, { color: theme.gold2 }]}>{lang === 'hi' ? 'कब का मुहूर्त *' : 'When *'}</Text>
-          {/* pick any exact date from the app's calendar (GoldDatePicker) */}
+          {/* quick range presets */}
+          <View style={styles.chipWrap}>
+            {([['r3', lang === 'hi' ? 'अगले 3 महीने' : 'Next 3 months'], ['r6', lang === 'hi' ? 'अगले 6 महीने' : 'Next 6 months'], ['year', lang === 'hi' ? '⭐ पूरे साल' : '⭐ Entire Year']] as ['r3' | 'r6' | 'year', string][]).map(([v, lbl]) => {
+              const on = !pickedDate && sel === v;
+              return (
+                <Pressable key={v} onPress={() => { hTap(); setPickedDate(null); setSel(v); }} style={[styles.chip, { borderColor: on ? theme.gold1 : theme.cardBorder, backgroundColor: on ? theme.gold1 : (theme.isDark ? 'rgba(233,184,80,0.08)' : '#fff') }]}>
+                  <Text style={[styles.chipTxt, { color: on ? '#1a1206' : theme.gold1 }]}>{lbl}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <Text style={[styles.orTxt, { color: theme.textMuted }]}>{lang === 'hi' ? '— या कोई खास तारीख —' : '— or a specific date —'}</Text>
           <PickerField
             icon={<CalendarIcon color={theme.gold2} size={20} />}
             label={lang === 'hi' ? 'तारीख चुनें (कैलेंडर)' : 'Pick a date (calendar)'}
@@ -389,12 +407,9 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
             onPress={() => { hTap(); setShowWhenPicker(true); }}
             theme={theme} lang={lang}
           />
-          <Text style={[styles.orTxt, { color: theme.textMuted }]}>{lang === 'hi' ? '— या नीचे से महीना चुनें —' : '— or pick a month below —'}</Text>
-          {/* wrapped chips — all visible, no fragile horizontal scroll */}
+
+          <Text style={[styles.orTxt, { color: theme.textMuted }]}>{lang === 'hi' ? '— या कोई एक महीना —' : '— or a single month —'}</Text>
           <View style={styles.chipWrap}>
-            <Pressable onPress={() => { hTap(); setPickedDate(null); setSel('year'); }} style={[styles.chip, { borderColor: !pickedDate && sel === 'year' ? theme.gold1 : theme.cardBorder, backgroundColor: !pickedDate && sel === 'year' ? theme.gold1 : (theme.isDark ? 'rgba(233,184,80,0.08)' : '#fff') }]}>
-              <Text style={[styles.chipTxt, { color: !pickedDate && sel === 'year' ? '#1a1206' : theme.gold1 }]}>⭐ {lang === 'hi' ? 'पूरे साल' : 'Entire Year'}</Text>
-            </Pressable>
             {months.map((mo) => {
               const on = !pickedDate && sel === mo.idx;
               return (
