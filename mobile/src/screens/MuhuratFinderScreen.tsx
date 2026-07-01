@@ -1,9 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, ActivityIndicator, ScrollView, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ActivityIndicator, ScrollView, Share, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Polyline } from 'react-native-svg';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system/legacy';
 import { Page } from '../components/Page';
-import { GradientText } from '../components/GradientText';
+import { TextField } from '../components/TextField';
+import { GoldDatePicker } from '../components/GoldDatePicker';
+import { GoldTimePicker } from '../components/GoldTimePicker';
+import { UserLine, CalendarIcon, ClockIcon } from '../components/icons/ProfileIcons';
 import { BirthPlaceField } from '../components/BirthPlaceField';
+import { MuhuratCalendar } from '../components/MuhuratCalendar';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts, radii } from '../theme/tokens';
 import { useLang } from '../i18n/LanguageProvider';
@@ -13,23 +21,65 @@ import { naamRashi } from '../lib/naamRashi';
 import { birthFromProfile } from '../lib/birth';
 import { muhuratCatByKey } from '../data/muhuratCategories';
 import { findMuhurat, MuhuratItem, MuhuratResult, MuhuratBirthInput, LocationSuggestion } from '../lib/api';
+import { buildMuhuratHtml } from '../lib/muhuratPdf';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) UIManager.setLayoutAnimationEnabledExperimental(true);
 const ease = () => LayoutAnimation.configureNext(LayoutAnimation.create(220, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
 
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const MON_HI = ['जन', 'फ़र', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुल', 'अग', 'सित', 'अक्तू', 'नव', 'दिस'];
+const MON_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const MON_HI = ['जनवरी', 'फरवरी', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुलाई', 'अगस्त', 'सितंबर', 'अक्टूबर', 'नवंबर', 'दिसंबर'];
+const MON_HI_SH = ['जन', 'फ़र', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुल', 'अग', 'सित', 'अक्तू', 'नव', 'दिस'];
 const WD_HI: Record<string, string> = { Sunday: 'रविवार', Monday: 'सोमवार', Tuesday: 'मंगलवार', Wednesday: 'बुधवार', Thursday: 'गुरुवार', Friday: 'शुक्रवार', Saturday: 'शनिवार' };
 const dmyParts = (dmy: string) => { const [d, m, y] = String(dmy).split('/').map(Number); return { d, m, y }; };
-const stars = (score: number) => Math.max(1, Math.min(5, Math.round(score / 20)));
+const nStars = (score: number) => Math.max(1, Math.min(5, Math.round(score / 20)));
 
 function Stars({ score, size = 13, color = '#e9b850' }: { score: number; size?: number; color?: string }) {
-  const n = stars(score);
-  return <Text style={{ fontSize: size, color, letterSpacing: 1 }}>{'★'.repeat(n)}<Text style={{ color: color + '55' }}>{'★'.repeat(5 - n)}</Text></Text>;
+  const n = nStars(score);
+  return <Text style={{ fontSize: size, color, letterSpacing: 1 }}>{'★'.repeat(n)}<Text style={{ color: color + '4d' }}>{'★'.repeat(5 - n)}</Text></Text>;
 }
 
-// expandable detail block shared by hero + rank cards
-function Detail({ item, lang, theme }: { item: MuhuratItem; lang: 'en' | 'hi'; theme: any }) {
+const fmtDob = (d: Date | null) => (d ? `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}` : '');
+
+// tappable field that opens a picker — same look as BirthDetailsScreen's PickerField
+function PickerField({ icon, label, value, onPress, theme, lang }: any) {
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.pf, { backgroundColor: theme.isDark ? 'rgba(0,0,0,0.55)' : '#fffdf7', borderColor: pressed ? theme.gold1 : (theme.isDark ? 'rgba(201,150,46,0.35)' : 'rgba(176,115,22,0.30)') }]}>
+      <View style={styles.pfIcon}>{icon}</View>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.pfLabel, { color: theme.goldText }]}>{label.toUpperCase()}</Text>
+        <Text style={[styles.pfValue, { color: value ? theme.text : theme.textMuted }]}>{value || (lang === 'hi' ? 'चुनने के लिए टैप करें' : 'Tap to select')}</Text>
+      </View>
+      <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={theme.gold2} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Polyline points="6 9 12 15 18 9" /></Svg>
+    </Pressable>
+  );
+}
+
+// "12:14 PM" → {h,m} 24h
+function parse12(t?: string) {
+  const m = String(t || '').match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+  if (!m) return null;
+  let h = +m[1]; const mm = +m[2]; const ap = (m[3] || '').toUpperCase();
+  if (ap === 'PM' && h < 12) h += 12; if (ap === 'AM' && h === 12) h = 0;
+  return { h, m: mm };
+}
+function buildIcs(item: MuhuratItem, title: string, place: string) {
+  const { d, m, y } = dmyParts(item.dmy);
+  const s = item.time.abhijit ? parse12(item.time.abhijit.start) : { h: 9, m: 0 };
+  const e = item.time.abhijit ? parse12(item.time.abhijit.end) : { h: 10, m: 0 };
+  const fmt = (hh: number, mm: number) => `${y}${String(m).padStart(2, '0')}${String(d).padStart(2, '0')}T${String(hh).padStart(2, '0')}${String(mm).padStart(2, '0')}00`;
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//ShreeYantra//Muhurat//EN', 'BEGIN:VEVENT',
+    `DTSTART:${fmt((s || { h: 9 }).h, (s || { m: 0 }).m)}`, `DTEND:${fmt((e || { h: 10 }).h, (e || { m: 0 }).m)}`,
+    `SUMMARY:${title}`, `LOCATION:${place || ''}`, `DESCRIPTION:Shubh Muhurat (score ${item.score}/100)`, 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+}
+
+// ── expandable, sectioned detail ──
+function Detail({ item, lang, theme, onLight }: { item: MuhuratItem; lang: 'en' | 'hi'; theme: any; onLight?: boolean }) {
+  const muted = onLight ? '#6b4e16' : theme.textMuted;
+  const txt = onLight ? '#3a2606' : theme.text;
+  const border = onLight ? 'rgba(58,38,2,0.16)' : theme.cardBorder;
+  const gold = onLight ? '#7a4e08' : theme.gold1;
+  const green = theme.isDark && !onLight ? '#8fe0ad' : '#2c8a52';
   const L = (o?: { en: string; hi: string } | null) => (o ? (lang === 'hi' ? o.hi : o.en) : '—');
   const rows: { k: string; v: string; good?: boolean }[] = [
     { k: lang === 'hi' ? 'तिथि' : 'Tithi', v: lang === 'hi' ? (item.tithi.hi || item.tithi.name) : item.tithi.name },
@@ -38,90 +88,103 @@ function Detail({ item, lang, theme }: { item: MuhuratItem; lang: 'en' | 'hi'; t
     { k: lang === 'hi' ? 'करण' : 'Karana', v: item.karana ? (lang === 'hi' ? (item.karana.hi || item.karana.name) : item.karana.name) : '—' },
     { k: lang === 'hi' ? 'चंद्र राशि' : 'Moon Sign', v: L(item.moonSign) },
     ...(item.chandra ? [{ k: lang === 'hi' ? 'चंद्रबल' : 'Chandrabal', v: L(item.chandra.label), good: true }] : []),
-    ...(item.tara ? [{ k: lang === 'hi' ? 'ताराबल' : 'Tara Bal', v: `${lang === 'hi' ? item.tara.hi : item.tara.en} · ${L(item.tara.label)}`, good: true }] : []),
+    ...(item.tara ? [{ k: lang === 'hi' ? 'ताराबल' : 'Tara Bal', v: `${lang === 'hi' ? item.tara.hi : item.tara.en}`, good: true }] : []),
     { k: lang === 'hi' ? 'चौघड़िया' : 'Choghadiya', v: item.flags.choghadiya || '—' },
-    { k: lang === 'hi' ? 'अभिजीत' : 'Abhijit', v: item.time.abhijit ? `${item.time.abhijit.start}–${item.time.abhijit.end}` : '—', good: !!item.time.abhijit },
-    { k: lang === 'hi' ? 'राहुकाल' : 'Rahu Kaal', v: lang === 'hi' ? 'हटाया ✓' : 'Removed ✓', good: true },
-    { k: lang === 'hi' ? 'भद्रा' : 'Bhadra', v: lang === 'hi' ? 'नहीं ✓' : 'No ✓', good: true },
-    { k: lang === 'hi' ? 'पंचक' : 'Panchak', v: lang === 'hi' ? 'नहीं ✓' : 'No ✓', good: true },
   ];
   return (
-    <View style={styles.detailWrap}>
-      <Text style={[styles.detailHead, { color: theme.gold1 }]}>{lang === 'hi' ? 'पंचांग विवरण' : 'Panchang Details'}</Text>
-      <View style={styles.pGrid}>
-        {rows.map((r) => (
-          <View key={r.k} style={[styles.pCell, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,253,247,0.85)' }]}>
-            <Text style={[styles.pLabel, { color: theme.textMuted }]}>{r.k}</Text>
-            <Text style={[styles.pValue, { color: r.good ? (theme.isDark ? '#8fe0ad' : '#2c8a52') : theme.text }]} numberOfLines={1}>{r.v}</Text>
-          </View>
-        ))}
+    <View style={{ marginTop: 12, gap: 12 }}>
+      <View>
+        <Text style={[styles.secH, { color: gold }]}>{lang === 'hi' ? 'पंचांग' : 'Panchang'}</Text>
+        <View style={styles.pGrid}>
+          {rows.map((r) => (
+            <View key={r.k} style={[styles.pCell, { borderColor: border, backgroundColor: onLight ? 'rgba(255,255,255,0.5)' : (theme.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,253,247,0.85)') }]}>
+              <Text style={[styles.pLabel, { color: muted }]}>{r.k}</Text>
+              <Text style={[styles.pValue, { color: r.good ? green : txt }]} numberOfLines={1}>{r.v}</Text>
+            </View>
+          ))}
+        </View>
       </View>
-      <Text style={[styles.detailHead, { color: theme.gold1, marginTop: 14 }]}>{lang === 'hi' ? 'यह मुहूर्त क्यों?' : 'Why this Muhurat?'}</Text>
-      <View style={{ gap: 6, marginTop: 6 }}>
-        {item.breakdown.map((bk) => (
-          <View key={bk.key} style={styles.whyRow}>
-            <Text style={[styles.whyTxt, { color: bk.ok ? theme.text : theme.textMuted }]}>{bk.ok ? '✓' : '•'} {lang === 'hi' ? bk.hi : bk.en}</Text>
-            <Text style={[styles.whyPts, { color: bk.ok ? (theme.isDark ? '#8fe0ad' : '#2c8a52') : theme.textMuted }]}>+{bk.pts}</Text>
-          </View>
-        ))}
+      <View>
+        <Text style={[styles.secH, { color: green }]}>{lang === 'hi' ? '✔ अच्छे कारण (Why)' : '✔ Good points (Why)'}</Text>
+        <View style={{ gap: 5 }}>
+          {item.breakdown.filter((b) => b.ok && b.pts >= 5).map((b) => (
+            <View key={b.key} style={styles.whyRow}>
+              <Text style={[styles.whyTxt, { color: txt }]}>✔ {lang === 'hi' ? b.hi : b.en}</Text>
+              <Text style={[styles.whyPts, { color: green }]}>+{b.pts}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+      <View>
+        <Text style={[styles.secH, { color: '#c67a5a' }]}>{lang === 'hi' ? '⛔ हटाई गई चीज़ें' : '⛔ Avoided'}</Text>
+        <Text style={[styles.avoidTxt, { color: muted }]}>
+          {lang === 'hi' ? 'राहुकाल हटाया · भद्रा नहीं · पंचक नहीं · दुर्मुहूर्त हटाया' : 'Rahu Kaal removed · No Bhadra · No Panchak · Durmuhurat removed'}
+          {item.time.rahuKaal ? `  (राहुकाल ${item.time.rahuKaal.start}–${item.time.rahuKaal.end})` : ''}
+        </Text>
       </View>
     </View>
   );
 }
 
-function HeroBest({ item, lang, theme, expanded, onToggle, place }: { item: MuhuratItem; lang: 'en' | 'hi'; theme: any; expanded: boolean; onToggle: () => void; place: string }) {
+// ── premium Best-Muhurat hero: DATE first, score explained, gold glow + sparkle ──
+function HeroBest({ item, lang, theme, expanded, onToggle, place, periodLabel }: any) {
   const { d, m, y } = dmyParts(item.dmy);
   const wd = lang === 'hi' ? (item.weekdayHi || WD_HI[item.weekday] || item.weekday) : item.weekday;
-  const top = item.breakdown.filter((b) => b.ok).slice(0, 6);
+  const dateStr = `${d} ${(lang === 'hi' ? MON_HI : MON_FULL)[(m - 1) % 12]} ${y}`;
+  const top = item.breakdown.filter((b: any) => b.ok && b.pts >= 5).slice(0, 6);
   return (
-    <LinearGradient colors={['#fce8a8', '#e9b850', '#b87f1a']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
-      <Text style={styles.heroCrown}>🏆 {lang === 'hi' ? 'सर्वश्रेष्ठ मुहूर्त' : 'Best Muhurat'}</Text>
-      <View style={styles.heroScoreRow}>
-        <Text style={styles.heroScore}>{item.score}</Text>
-        <View>
-          <Text style={styles.heroScoreMax}>/ 100</Text>
-          <Text style={styles.heroRating}>{lang === 'hi' ? item.rating.hi : item.rating.en}</Text>
+    <View style={styles.heroGlow}>
+      <LinearGradient colors={['#fce8a8', '#e9b850', '#b87f1a']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
+        {['✦', '✦', '✦'].map((s, i) => <Text key={i} style={[styles.spark, [{ top: 10, right: 14 }, { top: 40, right: 40, fontSize: 9 }, { bottom: 60, left: 16, fontSize: 8 }][i]]}>{s}</Text>)}
+        <Text style={styles.heroCrown}>🏆 {periodLabel}</Text>
+        {/* DATE = biggest */}
+        <Text style={styles.heroDate}>{dateStr}</Text>
+        <Text style={styles.heroWd}>{wd}</Text>
+        {!!item.time.abhijit && <Text style={styles.heroTime}>🕐 {item.time.abhijit.start} – {item.time.abhijit.end}</Text>}
+        {!!place && <Text style={styles.heroPlace} numberOfLines={1}>📍 {place}</Text>}
+        {/* score block, explained */}
+        <View style={styles.heroScoreBox}>
+          <Stars score={item.score} size={17} color="#3a2602" />
+          <Text style={styles.heroScoreLabel}>{lang === 'hi' ? 'कुल मुहूर्त स्कोर' : 'Overall Muhurat Score'}</Text>
+          <Text style={styles.heroScoreNum}>{item.score}<Text style={styles.heroScoreMax}> / 100</Text>  ·  <Text style={styles.heroRating}>{lang === 'hi' ? item.rating.hi : item.rating.en}</Text></Text>
         </View>
-        <View style={{ flex: 1, alignItems: 'flex-end' }}><Stars score={item.score} size={16} color="#3a2602" /></View>
-      </View>
-      <Text style={styles.heroDate}>📅 {d} {(lang === 'hi' ? MON_HI : MON)[(m - 1) % 12]} {y} · {wd}</Text>
-      {!!item.time.abhijit && <Text style={styles.heroTime}>🕐 {item.time.abhijit.start} – {item.time.abhijit.end}</Text>}
-      {!!place && <Text style={styles.heroPlace} numberOfLines={1}>📍 {place}</Text>}
-      <View style={styles.heroWhy}>
-        {top.map((b) => <Text key={b.key} style={styles.heroChk} numberOfLines={1}>✔ {lang === 'hi' ? b.hi : b.en}</Text>)}
-      </View>
-      <Pressable onPress={() => { hTap(); ease(); onToggle(); }} style={styles.heroBtn}>
-        <Text style={styles.heroBtnTxt}>{expanded ? (lang === 'hi' ? 'बंद करें ▲' : 'Close ▲') : (lang === 'hi' ? 'पूरी जानकारी देखें ▼' : 'View full details ▼')}</Text>
-      </Pressable>
-      {expanded && <View style={styles.heroDetail}><Detail item={item} lang={lang} theme={{ ...theme, isDark: false, text: '#3a2602', textMuted: '#6b4e16', cardBorder: 'rgba(58,38,2,0.18)', gold1: '#7a4e08' }} /></View>}
-    </LinearGradient>
+        <View style={styles.heroWhy}>
+          {top.map((b: any) => <Text key={b.key} style={styles.heroChk} numberOfLines={1}>✔ {lang === 'hi' ? b.hi : b.en}</Text>)}
+        </View>
+        <Pressable onPress={() => { hTap(); ease(); onToggle(); }} style={styles.heroBtn}>
+          <Text style={styles.heroBtnTxt}>{expanded ? (lang === 'hi' ? 'बंद करें ▲' : 'Close ▲') : (lang === 'hi' ? 'पूरी जानकारी देखें ▼' : 'View full details ▼')}</Text>
+        </Pressable>
+        {expanded && <View style={styles.heroDetail}><Detail item={item} lang={lang} theme={theme} onLight /></View>}
+      </LinearGradient>
+    </View>
   );
 }
 
-function RankCard({ item, rank, lang, theme, expanded, onToggle }: { item: MuhuratItem; rank: number; lang: 'en' | 'hi'; theme: any; expanded: boolean; onToggle: () => void }) {
-  const { d, m, y } = dmyParts(item.dmy);
+function RankCard({ item, rank, lang, theme, expanded, onToggle }: any) {
+  const { d, m } = dmyParts(item.dmy);
   const wd = lang === 'hi' ? (item.weekdayHi || WD_HI[item.weekday] || item.weekday) : item.weekday;
   const nak = lang === 'hi' ? (item.nakshatra.hi || item.nakshatra.name) : item.nakshatra.name;
-  const tithi = lang === 'hi' ? (item.tithi.hi || item.tithi.name) : item.tithi.name;
+  const top = item.breakdown.filter((b: any) => b.ok && b.pts >= 10).slice(0, 3);
   const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
   return (
     <View style={[styles.rankCard, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(255,253,247,0.92)' }]}>
       <Pressable onPress={() => { hTap(); ease(); onToggle(); }} style={styles.rankTop}>
-        <View style={styles.rankMedal}><Text style={styles.rankMedalTxt}>{medal}</Text></View>
+        <Text style={styles.rankMedal}>{medal}</Text>
         <View style={[styles.dateBox, { backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : '#fff7e6', borderColor: theme.cardBorder }]}>
           <Text style={[styles.dateDay, { color: theme.goldText }]}>{d}</Text>
-          <Text style={[styles.dateMon, { color: theme.gold2 }]}>{(lang === 'hi' ? MON_HI : MON)[(m - 1) % 12]}</Text>
+          <Text style={[styles.dateMon, { color: theme.gold2 }]}>{(lang === 'hi' ? MON_HI_SH : MON)[(m - 1) % 12]}</Text>
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
           <View style={styles.rankHeadRow}>
             <Text style={[styles.rankWd, { color: theme.text }]}>{wd}</Text>
-            <Text style={[styles.rankScore, { color: theme.gold1 }]}>{item.score}</Text>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={[styles.rankScore, { color: theme.gold1 }]}>{item.score}<Text style={{ fontSize: 10, color: theme.textMuted }}>/100</Text></Text>
+              <Stars score={item.score} size={11} />
+            </View>
           </View>
-          <Stars score={item.score} size={12} />
+          <Text style={[styles.rankRating, { color: theme.gold2 }]}>{lang === 'hi' ? item.rating.hi : item.rating.en} · {item.time.abhijit ? item.time.abhijit.start : ''}</Text>
           <View style={styles.chipRow}>
-            <View style={[styles.miniChip, { borderColor: theme.cardBorder }]}><Text style={[styles.miniChipTxt, { color: theme.gold2 }]}>{nak}</Text></View>
-            <View style={[styles.miniChip, { borderColor: theme.cardBorder }]}><Text style={[styles.miniChipTxt, { color: theme.gold2 }]}>{tithi}</Text></View>
-            {!!item.time.abhijit && <Text style={[styles.rankTime, { color: theme.gold1 }]}>🕐 {item.time.abhijit.start}</Text>}
+            {top.map((b: any) => <Text key={b.key} style={[styles.goodChip, { color: theme.isDark ? '#8fe0ad' : '#2c8a52', borderColor: '#3ec77a44' }]} numberOfLines={1}>✔ {lang === 'hi' ? b.hi.split('(')[0].split('—')[0].trim() : b.en.split('(')[0].split('—')[0].trim()}</Text>)}
           </View>
         </View>
         <Text style={[styles.rankChevron, { color: theme.gold2 }]}>{expanded ? '▲' : '▼'}</Text>
@@ -131,16 +194,17 @@ function RankCard({ item, rank, lang, theme, expanded, onToggle }: { item: Muhur
   );
 }
 
-// reusable birth inputs (DOB / time / place)
 function BirthInputs({ titleEn, titleHi, val, onChange, theme, lang }: any) {
+  const [showDate, setShowDate] = useState(false);
+  const [showTime, setShowTime] = useState(false);
   return (
     <View style={[styles.birthBox, { borderColor: theme.cardBorder }]}>
       <Text style={[styles.birthTitle, { color: theme.gold2 }]}>{lang === 'hi' ? titleHi : titleEn}</Text>
-      <View style={styles.birthRow}>
-        <TextInput value={val.dob} onChangeText={(t: string) => onChange({ ...val, dob: t })} placeholder={lang === 'hi' ? 'जन्म तिथि DD/MM/YYYY' : 'DOB DD/MM/YYYY'} placeholderTextColor={theme.textMuted} keyboardType="numbers-and-punctuation" style={[styles.smInput, { flex: 1.4, borderColor: theme.cardBorder, color: theme.text, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.4)' : '#fff' }]} />
-        <TextInput value={val.time} onChangeText={(t: string) => onChange({ ...val, time: t })} placeholder={lang === 'hi' ? 'समय HH:MM' : 'Time HH:MM'} placeholderTextColor={theme.textMuted} keyboardType="numbers-and-punctuation" style={[styles.smInput, { flex: 1, borderColor: theme.cardBorder, color: theme.text, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.4)' : '#fff' }]} />
-      </View>
+      <PickerField icon={<CalendarIcon color={theme.gold2} size={20} />} label={lang === 'hi' ? 'जन्म तिथि' : 'Date of birth'} value={fmtDob(val.dob)} onPress={() => { hTap(); setShowDate(true); }} theme={theme} lang={lang} />
+      <PickerField icon={<ClockIcon color={theme.gold2} size={20} />} label={lang === 'hi' ? 'जन्म समय' : 'Time of birth'} value={val.time} onPress={() => { hTap(); setShowTime(true); }} theme={theme} lang={lang} />
       <BirthPlaceField label={lang === 'hi' ? 'जन्म स्थान' : 'Birth place'} value={val.placeText || ''} onChangeText={(t: string) => onChange({ ...val, placeText: t })} onSelect={(it: LocationSuggestion | null) => onChange({ ...val, loc: it ? { place: it.description, lat: it.lat ?? undefined, lng: it.lng ?? undefined } : null })} placeholder={lang === 'hi' ? 'शहर / गाँव' : 'City / village'} />
+      <GoldDatePicker visible={showDate} initialDate={val.dob || new Date(2000, 0, 1)} maximumDate={new Date()} onConfirm={(d) => { onChange({ ...val, dob: d }); setShowDate(false); }} onCancel={() => setShowDate(false)} lang={lang} />
+      <GoldTimePicker visible={showTime} value={val.time || '08:00 AM'} onConfirm={(tm) => { onChange({ ...val, time: tm }); setShowTime(false); }} onCancel={() => setShowTime(false)} lang={lang} />
     </View>
   );
 }
@@ -155,79 +219,115 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
   const [name, setName] = useState('');
   const [placeText, setPlaceText] = useState('');
   const [loc, setLoc] = useState<{ place?: string; lat?: number; lng?: number } | null>(null);
-  const [monthIdx, setMonthIdx] = useState(0);
-  const [scope, setScope] = useState<3 | 6>(3);
-  const [advOpen, setAdvOpen] = useState(false);
-  const [birth1, setBirth1] = useState<any>({ dob: '', time: '', placeText: '', loc: null });
-  const [birth2, setBirth2] = useState<any>({ dob: '', time: '', placeText: '', loc: null });
+  const [sel, setSel] = useState<'year' | number>('year');
+  const [birth1, setBirth1] = useState<any>({ dob: null, time: '', placeText: '', loc: null });
+  const [birth2, setBirth2] = useState<any>({ dob: null, time: '', placeText: '', loc: null });
   const [result, setResult] = useState<MuhuratResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
+  const [view, setView] = useState<'list' | 'cal'>('list');
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     birthFromProfile().then((b: any) => {
       if (b?.place) { setPlaceText(b.place); setLoc({ place: b.place, lat: b.lat, lng: b.lng }); }
-      if (b?.dob && b?.place) setBirth1({ dob: String(b.dob).replace(/-/g, '/'), time: b.tob || '', placeText: b.place, loc: { place: b.place, lat: b.lat, lng: b.lng } });
+      if (b?.dob && b?.place) {
+        const [dd, mo, yy] = String(b.dob).split(/[-/]/).map(Number);
+        const dobDate = dd && mo && yy ? new Date(yy, mo - 1, dd) : null;
+        setBirth1({ dob: dobDate, time: b.tob || '', placeText: b.place, loc: { place: b.place, lat: b.lat, lng: b.lng } });
+      }
     }).catch(() => {});
-    if (req.birth === 'required') setAdvOpen(true);
   }, []);
 
   const rashi = useMemo(() => naamRashi(name), [name]);
   const months = useMemo(() => {
     const now = new Date();
-    return Array.from({ length: 10 }).map((_, i) => {
+    return Array.from({ length: 9 }).map((_, i) => {
       const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-      return { idx: i, month: d.getMonth() + 1, year: d.getFullYear(), label: `${(lang === 'hi' ? MON_HI : MON)[d.getMonth()]} ${d.getFullYear()}` };
+      return { idx: i, month: d.getMonth() + 1, year: d.getFullYear(), label: `${(lang === 'hi' ? MON_HI_SH : MON)[d.getMonth()]} ${d.getFullYear()}` };
     });
   }, [lang]);
 
-  const birthPayload = (bv: any): MuhuratBirthInput | null => {
-    if (!bv?.dob) return null;
-    return { date: bv.dob, time: bv.time || undefined, place: bv.loc?.place || bv.placeText || undefined, lat: bv.loc?.lat, lng: bv.loc?.lng };
-  };
+  // accuracy meter — location only 88, +name 93, +birth 99
+  const accuracy = birth1.dob && (birth1.loc || birth1.placeText) ? 99 : (req.name !== 'none' && rashi ? 93 : 88);
+  const birthPayload = (bv: any): MuhuratBirthInput | null => (bv?.dob ? { date: fmtDob(bv.dob), time: bv.time || undefined, place: bv.loc?.place || bv.placeText || undefined, lat: bv.loc?.lat, lng: bv.loc?.lng } : null);
+
+  const periodLabel = useMemo(() => {
+    if (sel === 'year') return lang === 'hi' ? `${new Date().getFullYear()} का सर्वश्रेष्ठ मुहूर्त` : `Best Muhurat of ${new Date().getFullYear()}`;
+    const mo = months[sel];
+    return lang === 'hi' ? `${(MON_HI)[mo.month - 1]} का सर्वश्रेष्ठ` : `Best of ${MON_FULL[mo.month - 1]}`;
+  }, [sel, months, lang]);
 
   const onFind = async () => {
-    hTap(); setError(null); setResult(null); setOpen(null); setLoading(true);
-    const sel = months[monthIdx];
+    hTap(); setError(null); setResult(null); setOpen(null); setView('list'); setLoading(true);
+    const isYear = sel === 'year';
+    const mo = isYear ? { month: new Date().getMonth() + 1, year: new Date().getFullYear() } : months[sel as number];
     try {
       const res = await findMuhurat({
-        category: categoryKey, month: sel.month, year: sel.year, months: scope,
+        category: categoryKey, month: mo.month, year: mo.year, months: isYear ? 6 : 3,
         place: loc?.place || placeText || undefined, lat: loc?.lat, lng: loc?.lng,
         nameRashi: req.name !== 'none' ? rashi : null,
-        birth: birthPayload(birth1),
-        birth2: req.couple ? birthPayload(birth2) : null,
+        birth: birthPayload(birth1), birth2: req.couple ? birthPayload(birth2) : null,
       });
       setResult(res);
-      if (!res.items.length) setError(lang === 'hi' ? 'इस अवधि में कोई शुभ मुहूर्त नहीं मिला — आगे का महीना या “पूरे साल” चुनें।' : 'No auspicious muhurat in this window — try a later month or “whole year”.');
-    } catch {
-      setError(lang === 'hi' ? 'मुहूर्त गणना अभी नहीं हो पाई — इंटरनेट जाँचकर पुनः प्रयास करें।' : 'Could not compute muhurat — check internet and retry.');
-    } finally { setLoading(false); }
+      if (!res.items.length) setError(lang === 'hi' ? 'इस अवधि में कोई शुभ मुहूर्त नहीं मिला — आगे का महीना चुनें।' : 'No auspicious muhurat here — try a later month.');
+    } catch { setError(lang === 'hi' ? 'मुहूर्त गणना नहीं हो पाई — इंटरनेट जाँचें।' : 'Could not compute — check internet.'); }
+    finally { setLoading(false); }
+  };
+
+  const catTitle = lang === 'hi' ? (cat?.name.hi || 'मुहूर्त') : (cat?.name.en || 'Muhurat');
+  const sharePdf = async () => {
+    if (!result || busy) return; setBusy(true);
+    try {
+      const html = buildMuhuratHtml(result, loc?.place || placeText || '');
+      const { uri } = await Print.printToFileAsync({ html });
+      if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: catTitle, UTI: 'com.adobe.pdf' });
+    } catch {} finally { setBusy(false); }
+  };
+  const shareText = async () => {
+    if (!result?.best) return;
+    const b = result.best; const { d, m, y } = dmyParts(b.dmy);
+    const msg = `🏆 ${catTitle} — ${lang === 'hi' ? 'सर्वश्रेष्ठ मुहूर्त' : 'Best Muhurat'}\n📅 ${d} ${MON[(m - 1) % 12]} ${y} (${b.weekday})\n🕐 ${b.time.abhijit ? `${b.time.abhijit.start} – ${b.time.abhijit.end}` : ''}\n⭐ ${b.score}/100 ${b.rating.en}\n📍 ${loc?.place || placeText || ''}`;
+    try { await Share.share({ message: msg }); } catch {}
+  };
+  const addToCal = async () => {
+    if (!result?.best || busy) return; setBusy(true);
+    try {
+      const ics = buildIcs(result.best, `${catTitle} Muhurat`, loc?.place || placeText || '');
+      const uri = `${FileSystem.cacheDirectory}muhurat.ics`;
+      await FileSystem.writeAsStringAsync(uri, ics, { encoding: FileSystem.EncodingType.UTF8 });
+      if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'text/calendar', dialogTitle: lang === 'hi' ? 'कैलेंडर में जोड़ें' : 'Add to Calendar' });
+    } catch {} finally { setBusy(false); }
   };
 
   return (
-    <Page title={lang === 'hi' ? (cat?.name.hi || 'मुहूर्त') : (cat?.name.en || 'Muhurat')} onBack={() => { hTap(); navigation.goBack(); }}>
-      <LinearGradient colors={cat?.colors || ['#eab94f', '#9f6b16']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.catHero}>
+    <Page title={catTitle} onBack={() => { hTap(); navigation.goBack(); }}>
+      {/* compact category header (small) */}
+      <LinearGradient colors={cat?.colors || ['#eab94f', '#9f6b16']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.catHero}>
         <Text style={styles.catEmoji}>{cat?.emoji || '🕉'}</Text>
-        <Text style={styles.catName}>{lang === 'hi' ? cat?.name.hi : cat?.name.en}</Text>
-        <Text style={styles.catBlurb}>{lang === 'hi' ? cat?.blurb.hi : cat?.blurb.en}</Text>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={styles.catName} numberOfLines={1}>{catTitle}</Text>
+          <Text style={styles.catBlurb} numberOfLines={1}>{lang === 'hi' ? cat?.blurb.hi : cat?.blurb.en}</Text>
+        </View>
       </LinearGradient>
 
-      {/* ── BASIC form ── */}
+      {/* form */}
       <View style={styles.form}>
-        <View>
-          <BirthPlaceField label={lang === 'hi' ? 'स्थान (कहाँ कार्य होगा) *' : 'Location (where the event is) *'} value={placeText} onChangeText={setPlaceText}
-            onSelect={(it: LocationSuggestion | null) => setLoc(it ? { place: it.description, lat: it.lat ?? undefined, lng: it.lng ?? undefined } : null)}
-            placeholder={lang === 'hi' ? 'शहर / गाँव' : 'City / village'} />
-        </View>
+        <BirthPlaceField label={lang === 'hi' ? 'स्थान (कहाँ कार्य होगा) *' : 'Location (where the event is) *'} value={placeText} onChangeText={setPlaceText}
+          onSelect={(it: LocationSuggestion | null) => setLoc(it ? { place: it.description, lat: it.lat ?? undefined, lng: it.lng ?? undefined } : null)}
+          placeholder={lang === 'hi' ? 'शहर / गाँव' : 'City / village'} />
 
         <View>
-          <Text style={[styles.label, { color: theme.gold2 }]}>{lang === 'hi' ? 'किस महीने से *' : 'Starting month *'}</Text>
+          <Text style={[styles.label, { color: theme.gold2 }]}>{lang === 'hi' ? 'कब का मुहूर्त *' : 'When *'}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -16 }} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
+            <Pressable onPress={() => { hTap(); setSel('year'); }} style={[styles.chip, { borderColor: sel === 'year' ? theme.gold1 : theme.cardBorder, backgroundColor: sel === 'year' ? theme.gold1 : (theme.isDark ? 'rgba(233,184,80,0.08)' : '#fff') }]}>
+              <Text style={[styles.chipTxt, { color: sel === 'year' ? '#1a1206' : theme.gold1 }]}>⭐ {lang === 'hi' ? 'पूरे साल' : 'Entire Year'}</Text>
+            </Pressable>
             {months.map((mo) => {
-              const on = monthIdx === mo.idx;
+              const on = sel === mo.idx;
               return (
-                <Pressable key={mo.idx} onPress={() => { hTap(); setMonthIdx(mo.idx); }} style={[styles.chip, { borderColor: on ? theme.gold1 : theme.cardBorder, backgroundColor: on ? theme.gold1 : (theme.isDark ? 'rgba(233,184,80,0.08)' : '#fff') }]}>
+                <Pressable key={mo.idx} onPress={() => { hTap(); setSel(mo.idx); }} style={[styles.chip, { borderColor: on ? theme.gold1 : theme.cardBorder, backgroundColor: on ? theme.gold1 : (theme.isDark ? 'rgba(233,184,80,0.08)' : '#fff') }]}>
                   <Text style={[styles.chipTxt, { color: on ? '#1a1206' : theme.gold1 }]}>{mo.label}</Text>
                 </Pressable>
               );
@@ -235,50 +335,40 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
           </ScrollView>
         </View>
 
-        <View>
-          <Text style={[styles.label, { color: theme.gold2 }]}>{lang === 'hi' ? 'खोज सीमा' : 'Search range'}</Text>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            {([[3, lang === 'hi' ? '3 महीने' : '3 months'], [6, lang === 'hi' ? 'पूरे साल (6 माह)' : 'Whole year (6 mo)']] as [3 | 6, string][]).map(([v, lbl]) => {
-              const on = scope === v;
-              return (
-                <Pressable key={v} onPress={() => { hTap(); setScope(v); }} style={[styles.scopeChip, { borderColor: on ? theme.gold1 : theme.cardBorder, backgroundColor: on ? (theme.isDark ? 'rgba(233,184,80,0.16)' : 'rgba(255,247,224,0.95)') : 'transparent' }]}>
-                  <Text style={[styles.scopeTxt, { color: on ? theme.gold1 : theme.textMuted }]}>{lbl}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* ── ADVANCED (collapsible) ── */}
         {(req.name !== 'none' || req.birth !== 'none') && (
           <View style={[styles.advBox, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.05)' : 'rgba(255,250,240,0.7)' }]}>
-            <Pressable onPress={() => { hTap(); ease(); setAdvOpen((v) => !v); }} style={styles.advHead}>
-              <Text style={[styles.advTitle, { color: theme.gold1 }]}>⚙ {lang === 'hi' ? 'अधिक सटीकता (वैकल्पिक)' : 'Advanced accuracy (optional)'}</Text>
-              <Text style={[styles.advChevron, { color: theme.gold2 }]}>{advOpen ? '▲' : '▼'}</Text>
-            </Pressable>
-            {advOpen && (
-              <View style={{ gap: 14, marginTop: 12 }}>
-                {req.name !== 'none' && (
-                  <View>
-                    <Text style={[styles.label, { color: theme.gold2 }]}>{lang === 'hi' ? 'नाम (चंद्रबल हेतु)' : 'Name (for Chandrabal)'}</Text>
-                    <TextInput value={name} onChangeText={setName} placeholder={lang === 'hi' ? 'मुखिया / सदस्य का नाम' : 'Head / member name'} placeholderTextColor={theme.textMuted} style={[styles.input, { borderColor: theme.cardBorder, color: theme.text, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.4)' : '#fff' }]} />
-                    {!!name.trim() && <Text style={[styles.hint, { color: rashi ? theme.gold1 : theme.textMuted }]}>{rashi ? `${lang === 'hi' ? 'नाम राशि' : 'Naam Rashi'}: ${aSign(rashi, lang)} 🌙` : (lang === 'hi' ? 'इस अक्षर की राशि नहीं मिली' : 'Could not map this letter')}</Text>}
-                  </View>
-                )}
-                {req.birth !== 'none' && (
-                  <BirthInputs titleEn={req.couple ? 'Groom / Person 1 birth' : (req.birth === 'required' ? 'Birth details (required for best accuracy)' : 'Birth details (optional)')} titleHi={req.couple ? 'वर / व्यक्ति 1 जन्म' : (req.birth === 'required' ? 'जन्म विवरण (सटीकता हेतु)' : 'जन्म विवरण (वैकल्पिक)')} val={birth1} onChange={setBirth1} theme={theme} lang={lang} />
-                )}
-                {req.couple && (
-                  <BirthInputs titleEn="Bride / Person 2 birth" titleHi="वधू / व्यक्ति 2 जन्म" val={birth2} onChange={setBirth2} theme={theme} lang={lang} />
-                )}
+            {/* always-open headline */}
+            <Text style={[styles.advTitle, { color: theme.gold1 }]}>{req.name !== 'none' ? (lang === 'hi' ? '🙏 नाम से मुहूर्त देखें' : '🙏 See Muhurat by Name') : (lang === 'hi' ? '🙏 जन्म विवरण से मुहूर्त देखें' : '🙏 See Muhurat by Birth Details')}</Text>
+            <Text style={[styles.advSub, { color: theme.textMuted }]}>{req.birth === 'required' ? (lang === 'hi' ? 'सटीक मुहूर्त हेतु जन्म विवरण भरें' : 'Fill birth details for an accurate muhurat') : (lang === 'hi' ? 'वैकल्पिक — अधिक सटीकता के लिए' : 'Optional — for higher accuracy')}</Text>
+            {/* accuracy meter */}
+            <View style={styles.accWrap}>
+              <View style={styles.accHead}>
+                <Text style={[styles.accLabel, { color: theme.textMuted }]}>{lang === 'hi' ? 'सटीकता' : 'Accuracy'}</Text>
+                <Text style={[styles.accVal, { color: theme.gold1 }]}>{accuracy}%</Text>
               </View>
-            )}
+              <View style={[styles.accTrack, { backgroundColor: theme.isDark ? 'rgba(233,184,80,0.16)' : 'rgba(154,107,22,0.14)' }]}>
+                <LinearGradient colors={['#fce8a8', '#e9b850', '#b87f1a']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={[styles.accFill, { width: `${accuracy}%` }]} />
+              </View>
+              <Text style={[styles.accNote, { color: theme.textMuted }]}>{lang === 'hi' ? 'जन्म विवरण जोड़ने से चंद्रबल व ताराबल की गणना अधिक सटीक होगी।' : 'Adding birth details makes Chandrabal & Tara Bal more accurate.'}</Text>
+            </View>
+            {/* always visible — no collapse */}
+            <View style={{ gap: 14, marginTop: 12 }}>
+              {req.name !== 'none' && (
+                <View>
+                  <TextField icon={<UserLine color={theme.gold2} size={20} />} label={lang === 'hi' ? 'नाम (चंद्रबल हेतु)' : 'Name (for Chandrabal)'} value={name} onChangeText={setName} placeholder={lang === 'hi' ? 'मुखिया / सदस्य का नाम' : 'Head / member name'} autoCapitalize="words" />
+                  {!!name.trim() && <Text style={[styles.hint, { color: rashi ? theme.gold1 : theme.textMuted }]}>{rashi ? `${lang === 'hi' ? 'नाम राशि' : 'Naam Rashi'}: ${aSign(rashi, lang)} 🌙` : (lang === 'hi' ? 'इस अक्षर की राशि नहीं मिली' : 'Could not map this letter')}</Text>}
+                </View>
+              )}
+              {req.birth !== 'none' && <BirthInputs titleEn={req.couple ? 'Groom birth' : (req.birth === 'required' ? 'Birth details (needed for best accuracy)' : 'Birth details (optional)')} titleHi={req.couple ? 'वर का जन्म' : (req.birth === 'required' ? 'जन्म विवरण (सटीकता हेतु)' : 'जन्म विवरण (वैकल्पिक)')} val={birth1} onChange={setBirth1} theme={theme} lang={lang} />}
+              {req.couple && <BirthInputs titleEn="Bride birth" titleHi="वधू का जन्म" val={birth2} onChange={setBirth2} theme={theme} lang={lang} />}
+            </View>
           </View>
         )}
 
         <Pressable onPress={loading ? undefined : onFind} style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1, marginTop: 2 }]}>
           <LinearGradient colors={['#fce8a8', '#e9b850', '#b87f1a']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.findBtn}>
             <Text style={styles.findBtnTxt}>{loading ? (lang === 'hi' ? 'गणना हो रही है…' : 'Calculating…') : (lang === 'hi' ? '🔍 शुभ मुहूर्त खोजें' : '🔍 Find Best Muhurat')}</Text>
+            <Text style={styles.findBtnSub}>{lang === 'hi' ? 'पंचांग आधारित सटीक गणना' : 'Panchang-based precise calculation'}</Text>
           </LinearGradient>
         </Pressable>
       </View>
@@ -292,10 +382,48 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
       {!!error && !loading && <Text style={[styles.err, { color: theme.textMuted }]}>{error}</Text>}
 
       {!!result && !loading && !!result.best && (
-        <View style={{ marginTop: 18 }}>
-          <HeroBest item={result.best} lang={lang} theme={theme} place={loc?.place || placeText} expanded={open === result.best.dmy} onToggle={() => setOpen(open === result.best!.dmy ? null : result.best!.dmy)} />
+        <View style={{ marginTop: 16 }}>
+          {/* confidence badge */}
+          <View style={[styles.conf, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(62,199,122,0.06)' : 'rgba(62,199,122,0.08)' }]}>
+            <Text style={[styles.confH, { color: theme.isDark ? '#8fe0ad' : '#2c8a52' }]}>{lang === 'hi' ? 'इनसे गणना की गई' : 'Calculated using'}</Text>
+            <View style={styles.confChips}>
+              {['Panchang', 'Astronomy Engine', 'Lahiri Ayanamsa', 'Chandrabal', 'Tara Bal', 'Choghadiya', 'Rahu Kaal', 'Bhadra', 'Panchak'].map((t) => (
+                <Text key={t} style={[styles.confTag, { color: theme.textSoft, borderColor: theme.cardBorder }]}>✔ {t}</Text>
+              ))}
+            </View>
+          </View>
 
-          {result.items.length > 1 && (
+          {/* view toggle */}
+          <View style={styles.viewToggle}>
+            {([['list', lang === 'hi' ? 'सूची' : 'List'], ['cal', lang === 'hi' ? 'कैलेंडर' : 'Calendar']] as ['list' | 'cal', string][]).map(([v, lbl]) => {
+              const on = view === v;
+              return (
+                <Pressable key={v} onPress={() => { hTap(); setView(v); }} style={[styles.vBtn, { borderColor: on ? theme.gold1 : theme.cardBorder, backgroundColor: on ? (theme.isDark ? 'rgba(233,184,80,0.16)' : 'rgba(255,247,224,0.95)') : 'transparent' }]}>
+                  <Text style={[styles.vTxt, { color: on ? theme.gold1 : theme.textMuted }]}>{lbl}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <View style={{ marginTop: 14 }}>
+            <HeroBest item={result.best} lang={lang} theme={theme} place={loc?.place || placeText} periodLabel={periodLabel} expanded={open === result.best.dmy} onToggle={() => setOpen(open === result.best!.dmy ? null : result.best!.dmy)} />
+          </View>
+
+          {/* actions */}
+          <View style={styles.actions}>
+            {[['📥', lang === 'hi' ? 'PDF' : 'PDF', sharePdf], ['↗', lang === 'hi' ? 'शेयर' : 'Share', shareText], ['📅', lang === 'hi' ? 'कैलेंडर' : 'Calendar', addToCal]].map(([ic, lbl, fn]: any) => (
+              <Pressable key={lbl} onPress={fn} style={[styles.actBtn, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.08)' : '#fff' }]}>
+                <Text style={styles.actIc}>{ic}</Text><Text style={[styles.actTxt, { color: theme.gold1 }]}>{lbl}</Text>
+              </Pressable>
+            ))}
+          </View>
+
+          {view === 'cal' ? (
+            <View style={{ marginTop: 16 }}>
+              <MuhuratCalendar items={result.items} bestDmy={result.best.dmy} lang={lang} selected={open} onPick={(dmy) => { ease(); setOpen(open === dmy ? null : dmy); }} />
+              {!!open && (() => { const it = result.items.find((x) => x.dmy === open); return it ? <View style={{ marginTop: 12 }}><RankCard item={it} rank={result.items.indexOf(it) + 1} lang={lang} theme={theme} expanded onToggle={() => setOpen(null)} /></View> : null; })()}
+            </View>
+          ) : result.items.length > 1 ? (
             <>
               <Text style={[styles.sectionH, { color: theme.goldText }]}>{lang === 'hi' ? '🏅 अन्य शुभ मुहूर्त' : '🏅 Top Recommended'}</Text>
               <View style={{ gap: 11 }}>
@@ -304,12 +432,9 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
                 ))}
               </View>
             </>
-          )}
+          ) : null}
 
-          <Text style={[styles.method, { color: theme.textMuted }]}>{lang === 'hi' ? result.method.hi : result.method.en}</Text>
-          <Text style={[styles.disclaimer, { color: theme.textMuted }]}>
-            {lang === 'hi' ? '🔒 स्कोर चुने गए शास्त्रीय नियमों पर आधारित है। बड़े कार्य हेतु किसी विद्वान से लग्न-शुद्धि भी करा लें।' : '🔒 The score follows classical rules. For major events, also confirm the lagna with a learned pandit.'}
-          </Text>
+          <Text style={[styles.disclaimer, { color: theme.textMuted }]}>{lang === 'hi' ? '🔒 स्कोर शास्त्रीय नियमों पर आधारित है। बड़े कार्य हेतु विद्वान से लग्न-शुद्धि भी करा लें।' : '🔒 The score follows classical rules. For major events, also confirm the lagna with a pandit.'}</Text>
         </View>
       )}
       <View style={{ height: 18 }} />
@@ -318,71 +443,96 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
 }
 
 const styles = StyleSheet.create({
-  catHero: { borderRadius: 20, padding: 16, overflow: 'hidden', alignItems: 'center' },
-  catEmoji: { fontSize: 38 },
-  catName: { fontFamily: fonts.playfairBold, fontSize: 21, color: '#fff8ec', marginTop: 5, textAlign: 'center' },
-  catBlurb: { fontFamily: fonts.inter, fontSize: 12, color: 'rgba(255,248,236,0.9)', marginTop: 2, textAlign: 'center' },
+  catHero: { borderRadius: 16, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12, overflow: 'hidden' },
+  catEmoji: { fontSize: 26 },
+  catName: { fontFamily: fonts.playfairBold, fontSize: 17, color: '#fff8ec' },
+  catBlurb: { fontFamily: fonts.inter, fontSize: 11.5, color: 'rgba(255,248,236,0.9)', marginTop: 1 },
 
-  form: { marginTop: 16, gap: 15 },
+  form: { marginTop: 15, gap: 15 },
   label: { fontFamily: fonts.interSemi, fontSize: 11, letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 8 },
   input: { height: 46, borderWidth: 1, borderRadius: radii.md, paddingHorizontal: 14, fontFamily: fonts.inter, fontSize: 15 },
   smInput: { height: 44, borderWidth: 1, borderRadius: radii.md, paddingHorizontal: 11, fontFamily: fonts.inter, fontSize: 13.5 },
   hint: { fontFamily: fonts.interSemi, fontSize: 12, marginTop: 7 },
   chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 13, paddingVertical: 8 },
   chipTxt: { fontFamily: fonts.interSemi, fontSize: 12 },
-  scopeChip: { flex: 1, borderWidth: 1, borderRadius: 12, paddingVertical: 10, alignItems: 'center' },
-  scopeTxt: { fontFamily: fonts.interSemi, fontSize: 12 },
 
   advBox: { borderWidth: 1, borderRadius: 16, padding: 13 },
   advHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  advTitle: { fontFamily: fonts.interSemi, fontSize: 13 },
+  advTitle: { fontFamily: fonts.playfairBold, fontSize: 16 },
+  advSub: { fontFamily: fonts.inter, fontSize: 11.5, marginTop: 2 },
   advChevron: { fontFamily: fonts.interSemi, fontSize: 12 },
+  accWrap: { marginTop: 12 },
+  accHead: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 },
+  accLabel: { fontFamily: fonts.interSemi, fontSize: 11 },
+  accVal: { fontFamily: fonts.cinzelSemi, fontSize: 13 },
+  accTrack: { height: 7, borderRadius: 4, overflow: 'hidden' },
+  accFill: { height: 7, borderRadius: 4 },
+  accNote: { fontFamily: fonts.inter, fontSize: 10.5, lineHeight: 15, marginTop: 6 },
   birthBox: { borderWidth: 1, borderRadius: 14, padding: 11, gap: 9 },
   birthTitle: { fontFamily: fonts.interSemi, fontSize: 11, letterSpacing: 0.4 },
-  birthRow: { flexDirection: 'row', gap: 8 },
+  pf: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderRadius: radii.md, paddingHorizontal: 13, paddingVertical: 11 },
+  pfIcon: { width: 20, alignItems: 'center' },
+  pfLabel: { fontFamily: fonts.interSemi, fontSize: 10, letterSpacing: 1 },
+  pfValue: { fontFamily: fonts.inter, fontSize: 14.5, marginTop: 2 },
 
-  findBtn: { borderRadius: 14, paddingVertical: 15, alignItems: 'center' },
+  findBtn: { borderRadius: 14, paddingVertical: 12, alignItems: 'center' },
   findBtnTxt: { fontFamily: fonts.interBold, fontSize: 15, color: '#2a1c00', letterSpacing: 0.3 },
+  findBtnSub: { fontFamily: fonts.interSemi, fontSize: 10, color: '#5a3e0a', marginTop: 2 },
 
   loadBox: { alignItems: 'center', gap: 14, paddingVertical: 36 },
   loadTxt: { fontFamily: fonts.inter, fontSize: 12.5, textAlign: 'center', paddingHorizontal: 30, lineHeight: 18 },
   err: { fontFamily: fonts.inter, fontSize: 13, textAlign: 'center', paddingVertical: 26, lineHeight: 19 },
 
-  // hero best
-  hero: { borderRadius: 22, padding: 18, overflow: 'hidden' },
-  heroCrown: { fontFamily: fonts.interBold, fontSize: 13, color: '#3a2602', letterSpacing: 0.5 },
-  heroScoreRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, marginTop: 8 },
-  heroScore: { fontFamily: fonts.cinzelSemi, fontSize: 46, lineHeight: 48, color: '#2a1c00' },
-  heroScoreMax: { fontFamily: fonts.interSemi, fontSize: 12, color: '#5a3e0a' },
-  heroRating: { fontFamily: fonts.interBold, fontSize: 13, color: '#3a2602' },
-  heroDate: { fontFamily: fonts.playfairBold, fontSize: 17, color: '#2a1c00', marginTop: 10 },
-  heroTime: { fontFamily: fonts.interBold, fontSize: 15, color: '#3a2602', marginTop: 4 },
+  conf: { borderWidth: 1, borderRadius: 14, padding: 12 },
+  confH: { fontFamily: fonts.interSemi, fontSize: 11, letterSpacing: 0.6, textTransform: 'uppercase' },
+  confChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
+  confTag: { fontFamily: fonts.inter, fontSize: 10, borderWidth: 1, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3, overflow: 'hidden' },
+
+  viewToggle: { flexDirection: 'row', gap: 8, marginTop: 14 },
+  vBtn: { flex: 1, borderWidth: 1, borderRadius: 12, paddingVertical: 9, alignItems: 'center' },
+  vTxt: { fontFamily: fonts.interSemi, fontSize: 12.5 },
+
+  // hero
+  heroGlow: { borderRadius: 24, shadowColor: '#e9b850', shadowOpacity: 0.55, shadowRadius: 20, shadowOffset: { width: 0, height: 6 }, elevation: 12 },
+  hero: { borderRadius: 24, padding: 20, overflow: 'hidden', borderWidth: 2, borderColor: '#fff3cf' },
+  spark: { position: 'absolute', color: 'rgba(255,255,255,0.9)', fontSize: 12 },
+  heroCrown: { fontFamily: fonts.interBold, fontSize: 12.5, color: '#3a2602', letterSpacing: 0.5 },
+  heroDate: { fontFamily: fonts.playfairBold, fontSize: 30, lineHeight: 36, color: '#2a1c00', marginTop: 8 },
+  heroWd: { fontFamily: fonts.interSemi, fontSize: 14, color: '#4a3204', marginTop: 1 },
+  heroTime: { fontFamily: fonts.interBold, fontSize: 18, color: '#2a1c00', marginTop: 8 },
   heroPlace: { fontFamily: fonts.inter, fontSize: 12, color: '#5a3e0a', marginTop: 3 },
-  heroWhy: { marginTop: 11, gap: 3 },
+  heroScoreBox: { marginTop: 14, borderTopWidth: 1, borderColor: 'rgba(58,38,2,0.18)', paddingTop: 12 },
+  heroScoreLabel: { fontFamily: fonts.interSemi, fontSize: 11, color: '#5a3e0a', marginTop: 6, textTransform: 'uppercase', letterSpacing: 0.6 },
+  heroScoreNum: { fontFamily: fonts.cinzelSemi, fontSize: 24, color: '#2a1c00', marginTop: 2 },
+  heroScoreMax: { fontFamily: fonts.interSemi, fontSize: 13, color: '#6b4e16' },
+  heroRating: { fontFamily: fonts.interBold, fontSize: 14, color: '#3a2602' },
+  heroWhy: { marginTop: 12, gap: 3 },
   heroChk: { fontFamily: fonts.interSemi, fontSize: 12, color: '#3a2602' },
-  heroBtn: { marginTop: 13, backgroundColor: 'rgba(58,38,2,0.14)', borderRadius: 999, paddingVertical: 9, alignItems: 'center' },
+  heroBtn: { marginTop: 13, backgroundColor: 'rgba(58,38,2,0.16)', borderRadius: 999, paddingVertical: 9, alignItems: 'center' },
   heroBtnTxt: { fontFamily: fonts.interBold, fontSize: 12.5, color: '#2a1c00' },
-  heroDetail: { marginTop: 12, backgroundColor: 'rgba(255,250,235,0.55)', borderRadius: 14, padding: 12 },
+  heroDetail: { marginTop: 12, backgroundColor: 'rgba(255,250,235,0.6)', borderRadius: 14, padding: 12 },
+
+  actions: { flexDirection: 'row', gap: 9, marginTop: 12 },
+  actBtn: { flex: 1, borderWidth: 1, borderRadius: 13, paddingVertical: 11, alignItems: 'center', gap: 3 },
+  actIc: { fontSize: 17 },
+  actTxt: { fontFamily: fonts.interSemi, fontSize: 11.5 },
 
   sectionH: { fontFamily: fonts.cinzelSemi, fontSize: 13.5, letterSpacing: 0.8, marginTop: 22, marginBottom: 12 },
   rankCard: { borderWidth: 1, borderRadius: 16, padding: 11, overflow: 'hidden' },
   rankTop: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  rankMedal: { width: 26, alignItems: 'center' },
-  rankMedalTxt: { fontSize: 16, fontFamily: fonts.interBold, color: '#9a7016' },
-  dateBox: { width: 50, borderWidth: 1, borderRadius: 12, paddingVertical: 6, alignItems: 'center' },
-  dateDay: { fontFamily: fonts.cinzelSemi, fontSize: 20, lineHeight: 22 },
-  dateMon: { fontFamily: fonts.interBold, fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.8 },
-  rankHeadRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  rankWd: { fontFamily: fonts.playfairBold, fontSize: 15 },
+  rankMedal: { fontSize: 16, width: 24, textAlign: 'center' },
+  dateBox: { width: 48, borderWidth: 1, borderRadius: 12, paddingVertical: 6, alignItems: 'center' },
+  dateDay: { fontFamily: fonts.cinzelSemi, fontSize: 19, lineHeight: 21 },
+  dateMon: { fontFamily: fonts.interBold, fontSize: 9.5, textTransform: 'uppercase', letterSpacing: 0.6 },
+  rankHeadRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
+  rankWd: { fontFamily: fonts.playfairBold, fontSize: 15, flex: 1 },
   rankScore: { fontFamily: fonts.cinzelSemi, fontSize: 18 },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 5 },
-  miniChip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2.5 },
-  miniChipTxt: { fontFamily: fonts.interSemi, fontSize: 10 },
-  rankTime: { fontFamily: fonts.interSemi, fontSize: 11 },
+  rankRating: { fontFamily: fonts.interSemi, fontSize: 11, marginTop: 2 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginTop: 6 },
+  goodChip: { fontFamily: fonts.interSemi, fontSize: 9.5, borderWidth: 1, borderRadius: 999, paddingHorizontal: 7, paddingVertical: 2, overflow: 'hidden' },
   rankChevron: { fontFamily: fonts.interSemi, fontSize: 12, paddingHorizontal: 2 },
 
-  detailWrap: { marginTop: 12 },
-  detailHead: { fontFamily: fonts.cinzelSemi, fontSize: 12, letterSpacing: 0.6, marginBottom: 8 },
+  secH: { fontFamily: fonts.cinzelSemi, fontSize: 11.5, letterSpacing: 0.5, marginBottom: 7 },
   pGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
   pCell: { width: '31.5%', borderWidth: 1, borderRadius: 10, paddingVertical: 7, paddingHorizontal: 8 },
   pLabel: { fontFamily: fonts.inter, fontSize: 9.5 },
@@ -390,7 +540,7 @@ const styles = StyleSheet.create({
   whyRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   whyTxt: { flex: 1, fontFamily: fonts.inter, fontSize: 11.5, lineHeight: 16 },
   whyPts: { fontFamily: fonts.interBold, fontSize: 11 },
+  avoidTxt: { fontFamily: fonts.inter, fontSize: 11, lineHeight: 16 },
 
-  method: { fontFamily: fonts.inter, fontSize: 11, lineHeight: 16, fontStyle: 'italic', marginTop: 16 },
-  disclaimer: { fontFamily: fonts.inter, fontSize: 11, lineHeight: 16, textAlign: 'center', marginTop: 12 },
+  disclaimer: { fontFamily: fonts.inter, fontSize: 11, lineHeight: 16, textAlign: 'center', marginTop: 16 },
 });
