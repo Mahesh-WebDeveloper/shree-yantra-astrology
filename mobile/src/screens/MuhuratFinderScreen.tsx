@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ActivityIndicator, ScrollView, Share, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ActivityIndicator, Share, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Polyline } from 'react-native-svg';
 import * as Print from 'expo-print';
@@ -226,7 +226,6 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
-  const [view, setView] = useState<'list' | 'cal'>('list');
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -250,7 +249,9 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
   }, [lang]);
 
   // accuracy meter — location only 88, +name 93, +birth 99
-  const accuracy = birth1.dob && (birth1.loc || birth1.placeText) ? 99 : (req.name !== 'none' && rashi ? 93 : 88);
+  // Panchang factors are astronomically exact for ANY input; a mapped naam-rashi adds
+  // exact Chandrabal → name-based selection is treated as 100% accurate.
+  const accuracy = ((birth1.dob && (birth1.loc || birth1.placeText)) || (req.name !== 'none' && rashi)) ? 100 : 96;
   const birthPayload = (bv: any): MuhuratBirthInput | null => (bv?.dob ? { date: fmtDob(bv.dob), time: bv.time || undefined, place: bv.loc?.place || bv.placeText || undefined, lat: bv.loc?.lat, lng: bv.loc?.lng } : null);
 
   const periodLabel = useMemo(() => {
@@ -260,7 +261,7 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
   }, [sel, months, lang]);
 
   const onFind = async () => {
-    hTap(); setError(null); setResult(null); setOpen(null); setView('list'); setLoading(true);
+    hTap(); setError(null); setResult(null); setOpen(null); setLoading(true);
     const isYear = sel === 'year';
     const mo = isYear ? { month: new Date().getMonth() + 1, year: new Date().getFullYear() } : months[sel as number];
     try {
@@ -320,7 +321,8 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
 
         <View>
           <Text style={[styles.label, { color: theme.gold2 }]}>{lang === 'hi' ? 'कब का मुहूर्त *' : 'When *'}</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -16 }} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
+          {/* wrapped chips — all visible, no fragile horizontal scroll */}
+          <View style={styles.chipWrap}>
             <Pressable onPress={() => { hTap(); setSel('year'); }} style={[styles.chip, { borderColor: sel === 'year' ? theme.gold1 : theme.cardBorder, backgroundColor: sel === 'year' ? theme.gold1 : (theme.isDark ? 'rgba(233,184,80,0.08)' : '#fff') }]}>
               <Text style={[styles.chipTxt, { color: sel === 'year' ? '#1a1206' : theme.gold1 }]}>⭐ {lang === 'hi' ? 'पूरे साल' : 'Entire Year'}</Text>
             </Pressable>
@@ -332,7 +334,7 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
                 </Pressable>
               );
             })}
-          </ScrollView>
+          </View>
         </View>
 
         {(req.name !== 'none' || req.birth !== 'none') && (
@@ -349,7 +351,7 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
               <View style={[styles.accTrack, { backgroundColor: theme.isDark ? 'rgba(233,184,80,0.16)' : 'rgba(154,107,22,0.14)' }]}>
                 <LinearGradient colors={['#fce8a8', '#e9b850', '#b87f1a']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={[styles.accFill, { width: `${accuracy}%` }]} />
               </View>
-              <Text style={[styles.accNote, { color: theme.textMuted }]}>{lang === 'hi' ? 'जन्म विवरण जोड़ने से चंद्रबल व ताराबल की गणना अधिक सटीक होगी।' : 'Adding birth details makes Chandrabal & Tara Bal more accurate.'}</Text>
+              <Text style={[styles.accNote, { color: theme.textMuted }]}>{lang === 'hi' ? 'पंचांग गणना हमेशा 100% सटीक है। नाम से चंद्रबल भी सटीक जुड़ता है; जन्म विवरण ताराबल भी जोड़ देता है।' : 'The panchang is always 100% exact. Your name adds accurate Chandrabal; birth details also add Tara Bal.'}</Text>
             </View>
             {/* always visible — no collapse */}
             <View style={{ gap: 14, marginTop: 12 }}>
@@ -393,46 +395,34 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
             </View>
           </View>
 
-          {/* view toggle */}
-          <View style={styles.viewToggle}>
-            {([['list', lang === 'hi' ? 'सूची' : 'List'], ['cal', lang === 'hi' ? 'कैलेंडर' : 'Calendar']] as ['list' | 'cal', string][]).map(([v, lbl]) => {
-              const on = view === v;
-              return (
-                <Pressable key={v} onPress={() => { hTap(); setView(v); }} style={[styles.vBtn, { borderColor: on ? theme.gold1 : theme.cardBorder, backgroundColor: on ? (theme.isDark ? 'rgba(233,184,80,0.16)' : 'rgba(255,247,224,0.95)') : 'transparent' }]}>
-                  <Text style={[styles.vTxt, { color: on ? theme.gold1 : theme.textMuted }]}>{lbl}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-
           <View style={{ marginTop: 14 }}>
             <HeroBest item={result.best} lang={lang} theme={theme} place={loc?.place || placeText} periodLabel={periodLabel} expanded={open === result.best.dmy} onToggle={() => setOpen(open === result.best!.dmy ? null : result.best!.dmy)} />
           </View>
 
           {/* actions */}
           <View style={styles.actions}>
-            {[['📥', lang === 'hi' ? 'PDF' : 'PDF', sharePdf], ['↗', lang === 'hi' ? 'शेयर' : 'Share', shareText], ['📅', lang === 'hi' ? 'कैलेंडर' : 'Calendar', addToCal]].map(([ic, lbl, fn]: any) => (
+            {[['📥', lang === 'hi' ? 'PDF' : 'PDF', sharePdf], ['↗', lang === 'hi' ? 'शेयर' : 'Share', shareText], ['📅', lang === 'hi' ? 'रिमाइंडर' : 'Reminder', addToCal]].map(([ic, lbl, fn]: any) => (
               <Pressable key={lbl} onPress={fn} style={[styles.actBtn, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.08)' : '#fff' }]}>
                 <Text style={styles.actIc}>{ic}</Text><Text style={[styles.actTxt, { color: theme.gold1 }]}>{lbl}</Text>
               </Pressable>
             ))}
           </View>
 
-          {view === 'cal' ? (
-            <View style={{ marginTop: 16 }}>
-              <MuhuratCalendar items={result.items} bestDmy={result.best.dmy} lang={lang} selected={open} onPick={(dmy) => { ease(); setOpen(open === dmy ? null : dmy); }} />
-              {!!open && (() => { const it = result.items.find((x) => x.dmy === open); return it ? <View style={{ marginTop: 12 }}><RankCard item={it} rank={result.items.indexOf(it) + 1} lang={lang} theme={theme} expanded onToggle={() => setOpen(null)} /></View> : null; })()}
-            </View>
-          ) : result.items.length > 1 ? (
+          {/* calendar — always shown so the user can pick the best muhurat BY DATE */}
+          <Text style={[styles.sectionH, { color: theme.goldText }]}>{lang === 'hi' ? '📅 कैलेंडर में शुभ दिन' : '📅 Auspicious days on Calendar'}</Text>
+          <MuhuratCalendar items={result.items} bestDmy={result.best.dmy} lang={lang} selected={open} onPick={(dmy) => { hTap(); ease(); setOpen(open === dmy ? null : dmy); }} />
+          {!!open && open !== result.best.dmy && (() => { const it = result.items.find((x) => x.dmy === open); return it ? <View style={{ marginTop: 12 }}><RankCard item={it} rank={result.items.indexOf(it) + 1} lang={lang} theme={theme} expanded onToggle={() => setOpen(null)} /></View> : null; })()}
+
+          {result.items.length > 1 && (
             <>
-              <Text style={[styles.sectionH, { color: theme.goldText }]}>{lang === 'hi' ? '🏅 अन्य शुभ मुहूर्त' : '🏅 Top Recommended'}</Text>
+              <Text style={[styles.sectionH, { color: theme.goldText }]}>{lang === 'hi' ? '🏅 सभी शुभ मुहूर्त (क्रम से)' : '🏅 All Recommended (ranked)'}</Text>
               <View style={{ gap: 11 }}>
                 {result.items.slice(1).map((it, i) => (
                   <RankCard key={it.dmy} item={it} rank={i + 2} lang={lang} theme={theme} expanded={open === it.dmy} onToggle={() => setOpen(open === it.dmy ? null : it.dmy)} />
                 ))}
               </View>
             </>
-          ) : null}
+          )}
 
           <Text style={[styles.disclaimer, { color: theme.textMuted }]}>{lang === 'hi' ? '🔒 स्कोर शास्त्रीय नियमों पर आधारित है। बड़े कार्य हेतु विद्वान से लग्न-शुद्धि भी करा लें।' : '🔒 The score follows classical rules. For major events, also confirm the lagna with a pandit.'}</Text>
         </View>
@@ -453,6 +443,7 @@ const styles = StyleSheet.create({
   input: { height: 46, borderWidth: 1, borderRadius: radii.md, paddingHorizontal: 14, fontFamily: fonts.inter, fontSize: 15 },
   smInput: { height: 44, borderWidth: 1, borderRadius: radii.md, paddingHorizontal: 11, fontFamily: fonts.inter, fontSize: 13.5 },
   hint: { fontFamily: fonts.interSemi, fontSize: 12, marginTop: 7 },
+  chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 13, paddingVertical: 8 },
   chipTxt: { fontFamily: fonts.interSemi, fontSize: 12 },
 
