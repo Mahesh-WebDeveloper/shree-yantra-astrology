@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme/ThemeProvider';
@@ -26,6 +26,8 @@ export function MuhuratCalendar({ items, bestDmy, lang, onPick, selected }: {
 
   const first = items[0] ? dmyParts(items[0].dmy) : dmyParts(bestDmy || `1/${new Date().getMonth() + 1}/${new Date().getFullYear()}`);
   const [view, setView] = useState({ m: first.m, y: first.y });
+  // jump to the best muhurat's month whenever a new result set arrives
+  useEffect(() => { setView({ m: first.m, y: first.y }); }, [items[0]?.dmy]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // range of months that actually contain results (for prev/next bounds)
   const bounds = useMemo(() => {
@@ -110,7 +112,7 @@ const styles = StyleSheet.create({
   weekRow: { flexDirection: 'row' },
   wd: { flex: 1, textAlign: 'center', fontFamily: fonts.interSemi, fontSize: 10.5, paddingVertical: 4 },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
-  cell: { width: `${100 / 7}%`, aspectRatio: 1, padding: 2 },
+  cell: { width: `${100 / 7}%`, height: 42, padding: 2 },
   dayInner: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   dayBest: { borderRadius: 10 },
   dayTxt: { fontFamily: fonts.interSemi, fontSize: 12.5 },

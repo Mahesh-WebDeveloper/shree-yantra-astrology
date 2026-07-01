@@ -170,19 +170,22 @@ function RankCard({ item, rank, lang, theme, expanded, onToggle }: any) {
     <View style={[styles.rankCard, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(255,253,247,0.92)' }]}>
       <Pressable onPress={() => { hTap(); ease(); onToggle(); }} style={styles.rankTop}>
         <Text style={styles.rankMedal}>{medal}</Text>
-        <View style={[styles.dateBox, { backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : '#fff7e6', borderColor: theme.cardBorder }]}>
-          <Text style={[styles.dateDay, { color: theme.goldText }]}>{d}</Text>
-          <Text style={[styles.dateMon, { color: theme.gold2 }]}>{(lang === 'hi' ? MON_HI_SH : MON)[(m - 1) % 12]}</Text>
-        </View>
+        <LinearGradient colors={item.score >= 92 ? ['#eab94f', '#9f6b16'] : ['#cdb079', '#7a5a24']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.dateThumb}>
+          <Text style={styles.thumbDay}>{d}</Text>
+          <Text style={styles.thumbMon}>{(lang === 'hi' ? MON_HI_SH : MON)[(m - 1) % 12]}</Text>
+          <Text style={styles.thumbWd} numberOfLines={1}>{String(wd).slice(0, 3)}</Text>
+        </LinearGradient>
         <View style={{ flex: 1, minWidth: 0 }}>
           <View style={styles.rankHeadRow}>
-            <Text style={[styles.rankWd, { color: theme.text }]}>{wd}</Text>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={[styles.rankScore, { color: theme.gold1 }]}>{item.score}<Text style={{ fontSize: 10, color: theme.textMuted }}>/100</Text></Text>
-              <Stars score={item.score} size={11} />
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={[styles.rankWd, { color: theme.text }]} numberOfLines={1}>{wd}</Text>
+              <Text style={[styles.rankRating, { color: theme.gold2 }]} numberOfLines={1}>{lang === 'hi' ? item.rating.hi : item.rating.en}{item.time.abhijit ? ` · 🕐 ${item.time.abhijit.start}` : ''}</Text>
+            </View>
+            <View style={[styles.scorePill, { backgroundColor: item.score >= 92 ? 'rgba(62,199,122,0.14)' : 'rgba(233,184,80,0.16)', borderColor: item.score >= 92 ? '#3ec77a66' : theme.gold2 + '66' }]}>
+              <Text style={[styles.scorePillNum, { color: item.score >= 92 ? (theme.isDark ? '#8fe0ad' : '#2c8a52') : theme.gold1 }]}>{item.score}</Text>
+              <Stars score={item.score} size={9} />
             </View>
           </View>
-          <Text style={[styles.rankRating, { color: theme.gold2 }]}>{lang === 'hi' ? item.rating.hi : item.rating.en} · {item.time.abhijit ? item.time.abhijit.start : ''}</Text>
           <View style={styles.chipRow}>
             {top.map((b: any) => <Text key={b.key} style={[styles.goodChip, { color: theme.isDark ? '#8fe0ad' : '#2c8a52', borderColor: '#3ec77a44' }]} numberOfLines={1}>✔ {lang === 'hi' ? b.hi.split('(')[0].split('—')[0].trim() : b.en.split('(')[0].split('—')[0].trim()}</Text>)}
           </View>
@@ -227,6 +230,8 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [pickedDate, setPickedDate] = useState<Date | null>(null); // "pick any date" via app calendar
+  const [showWhenPicker, setShowWhenPicker] = useState(false);
 
   useEffect(() => {
     birthFromProfile().then((b: any) => {
@@ -255,18 +260,22 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
   const birthPayload = (bv: any): MuhuratBirthInput | null => (bv?.dob ? { date: fmtDob(bv.dob), time: bv.time || undefined, place: bv.loc?.place || bv.placeText || undefined, lat: bv.loc?.lat, lng: bv.loc?.lng } : null);
 
   const periodLabel = useMemo(() => {
+    if (pickedDate) return lang === 'hi' ? `${fmtDob(pickedDate)} के आसपास सर्वश्रेष्ठ` : `Best around ${fmtDob(pickedDate)}`;
     if (sel === 'year') return lang === 'hi' ? `${new Date().getFullYear()} का सर्वश्रेष्ठ मुहूर्त` : `Best Muhurat of ${new Date().getFullYear()}`;
     const mo = months[sel];
     return lang === 'hi' ? `${(MON_HI)[mo.month - 1]} का सर्वश्रेष्ठ` : `Best of ${MON_FULL[mo.month - 1]}`;
-  }, [sel, months, lang]);
+  }, [sel, months, lang, pickedDate]);
 
   const onFind = async () => {
     hTap(); setError(null); setResult(null); setOpen(null); setLoading(true);
-    const isYear = sel === 'year';
-    const mo = isYear ? { month: new Date().getMonth() + 1, year: new Date().getFullYear() } : months[sel as number];
+    // pickedDate (app calendar) → scan a focused window from that date; else month chip / whole year
+    const isYear = !pickedDate && sel === 'year';
+    const mo = pickedDate ? { month: pickedDate.getMonth() + 1, year: pickedDate.getFullYear() } : (isYear ? { month: new Date().getMonth() + 1, year: new Date().getFullYear() } : months[sel as number]);
     try {
       const res = await findMuhurat({
-        category: categoryKey, month: mo.month, year: mo.year, months: isYear ? 6 : 3,
+        category: categoryKey,
+        date: pickedDate ? fmtDob(pickedDate) : undefined,
+        month: mo.month, year: mo.year, months: pickedDate ? 2 : (isYear ? 6 : 3),
         place: loc?.place || placeText || undefined, lat: loc?.lat, lng: loc?.lng,
         nameRashi: req.name !== 'none' ? rashi : null,
         birth: birthPayload(birth1), birth2: req.couple ? birthPayload(birth2) : null,
@@ -321,20 +330,37 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
 
         <View>
           <Text style={[styles.label, { color: theme.gold2 }]}>{lang === 'hi' ? 'कब का मुहूर्त *' : 'When *'}</Text>
+          {/* pick any exact date from the app's calendar (GoldDatePicker) */}
+          <PickerField
+            icon={<CalendarIcon color={theme.gold2} size={20} />}
+            label={lang === 'hi' ? 'तारीख चुनें (कैलेंडर)' : 'Pick a date (calendar)'}
+            value={pickedDate ? fmtDob(pickedDate) : ''}
+            onPress={() => { hTap(); setShowWhenPicker(true); }}
+            theme={theme} lang={lang}
+          />
+          <Text style={[styles.orTxt, { color: theme.textMuted }]}>{lang === 'hi' ? '— या नीचे से महीना चुनें —' : '— or pick a month below —'}</Text>
           {/* wrapped chips — all visible, no fragile horizontal scroll */}
           <View style={styles.chipWrap}>
-            <Pressable onPress={() => { hTap(); setSel('year'); }} style={[styles.chip, { borderColor: sel === 'year' ? theme.gold1 : theme.cardBorder, backgroundColor: sel === 'year' ? theme.gold1 : (theme.isDark ? 'rgba(233,184,80,0.08)' : '#fff') }]}>
-              <Text style={[styles.chipTxt, { color: sel === 'year' ? '#1a1206' : theme.gold1 }]}>⭐ {lang === 'hi' ? 'पूरे साल' : 'Entire Year'}</Text>
+            <Pressable onPress={() => { hTap(); setPickedDate(null); setSel('year'); }} style={[styles.chip, { borderColor: !pickedDate && sel === 'year' ? theme.gold1 : theme.cardBorder, backgroundColor: !pickedDate && sel === 'year' ? theme.gold1 : (theme.isDark ? 'rgba(233,184,80,0.08)' : '#fff') }]}>
+              <Text style={[styles.chipTxt, { color: !pickedDate && sel === 'year' ? '#1a1206' : theme.gold1 }]}>⭐ {lang === 'hi' ? 'पूरे साल' : 'Entire Year'}</Text>
             </Pressable>
             {months.map((mo) => {
-              const on = sel === mo.idx;
+              const on = !pickedDate && sel === mo.idx;
               return (
-                <Pressable key={mo.idx} onPress={() => { hTap(); setSel(mo.idx); }} style={[styles.chip, { borderColor: on ? theme.gold1 : theme.cardBorder, backgroundColor: on ? theme.gold1 : (theme.isDark ? 'rgba(233,184,80,0.08)' : '#fff') }]}>
+                <Pressable key={mo.idx} onPress={() => { hTap(); setPickedDate(null); setSel(mo.idx); }} style={[styles.chip, { borderColor: on ? theme.gold1 : theme.cardBorder, backgroundColor: on ? theme.gold1 : (theme.isDark ? 'rgba(233,184,80,0.08)' : '#fff') }]}>
                   <Text style={[styles.chipTxt, { color: on ? '#1a1206' : theme.gold1 }]}>{mo.label}</Text>
                 </Pressable>
               );
             })}
           </View>
+          <GoldDatePicker
+            visible={showWhenPicker}
+            initialDate={pickedDate || new Date()}
+            maximumDate={new Date(new Date().getFullYear() + 2, 11, 31)}
+            onConfirm={(d) => { setPickedDate(d); setShowWhenPicker(false); }}
+            onCancel={() => setShowWhenPicker(false)}
+            lang={lang}
+          />
         </View>
 
         {(req.name !== 'none' || req.birth !== 'none') && (
@@ -443,6 +469,7 @@ const styles = StyleSheet.create({
   input: { height: 46, borderWidth: 1, borderRadius: radii.md, paddingHorizontal: 14, fontFamily: fonts.inter, fontSize: 15 },
   smInput: { height: 44, borderWidth: 1, borderRadius: radii.md, paddingHorizontal: 11, fontFamily: fonts.inter, fontSize: 13.5 },
   hint: { fontFamily: fonts.interSemi, fontSize: 12, marginTop: 7 },
+  orTxt: { fontFamily: fonts.interSemi, fontSize: 10.5, textAlign: 'center', marginVertical: 9, letterSpacing: 0.3 },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 13, paddingVertical: 8 },
   chipTxt: { fontFamily: fonts.interSemi, fontSize: 12 },
@@ -511,13 +538,15 @@ const styles = StyleSheet.create({
   sectionH: { fontFamily: fonts.cinzelSemi, fontSize: 13.5, letterSpacing: 0.8, marginTop: 22, marginBottom: 12 },
   rankCard: { borderWidth: 1, borderRadius: 16, padding: 11, overflow: 'hidden' },
   rankTop: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  rankMedal: { fontSize: 16, width: 24, textAlign: 'center' },
-  dateBox: { width: 48, borderWidth: 1, borderRadius: 12, paddingVertical: 6, alignItems: 'center' },
-  dateDay: { fontFamily: fonts.cinzelSemi, fontSize: 19, lineHeight: 21 },
-  dateMon: { fontFamily: fonts.interBold, fontSize: 9.5, textTransform: 'uppercase', letterSpacing: 0.6 },
-  rankHeadRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
-  rankWd: { fontFamily: fonts.playfairBold, fontSize: 15, flex: 1 },
-  rankScore: { fontFamily: fonts.cinzelSemi, fontSize: 18 },
+  rankMedal: { fontSize: 16, width: 22, textAlign: 'center' },
+  dateThumb: { width: 50, borderRadius: 13, paddingVertical: 7, alignItems: 'center', justifyContent: 'center' },
+  thumbDay: { fontFamily: fonts.cinzelSemi, fontSize: 21, lineHeight: 23, color: '#fff8ec' },
+  thumbMon: { fontFamily: fonts.interBold, fontSize: 9.5, textTransform: 'uppercase', letterSpacing: 0.8, color: '#fff3da', marginTop: 1 },
+  thumbWd: { fontFamily: fonts.inter, fontSize: 8.5, color: 'rgba(255,248,236,0.85)', marginTop: 1 },
+  rankHeadRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  rankWd: { fontFamily: fonts.playfairBold, fontSize: 15 },
+  scorePill: { alignItems: 'center', borderWidth: 1, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4, minWidth: 52 },
+  scorePillNum: { fontFamily: fonts.cinzelSemi, fontSize: 18, lineHeight: 20 },
   rankRating: { fontFamily: fonts.interSemi, fontSize: 11, marginTop: 2 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginTop: 6 },
   goodChip: { fontFamily: fonts.interSemi, fontSize: 9.5, borderWidth: 1, borderRadius: 999, paddingHorizontal: 7, paddingVertical: 2, overflow: 'hidden' },
