@@ -163,6 +163,123 @@ const PLANET_REMEDY = {
   9: { en: 'Donate on Tuesday; Hanuman ji; Mangal mantra; control anger.', hi: 'मंगलवार दान; हनुमान जी; मंगल मंत्र; क्रोध नियंत्रण।' },
 };
 
+// ── 7b. PER-NUMBER MEANINGS (traditional, editable config) ─────────────────
+// Deterministic, number-specific content so every card shows real meaning (not a
+// generic label). Different for each number → "dynamic" per profile. Validate with a
+// numerologist; the AI layer adds extra personalisation on top of this.
+const NUMBER_MEANINGS = {
+  1: {
+    keywords: { en: ['Leadership', 'Confidence', 'Independence', 'Ambition', 'Originality'], hi: ['नेतृत्व', 'आत्मविश्वास', 'स्वतंत्रता', 'महत्वाकांक्षा', 'मौलिकता'] },
+    nature: { en: 'A born leader — confident, independent and determined. You dislike taking orders and prefer to forge your own path.', hi: 'आप जन्मजात नेता हैं — आत्मविश्वासी, स्वतंत्र और दृढ़-निश्चयी। आदेश लेना पसंद नहीं, अपने दम पर आगे बढ़ते हैं।' },
+    lifePath: { en: 'Your path leads toward leadership, authority and self-reliance — where you initiate and show others the way.', hi: 'आपका जीवन-पथ नेतृत्व, अधिकार और आत्मनिर्भरता की ओर है — जहाँ आप पहल करें और राह दिखाएँ।' },
+    career: { en: ['Administration', 'Own business', 'Politics / Govt', 'Management'], hi: ['प्रशासन', 'स्वयं का व्यवसाय', 'राजनीति/सरकारी पद', 'प्रबंधन'] },
+    strength: { en: 'Strong willpower and clear vision.', hi: 'दृढ़ इच्छाशक्ति और स्पष्ट दृष्टि।' },
+    caution: { en: 'Avoid ego and stubbornness; listen to others.', hi: 'अहंकार और ज़िद से बचें; दूसरों की राय सुनें।' },
+  },
+  2: {
+    keywords: { en: ['Sensitivity', 'Cooperation', 'Intuition', 'Diplomacy', 'Imagination'], hi: ['संवेदनशीलता', 'सहयोग', 'अंतर्ज्ञान', 'कूटनीति', 'कल्पनाशीलता'] },
+    nature: { en: 'Gentle, emotional and cooperative — you seek depth and peace in relationships and have sharp intuition.', hi: 'आप कोमल, भावुक और सहयोगी हैं — रिश्तों में गहराई व शांति चाहते हैं, अंतर्दृष्टि तेज़ है।' },
+    lifePath: { en: 'Partnership, support and creativity — a path of connecting and nurturing.', hi: 'साझेदारी, सहयोग और सृजन आपकी राह — जोड़ने व सँवारने का काम।' },
+    career: { en: ['Counselling', 'Art / Music', 'Teaching', 'Teamwork', 'Public relations'], hi: ['परामर्श', 'कला/संगीत', 'शिक्षण', 'टीम-वर्क', 'जनसंपर्क'] },
+    strength: { en: 'Empathy and the gift of harmony.', hi: 'सहानुभूति और तालमेल की शक्ति।' },
+    caution: { en: 'Control over-sensitivity and mood swings.', hi: 'अति-भावुकता व मन के उतार-चढ़ाव पर नियंत्रण रखें।' },
+  },
+  3: {
+    keywords: { en: ['Wisdom', 'Optimism', 'Creativity', 'Expression', 'Discipline'], hi: ['ज्ञान', 'आशावाद', 'रचनात्मकता', 'अभिव्यक्ति', 'अनुशासन'] },
+    nature: { en: 'Cheerful, wise and ambitious — you love learning and teaching, and discipline is your strength.', hi: 'आप हँसमुख, ज्ञानी और महत्वाकांक्षी हैं — सीखना-सिखाना पसंद, अनुशासन आपकी ताक़त।' },
+    lifePath: { en: 'Education, guidance and expansion — sharing knowledge and growing.', hi: 'शिक्षा, मार्गदर्शन और विस्तार आपकी राह — ज्ञान बाँटें और बढ़ें।' },
+    career: { en: ['Teaching', 'Law', 'Finance / Banking', 'Advisory', 'Writing', 'Spirituality'], hi: ['शिक्षण', 'कानून', 'वित्त/बैंकिंग', 'सलाहकार', 'लेखन', 'अध्यात्म'] },
+    strength: { en: 'Knowledge, discipline and optimism.', hi: 'ज्ञान, अनुशासन और आशावाद।' },
+    caution: { en: 'Avoid over-confidence and scattering energy.', hi: 'अति-आत्मविश्वास व बिखराव से बचें।' },
+  },
+  4: {
+    keywords: { en: ['Practicality', 'Hard work', 'System', 'Reformer', 'Persistence'], hi: ['व्यावहारिकता', 'परिश्रम', 'व्यवस्था', 'सुधारवादी', 'दृढ़ता'] },
+    nature: { en: 'Hard-working, systematic and practical — you think differently, but can be stubborn.', hi: 'आप मेहनती, व्यवस्थित और व्यावहारिक हैं — लीक से हटकर सोचते हैं, पर जिद्दी हो सकते हैं।' },
+    lifePath: { en: 'Solid building and reform — creating structure and driving change.', hi: 'ठोस निर्माण और सुधार आपकी राह — व्यवस्था बनाएँ व बदलाव लाएँ।' },
+    career: { en: ['Technology / Engineering', 'Real estate', 'Administration', 'Social reform'], hi: ['तकनीक/इंजीनियरिंग', 'रियल एस्टेट', 'प्रशासनिक कार्य', 'समाज-सुधार'] },
+    strength: { en: 'Diligence and dependability.', hi: 'परिश्रम और भरोसेमंदी।' },
+    caution: { en: 'Be ready for sudden change; stay patient, ease the stubbornness.', hi: 'अचानक बदलाव के लिए तैयार रहें; धैर्य रखें, ज़िद कम करें।' },
+  },
+  5: {
+    keywords: { en: ['Intelligence', 'Versatile', 'Communication', 'Business', 'Adaptable'], hi: ['बुद्धि', 'बहुमुखी', 'संवाद', 'व्यापार', 'अनुकूलनशीलता'] },
+    nature: { en: 'Quick-witted, talkative and friendly — you love novelty and freedom, but stay restless.', hi: 'आप तेज़ बुद्धि, बातूनी और मिलनसार हैं — नयापन व स्वतंत्रता पसंद, पर बेचैन रहते हैं।' },
+    lifePath: { en: 'Communication, trade and movement — connecting, selling and travelling.', hi: 'संवाद, व्यापार और गति आपकी राह — जुड़ें, बेचें और घूमें।' },
+    career: { en: ['Business', 'Media / Communication', 'Marketing', 'Travel / Tourism', 'Broking'], hi: ['व्यापार', 'मीडिया/संचार', 'मार्केटिंग', 'यात्रा/पर्यटन', 'दलाली'] },
+    strength: { en: 'Sharp mind and adaptability.', hi: 'तेज़ दिमाग और अनुकूलन।' },
+    caution: { en: 'Avoid restlessness; commit to one direction.', hi: 'बेचैनी व बिखराव से बचें; एक दिशा पर टिकें।' },
+  },
+  6: {
+    keywords: { en: ['Love', 'Art', 'Beauty', 'Responsibility', 'Family'], hi: ['प्रेम', 'कला', 'सौंदर्य', 'ज़िम्मेदारी', 'परिवार'] },
+    nature: { en: 'Loving, artistic and charming — drawn to beauty, comfort and family bonds.', hi: 'आप प्रेममयी, कलात्मक और आकर्षक हैं — सुंदरता, सुख-सुविधा व परिवार से जुड़ाव।' },
+    lifePath: { en: 'Beauty, service and harmony — a path of caring and creating.', hi: 'सौंदर्य, सेवा और सामंजस्य आपकी राह — सँवारें और सँभालें।' },
+    career: { en: ['Art / Design', 'Hospitality', 'Beauty / Fashion', 'Healthcare / Service', 'Family business'], hi: ['कला/डिज़ाइन', 'आतिथ्य', 'सौंदर्य/फैशन', 'चिकित्सा/सेवा', 'पारिवारिक व्यवसाय'] },
+    strength: { en: 'Love, art and responsibility.', hi: 'प्रेम, कला और उत्तरदायित्व।' },
+    caution: { en: 'Avoid over-indulgence and over-dependence on others.', hi: 'अति-भोग व दूसरों पर निर्भरता से बचें।' },
+  },
+  7: {
+    keywords: { en: ['Spirituality', 'Analysis', 'Introspection', 'Research', 'Detachment'], hi: ['अध्यात्म', 'विश्लेषण', 'अंतर्मुखता', 'शोध', 'वैराग्य'] },
+    nature: { en: 'Thoughtful, spiritual and introverted — drawn to depth, mystery and research.', hi: 'आप विचारशील, आध्यात्मिक और अंतर्मुखी हैं — गहराई, रहस्य व शोध में रुचि।' },
+    lifePath: { en: 'Research, spirituality and self-discovery — going deep within.', hi: 'शोध, अध्यात्म और आत्म-खोज आपकी राह — गहराई तक जाएँ।' },
+    career: { en: ['Research / Science', 'Spirituality', 'Psychology', 'Healthcare', 'Philosophy'], hi: ['शोध/विज्ञान', 'अध्यात्म', 'मनोविज्ञान', 'चिकित्सा', 'दर्शन'] },
+    strength: { en: 'Deep thinking and intuition.', hi: 'गहन सोच और अंतर्ज्ञान।' },
+    caution: { en: 'Avoid isolation and doubt; keep faith.', hi: 'अकेलेपन व संशय से बचें; श्रद्धा रखें।' },
+  },
+  8: {
+    keywords: { en: ['Ambition', 'Discipline', 'Justice', 'Karma', 'Patience'], hi: ['महत्वाकांक्षा', 'अनुशासन', 'न्याय', 'कर्म', 'धैर्य'] },
+    nature: { en: 'Ambitious, disciplined and serious — karma-driven; success comes after struggle but lasts.', hi: 'आप महत्वाकांक्षी, अनुशासित और गंभीर हैं — कर्म-प्रधान; सफलता संघर्ष के बाद, पर स्थायी।' },
+    lifePath: { en: 'Justice, organisation and lasting success — building big through patience.', hi: 'न्याय, संगठन और स्थायी सफलता आपकी राह — धैर्य से बड़ा निर्माण।' },
+    career: { en: ['Business', 'Law', 'Administration', 'Real estate', 'Service'], hi: ['व्यापार', 'कानून', 'प्रशासन', 'रियल एस्टेट', 'सेवा-कार्य'] },
+    strength: { en: 'Patience, discipline and persistence.', hi: 'धैर्य, अनुशासन और दृढ़ता।' },
+    caution: { en: 'Avoid despair and haste; stay honest.', hi: 'निराशा व जल्दबाज़ी से बचें; ईमानदारी रखें।' },
+  },
+  9: {
+    keywords: { en: ['Energy', 'Courage', 'Determination', 'Humanity', 'Leadership'], hi: ['ऊर्जा', 'साहस', 'दृढ़ता', 'मानवता', 'नेतृत्व'] },
+    nature: { en: 'Energetic, courageous and firm — a protector at heart; controlling anger is key.', hi: 'आप ऊर्जावान, साहसी और दृढ़ हैं — रक्षक स्वभाव; क्रोध पर नियंत्रण ज़रूरी।' },
+    lifePath: { en: 'Courage, service and leadership — a path of fighting for and protecting others.', hi: 'साहस, सेवा और नेतृत्व आपकी राह — लड़ें और रक्षा करें।' },
+    career: { en: ['Defence / Police', 'Sports', 'Surgery', 'Engineering', 'Social service'], hi: ['रक्षा/पुलिस', 'खेल', 'सर्जरी', 'इंजीनियरिंग', 'समाज-सेवा'] },
+    strength: { en: 'Courage and energy.', hi: 'साहस और ऊर्जा।' },
+    caution: { en: 'Control anger and impulsiveness.', hi: 'क्रोध व आवेग पर नियंत्रण रखें।' },
+  },
+  11: {
+    keywords: { en: ['Intuition', 'Idealism', 'Inspiration', 'Vision'], hi: ['अंतर्ज्ञान', 'आदर्शवाद', 'प्रेरणा', 'दूरदृष्टि'] },
+    nature: { en: 'A master number — highly intuitive and idealistic, meant to inspire others.', hi: 'मास्टर अंक — अत्यंत अंतर्ज्ञानी व आदर्शवादी, दूसरों को प्रेरित करने के लिए।' },
+    lifePath: { en: 'Spiritual inspiration and guidance on a large scale.', hi: 'बड़े स्तर पर आध्यात्मिक प्रेरणा व मार्गदर्शन।' },
+    career: { en: ['Spiritual guide', 'Counselling', 'Arts', 'Innovation'], hi: ['आध्यात्मिक गुरु', 'परामर्श', 'कला', 'नवाचार'] },
+    strength: { en: 'Vision and inspiration.', hi: 'दूरदृष्टि और प्रेरणा।' },
+    caution: { en: 'Ground your ideals in practical action.', hi: 'आदर्शों को व्यावहारिक कर्म में उतारें।' },
+  },
+  22: {
+    keywords: { en: ['Master Builder', 'Vision', 'Mastery', 'Impact'], hi: ['मास्टर बिल्डर', 'दूरदृष्टि', 'निपुणता', 'प्रभाव'] },
+    nature: { en: 'A master number — the "master builder": big vision paired with practical mastery.', hi: 'मास्टर अंक — "मास्टर बिल्डर": बड़ी दूरदृष्टि के साथ व्यावहारिक निपुणता।' },
+    lifePath: { en: 'Turning great ideas into large, lasting achievements.', hi: 'बड़े विचारों को स्थायी, विशाल उपलब्धियों में बदलना।' },
+    career: { en: ['Large enterprise', 'Architecture', 'Nation-building work', 'Leadership'], hi: ['बड़ा उद्यम', 'वास्तुकला', 'राष्ट्र-निर्माण कार्य', 'नेतृत्व'] },
+    strength: { en: 'Vision plus execution.', hi: 'दूरदृष्टि के साथ क्रियान्वयन।' },
+    caution: { en: 'Avoid burnout under great pressure.', hi: 'भारी दबाव में थकान से बचें।' },
+  },
+  33: {
+    keywords: { en: ['Master Teacher', 'Compassion', 'Healing', 'Guidance'], hi: ['मास्टर शिक्षक', 'करुणा', 'उपचार', 'मार्गदर्शन'] },
+    nature: { en: 'A master number — the "master teacher": compassion and selfless service to uplift others.', hi: 'मास्टर अंक — "मास्टर शिक्षक": करुणा व निःस्वार्थ सेवा से दूसरों का उत्थान।' },
+    lifePath: { en: 'Healing, teaching and guiding humanity.', hi: 'मानवता का उपचार, शिक्षण व मार्गदर्शन।' },
+    career: { en: ['Teaching', 'Healing', 'Social leadership', 'Spirituality'], hi: ['शिक्षण', 'उपचार', 'सामाजिक नेतृत्व', 'अध्यात्म'] },
+    strength: { en: 'Compassion and wisdom.', hi: 'करुणा और ज्ञान।' },
+    caution: { en: 'Care for self while serving others.', hi: 'दूसरों की सेवा में स्वयं का भी ध्यान रखें।' },
+  },
+};
+const meaningOf = (n) => NUMBER_MEANINGS[n] || NUMBER_MEANINGS[reduceNumber(n, false).final] || null;
+
+// Personal-year theme (deterministic, editable).
+const PERSONAL_YEAR_MEANINGS = {
+  1: { en: 'New beginnings — plant seeds, take initiative, start fresh.', hi: 'नई शुरुआत — बीज बोएँ, पहल करें, नए सिरे से आरंभ।' },
+  2: { en: 'Patience & partnerships — nurture relationships and cooperation.', hi: 'धैर्य व साझेदारी — रिश्ते और सहयोग सँवारें।' },
+  3: { en: 'Creativity & expansion — express yourself, socialise, grow.', hi: 'रचनात्मकता व विस्तार — आत्म-अभिव्यक्ति, मेल-जोल, विकास।' },
+  4: { en: 'Hard work & foundations — build structure and stability.', hi: 'मेहनत व नींव — व्यवस्था और स्थिरता बनाएँ।' },
+  5: { en: 'Change & freedom — opportunities, travel and new directions.', hi: 'बदलाव व स्वतंत्रता — अवसर, यात्रा व नई दिशाएँ।' },
+  6: { en: 'Family & responsibility — love, service and home matters.', hi: 'परिवार व ज़िम्मेदारी — प्रेम, सेवा व घर के मामले।' },
+  7: { en: 'Reflection & study — inner growth and spirituality.', hi: 'आत्म-चिंतन व अध्ययन — आंतरिक विकास व अध्यात्म।' },
+  8: { en: 'Achievement & reward — success, money and recognition.', hi: 'सफलता व फल — उपलब्धि, धन व मान-सम्मान।' },
+  9: { en: 'Completion & release — let go of the old, make space for the new.', hi: 'समापन व त्याग — पुराना छोड़ें, नए के लिए जगह बनाएँ।' },
+};
+
 // ── 8. NAME-CORRECTION HINT (premium) ──────────────────────────────────────
 // Honest, config-driven hint (NOT a guarantee): if the current Namank clashes with the
 // Destiny/Bhagyank, list which target Name-numbers would be friendlier.
@@ -199,7 +316,7 @@ const DISCLAIMER = {
   hi: 'गणनाएँ सटीक हैं; व्याख्या केवल परंपरागत मार्गदर्शन है (चिंतन हेतु), वैज्ञानिक तथ्य नहीं।',
 };
 
-function withPlanet(r) { return { ...r, planet: planetOf(r.final), remedy: PLANET_REMEDY[r.final] || null }; }
+function withPlanet(r) { return { ...r, planet: planetOf(r.final), remedy: PLANET_REMEDY[r.final] || null, meaning: meaningOf(r.final) }; }
 
 function fullProfile({ name = '', d, m, y, currentYear }) {
   const day = Number(d); const month = Number(m); const year = Number(y);
@@ -210,6 +327,7 @@ function fullProfile({ name = '', d, m, y, currentYear }) {
   const mu = mulank(day);
   const bh = bhagyank(day, month, year);
   const nk = namank(name, 'chaldean');
+  const py = personalYear(day, month, cy);
   return {
     name: String(name || '').trim(),
     dob: `${pad2(day)}/${pad2(month)}/${year}`,
@@ -219,7 +337,7 @@ function fullProfile({ name = '', d, m, y, currentYear }) {
     namank: { ...withPlanet(nk), pythagorean: namank(name, 'pythagorean').final },
     soulUrge: soulUrge(name),
     personality: personality(name),
-    personalYear: personalYear(day, month, cy),
+    personalYear: { ...py, meaning: PERSONAL_YEAR_MEANINGS[py.final] || null },
     loShu: loShuGrid(day, month, year),
     lucky: LUCKY[mu.final] || null,
     nameCorrection: name ? nameCorrectionHint(name, mu.final, bh.final) : null,
@@ -229,7 +347,7 @@ function fullProfile({ name = '', d, m, y, currentYear }) {
 
 module.exports = {
   // constants (exported for tests / config editing)
-  CHALDEAN, MASTER_NUMBERS, KARMIC_DEBT, NUMBER_PLANET, LOSHU_LINES, FRIENDS, ENEMIES, LUCKY, PLANET_REMEDY, DISCLAIMER,
+  CHALDEAN, MASTER_NUMBERS, KARMIC_DEBT, NUMBER_PLANET, LOSHU_LINES, FRIENDS, ENEMIES, LUCKY, PLANET_REMEDY, NUMBER_MEANINGS, PERSONAL_YEAR_MEANINGS, meaningOf, DISCLAIMER,
   // primitives
   pythagoreanValue, chaldeanValue, reduceNumber, normalizeName,
   // core

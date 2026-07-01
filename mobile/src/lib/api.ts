@@ -1023,14 +1023,15 @@ export const getRemedies = (input: KundliInput) => post<RemediesResponse>('/api/
 export interface NumBi { en: string; hi: string }
 export interface NumBiList { en: string[]; hi: string[] }
 export interface NumReduced { final: number; compound: number; isMaster: boolean; isKarmic: boolean }
-export interface NumWithPlanet extends NumReduced { planet: NumBi | null; remedy?: NumBi | null }
+export interface NumberMeaning { keywords: NumBiList; nature: NumBi; lifePath: NumBi; career: NumBiList; strength: NumBi; caution: NumBi }
+export interface NumWithPlanet extends NumReduced { planet: NumBi | null; remedy?: NumBi | null; meaning?: NumberMeaning | null }
 export interface LoShuArrow { key: string; en: string; hi: string }
 export interface NumRelation { key: 'friend' | 'enemy' | 'neutral'; en: string; hi: string }
 export interface NumerologyProfile {
   name: string; dob: string; system: string;
   mulank: NumWithPlanet; bhagyank: NumWithPlanet;
   namank: NumWithPlanet & { pythagorean: number };
-  soulUrge: NumReduced; personality: NumReduced; personalYear: NumReduced;
+  soulUrge: NumReduced; personality: NumReduced; personalYear: NumReduced & { meaning?: NumBi | null };
   loShu: { counts: Record<string, number>; positions: Record<string, [number, number]>; missing: number[]; presentArrows: LoShuArrow[]; missingArrows: LoShuArrow[] };
   lucky: { numbers: number[]; colors: NumBiList; days: NumBiList; gem: NumBi } | null;
   nameCorrection: { currentNamank: number; relationToDriver: NumRelation; relationToDestiny: NumRelation; isHarmonious: boolean; suggestedNameNumbers: number[]; note: NumBi } | null;

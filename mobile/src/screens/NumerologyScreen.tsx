@@ -112,15 +112,23 @@ export function NumerologyScreen({ navigation }: any) {
       {profile && !busy && (
         <View style={{ gap: 14, marginTop: 14 }} onLayout={onResultsLayout}>
           <Text style={[styles.section, { color: theme.goldText }]}>{hi ? 'मुख्य त्रिमूर्ति' : 'Core Trinity'}</Text>
-          <Trinity theme={theme} L={L} label={hi ? 'मूलांक' : 'Mulank'} tag={hi ? 'ड्राइवर · स्वभाव' : 'Driver · Nature'} data={profile.mulank} />
-          <Trinity theme={theme} L={L} label={hi ? 'भाग्यांक' : 'Bhagyank'} tag={hi ? 'कंडक्टर · जीवन-पथ' : 'Conductor · Life Path'} data={profile.bhagyank} />
-          <Trinity theme={theme} L={L} label={hi ? 'नामांक' : 'Namank'} tag={hi ? 'चेल्डियन · नाम कंपन' : 'Chaldean · Name'} data={profile.namank} />
+          <Trinity theme={theme} hi={hi} focus="nature" label={hi ? 'मूलांक' : 'Mulank'} tag={hi ? 'ड्राइवर · स्वभाव' : 'Driver · Nature'} data={profile.mulank} />
+          <Trinity theme={theme} hi={hi} focus="path" label={hi ? 'भाग्यांक' : 'Bhagyank'} tag={hi ? 'कंडक्टर · जीवन-पथ' : 'Conductor · Life Path'} data={profile.bhagyank} />
+          <Trinity theme={theme} hi={hi} focus="name" label={hi ? 'नामांक' : 'Namank'} tag={hi ? 'चेल्डियन · नाम कंपन' : 'Chaldean · Name'} data={profile.namank} />
 
           <View style={styles.row2}>
             <MiniStat theme={theme} label={hi ? 'सोल अर्ज' : 'Soul Urge'} n={profile.soulUrge.final} />
             <MiniStat theme={theme} label={hi ? 'व्यक्तित्व' : 'Personality'} n={profile.personality.final} />
             <MiniStat theme={theme} label={hi ? 'व्यक्तिगत वर्ष' : 'Personal Year'} n={profile.personalYear.final} highlight />
           </View>
+          {!!profile.personalYear.meaning && (
+            <View style={[styles.pyCard, { borderColor: theme.gold2 + '55', backgroundColor: theme.isDark ? 'rgba(233,184,80,0.06)' : 'rgba(255,247,224,0.7)' }]}>
+              <Text style={[styles.pyTxt, { color: theme.text }]}>
+                <Text style={{ color: theme.gold1, fontFamily: fonts.interBold }}>{hi ? `व्यक्तिगत वर्ष ${profile.personalYear.final}: ` : `Personal Year ${profile.personalYear.final}: `}</Text>
+                {L(profile.personalYear.meaning)}
+              </Text>
+            </View>
+          )}
 
           {/* ── Lo Shu grid ── */}
           <Text style={[styles.section, { color: theme.goldText }]}>{hi ? 'लो-शु ग्रिड' : 'Lo Shu Grid'}</Text>
@@ -252,24 +260,56 @@ export function NumerologyScreen({ navigation }: any) {
 }
 
 // ── sub-components ──
-function Trinity({ theme, L, label, tag, data }: { theme: any; L: any; label: string; tag: string; data: NumWithPlanet }) {
+function Trinity({ theme, hi, label, tag, data, focus }: { theme: any; hi: boolean; label: string; tag: string; data: NumWithPlanet; focus: 'nature' | 'path' | 'name' }) {
+  const L = (o?: { en: string; hi: string } | null) => (o ? (hi ? o.hi : o.en) : '');
+  const LL = (o?: { en: string[]; hi: string[] } | null) => (o ? (hi ? o.hi : o.en) : []);
+  const m = data.meaning;
   return (
     <View style={[styles.card, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(255,253,247,0.85)' }]}>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <LinearGradient colors={['#fce8a8', '#e9b850']} style={styles.numCircle}>
+        <LinearGradient colors={['#fce8a8', '#e9b850']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.numCircle}>
           <Text style={styles.numBig}>{data.final}</Text>
         </LinearGradient>
-        <View style={{ flex: 1, marginLeft: 14 }}>
+        <View style={{ flex: 1, marginLeft: 16 }}>
           <Text style={[styles.tLabel, { color: theme.text }]}>{label}</Text>
           <Text style={[styles.tTag, { color: theme.textMuted }]}>{tag}</Text>
           <Text style={[styles.tPlanet, { color: theme.gold1 }]}>{L(data.planet)}</Text>
-          <View style={{ flexDirection: 'row', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
+          <View style={{ flexDirection: 'row', gap: 6, marginTop: 5, flexWrap: 'wrap' }}>
             {data.compound !== data.final && <Badge theme={theme} txt={`${data.compound} → ${data.final}`} />}
             {data.isMaster && <Badge theme={theme} txt="Master ✦" gold />}
             {data.isKarmic && <Badge theme={theme} txt="Karmic" warn />}
           </View>
         </View>
       </View>
+
+      {m && (
+        <View style={{ marginTop: 13 }}>
+          <View style={styles.kwWrap}>
+            {LL(m.keywords).map((k) => (
+              <View key={k} style={[styles.kw, { borderColor: theme.gold2 + '44', backgroundColor: theme.isDark ? 'rgba(233,184,80,0.07)' : 'rgba(255,247,224,0.85)' }]}>
+                <Text style={[styles.kwTxt, { color: theme.gold1 }]}>{k}</Text>
+              </View>
+            ))}
+          </View>
+          {focus === 'path' ? (
+            <>
+              <Text style={[styles.meaningTxt, { color: theme.text }]}>{L(m.lifePath)}</Text>
+              <Text style={[styles.subHead, { color: theme.gold2 }]}>{hi ? 'उपयुक्त क्षेत्र' : 'Suited fields'}</Text>
+              <Text style={[styles.careerTxt, { color: theme.textMuted }]}>{LL(m.career).join(' · ')}</Text>
+            </>
+          ) : focus === 'name' ? (
+            <Text style={[styles.meaningTxt, { color: theme.text }]}>{L(m.nature)}</Text>
+          ) : (
+            <>
+              <Text style={[styles.meaningTxt, { color: theme.text }]}>{L(m.nature)}</Text>
+              <View style={styles.scRow}>
+                <Text style={[styles.scTxt, { color: '#3ec77a' }]}>✓ {L(m.strength)}</Text>
+                <Text style={[styles.scTxt, { color: '#e0a92e' }]}>⚠ {L(m.caution)}</Text>
+              </View>
+            </>
+          )}
+        </View>
+      )}
       {data.remedy && <Text style={[styles.remedy, { color: theme.textMuted }]}>🕉 {L(data.remedy)}</Text>}
     </View>
   );
@@ -315,12 +355,22 @@ const styles = StyleSheet.create({
   pVal: { fontFamily: fonts.interSemi, fontSize: 14.5, marginTop: 2 },
   section: { fontFamily: fonts.cinzelSemi, fontSize: 13, letterSpacing: 1, marginTop: 4 },
 
-  numCircle: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
-  numBig: { fontFamily: fonts.playfairBold, fontSize: 26, color: '#2a1c00' },
-  tLabel: { fontFamily: fonts.interBold, fontSize: 15.5 },
+  numCircle: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center' },
+  numBig: { fontFamily: fonts.playfairBold, fontSize: 38, color: '#2a1c00' },
+  tLabel: { fontFamily: fonts.interBold, fontSize: 17 },
   tTag: { fontFamily: fonts.inter, fontSize: 10.5, marginTop: 1 },
-  tPlanet: { fontFamily: fonts.interSemi, fontSize: 12.5, marginTop: 3 },
-  remedy: { fontFamily: fonts.inter, fontSize: 11.5, lineHeight: 16, marginTop: 10 },
+  tPlanet: { fontFamily: fonts.interSemi, fontSize: 13, marginTop: 3 },
+  kwWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 9 },
+  kw: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 },
+  kwTxt: { fontFamily: fonts.interSemi, fontSize: 10.5 },
+  meaningTxt: { fontFamily: fonts.inter, fontSize: 13, lineHeight: 19 },
+  subHead: { fontFamily: fonts.interBold, fontSize: 11, marginTop: 9, letterSpacing: 0.3 },
+  careerTxt: { fontFamily: fonts.interSemi, fontSize: 12.5, lineHeight: 18, marginTop: 2 },
+  scRow: { marginTop: 9, gap: 3 },
+  scTxt: { fontFamily: fonts.inter, fontSize: 11.5, lineHeight: 16 },
+  pyCard: { borderWidth: 1, borderRadius: 14, padding: 12 },
+  pyTxt: { fontFamily: fonts.inter, fontSize: 12.5, lineHeight: 18 },
+  remedy: { fontFamily: fonts.inter, fontSize: 11.5, lineHeight: 16, marginTop: 11 },
   badge: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 },
   badgeTxt: { fontFamily: fonts.interSemi, fontSize: 9.5 },
 
