@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Page } from '../components/Page';
 import { GradientText } from '../components/GradientText';
@@ -108,7 +108,8 @@ export function ExampleKundliScreen({ navigation }: any) {
       </View>
 
       {/* chart selector */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll} contentContainerStyle={styles.chipRow}>
+      {/* wrapped chips — all charts visible, no fragile horizontal scroll */}
+      <View style={styles.chipRow}>
         {EXAMPLE_CHARTS.map((c, i) => {
           const on = i === sel;
           return (
@@ -118,7 +119,7 @@ export function ExampleKundliScreen({ navigation }: any) {
             </Pressable>
           );
         })}
-      </ScrollView>
+      </View>
 
       {/* selected chart focus */}
       <View style={styles.focusHead}>
@@ -187,8 +188,7 @@ const styles = StyleSheet.create({
   note: { borderWidth: 1, borderRadius: 14, padding: 12, marginTop: 13 },
   noteTxt: { fontFamily: fonts.inter, fontSize: 12, lineHeight: 18 },
 
-  chipScroll: { marginTop: 16, marginHorizontal: -16 },
-  chipRow: { paddingHorizontal: 16, gap: 8 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 16, justifyContent: 'center' },
   chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 13, paddingVertical: 7, minWidth: 44, alignItems: 'center' },
   chipTxt: { fontFamily: fonts.cinzelSemi, fontSize: 12.5 },
 

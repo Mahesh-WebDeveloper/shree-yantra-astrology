@@ -396,7 +396,8 @@ const birthSig = (i) => `${i.dob}|${i.tob}|${i.place || `${i.lat},${i.lng}`}`;
 // 'sx3' = added a dedicated "saralVivaran" plain-language section to every reading.
 // 'sx4' = Sade Sati now gets DETERMINISTIC start/end dates (no AI date hallucination).
 // 'sx5' = prompt: never confuse Sade Sati (transit) with the Shani Mahadasha (dasha).
-const PROMPT_VERSION = 'sx7';
+// 'sx8' = stronger no-Hinglish / pure-language directive in writeIn().
+const PROMPT_VERSION = 'sx8';
 
 async function cached(key, type, producer) {
   const vkey = `${PROMPT_VERSION}|${key}`;
@@ -483,8 +484,8 @@ const SARAL_FIELD_EN = '"saralVivaran":"a complete, stand-alone summary of this 
 const saralField = (lang) => (lang === 'hi' ? SARAL_FIELD_HI : SARAL_FIELD_EN);
 const writeIn = (lang) =>
   lang === 'hi'
-    ? 'VERY IMPORTANT: Write ALL text values in PURE, SIMPLE HINDI using DEVANAGARI script ONLY (शुद्ध हिंदी). Do NOT use Hinglish or Roman/English letters inside the Hindi text (only keep unavoidable proper nouns/numbers). Keep JSON keys in English. Be specific to the data, warm and natural — like a kind Hindi-speaking astrologer.' + SIMPLIFY_HI
-    : 'Write in simple, positive English (an average Indian user reads it). Be specific to the data, not generic.' + SIMPLIFY_EN;
+    ? 'VERY IMPORTANT — LANGUAGE: Write ALL text values in PURE, SIMPLE HINDI in DEVANAGARI script ONLY (शुद्ध हिंदी). ABSOLUTELY NO HINGLISH — never write Hindi words in Roman/English letters, and do NOT mix English words into the Hindi sentences (keep only unavoidable proper nouns and numerals). Every single sentence must be natural Devanagari Hindi. Keep JSON keys in English. Be specific to the data, warm and natural — like a kind Hindi-speaking astrologer.' + SIMPLIFY_HI
+    : 'VERY IMPORTANT — LANGUAGE: Write ALL text in clear, simple English ONLY. Do NOT mix in any Hindi/Devanagari or Hinglish words. Be specific to the data, positive and easy for an average Indian reader.' + SIMPLIFY_EN;
 
 const fixedMoods = ['Energy', 'Love', 'Career', 'Health'];
 const fixedAreas = ['Love', 'Career', 'Finance', 'Health'];

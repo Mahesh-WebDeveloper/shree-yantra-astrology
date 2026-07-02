@@ -185,8 +185,8 @@ export function KundliLearnScreen({ navigation }: any) {
           >
             <View style={styles.exampleArt}><LearnArt art="readchart" dark={theme.isDark} width={66} height={56} /></View>
             <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={[styles.exampleKicker, { color: theme.gold2 }]}>{l === 'hi' ? '🔯 इंटरैक्टिव अभ्यास' : '🔯 Interactive practice'}</Text>
-              <Text style={[styles.exampleTitle, { color: theme.text }]}>{l === 'hi' ? 'भाव पर टैप करें → चार्ट में चमके' : 'Tap a house → it lights up'}</Text>
+              <Text style={[styles.exampleKicker, { color: theme.gold2 }]}>{l === 'hi' ? '🔯 कुंडली आसान भाषा में' : '🔯 Kundli made simple'}</Text>
+              <Text style={[styles.exampleTitle, { color: theme.text }]}>{l === 'hi' ? 'कुंडली के 12 खाने का मतलब — हर खाना समझें' : 'What the 12 houses mean — understand each one'}</Text>
               <Text style={[styles.exampleSub, { color: theme.textMuted }]}>{l === 'hi' ? '12 भाव + सभी 16 चार्ट, हर एक पर “AI से सीखें”' : '12 houses + all 16 charts, each with "Learn with AI"'}</Text>
             </View>
             <Text style={[styles.exampleArrow, { color: theme.gold1 }]}>›</Text>

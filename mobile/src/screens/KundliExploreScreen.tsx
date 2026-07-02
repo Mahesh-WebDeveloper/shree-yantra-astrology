@@ -9,8 +9,6 @@ import { useLang } from '../i18n/LanguageProvider';
 import { hTap, hSelect } from '../lib/haptics';
 import { BHAVAS, VARGAS, Bi } from '../data/kundliBhava';
 
-const HOUSE_HI = ['१', '२', '३', '४', '५', '६', '७', '८', '९', '१०', '११', '१२'];
-
 export function KundliExploreScreen({ navigation }: any) {
   const { theme } = useTheme();
   const { lang } = useLang();
@@ -30,10 +28,10 @@ export function KundliExploreScreen({ navigation }: any) {
   return (
     <Page title={hi ? 'कुंडली सीखें' : 'Learn Kundli'} onBack={() => { hTap(); navigation.goBack(); }}>
       <View style={[styles.card, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(255,253,247,0.85)' }]}>
-        <GradientText style={styles.h1}>{hi ? 'कुंडली को आसानी से समझें' : 'Understand your Kundli, easily'}</GradientText>
+        <GradientText style={styles.h1}>{hi ? 'कुंडली में 12 खाने का मतलब' : 'What the 12 houses mean'}</GradientText>
         <Text style={[styles.sub, { color: theme.textMuted }]}>
-          {hi ? 'हर भाव (घर) पर टैप करें — कुंडली में वह खाना जगमगाएगा और उसका सरल अर्थ मिलेगा। साथ ही सभी 16 वर्ग-चार्ट भी समझें।'
-              : 'Tap any house — it lights up in the chart with a simple meaning. Plus, learn all 16 divisional charts.'}
+          {hi ? 'कुंडली में 12 खाने (भाव) होते हैं — हर एक जीवन का एक अलग हिस्सा दर्शाता है। किसी भी खाने पर टैप करके उसका सरल अर्थ जानें। साथ ही सभी 16 वर्ग-चार्ट भी समझें।'
+              : 'A kundli has 12 houses — each shows a different part of life. Tap any house to learn its simple meaning. Plus, understand all 16 divisional charts.'}
         </Text>
       </View>
 
@@ -62,7 +60,7 @@ export function KundliExploreScreen({ navigation }: any) {
               const on = b.house === house;
               return (
                 <Pressable key={b.house} onPress={() => { hSelect(); setHouse(b.house); }} style={[styles.tab, { borderColor: on ? theme.gold1 : theme.cardBorder, backgroundColor: on ? theme.gold1 : (theme.isDark ? 'rgba(233,184,80,0.07)' : '#fff') }]}>
-                  <Text style={[styles.tabTxt, { color: on ? theme.buttonInk : theme.gold1 }]}>{hi ? HOUSE_HI[b.house - 1] : b.house}</Text>
+                  <Text style={[styles.tabTxt, { color: on ? theme.buttonInk : theme.gold1 }]}>{b.house}</Text>
                 </Pressable>
               );
             })}
