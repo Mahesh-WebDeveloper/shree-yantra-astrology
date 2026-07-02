@@ -214,8 +214,16 @@ export function NumerologyScreen({ navigation }: any) {
                     const c = profile.loShu.counts[String(n)] || 0;
                     const on = c > 0;
                     return (
-                      <View key={n} style={[styles.gCell, { borderColor: theme.cardBorder, backgroundColor: on ? (theme.isDark ? 'rgba(233,184,80,0.14)' : 'rgba(233,184,80,0.16)') : 'transparent' }]}>
-                        <Text style={[styles.gNum, { color: on ? theme.gold1 : theme.textMuted, opacity: on ? 1 : 0.32 }]}>{on ? Array.from({ length: c }, () => n).join(' ') : n}</Text>
+                      <View key={n} style={[styles.gCell, { borderColor: on ? theme.gold2 + '66' : theme.cardBorder, backgroundColor: on ? (theme.isDark ? 'rgba(233,184,80,0.14)' : 'rgba(233,184,80,0.16)') : 'transparent' }]}>
+                        {on ? (
+                          <View style={styles.gRepeat}>
+                            {Array.from({ length: c }).map((_, k) => (
+                              <Text key={k} style={[styles.gNum, { color: theme.gold1 }]}>{n}</Text>
+                            ))}
+                          </View>
+                        ) : (
+                          <Text style={[styles.gDash, { color: theme.textMuted }]}>–</Text>
+                        )}
                       </View>
                     );
                   })}
@@ -501,7 +509,9 @@ const styles = StyleSheet.create({
 
   grid: { alignSelf: 'center' },
   gCell: { width: 60, height: 54, borderWidth: 1, alignItems: 'center', justifyContent: 'center', margin: 2, borderRadius: 8 },
-  gNum: { fontFamily: fonts.interBold, fontSize: 16, letterSpacing: 1 },
+  gRepeat: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, alignItems: 'center', justifyContent: 'center' },
+  gNum: { fontFamily: fonts.interBold, fontSize: 16 },
+  gDash: { fontFamily: fonts.interSemi, fontSize: 17, opacity: 0.28 },
   gMiss: { fontFamily: fonts.inter, fontSize: 12, textAlign: 'center', marginTop: 12 },
   gridNote: { fontFamily: fonts.inter, fontSize: 10.5, lineHeight: 15, textAlign: 'center', marginTop: 12 },
   compatRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 7, gap: 10 },
