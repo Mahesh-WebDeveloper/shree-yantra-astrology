@@ -44,6 +44,7 @@ export function VastuBlueprintScreen({ navigation }: any) {
   const [bp, setBp] = useState<Blueprint | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
+  const [showMandala, setShowMandala] = useState(false);
   const [question, setQuestion] = useState('');
   const [asking, setAsking] = useState(false);
   const [ai, setAi] = useState<VastuAskResponse | null>(null);
@@ -178,26 +179,44 @@ export function VastuBlueprintScreen({ navigation }: any) {
             <Text style={[styles.helper, { color: theme.textMuted }]}>
               {hi ? 'किसी भी कमरे पर टैप करें — नीचे उसका साइज़ बदल सकते हैं।' : 'Tap any room — adjust its size below.'}
             </Text>
-            <BlueprintCanvas bp={bp} selected={selected} onSelect={(id) => { hSelect(); setSelected(id === selected ? null : id); }} height={390} />
-            <Pressable onPress={() => { hTap(); setFullscreen(true); }} style={[styles.fsBtn, { borderColor: theme.gold2, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(255,247,224,0.95)' }]}>
-              <Text style={[styles.fsBtnTxt, { color: theme.gold1 }]}>⛶ {hi ? 'पूरी स्क्रीन पर देखें (ज़ूम करें)' : 'View fullscreen (zoom)'}</Text>
-            </Pressable>
+            <BlueprintCanvas bp={bp} selected={selected} showMandala={showMandala} onSelect={(id) => { hSelect(); setSelected(id === selected ? null : id); }} height={390} />
+            <View style={styles.toolRow}>
+              <Pressable onPress={() => { hSelect(); setShowMandala((v) => !v); }} style={[styles.toolBtn, { borderColor: showMandala ? theme.gold1 : theme.gold2, backgroundColor: showMandala ? theme.gold1 : (theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(255,247,224,0.95)') }]}>
+                <Text style={[styles.toolBtnTxt, { color: showMandala ? theme.buttonInk : theme.gold1 }]}>{showMandala ? '✓ ' : ''}🕉 {hi ? 'वास्तु मंडल' : 'Vastu Mandala'}</Text>
+              </Pressable>
+              <Pressable onPress={() => { hTap(); setFullscreen(true); }} style={[styles.toolBtn, { borderColor: theme.gold2, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(255,247,224,0.95)' }]}>
+                <Text style={[styles.toolBtnTxt, { color: theme.gold1 }]}>⛶ {hi ? 'पूरी स्क्रीन (ज़ूम)' : 'Fullscreen (zoom)'}</Text>
+              </Pressable>
+            </View>
 
-            {selRoom && selRoom.editable && (
+            {selRoom && (
               <View style={[styles.editBox, { borderColor: theme.gold2 + '66', backgroundColor: theme.isDark ? 'rgba(233,184,80,0.07)' : 'rgba(255,247,224,0.9)' }]}>
-                <Text style={[styles.editTitle, { color: theme.gold1 }]}>{L(selRoom.name, hi)} — {ft(selRoom.w)} × {ft(selRoom.h)}</Text>
-                <Text style={[styles.editMeta, { color: theme.textMuted }]}>
-                  {hi ? `दिशा-क्षेत्र: ${selRoom.zone} · क्षेत्रफल ${Math.round(selRoom.w * selRoom.h)} वर्ग फ़ीट` : `Zone: ${selRoom.zone} · area ${Math.round(selRoom.w * selRoom.h)} sq ft`}
-                </Text>
-                <View style={styles.editRow}>
-                  <Text style={[styles.editLbl, { color: theme.textSoft }]}>{hi ? 'चौड़ाई' : 'Width'}</Text>
-                  <Stepper onMinus={() => adjust(selRoom, -1, 0)} onPlus={() => adjust(selRoom, 1, 0)} theme={theme} value={ft(selRoom.w)} />
+                <View style={styles.detHead}>
+                  <View style={[styles.detSwatch, { backgroundColor: selRoom.color }]} />
+                  <Text style={[styles.editTitle, { color: theme.gold1, flex: 1 }]}>{L(selRoom.name, hi)}</Text>
+                  <Text style={styles.detStars}>{'★'.repeat(Math.round(selRoom.vastuScore / 20))}{'☆'.repeat(5 - Math.round(selRoom.vastuScore / 20))}</Text>
                 </View>
-                <View style={styles.editRow}>
-                  <Text style={[styles.editLbl, { color: theme.textSoft }]}>{hi ? 'लंबाई' : 'Length'}</Text>
-                  <Stepper onMinus={() => adjust(selRoom, 0, -1)} onPlus={() => adjust(selRoom, 0, 1)} theme={theme} value={ft(selRoom.h)} />
+                <View style={styles.detGrid}>
+                  <Det theme={theme} k={hi ? 'दिशा' : 'Direction'} v={L(selRoom.direction, hi)} />
+                  <Det theme={theme} k={hi ? 'साइज़' : 'Size'} v={`${ft(selRoom.w)} × ${ft(selRoom.h)}`} />
+                  <Det theme={theme} k={hi ? 'क्षेत्रफल' : 'Area'} v={`${selRoom.areaSqft} ${hi ? 'वर्ग फ़ीट' : 'sq ft'}`} />
+                  <Det theme={theme} k={hi ? 'वास्तु स्कोर' : 'Vastu score'} v={`${selRoom.vastuScore}/100`} />
                 </View>
-                <Text style={[styles.editNote, { color: theme.textMuted }]}>{hi ? 'साइज़ उसी दिशा-क्षेत्र के अंदर रहेगा, ताकि वास्तु न बिगड़े।' : 'Size stays within its direction zone so the Vastu holds.'}</Text>
+                <Text style={[styles.detReason, { color: theme.textSoft }]}>📍 {L(selRoom.reason, hi)}</Text>
+                <Text style={[styles.detTip, { color: theme.text }]}>💡 {L(selRoom.tip, hi)}</Text>
+                {selRoom.editable && (
+                  <>
+                    <View style={styles.editRow}>
+                      <Text style={[styles.editLbl, { color: theme.textSoft }]}>{hi ? 'चौड़ाई' : 'Width'}</Text>
+                      <Stepper onMinus={() => adjust(selRoom, -1, 0)} onPlus={() => adjust(selRoom, 1, 0)} theme={theme} value={ft(selRoom.w)} />
+                    </View>
+                    <View style={styles.editRow}>
+                      <Text style={[styles.editLbl, { color: theme.textSoft }]}>{hi ? 'लंबाई' : 'Length'}</Text>
+                      <Stepper onMinus={() => adjust(selRoom, 0, -1)} onPlus={() => adjust(selRoom, 0, 1)} theme={theme} value={ft(selRoom.h)} />
+                    </View>
+                    <Text style={[styles.editNote, { color: theme.textMuted }]}>{hi ? 'साइज़ उसी दिशा-क्षेत्र के अंदर रहेगा, ताकि वास्तु न बिगड़े।' : 'Size stays within its direction zone so the Vastu holds.'}</Text>
+                  </>
+                )}
               </View>
             )}
           </View>
@@ -258,6 +277,14 @@ export function VastuBlueprintScreen({ navigation }: any) {
   );
 }
 
+function Det({ theme, k, v }: any) {
+  return (
+    <View style={styles.detCell}>
+      <Text style={[styles.detK, { color: theme.textMuted }]}>{k}</Text>
+      <Text style={[styles.detV, { color: theme.text }]}>{v}</Text>
+    </View>
+  );
+}
 function Stepper({ value, onMinus, onPlus, theme }: any) {
   return (
     <View style={styles.stepper}>
@@ -284,11 +311,20 @@ const styles = StyleSheet.create({
   chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 13, paddingVertical: 8, minWidth: 44, alignItems: 'center' },
   chipTxt: { fontFamily: fonts.interSemi, fontSize: 12 },
   toggleWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  fsBtn: { borderWidth: 1, borderRadius: 12, paddingVertical: 11, alignItems: 'center', marginTop: 10 },
-  fsBtnTxt: { fontFamily: fonts.interBold, fontSize: 12.5 },
-  editBox: { borderWidth: 1, borderRadius: 14, padding: 12, marginTop: 12 },
-  editTitle: { fontFamily: fonts.interBold, fontSize: 13.5, marginBottom: 2 },
-  editMeta: { fontFamily: fonts.inter, fontSize: 11, marginBottom: 8 },
+  toolRow: { flexDirection: 'row', gap: 10, marginTop: 10 },
+  toolBtn: { flex: 1, borderWidth: 1, borderRadius: 12, paddingVertical: 11, alignItems: 'center' },
+  toolBtnTxt: { fontFamily: fonts.interBold, fontSize: 12 },
+  editBox: { borderWidth: 1, borderRadius: 14, padding: 13, marginTop: 12 },
+  editTitle: { fontFamily: fonts.interBold, fontSize: 14.5 },
+  detHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+  detSwatch: { width: 12, height: 12, borderRadius: 3 },
+  detStars: { fontFamily: fonts.interBold, fontSize: 12, color: '#e9b850' },
+  detGrid: { flexDirection: 'row', flexWrap: 'wrap' },
+  detCell: { width: '50%', marginBottom: 8 },
+  detK: { fontFamily: fonts.interSemi, fontSize: 9.5, letterSpacing: 0.5, textTransform: 'uppercase' },
+  detV: { fontFamily: fonts.interBold, fontSize: 13, marginTop: 1 },
+  detReason: { fontFamily: fonts.inter, fontSize: 12, lineHeight: 17, marginTop: 4 },
+  detTip: { fontFamily: fonts.interSemi, fontSize: 12, lineHeight: 17, marginTop: 8 },
   editRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 },
   editLbl: { fontFamily: fonts.interSemi, fontSize: 12.5 },
   editNote: { fontFamily: fonts.inter, fontSize: 10.6, lineHeight: 15, marginTop: 10 },

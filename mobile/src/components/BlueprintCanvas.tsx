@@ -26,8 +26,21 @@ const MUTE = '#8a744d';
 const GOLD = '#b8860b';
 const SEL = '#e9b850';
 
-export function BlueprintCanvas({ bp, selected, onSelect, height = 380 }: {
-  bp: Blueprint; selected: string | null; onSelect?: (id: string) => void; height?: number;
+// 9-pad Vastu Purusha Mandala (fixed geometric zones + Brahmasthan)
+const MANDALA: { zone: string; col: number; row: number; hi: string; en: string; tint: string }[] = [
+  { zone: 'NW', col: 0, row: 0, hi: 'वायव्य', en: 'NW', tint: '#c7d2e8' },
+  { zone: 'N', col: 1, row: 0, hi: 'उत्तर', en: 'N', tint: '#bfe0d0' },
+  { zone: 'NE', col: 2, row: 0, hi: 'ईशान', en: 'NE', tint: '#f2e6a8' },
+  { zone: 'W', col: 0, row: 1, hi: 'पश्चिम', en: 'W', tint: '#d7cdb0' },
+  { zone: 'C', col: 1, row: 1, hi: 'ब्रह्मस्थान', en: 'Centre', tint: '#f0d98a' },
+  { zone: 'E', col: 2, row: 1, hi: 'पूर्व', en: 'E', tint: '#cfe3b8' },
+  { zone: 'SW', col: 0, row: 2, hi: 'नैऋत्य', en: 'SW', tint: '#b8a483' },
+  { zone: 'S', col: 1, row: 2, hi: 'दक्षिण', en: 'S', tint: '#e6c2a0' },
+  { zone: 'SE', col: 2, row: 2, hi: 'आग्नेय', en: 'SE', tint: '#e9b48f' },
+];
+
+export function BlueprintCanvas({ bp, selected, onSelect, showMandala = false, height = 380 }: {
+  bp: Blueprint; selected: string | null; onSelect?: (id: string) => void; showMandala?: boolean; height?: number;
 }) {
   const { lang } = useLang();
   const hi = lang === 'hi';
@@ -83,6 +96,22 @@ export function BlueprintCanvas({ bp, selected, onSelect, height = 380 }: {
         {bp.rooms.map((r) => (
           <RoomShape key={r.id} r={r} X={X} Y={Y} s={s} hi={hi} on={selected === r.id} onSelect={onSelect} bcx={bcx} bcy={bcy} builtW={bp.builtW} builtL={bp.builtL} />
         ))}
+
+        {/* Vastu Purusha Mandala overlay (transparent 9-pad) */}
+        {showMandala && (
+          <G>
+            {MANDALA.map((m) => {
+              const cw = bp.builtW / 3, ch = bp.builtL / 3;
+              const zx = X(m.col * cw), zy = Y(m.row * ch);
+              return (
+                <G key={m.zone}>
+                  <Rect x={zx} y={zy} width={cw * s} height={ch * s} fill={m.tint} fillOpacity={0.24} stroke={GOLD} strokeWidth={0.35} strokeDasharray="1.2 0.9" />
+                  <SvgText x={zx + (cw * s) / 2} y={zy + 3.2} textAnchor="middle" fontSize={2.4} fontWeight="700" fill="#7a5a10">{hi ? m.hi : m.en}</SvgText>
+                </G>
+              );
+            })}
+          </G>
+        )}
 
         {/* outer double wall on top */}
         <Rect x={X(0)} y={Y(0)} width={bp.builtW * s} height={IH} fill="none" stroke={WALL} strokeWidth={1.15} />

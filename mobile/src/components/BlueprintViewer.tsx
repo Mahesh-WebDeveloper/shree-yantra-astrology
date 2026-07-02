@@ -13,6 +13,7 @@ export function BlueprintViewer({ bp, visible, onClose }: { bp: Blueprint; visib
   const { lang } = useLang();
   const hi = lang === 'hi';
   const [landscape, setLandscape] = useState(false);
+  const [mandala, setMandala] = useState(false);
 
   const scale = useRef(new Animated.Value(1)).current;
   const pan = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
@@ -81,7 +82,7 @@ export function BlueprintViewer({ bp, visible, onClose }: { bp: Blueprint; visib
               ],
             }}
           >
-            <BlueprintCanvas bp={bp} selected={null} height={contentH} />
+            <BlueprintCanvas bp={bp} selected={null} showMandala={mandala} height={contentH} />
           </Animated.View>
         </View>
 
@@ -90,6 +91,7 @@ export function BlueprintViewer({ bp, visible, onClose }: { bp: Blueprint; visib
           <Btn label="＋" onPress={() => { hTap(); setScale(cur.current.scale * 1.4); }} />
           <Btn label="−" onPress={() => { hTap(); setScale(cur.current.scale / 1.4); }} />
           <Btn label="⟳" onPress={reset} />
+          <Pressable onPress={() => { hTap(); setMandala((v) => !v); }} style={[styles.ctl, mandala && styles.ctlOn]}><Text style={[styles.ctlTxt, mandala && { color: '#1a1206' }]}>🕉</Text></Pressable>
           <Btn label={landscape ? '▭' : '▯'} onPress={() => { hTap(); setLandscape((v) => !v); reset(); }} />
           <Pressable onPress={() => { hTap(); onClose(); }} style={[styles.ctl, styles.close]}><Text style={[styles.ctlTxt, { color: '#1a1206' }]}>✕</Text></Pressable>
         </View>
@@ -105,5 +107,6 @@ const styles = StyleSheet.create({
   ctlRow: { flexDirection: 'row', gap: 12, paddingBottom: 26 },
   ctl: { width: 46, height: 46, borderRadius: 23, borderWidth: 1, borderColor: 'rgba(233,184,80,0.6)', backgroundColor: 'rgba(233,184,80,0.10)', alignItems: 'center', justifyContent: 'center' },
   ctlTxt: { color: '#e9b850', fontSize: 19, fontWeight: '700' },
+  ctlOn: { backgroundColor: '#e9b850' },
   close: { backgroundColor: '#e9b850' },
 });
