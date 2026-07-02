@@ -40,7 +40,7 @@ export function VastuBlueprintScreen({ navigation }: any) {
   const [showCompass, setShowCompass] = useState(false);
   const [bedrooms, setBedrooms] = useState(2);
   const [bathrooms, setBathrooms] = useState(2);
-  const [opts, setOpts] = useState({ pooja: true, dining: true, study: false, store: false, staircase: true, parking: false, tankOverhead: true, tankUnderground: false });
+  const [opts, setOpts] = useState({ pooja: true, dining: true, study: false, store: false, staircase: true, parking: false, tankOverhead: true, tankUnderground: false, garden: true, borewell: false, septic: true, rainwater: false, solar: false });
   const [bp, setBp] = useState<Blueprint | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
@@ -157,7 +157,7 @@ export function VastuBlueprintScreen({ navigation }: any) {
           ))}
         </View>
         <View style={[styles.toggleWrap, { marginTop: 14 }]}>
-          {([['pooja', hi ? '🛕 पूजा घर' : '🛕 Pooja room'], ['dining', hi ? '🍽 भोजन कक्ष' : '🍽 Dining'], ['study', hi ? '📚 अध्ययन' : '📚 Study'], ['store', hi ? '📦 भंडार' : '📦 Store'], ['staircase', hi ? '🪜 सीढ़ियाँ' : '🪜 Stairs'], ['parking', hi ? '🚗 पार्किंग' : '🚗 Parking'], ['tankOverhead', hi ? '🚰 छत टंकी' : '🚰 Roof tank'], ['tankUnderground', hi ? '💧 भूमिगत जल' : '💧 Underground']] as [keyof typeof opts, string][]).map(([k, lbl]) => {
+          {([['pooja', hi ? '🛕 पूजा घर' : '🛕 Pooja room'], ['dining', hi ? '🍽 भोजन कक्ष' : '🍽 Dining'], ['study', hi ? '📚 अध्ययन' : '📚 Study'], ['store', hi ? '📦 भंडार' : '📦 Store'], ['staircase', hi ? '🪜 सीढ़ियाँ' : '🪜 Stairs'], ['parking', hi ? '🚗 पार्किंग' : '🚗 Parking'], ['tankOverhead', hi ? '🚰 छत टंकी' : '🚰 Roof tank'], ['tankUnderground', hi ? '💧 भूमिगत जल' : '💧 Underground'], ['garden', hi ? '🌳 बगीचा' : '🌳 Garden'], ['borewell', hi ? '◉ बोरवेल' : '◉ Borewell'], ['septic', hi ? '▤ सेप्टिक' : '▤ Septic'], ['rainwater', hi ? '☂ वर्षाजल' : '☂ Rainwater'], ['solar', hi ? '☀ सोलर' : '☀ Solar']] as [keyof typeof opts, string][]).map(([k, lbl]) => {
             const on = opts[k];
             return (
               <Pressable key={k} onPress={() => toggle(k)} style={[styles.chip, { borderColor: on ? theme.gold1 : theme.cardBorder, backgroundColor: on ? theme.gold1 : 'transparent' }]}>

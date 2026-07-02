@@ -26,6 +26,7 @@ export interface BlueprintInput {
   bedrooms: number; bathrooms: number;
   pooja: boolean; dining: boolean; study: boolean; store: boolean;
   staircase: boolean; parking: boolean; tankOverhead: boolean; tankUnderground: boolean;
+  garden?: boolean; borewell?: boolean; septic?: boolean; rainwater?: boolean; solar?: boolean;
 }
 
 export interface BpRoom {

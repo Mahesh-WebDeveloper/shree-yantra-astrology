@@ -45,13 +45,24 @@ export function BlueprintCanvas({ bp, selected, onSelect, showMandala = false, h
   const { lang } = useLang();
   const hi = lang === 'hi';
 
-  const PL = 15, PT = 22, PR = 9, PB = 15;           // sheet padding (svg units)
+  const PL = 15, PT = 22, PR = 9;                     // sheet padding (svg units)
+  const gardenH = bp.input.garden ? 15 : 0;          // front-garden band (North)
+  const svcItems: { icon: string; label: Bi }[] = [];
+  if (bp.input.borewell) svcItems.push({ icon: '◉', label: { en: 'Borewell', hi: 'बोरवेल' } });
+  if (bp.input.tankUnderground) svcItems.push({ icon: '▽', label: { en: 'Water sump', hi: 'भूमिगत जल' } });
+  if (bp.input.septic) svcItems.push({ icon: '▤', label: { en: 'Septic tank', hi: 'सेप्टिक टैंक' } });
+  if (bp.input.rainwater) svcItems.push({ icon: '☂', label: { en: 'Rainwater pit', hi: 'वर्षाजल कुंड' } });
+  if (bp.input.solar) svcItems.push({ icon: '☀', label: { en: 'Solar', hi: 'सोलर' } });
+  const serviceH = svcItems.length ? 17 : 0;         // backyard / service band (South)
   const VW = 160;
   const s = (VW - PL - PR) / bp.builtW;               // ft → svg
   const IH = bp.builtL * s;                           // inner (built) height
-  const VH = PT + IH + PB;
+  const builtTop = PT + gardenH;
+  const serviceTop = builtTop + IH + 1.5;
+  const dimY = serviceTop + serviceH + 4;
+  const VH = dimY + 8.5;
   const X = (v: number) => PL + v * s;
-  const Y = (v: number) => PT + v * s;
+  const Y = (v: number) => builtTop + v * s;
   const hasPlot = bp.plotW > bp.builtW || bp.plotL > bp.builtL;
   const bcx = bp.builtW / 2, bcy = bp.builtL / 2;     // built centre (ft)
 
@@ -87,6 +98,21 @@ export function BlueprintCanvas({ bp, selected, onSelect, showMandala = false, h
         <SvgText x={VW / 2} y={10.4} textAnchor="middle" fontSize={2.3} fill={MUTE}>
           {hi ? `निर्माण ${ftLbl(bp.builtW)} × ${ftLbl(bp.builtL)}` : `Built ${ftLbl(bp.builtW)} × ${ftLbl(bp.builtL)}`}{hasPlot ? (hi ? `  ·  प्लॉट ${ftLbl(bp.plotW)} × ${ftLbl(bp.plotL)}` : `  ·  Plot ${ftLbl(bp.plotW)} × ${ftLbl(bp.plotL)}`) : ''}
         </SvgText>
+
+        {/* front garden band (North) */}
+        {gardenH > 0 && (
+          <G>
+            <Rect x={X(0)} y={builtTop - gardenH + 1} width={bp.builtW * s} height={gardenH - 2} rx={1} fill="#cfe6c0" fillOpacity={0.7} stroke="#8fbf7a" strokeWidth={0.35} />
+            <SvgText x={X(bp.builtW / 2)} y={builtTop - gardenH + 4} textAnchor="middle" fontSize={2.4} fontWeight="700" fill="#4a7a3a">{hi ? '🌳 सामने का बगीचा' : '🌳 FRONT GARDEN'}</SvgText>
+            {[0.18, 0.4, 0.82].map((f, i) => (
+              <G key={i}>
+                <Circle cx={X(bp.builtW * f)} cy={builtTop - gardenH * 0.42} r={1.9} fill="#7bb168" opacity={0.85} />
+                <Line x1={X(bp.builtW * f)} y1={builtTop - gardenH * 0.42} x2={X(bp.builtW * f)} y2={builtTop - 2} stroke="#6b4a2a" strokeWidth={0.3} />
+              </G>
+            ))}
+            <Rect x={X(bp.builtW * 0.52)} y={builtTop - gardenH * 0.7} width={bp.builtW * s * 0.12} height={gardenH * 0.62} fill="#e6d7b0" opacity={0.7} />
+          </G>
+        )}
 
         {/* CAD grid inside the built area */}
         {gridV.map((g) => <Line key={`v${g}`} x1={X(g)} y1={Y(0)} x2={X(g)} y2={Y(bp.builtL)} stroke={GRID} strokeWidth={0.18} />)}
@@ -130,8 +156,26 @@ export function BlueprintCanvas({ bp, selected, onSelect, showMandala = false, h
           </G>
         ))}
 
+        {/* backyard / service band (South) */}
+        {serviceH > 0 && (
+          <G>
+            <Rect x={X(0)} y={serviceTop} width={bp.builtW * s} height={serviceH} rx={1} fill="#e8e0cf" fillOpacity={0.6} stroke="#c2b48f" strokeWidth={0.35} />
+            <SvgText x={X(bp.builtW / 2)} y={serviceTop + 3} textAnchor="middle" fontSize={2.3} fontWeight="700" fill="#7a5a10">{hi ? '🔧 पिछवाड़ा / सेवा क्षेत्र' : '🔧 BACKYARD / SERVICE'}</SvgText>
+            {svcItems.map((it, i) => {
+              const cx = X(bp.builtW * ((i + 0.5) / svcItems.length));
+              return (
+                <G key={i}>
+                  <Circle cx={cx} cy={serviceTop + serviceH * 0.55} r={2.4} fill="none" stroke="#2980b9" strokeWidth={0.4} />
+                  <SvgText x={cx} y={serviceTop + serviceH * 0.55 + 1} textAnchor="middle" fontSize={2.6} fill="#2980b9">{it.icon}</SvgText>
+                  <SvgText x={cx} y={serviceTop + serviceH - 1.4} textAnchor="middle" fontSize={1.9} fill={MUTE}>{hi ? it.label.hi : it.label.en}</SvgText>
+                </G>
+              );
+            })}
+          </G>
+        )}
+
         {/* overall dimension lines */}
-        <DimLine x1={X(0)} y1={Y(bp.builtL) + 5} x2={X(bp.builtW)} y2={Y(bp.builtL) + 5} label={ftLbl(bp.builtW)} />
+        <DimLine x1={X(0)} y1={dimY} x2={X(bp.builtW)} y2={dimY} label={ftLbl(bp.builtW)} />
         <DimLine x1={PL - 5} y1={Y(0)} x2={PL - 5} y2={Y(bp.builtL)} label={ftLbl(bp.builtL)} vertical />
 
         {/* scale bar */}
