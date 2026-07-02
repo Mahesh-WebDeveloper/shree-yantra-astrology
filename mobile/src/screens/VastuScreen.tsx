@@ -379,6 +379,20 @@ export function VastuScreen({ navigation }: any) {
         </Text>
       </LinearGradient>
 
+      {/* CTA → new-home blueprint designer */}
+      <Pressable
+        onPress={() => { hTap(); navigation.navigate('VastuBlueprint'); }}
+        style={({ pressed }) => [styles.bpCta, { borderColor: theme.gold1, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(255,247,224,0.95)', opacity: pressed ? 0.9 : 1 }]}
+      >
+        <Text style={styles.bpCtaEmoji}>🏠</Text>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={[styles.bpCtaKicker, { color: theme.gold2 }]}>{hi ? 'नया घर बनाने जा रहे हैं?' : 'Building a new home?'}</Text>
+          <Text style={[styles.bpCtaTitle, { color: theme.text }]}>{hi ? 'वास्तु नक्शा डिज़ाइनर — साइज़ के साथ नक्शा बनाएँ' : 'Vastu Map Designer — plan with real sizes'}</Text>
+          <Text style={[styles.bpCtaSub, { color: theme.textMuted }]}>{hi ? 'प्लॉट व ज़रूरतें भरें → हर कमरे की सही दिशा व साइज़ वाला नक्शा' : 'Enter plot & needs → a map with every room in its right place'}</Text>
+        </View>
+        <Text style={[styles.bpCtaArrow, { color: theme.gold1 }]}>›</Text>
+      </Pressable>
+
       <View style={[styles.card, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(255,253,247,0.9)' }]}>
         <Text style={[styles.section, { color: theme.goldText }]}>{hi ? 'मूल जानकारी' : 'Basic Details'}</Text>
         <View style={styles.typeRow}>
@@ -594,6 +608,12 @@ const styles = StyleSheet.create({
   compassBtn: { alignSelf: 'flex-start', borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7, marginBottom: 8 },
   compassBtnTxt: { fontFamily: fonts.interBold, fontSize: 11.5 },
   compassMini: { fontSize: 16 },
+  bpCta: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1.4, borderRadius: 18, padding: 14, marginTop: 14 },
+  bpCtaEmoji: { fontSize: 30 },
+  bpCtaKicker: { fontFamily: fonts.interSemi, fontSize: 10.5, letterSpacing: 0.6, textTransform: 'uppercase' },
+  bpCtaTitle: { fontFamily: fonts.interBold, fontSize: 14, lineHeight: 19, marginTop: 2 },
+  bpCtaSub: { fontFamily: fonts.inter, fontSize: 11.3, lineHeight: 15.5, marginTop: 3 },
+  bpCtaArrow: { fontFamily: fonts.interBold, fontSize: 26 },
   helper: { fontFamily: fonts.inter, fontSize: 12, lineHeight: 17, marginBottom: 10 },
   dimRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
   dirWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
