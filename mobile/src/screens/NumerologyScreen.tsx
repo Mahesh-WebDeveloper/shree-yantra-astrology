@@ -141,7 +141,7 @@ export function NumerologyScreen({ navigation }: any) {
                     const on = c > 0;
                     return (
                       <View key={n} style={[styles.gCell, { borderColor: theme.cardBorder, backgroundColor: on ? (theme.isDark ? 'rgba(233,184,80,0.14)' : 'rgba(233,184,80,0.16)') : 'transparent' }]}>
-                        <Text style={[styles.gNum, { color: on ? theme.gold1 : theme.textMuted, opacity: on ? 1 : 0.35 }]}>{on ? String(n).repeat(c) : n}</Text>
+                        <Text style={[styles.gNum, { color: on ? theme.gold1 : theme.textMuted, opacity: on ? 1 : 0.32 }]}>{on ? Array.from({ length: c }, () => n).join(' ') : n}</Text>
                       </View>
                     );
                   })}
@@ -162,6 +162,18 @@ export function NumerologyScreen({ navigation }: any) {
                 ))}
               </View>
             )}
+            <Text style={[styles.gridNote, { color: theme.textMuted }]}>
+              {hi ? 'ग्रिड में जन्मतिथि के अंक + मूलांक (ड्राइवर) + भाग्यांक (कंडक्टर) शामिल हैं — मानक विधि (नामांक नहीं जोड़ा जाता)।'
+                  : 'Grid includes the birth-date digits + Mulank (Driver) + Bhagyank (Conductor) — the standard method (the name number is never added).'}
+            </Text>
+          </View>
+
+          {/* ── Core compatibility (Driver ↔ Conductor ↔ Name) ── */}
+          <Text style={[styles.section, { color: theme.goldText }]}>{hi ? 'अंकों का आपसी तालमेल' : 'Core Number Harmony'}</Text>
+          <View style={[styles.card, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(255,253,247,0.85)' }]}>
+            <CompatRow theme={theme} hi={hi} a={hi ? 'मूलांक' : 'Mulank'} an={profile.mulank.final} b={hi ? 'भाग्यांक' : 'Bhagyank'} bn={profile.bhagyank.final} rel={profile.coreCompatibility.driverConductor} relColor={relColor} L={L} />
+            <CompatRow theme={theme} hi={hi} a={hi ? 'मूलांक' : 'Mulank'} an={profile.mulank.final} b={hi ? 'नामांक' : 'Namank'} bn={profile.namank.final} rel={profile.coreCompatibility.driverName} relColor={relColor} L={L} />
+            <CompatRow theme={theme} hi={hi} a={hi ? 'भाग्यांक' : 'Bhagyank'} an={profile.bhagyank.final} b={hi ? 'नामांक' : 'Namank'} bn={profile.namank.final} rel={profile.coreCompatibility.conductorName} relColor={relColor} L={L} />
           </View>
 
           {/* ── Lucky ── */}
@@ -334,6 +346,17 @@ function LuckyRow({ theme, k, v }: any) {
     </View>
   );
 }
+function CompatRow({ theme, a, an, b, bn, rel, relColor, L }: any) {
+  const c = relColor(rel);
+  return (
+    <View style={styles.compatRow}>
+      <Text style={[styles.compatPair, { color: theme.text }]}>{a} <Text style={{ color: theme.gold1, fontFamily: fonts.interBold }}>{an}</Text>  <Text style={{ color: theme.textMuted }}>↔</Text>  {b} <Text style={{ color: theme.gold1, fontFamily: fonts.interBold }}>{bn}</Text></Text>
+      <View style={[styles.compatPill, { borderColor: c + '66' }]}>
+        <Text style={[styles.compatPillTxt, { color: c }]}>{rel.key === 'friend' ? '✓ ' : rel.key === 'enemy' ? '✕ ' : '• '}{L(rel)}</Text>
+      </View>
+    </View>
+  );
+}
 function AiBlock({ theme, title, b, list }: { theme: any; title: string; b?: { title?: string; meaning?: string } | null; list?: string[] }) {
   if (!b || !b.meaning) return null;
   return (
@@ -383,6 +406,11 @@ const styles = StyleSheet.create({
   gCell: { width: 60, height: 54, borderWidth: 1, alignItems: 'center', justifyContent: 'center', margin: 2, borderRadius: 8 },
   gNum: { fontFamily: fonts.interBold, fontSize: 16, letterSpacing: 1 },
   gMiss: { fontFamily: fonts.inter, fontSize: 12, textAlign: 'center', marginTop: 12 },
+  gridNote: { fontFamily: fonts.inter, fontSize: 10.5, lineHeight: 15, textAlign: 'center', marginTop: 12 },
+  compatRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 7, gap: 10 },
+  compatPair: { fontFamily: fonts.interSemi, fontSize: 12.5, flex: 1 },
+  compatPill: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 },
+  compatPillTxt: { fontFamily: fonts.interBold, fontSize: 11 },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'center', marginTop: 10 },
   arrow: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4 },
   arrowTxt: { fontFamily: fonts.interSemi, fontSize: 10.5 },

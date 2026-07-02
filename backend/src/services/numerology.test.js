@@ -55,6 +55,20 @@ eq('relation(1,3) = Friend', N.relation(1, 3).key, 'friend');
 eq('mobile 98765 43210 total = 9', N.numberTotal('98765 43210').final, 9); // 9+8+7+6+5+4+3+2+1+0 = 45 → 9
 eq('check ignores non-digits', N.numberTotal('98-76').final, N.numberTotal('9876').final);
 
+// ── Real user cases (verified by hand) ──
+// Teja Ram 05/02/2005: day 5 → Mulank 5; full 0+5+0+2+2+0+0+5=14→5 Bhagyank; Chaldean
+// T4 E5 J1 A1 R2 A1 M4 = 18 → 9 Namank.
+eq('Teja Ram Mulank = 5', N.mulank(5).final, 5);
+eq('Teja Ram Bhagyank = 5', N.bhagyank(5, 2, 2005).final, 5);
+eq('Teja Ram Namank = 9', N.namank('Teja Ram').final, 9);
+// Mahesh Choudhary 19/04/2005: 19→1 Mulank (Karmic); 1+9+0+4+2+0+0+5=21→3 Bhagyank;
+// Chaldean total 57 → 3 Namank; grid (DOB+driver+conductor) misses 6,7,8.
+eq('Mahesh Mulank = 1', N.mulank(19).final, 1);
+ok('Mahesh Mulank 19 is Karmic', N.mulank(19).isKarmic === true);
+eq('Mahesh Bhagyank = 3', N.bhagyank(19, 4, 2005).final, 3);
+eq('Mahesh Namank = 3', N.namank('Mahesh Choudhary').final, 3);
+eq('Mahesh grid missing = [6,7,8]', N.loShuGrid(19, 4, 2005).missing, [6, 7, 8]);
+
 // ── Full profile shape ──
 const prof = N.fullProfile({ name: 'Amit Sharma', d: 28, m: 7, y: 1990 });
 ok('profile has mulank.planet', !!prof.mulank.planet);

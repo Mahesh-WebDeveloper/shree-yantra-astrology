@@ -339,6 +339,13 @@ function fullProfile({ name = '', d, m, y, currentYear }) {
     personality: personality(name),
     personalYear: { ...py, meaning: PERSONAL_YEAR_MEANINGS[py.final] || null },
     loShu: loShuGrid(day, month, year),
+    // Friendship between the three core numbers (Driver ↔ Conductor ↔ Name) — when they
+    // are friendly, life flows with less struggle; clashes suggest areas to balance.
+    coreCompatibility: {
+      driverConductor: relation(mu.final, bh.final),
+      driverName: relation(mu.final, nk.final),
+      conductorName: relation(bh.final, nk.final),
+    },
     lucky: LUCKY[mu.final] || null,
     nameCorrection: name ? nameCorrectionHint(name, mu.final, bh.final) : null,
     disclaimer: DISCLAIMER,

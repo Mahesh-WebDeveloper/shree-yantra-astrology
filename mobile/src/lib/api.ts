@@ -1033,6 +1033,7 @@ export interface NumerologyProfile {
   namank: NumWithPlanet & { pythagorean: number };
   soulUrge: NumReduced; personality: NumReduced; personalYear: NumReduced & { meaning?: NumBi | null };
   loShu: { counts: Record<string, number>; positions: Record<string, [number, number]>; missing: number[]; presentArrows: LoShuArrow[]; missingArrows: LoShuArrow[] };
+  coreCompatibility: { driverConductor: NumRelation; driverName: NumRelation; conductorName: NumRelation };
   lucky: { numbers: number[]; colors: NumBiList; days: NumBiList; gem: NumBi } | null;
   nameCorrection: { currentNamank: number; relationToDriver: NumRelation; relationToDestiny: NumRelation; isHarmonious: boolean; suggestedNameNumbers: number[]; note: NumBi } | null;
   disclaimer: NumBi;
