@@ -141,6 +141,7 @@ const EX_ASC_LON = 130; // Leo 10°
 // the 16 Shodashavarga charts (D1..D60) with bilingual name + focus
 const CHART_META: { code: string; nameEn: string; nameHi: string; sanskrit: string; focusEn: string; focusHi: string; noteEn?: string; noteHi?: string }[] = [
   { code: 'D1', nameEn: 'Lagna / Rashi', nameHi: 'लग्न / राशि', sanskrit: 'Rashi', focusEn: 'whole life, body, identity', focusHi: 'पूरा जीवन, शरीर, पहचान' },
+  { code: 'Moon', nameEn: 'Chandra (Moon) Chart', nameHi: 'चंद्र कुंडली', sanskrit: 'Chandra Lagna', focusEn: 'mind, emotions, mental peace', focusHi: 'मन, भावनाएँ, मानसिक शांति', noteEn: 'This is the D1 chart drawn with the Moon as the ascendant (1st house). It is key for the mind, and dasha/transit results are often judged from it too.', noteHi: 'यह वही D1 कुंडली है, पर चंद्रमा को लग्न (पहला घर) मानकर बनाई गई। मन के लिए यह अहम है; दशा/गोचर के फल भी अक्सर इसी से देखे जाते हैं।' },
   { code: 'D2', nameEn: 'Hora', nameHi: 'होरा', sanskrit: 'Hora', focusEn: 'wealth & money flow', focusHi: 'धन और पैसे का प्रवाह', noteEn: 'Special rule: in the Hora chart every planet falls into only 2 signs — Leo (Sun’s hora) and Cancer (Moon’s hora). So most boxes stay empty here; that is normal.', noteHi: 'खास नियम: होरा चार्ट में हर ग्रह सिर्फ़ 2 राशियों में आता है — सिंह (सूर्य की होरा) और कर्क (चंद्र की होरा)। इसलिए ज़्यादातर खाने खाली रहते हैं; यह सामान्य है।' },
   { code: 'D3', nameEn: 'Drekkana', nameHi: 'द्रेष्काण', sanskrit: 'Drekkana', focusEn: 'siblings, courage, effort', focusHi: 'भाई-बहन, साहस, मेहनत' },
   { code: 'D4', nameEn: 'Chaturthamsha', nameHi: 'चतुर्थांश', sanskrit: 'Chaturthamsa', focusEn: 'home, property, comforts', focusHi: 'घर, संपत्ति, सुख-सुविधा' },
@@ -169,11 +170,16 @@ export interface ExampleChart {
 }
 
 function buildChart(meta: typeof CHART_META[number]): ExampleChart {
-  const ascSign = divisionalSign(meta.code, 'Leo', EX_ASC_LON) || 'Leo';
+  // Moon chart = the D1 (Rasi) chart read with the Moon as the ascendant — NOT a
+  // divisional formula. Everyone else uses the standard varga math.
+  const isMoon = meta.code === 'Moon';
+  const d1Sign = (lon: number) => SIGNS[Math.floor(lon / 30) % 12];
+  const moonLon = EX_PLANETS.find((p) => p.planet === 'Moon')?.lon ?? EX_ASC_LON;
+  const ascSign = isMoon ? d1Sign(moonLon) : (divisionalSign(meta.code, 'Leo', EX_ASC_LON) || 'Leo');
   const ascIdx = SIGN_IDX[ascSign];
 
   const placed = EX_PLANETS.map((p) => {
-    const dSign = divisionalSign(meta.code, SIGNS[Math.floor(p.lon / 30) % 12], p.lon) || SIGNS[Math.floor(p.lon / 30) % 12];
+    const dSign = isMoon ? d1Sign(p.lon) : (divisionalSign(meta.code, SIGNS[Math.floor(p.lon / 30) % 12], p.lon) || SIGNS[Math.floor(p.lon / 30) % 12]);
     const sIdx = SIGN_IDX[dSign];
     const house = mod12(sIdx - ascIdx) + 1;
     return { planet: p.planet, sIdx, house, dignity: dignityOf(p.planet, sIdx) };

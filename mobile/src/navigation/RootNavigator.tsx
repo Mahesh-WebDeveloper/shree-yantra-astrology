@@ -48,6 +48,7 @@ import { LifeTimelineScreen } from '../screens/LifeTimelineScreen';
 import { JanamPatriScreen } from '../screens/JanamPatriScreen';
 import { BrihatKundliScreen } from '../screens/BrihatKundliScreen';
 import { KundliLearnScreen } from '../screens/KundliLearnScreen';
+import { KundliExploreScreen } from '../screens/KundliExploreScreen';
 import { ExampleKundliScreen } from '../screens/ExampleKundliScreen';
 import { MuhuratScreen } from '../screens/MuhuratScreen';
 import { MuhuratFinderScreen } from '../screens/MuhuratFinderScreen';
@@ -128,6 +129,7 @@ export function RootNavigator() {
       <Stack.Screen name="JanamPatri" component={JanamPatriScreen} />
       <Stack.Screen name="BrihatKundli" component={BrihatKundliScreen} />
       <Stack.Screen name="KundliLearn" component={KundliLearnScreen} />
+      <Stack.Screen name="KundliExplore" component={KundliExploreScreen} />
       <Stack.Screen name="ExampleKundli" component={ExampleKundliScreen} />
       <Stack.Screen name="Muhurat" component={MuhuratScreen} />
       <Stack.Screen name="MuhuratFinder" component={MuhuratFinderScreen} />

@@ -178,6 +178,20 @@ export function KundliLearnScreen({ navigation }: any) {
               : 'Astronomy facts are kept factual and Jyotish is shown as the traditional interpretation — so the learning stays clear and trustworthy.'}
           </Text>
 
+          {/* CTA → interactive: tap a house → it highlights in the chart + Learn with AI */}
+          <Pressable
+            onPress={() => { hTap(); navigation.navigate('KundliExplore'); }}
+            style={({ pressed }) => [styles.exampleCta, { borderColor: theme.gold1, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.13)' : 'rgba(255,244,214,0.95)', opacity: pressed ? 0.9 : 1, marginBottom: 12 }]}
+          >
+            <View style={styles.exampleArt}><LearnArt art="readchart" dark={theme.isDark} width={66} height={56} /></View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={[styles.exampleKicker, { color: theme.gold2 }]}>{l === 'hi' ? '🔯 इंटरैक्टिव अभ्यास' : '🔯 Interactive practice'}</Text>
+              <Text style={[styles.exampleTitle, { color: theme.text }]}>{l === 'hi' ? 'भाव पर टैप करें → चार्ट में चमके' : 'Tap a house → it lights up'}</Text>
+              <Text style={[styles.exampleSub, { color: theme.textMuted }]}>{l === 'hi' ? '12 भाव + सभी 16 चार्ट, हर एक पर “AI से सीखें”' : '12 houses + all 16 charts, each with "Learn with AI"'}</Text>
+            </View>
+            <Text style={[styles.exampleArrow, { color: theme.gold1 }]}>›</Text>
+          </Pressable>
+
           {/* CTA → live example chart, box by box */}
           <Pressable
             onPress={() => { hTap(); navigation.navigate('ExampleKundli'); }}
