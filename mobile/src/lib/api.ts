@@ -18,6 +18,18 @@ export const API_BASE = (process.env.EXPO_PUBLIC_API_URL || (__DEV__ ? DEV_API :
 // parallel calls / slow upstream) can take a while, so we keep this generous; the
 // heaviest aggregators (Brihat, transit) override with even longer values below.
 const REQUEST_TIMEOUT_MS = 30000;
+// AI generation (with the provider fallback chain Gemini→Groq→OpenRouter, each retrying)
+// routinely takes 30–90s. A 30s client timeout aborts while the server is still working —
+// the server finishes and CACHES the result, so a manual retry then returns instantly,
+// which looked like "network error, but retry works". Give AI/heavy endpoints a generous
+// per-attempt timeout so the first attempt actually waits for the response.
+const AI_TIMEOUT_MS = 120000;
+const AI_PATH_RE = /\/api\/(ai\/|vedic-reading|brihat-kundli|match|gochar|remedies|life-timeline|transit-forecast|name-suggestions|baby-names|name-ask|numerology\/interpret|horoscope\/personalized|muhurat\/find)/;
+function timeoutForPath(path: string, explicit?: number): number {
+  const clean = path.split('?')[0];
+  if (AI_PATH_RE.test(clean)) return Math.max(explicit ?? 0, AI_TIMEOUT_MS);
+  return explicit ?? REQUEST_TIMEOUT_MS;
+}
 
 function activityForPath(path: string): NetworkActivityMeta | null {
   const clean = path.split('?')[0];
@@ -229,7 +241,7 @@ async function post<T>(path: string, body: any, method: 'POST' | 'PUT' | 'PATCH'
       method,
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(body),
-    }, timeoutMs), retryCountForPath(path, method));
+    }, timeoutForPath(path, timeoutMs)), retryCountForPath(path, method));
   } finally {
     endActivity();
   }
