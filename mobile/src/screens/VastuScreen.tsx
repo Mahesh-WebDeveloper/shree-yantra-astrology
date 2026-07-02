@@ -13,6 +13,7 @@ import { fonts } from '../theme/tokens';
 import { useLang } from '../i18n/LanguageProvider';
 import { hError, hSelect, hSuccess, hTap } from '../lib/haptics';
 import { useDialog } from '../components/DialogProvider';
+import { VastuCompass, CompassDir } from '../components/VastuCompass';
 import {
   analyzeVastu,
   askVastu,
@@ -206,6 +207,64 @@ function PlanDiagram({ plan }: { plan: VastuPlan }) {
   );
 }
 
+// Your CURRENT house drawn on a 3×3 direction grid — each room lands in the zone the
+// user picked, coloured by the audit verdict (✓ green good / ~ amber ok / ✕ red problem),
+// so anyone can SEE what is right and what needs fixing at a glance.
+const GRID_ZONES: { key: VastuDirectionKey; col: number; row: number }[] = [
+  { key: 'NW', col: 0, row: 0 }, { key: 'N', col: 1, row: 0 }, { key: 'NE', col: 2, row: 0 },
+  { key: 'W', col: 0, row: 1 }, { key: 'CENTER', col: 1, row: 1 }, { key: 'E', col: 2, row: 1 },
+  { key: 'SW', col: 0, row: 2 }, { key: 'S', col: 1, row: 2 }, { key: 'SE', col: 2, row: 2 },
+];
+function HouseGrid({ analysis }: { analysis: VastuAnalysisResponse }) {
+  const { theme } = useTheme();
+  const { lang } = useLang();
+  const hi = lang === 'hi';
+  const byDir: Record<string, VastuFinding[]> = {};
+  analysis.findings.forEach((f) => {
+    const d = (analysis.roomInputs[f.roomType] || {}).direction;
+    if (d) (byDir[d] = byDir[d] || []).push(f);
+  });
+  const statusColor = (s: string) => (s === 'problem' ? '#e06a5a' : s === 'good' ? '#3ec77a' : '#e0a92e');
+  const statusMark = (s: string) => (s === 'problem' ? '✕' : s === 'good' ? '✓' : '~');
+  const CELL = 32; // svg units per cell
+  const dirLbl = (k: VastuDirectionKey) => {
+    const d = DIRS.find((x) => x.key === k);
+    return d ? (hi ? d.hi : d.en) : k;
+  };
+  return (
+    <View style={[styles.planBox, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? '#040404' : '#fffaf0' }]}>
+      <Svg width="100%" height={330} viewBox="0 0 100 110">
+        <SvgText x={50} y={5} textAnchor="middle" fontSize={4} fontWeight="700" fill={theme.gold1}>{hi ? '↑ उत्तर' : '↑ NORTH'}</SvgText>
+        <Rect x={2} y={8} width={96} height={96} rx={2.5} fill="none" stroke={theme.gold2} strokeWidth={0.7} />
+        {GRID_ZONES.map((z) => {
+          const x0 = 2 + z.col * CELL; const y0 = 8 + z.row * CELL;
+          const items = byDir[z.key] || [];
+          const worst = items.some((i) => i.status === 'problem') ? 'problem' : items.some((i) => i.status === 'ok' || i.status === 'neutral' || i.status === 'unknown') && !items.some((i) => i.status === 'good') ? 'ok' : items.length ? 'good' : null;
+          return (
+            <G key={z.key}>
+              <Rect x={x0} y={y0} width={CELL} height={CELL} fill={worst ? statusColor(worst === 'ok' ? 'ok' : worst) + (theme.isDark ? '22' : '1d') : 'transparent'} stroke={theme.cardBorder} strokeWidth={0.35} />
+              <SvgText x={x0 + 2} y={y0 + 4.6} fontSize={3} fontWeight="700" fill={theme.isDark ? '#c9a961' : '#5f3808'}>{z.key === 'CENTER' ? (hi ? 'ब्रह्मस्थान' : 'Center') : dirLbl(z.key)}</SvgText>
+              {items.slice(0, 3).map((f, i) => (
+                <G key={f.id}>
+                  <SvgText x={x0 + 2} y={y0 + 11 + i * 6.4} fontSize={3.6} fontWeight="700" fill={statusColor(f.status === 'ok' || f.status === 'neutral' || f.status === 'unknown' ? 'ok' : f.status)}>
+                    {statusMark(f.status === 'ok' || f.status === 'neutral' || f.status === 'unknown' ? 'ok' : f.status)} {L(ROOM_SHORT[f.roomType] || f.room, hi)}
+                  </SvgText>
+                </G>
+              ))}
+              {z.key === 'CENTER' && items.length === 0 && (
+                <SvgText x={x0 + CELL / 2} y={y0 + CELL / 2 + 2} textAnchor="middle" fontSize={3} fill={theme.isDark ? 'rgba(252,232,168,0.5)' : '#8a6a3a'}>{hi ? 'खुला रखें' : 'keep open'}</SvgText>
+              )}
+            </G>
+          );
+        })}
+        <SvgText x={50} y={109} textAnchor="middle" fontSize={2.9} fill={theme.isDark ? 'rgba(252,232,168,0.62)' : '#5f3808'}>
+          {hi ? '✓ सही जगह  ·  ~ ठीक-ठाक  ·  ✕ सुधार चाहिए' : '✓ right place  ·  ~ acceptable  ·  ✕ needs fixing'}
+        </SvgText>
+      </Svg>
+    </View>
+  );
+}
+
 function FindingCard({ item }: { item: VastuFinding }) {
   const { theme } = useTheme();
   const { lang } = useLang();
@@ -243,6 +302,8 @@ export function VastuScreen({ navigation }: any) {
   const [question, setQuestion] = useState('');
   const [asking, setAsking] = useState(false);
   const [ai, setAi] = useState<VastuAskResponse | null>(null);
+  // compass target: which field the compass is currently measuring for
+  const [compassFor, setCompassFor] = useState<'facing' | VastuRoomType | null>(null);
 
   const input = useMemo(() => {
     const cleanRooms: any = {};
@@ -332,7 +393,12 @@ export function VastuScreen({ navigation }: any) {
             );
           })}
         </View>
-        <Text style={[styles.label, { color: theme.goldText }]}>{hi ? 'मुख्य फेसिंग दिशा' : 'Main facing direction'}</Text>
+        <View style={styles.labelRow}>
+          <Text style={[styles.label, { color: theme.goldText }]}>{hi ? 'घर का मुँह किस दिशा में है?' : 'Which way does the house face?'}</Text>
+          <Pressable onPress={() => { hTap(); setCompassFor('facing'); }} style={[styles.compassBtn, { borderColor: theme.gold2, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(255,247,224,0.95)' }]}>
+            <Text style={[styles.compassBtnTxt, { color: theme.gold1 }]}>🧭 {hi ? 'दिशा पता नहीं? कंपास खोलें' : "Don't know? Open compass"}</Text>
+          </Pressable>
+        </View>
         <DirectionPicker value={facing} onChange={(v) => v && setFacing(v)} />
         <View style={styles.dimRow}>
           <View style={{ flex: 1 }}>
@@ -363,7 +429,12 @@ export function VastuScreen({ navigation }: any) {
           <View key={r.key} style={styles.roomBlock}>
             <View style={styles.roomTitleRow}>
               <Text style={[styles.roomTitle, { color: theme.text }]}>{hi ? r.hi : r.en}</Text>
-              {r.required && <Text style={[styles.req, { color: theme.gold2 }]}>{hi ? 'मुख्य' : 'core'}</Text>}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                {r.required && <Text style={[styles.req, { color: theme.gold2 }]}>{hi ? 'मुख्य' : 'core'}</Text>}
+                <Pressable onPress={() => { hTap(); setCompassFor(r.key); }} hitSlop={8}>
+                  <Text style={[styles.compassMini, { color: theme.gold1 }]}>🧭</Text>
+                </Pressable>
+              </View>
             </View>
             <DirectionPicker value={rooms[r.key] || ''} onChange={(v) => setRoomDir(r.key, v)} allowCenter={r.key !== 'mainEntrance'} />
           </View>
@@ -383,10 +454,21 @@ export function VastuScreen({ navigation }: any) {
             </View>
           </View>
 
+          {Object.keys(analysis.roomInputs || {}).length > 0 && (
+            <View style={[styles.card, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : '#fffdf8' }]}>
+              <Text style={[styles.section, { color: theme.goldText, marginTop: 0 }]}>{hi ? 'आपका मौजूदा घर — नक्शे पर' : 'Your Current Home — On The Map'}</Text>
+              <Text style={[styles.helper, { color: theme.textMuted }]}>
+                {hi ? 'हर कमरा उसी दिशा के खाने में दिखाया गया है जो आपने भरी — हरा ✓ मतलब सही जगह, लाल ✕ मतलब सुधार चाहिए।'
+                    : 'Each room is drawn in the direction you entered — green ✓ means right place, red ✕ means it needs fixing.'}
+              </Text>
+              <HouseGrid analysis={analysis} />
+            </View>
+          )}
+
           <View style={[styles.card, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : '#fffdf8' }]}>
             <View style={styles.sectionLine}>
               <ServiceIcon name="vastu" color={theme.gold1} size={24} />
-              <Text style={[styles.section, { color: theme.goldText, marginTop: 0 }]}>{hi ? 'सुझाया गया नक्शा' : 'Suggested Map'}</Text>
+              <Text style={[styles.section, { color: theme.goldText, marginTop: 0 }]}>{hi ? 'आपके लिए आदर्श नक्शा' : 'Ideal Map For You'}</Text>
             </View>
             <Text style={[styles.helper, { color: theme.textMuted }]}>{L(analysis.suggestedPlan.subtitle, hi)}</Text>
             <PlanDiagram plan={analysis.suggestedPlan} />
@@ -475,6 +557,23 @@ export function VastuScreen({ navigation }: any) {
           </View>
         </View>
       )}
+
+      {/* phone compass — for users who don't know their directions */}
+      <VastuCompass
+        visible={compassFor != null}
+        title={compassFor === 'facing'
+          ? (hi ? 'घर की फेसिंग दिशा' : 'House Facing Direction')
+          : `${hi ? (ROOM_FIELDS.find((r) => r.key === compassFor)?.hi || '') : (ROOM_FIELDS.find((r) => r.key === compassFor)?.en || '')} ${hi ? 'की दिशा' : 'direction'}`}
+        instruction={compassFor === 'facing'
+          ? (hi ? 'मुख्य दरवाज़े के अंदर खड़े होकर बाहर (गली/सड़क) की ओर मुँह करें।' : 'Stand inside the main door and face outside (toward the street).')
+          : (hi ? 'घर के बीचों-बीच खड़े होकर उस कमरे की ओर मुँह करें।' : 'Stand at the centre of the house and face toward that room.')}
+        onPick={(d: CompassDir) => {
+          if (compassFor === 'facing') setFacing(d);
+          else if (compassFor) setRoomDir(compassFor, d);
+          setCompassFor(null);
+        }}
+        onClose={() => setCompassFor(null)}
+      />
     </Page>
   );
 }
@@ -491,6 +590,10 @@ const styles = StyleSheet.create({
   typeChip: { minHeight: 38, borderRadius: 999, borderWidth: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
   typeTxt: { fontFamily: fonts.interSemi, fontSize: 12 },
   label: { fontFamily: fonts.interSemi, fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase', marginTop: 12, marginBottom: 8 },
+  labelRow: { flexDirection: 'column', gap: 6 },
+  compassBtn: { alignSelf: 'flex-start', borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7, marginBottom: 8 },
+  compassBtnTxt: { fontFamily: fonts.interBold, fontSize: 11.5 },
+  compassMini: { fontSize: 16 },
   helper: { fontFamily: fonts.inter, fontSize: 12, lineHeight: 17, marginBottom: 10 },
   dimRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
   dirWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
