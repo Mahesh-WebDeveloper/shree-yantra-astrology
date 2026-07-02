@@ -22,6 +22,60 @@ const pad = (n: number) => (n < 10 ? '0' : '') + n;
 const toDMY = (d: Date) => `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
 const LOSHU_ROWS = [[4, 9, 2], [3, 5, 7], [8, 1, 6]];
 
+// Beginner tutorial — easy language + examples, for users with zero numerology knowledge.
+const GUIDE: { icon: string; tEn: string; tHi: string; bEn: string; bHi: string }[] = [
+  {
+    icon: '🔢', tEn: 'What is Numerology?', tHi: 'अंकशास्त्र क्या है?',
+    bEn: 'Every number 1–9 carries its own energy and personality. From your NAME and your DATE OF BIRTH we work out a few special numbers that describe your nature, your destiny, and your name\'s energy. It is pure maths — nothing is guessed.',
+    bHi: 'हर अंक (1 से 9) की अपनी एक ऊर्जा और स्वभाव होती है। आपके नाम और जन्म-तिथि से कुछ खास अंक निकलते हैं जो आपके स्वभाव, भाग्य और नाम की ऊर्जा को बताते हैं। यह पूरी तरह गणित है — कुछ भी अनुमान से नहीं।',
+  },
+  {
+    icon: '🚗', tEn: 'Mulank (Driver) — how it\'s found', tHi: 'मूलांक (ड्राइवर) कैसे निकलता है?',
+    bEn: 'Add only the DAY of birth to a single digit. Example: born on the 19th → 1+9 = 10 → 1+0 = 1. This is your inner nature — like the driver who steers your everyday behaviour.',
+    bHi: 'सिर्फ़ जन्म के दिन को जोड़कर एक अंक बनाएँ। उदाहरण: 19 तारीख → 1+9 = 10 → 1+0 = 1। यह आपका भीतरी स्वभाव है — जैसे गाड़ी का ड्राइवर जो आपके रोज़ के व्यवहार को चलाता है।',
+  },
+  {
+    icon: '🚌', tEn: 'Bhagyank (Conductor) — how it\'s found', tHi: 'भाग्यांक (कंडक्टर) कैसे निकलता है?',
+    bEn: 'Add the WHOLE date (day+month+year) to a single digit. Example: 19/04/2005 → 1+9+0+4+2+0+0+5 = 21 → 2+1 = 3. This is your life-path & destiny — like a bus conductor who manages the route.',
+    bHi: 'पूरी जन्म-तिथि (दिन+माह+वर्ष) को जोड़कर एक अंक बनाएँ। उदाहरण: 19/04/2005 → 1+9+0+4+2+0+0+5 = 21 → 2+1 = 3। यह आपका जीवन-पथ व भाग्य है — जैसे बस का कंडक्टर जो रास्ता संभालता है।',
+  },
+  {
+    icon: '🔤', tEn: 'Namank (Name number) — Chaldean', tHi: 'नामांक (नाम अंक) — चेल्डियन',
+    bEn: 'Each letter of your name has a number (Chaldean chart). Add them all and reduce. Example: "Mahesh Choudhary" → 57 → 5+7 = 12 → 3. (In Chaldean, the number 9 is sacred and given to no letter.)',
+    bHi: 'आपके नाम के हर अक्षर का एक अंक होता है (चेल्डियन चार्ट)। सबको जोड़कर घटाएँ। उदाहरण: "Mahesh Choudhary" → 57 → 5+7 = 12 → 3। (चेल्डियन में 9 पवित्र है, किसी अक्षर को नहीं दिया जाता।)',
+  },
+  {
+    icon: '✦', tEn: 'Master & Karmic numbers', tHi: 'मास्टर व कार्मिक अंक',
+    bEn: '11, 22 and 33 are "Master" numbers — very powerful, so they are NOT reduced. 13, 14, 16 and 19 are "Karmic Debt" numbers — they ask for extra effort and patience in life.',
+    bHi: '11, 22 और 33 “मास्टर” अंक हैं — बहुत शक्तिशाली, इसलिए इन्हें घटाया नहीं जाता। 13, 14, 16 और 19 “कार्मिक ऋण” अंक हैं — ये जीवन में थोड़ी अतिरिक्त मेहनत व धैर्य माँगते हैं।',
+  },
+  {
+    icon: '🔲', tEn: 'Lo Shu Grid & missing numbers', tHi: 'लो-शु ग्रिड व अनुपस्थित अंक',
+    bEn: 'A 3×3 magic square. We fill in the digits of your birth date + your Mulank + your Bhagyank (not the name). Whichever numbers are MISSING show the areas you can work on, with simple remedies.',
+    bHi: 'एक 3×3 जादुई वर्ग। इसमें आपकी जन्म-तिथि के अंक + मूलांक + भाग्यांक भरते हैं (नाम नहीं)। जो अंक अनुपस्थित हैं वे बताते हैं कि आपको किन क्षेत्रों पर काम करना है, साथ में आसान उपाय।',
+  },
+  {
+    icon: '🪐', tEn: 'Number → Planet', tHi: 'अंक → ग्रह',
+    bEn: 'Each number is ruled by a planet: 1-Sun, 2-Moon, 3-Jupiter, 4-Rahu, 5-Mercury, 6-Venus, 7-Ketu, 8-Saturn, 9-Mars. This links numerology with Vedic astrology.',
+    bHi: 'हर अंक का एक स्वामी ग्रह है: 1-सूर्य, 2-चंद्र, 3-गुरु, 4-राहु, 5-बुध, 6-शुक्र, 7-केतु, 8-शनि, 9-मंगल। यही अंकशास्त्र को वैदिक ज्योतिष से जोड़ता है।',
+  },
+  {
+    icon: '🤝', tEn: 'Harmony (friend/enemy)', tHi: 'तालमेल (मित्र/शत्रु)',
+    bEn: 'When your Mulank, Bhagyank and Namank are friends, life tends to flow with less struggle. If the name clashes, a small spelling change can improve harmony (see Name Harmony).',
+    bHi: 'जब आपके मूलांक, भाग्यांक और नामांक आपस में मित्र हों, तो जीवन में संघर्ष कम रहता है। यदि नाम टकराए, तो नाम में छोटा बदलाव सामंजस्य बढ़ा सकता है (नाम सामंजस्य देखें)।',
+  },
+  {
+    icon: '📖', tEn: 'How to read your report', tHi: 'अपनी रिपोर्ट कैसे पढ़ें',
+    bEn: '1) Mulank = who you are inside. 2) Bhagyank = your life direction & best career. 3) Check if your Namank matches them. 4) Lo Shu missing = areas to strengthen. 5) Personal Year = this year\'s focus.',
+    bHi: '1) मूलांक = आप भीतर से कैसे हैं। 2) भाग्यांक = आपकी जीवन-दिशा व सर्वोत्तम करियर। 3) देखें नामांक इनसे मेल खाता है या नहीं। 4) लो-शु अनुपस्थित = मज़बूत करने वाले क्षेत्र। 5) व्यक्तिगत वर्ष = इस साल का फोकस।',
+  },
+  {
+    icon: '🙏', tEn: 'Please note', tHi: 'ध्यान दें',
+    bEn: 'The maths here is exact and reproducible. The meanings are traditional guidance for reflection — not scientific fact. Use them as a helpful mirror, not a fixed prediction.',
+    bHi: 'यहाँ की गणना सटीक व पुनः-सत्यापित है। अर्थ परंपरागत मार्गदर्शन हैं (चिंतन हेतु) — वैज्ञानिक तथ्य नहीं। इन्हें एक सहायक दर्पण की तरह लें, तय भविष्यवाणी नहीं।',
+  },
+];
+
 export function NumerologyScreen({ navigation }: any) {
   const { theme } = useTheme();
   const { lang } = useLang();
@@ -33,6 +87,7 @@ export function NumerologyScreen({ navigation }: any) {
   const [dob, setDob] = useState<Date | null>(null);
   const [showDate, setShowDate] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
   const [profile, setProfile] = useState<NumerologyProfile | null>(null);
 
   const [reading, setReading] = useState<NumerologyReading | null>(null);
@@ -108,13 +163,32 @@ export function NumerologyScreen({ navigation }: any) {
         {busy && <ActivityIndicator color={theme.gold1} style={{ marginTop: 12 }} />}
       </View>
 
+      {/* ── learn / tutorial (for beginners) ── */}
+      <Pressable onPress={() => { hTap(); setShowGuide((s) => !s); }} style={[styles.learnBtn, { borderColor: theme.gold2 + '66', backgroundColor: theme.isDark ? 'rgba(233,184,80,0.06)' : 'rgba(255,247,224,0.6)' }]}>
+        <Text style={[styles.learnTxt, { color: theme.gold1 }]}>📖 {hi ? 'अंकशास्त्र कैसे समझें? (नए हैं तो पढ़ें)' : 'How to read Numerology? (new? tap here)'}</Text>
+        <Text style={[styles.learnChev, { color: theme.gold1 }]}>{showGuide ? '▲' : '▼'}</Text>
+      </Pressable>
+      {showGuide && (
+        <View style={{ gap: 8, marginTop: 10 }}>
+          {GUIDE.map((g, i) => (
+            <GuideItem key={i} theme={theme} icon={g.icon} title={hi ? g.tHi : g.tEn} body={hi ? g.bHi : g.bEn} />
+          ))}
+        </View>
+      )}
+
       {/* ── results ── */}
       {profile && !busy && (
         <View style={{ gap: 14, marginTop: 14 }} onLayout={onResultsLayout}>
           <Text style={[styles.section, { color: theme.goldText }]}>{hi ? 'मुख्य त्रिमूर्ति' : 'Core Trinity'}</Text>
-          <Trinity theme={theme} hi={hi} focus="nature" label={hi ? 'मूलांक' : 'Mulank'} tag={hi ? 'ड्राइवर · स्वभाव' : 'Driver · Nature'} data={profile.mulank} />
-          <Trinity theme={theme} hi={hi} focus="path" label={hi ? 'भाग्यांक' : 'Bhagyank'} tag={hi ? 'कंडक्टर · जीवन-पथ' : 'Conductor · Life Path'} data={profile.bhagyank} />
-          <Trinity theme={theme} hi={hi} focus="name" label={hi ? 'नामांक' : 'Namank'} tag={hi ? 'चेल्डियन · नाम कंपन' : 'Chaldean · Name'} data={profile.namank} />
+          <Trinity theme={theme} hi={hi} focus="nature" label={hi ? 'मूलांक' : 'Mulank'} tag={hi ? 'ड्राइवर · स्वभाव' : 'Driver · Nature'}
+            plain={hi ? 'सिर्फ़ जन्म-तारीख से बना अंक — यह आपका स्वभाव व व्यक्तित्व “चलाता” है (जैसे गाड़ी का ड्राइवर)।' : "Made from just your birth day — it 'drives' your nature & personality (like a car's driver)."}
+            data={profile.mulank} />
+          <Trinity theme={theme} hi={hi} focus="path" label={hi ? 'भाग्यांक' : 'Bhagyank'} tag={hi ? 'कंडक्टर · जीवन-पथ' : 'Conductor · Life Path'}
+            plain={hi ? 'पूरी जन्म-तिथि (दिन+माह+वर्ष) का जोड़ — यह आपके जीवन-पथ व भाग्य को दिशा देता है (जैसे बस का कंडक्टर)।' : 'Sum of your full birth date — it guides your life-path & destiny (like a bus conductor).'}
+            data={profile.bhagyank} />
+          <Trinity theme={theme} hi={hi} focus="name" label={hi ? 'नामांक' : 'Namank'} tag={hi ? 'चेल्डियन · नाम कंपन' : 'Chaldean · Name'}
+            plain={hi ? 'आपके नाम के अक्षरों की ऊर्जा (चेल्डियन विधि) — नाम मूलांक/भाग्यांक से मिले तो जीवन आसान।' : "The energy of your name's letters (Chaldean) — if it matches your Mulank/Bhagyank, life flows easier."}
+            data={profile.namank} />
 
           <View style={styles.row2}>
             <MiniStat theme={theme} label={hi ? 'सोल अर्ज' : 'Soul Urge'} n={profile.soulUrge.final} />
@@ -272,7 +346,7 @@ export function NumerologyScreen({ navigation }: any) {
 }
 
 // ── sub-components ──
-function Trinity({ theme, hi, label, tag, data, focus }: { theme: any; hi: boolean; label: string; tag: string; data: NumWithPlanet; focus: 'nature' | 'path' | 'name' }) {
+function Trinity({ theme, hi, label, tag, plain, data, focus }: { theme: any; hi: boolean; label: string; tag: string; plain: string; data: NumWithPlanet; focus: 'nature' | 'path' | 'name' }) {
   const L = (o?: { en: string; hi: string } | null) => (o ? (hi ? o.hi : o.en) : '');
   const LL = (o?: { en: string[]; hi: string[] } | null) => (o ? (hi ? o.hi : o.en) : []);
   const m = data.meaning;
@@ -294,8 +368,10 @@ function Trinity({ theme, hi, label, tag, data, focus }: { theme: any; hi: boole
         </View>
       </View>
 
+      <Text style={[styles.plainTxt, { color: theme.textMuted }]}>ℹ️ {plain}</Text>
+
       {m && (
-        <View style={{ marginTop: 13 }}>
+        <View style={{ marginTop: 11 }}>
           <View style={styles.kwWrap}>
             {LL(m.keywords).map((k) => (
               <View key={k} style={[styles.kw, { borderColor: theme.gold2 + '44', backgroundColor: theme.isDark ? 'rgba(233,184,80,0.07)' : 'rgba(255,247,224,0.85)' }]}>
@@ -357,6 +433,18 @@ function CompatRow({ theme, a, an, b, bn, rel, relColor, L }: any) {
     </View>
   );
 }
+function GuideItem({ theme, icon, title, body }: { theme: any; icon: string; title: string; body: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Pressable onPress={() => { hTap(); setOpen((o) => !o); }} style={[styles.guideItem, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(255,253,247,0.85)' }]}>
+      <View style={styles.guideHead}>
+        <Text style={[styles.guideTitle, { color: theme.text }]}>{icon}  {title}</Text>
+        <Text style={[styles.guideChevron, { color: theme.gold1 }]}>{open ? '−' : '+'}</Text>
+      </View>
+      {open && <Text style={[styles.guideBody, { color: theme.textMuted }]}>{body}</Text>}
+    </Pressable>
+  );
+}
 function AiBlock({ theme, title, b, list }: { theme: any; title: string; b?: { title?: string; meaning?: string } | null; list?: string[] }) {
   if (!b || !b.meaning) return null;
   return (
@@ -378,6 +466,15 @@ const styles = StyleSheet.create({
   pVal: { fontFamily: fonts.interSemi, fontSize: 14.5, marginTop: 2 },
   section: { fontFamily: fonts.cinzelSemi, fontSize: 13, letterSpacing: 1, marginTop: 4 },
 
+  learnBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderRadius: 14, paddingVertical: 13, paddingHorizontal: 15, marginTop: 14 },
+  learnTxt: { fontFamily: fonts.interBold, fontSize: 13, flex: 1 },
+  learnChev: { fontFamily: fonts.interBold, fontSize: 12, marginLeft: 8 },
+  guideItem: { borderWidth: 1, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 14 },
+  guideHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  guideTitle: { fontFamily: fonts.interSemi, fontSize: 13, flex: 1 },
+  guideChevron: { fontFamily: fonts.interBold, fontSize: 18, marginLeft: 10 },
+  guideBody: { fontFamily: fonts.inter, fontSize: 12.5, lineHeight: 19, marginTop: 9 },
+  plainTxt: { fontFamily: fonts.inter, fontSize: 11.5, lineHeight: 16, marginTop: 10, fontStyle: 'italic' },
   numCircle: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center' },
   numBig: { fontFamily: fonts.playfairBold, fontSize: 38, color: '#2a1c00' },
   tLabel: { fontFamily: fonts.interBold, fontSize: 17 },
