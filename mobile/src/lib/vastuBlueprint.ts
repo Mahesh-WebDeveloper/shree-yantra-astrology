@@ -29,6 +29,7 @@ export interface BlueprintInput {
   garden?: boolean; borewell?: boolean; septic?: boolean; rainwater?: boolean; solar?: boolean;
 }
 
+export interface SubRoom { type: string; name: Bi; x: number; y: number; w: number; h: number }
 export interface BpRoom {
   id: string; type: string; name: Bi; zone: ZoneKey;
   x: number; y: number; w: number; h: number;          // ft, relative to built top-left (N = top)
@@ -36,6 +37,7 @@ export interface BpRoom {
   color: string;
   direction: Bi; areaSqft: number; vastuScore: number;
   reason: Bi; tip: Bi;
+  sub?: SubRoom[];                                      // nested partitions (attached bath, utility)
   editable: boolean;
 }
 export interface BpMarker { id: string; kind: 'tank-overhead' | 'tank-underground'; x: number; y: number; label: Bi }
@@ -123,8 +125,11 @@ export function buildBlueprint(inp: BlueprintInput): Blueprint {
   }
   if (inp.dining) put('W', 'dining');
   if (inp.study) put(entranceZone === 'E' ? 'W' : 'E', 'study');
+  // bathrooms: give each bedroom an ATTACHED bath (carved later); the rest are common.
+  const attachN = Math.min(Math.min(3, inp.bathrooms), Math.min(5, inp.bedrooms));
+  const commonBaths = Math.max(0, Math.min(3, inp.bathrooms) - attachN);
   const bathZones: ZoneKey[] = ['NW', 'S', 'W'];
-  for (let i = 0; i < Math.max(0, Math.min(3, inp.bathrooms)); i += 1) put(bathZones[i % 3], 'bath');
+  for (let i = 0; i < commonBaths; i += 1) put(bathZones[i % 3], 'bath');
   if (inp.store) put('S', 'store');
   if (inp.staircase) put('S', 'stairs');
   if (inp.parking && freeW + freeL <= 0) put('NW', 'parking');
@@ -171,6 +176,23 @@ export function buildBlueprint(inp: BlueprintInput): Blueprint {
     });
     y += h;
   });
+
+  // ── nested partitions: attached bath in each bedroom, utility in the kitchen ──
+  const rnd = (v: number) => Math.round(v * 10) / 10;
+  const carve = (parent: BpRoom, type: string, name: Bi, ftW: number, ftH: number) => {
+    const sw = Math.min(ftW, parent.w * 0.46);
+    const sh = Math.min(ftH, parent.h * 0.5);
+    if (sw < 4 || sh < 4) return;
+    const iRight = parent.x + parent.w / 2 < builtW / 2;   // interior (toward centre) is to the right
+    const iUp = parent.y + parent.h / 2 > builtL / 2;       // interior is up
+    const sx = iRight ? parent.x + parent.w - sw : parent.x;
+    const sy = iUp ? parent.y : parent.y + parent.h - sh;
+    parent.sub = [...(parent.sub || []), { type, name, x: rnd(sx), y: rnd(sy), w: rnd(sw), h: rnd(sh) }];
+  };
+  const bedrooms = rooms.filter((r) => r.type === 'master' || r.type === 'bedroom' || r.type === 'guestBedroom');
+  bedrooms.slice(0, attachN).forEach((br) => carve(br, 'bath', N('Attached Bath', 'संलग्न स्नान'), 8, 6));
+  const kitchenRoom = rooms.find((r) => r.type === 'kitchen');
+  if (kitchenRoom && kitchenRoom.w >= 12 && kitchenRoom.h >= 12) carve(kitchenRoom, 'utility', N('Utility', 'यूटिलिटी'), 6, 6);
 
   // ── entrance on the facing edge, in the auspicious pada ──
   const seg = Math.min(3.5, Math.max(2.6, builtW * 0.09));

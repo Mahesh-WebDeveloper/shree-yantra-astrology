@@ -244,17 +244,45 @@ function RoomShape({ r, X, Y, s, hi, on, onSelect, bcx, bcy, builtW, builtL }: {
     if (Math.abs(r.x + r.w - builtW) <= eps) wins.push(<WindowSym key="e" x1={x + w} y1={cy - winLen / 2} x2={x + w} y2={cy + winLen / 2} vertical />);
   }
 
+  // shift the room name away from any nested partition (attached bath / utility)
+  const sub0 = r.sub && r.sub[0];
+  let nameCx = cx, nameCy = cy;
+  if (sub0) {
+    const subRight = sub0.x + sub0.w / 2 > r.x + r.w / 2;
+    const subTop = sub0.y + sub0.h / 2 < r.y + r.h / 2;
+    nameCx = cx + (subRight ? -w * 0.16 : w * 0.16);
+    nameCy = cy + (subTop ? h * 0.22 : -h * 0.18);
+  }
+
   return (
     <G onPress={onSelect ? () => onSelect(r.id) : undefined}>
       <Rect x={x} y={y} width={w} height={h} fill={r.color} fillOpacity={on ? 0.62 : open ? 0.28 : 0.42} stroke={on ? SEL : WALL} strokeWidth={on ? 0.9 : 0.5} strokeDasharray={open ? '1.4 0.9' : undefined} />
       <Furniture r={r} x={x} y={y} w={w} h={h} />
       {door}
       {wins}
+      {r.sub?.map((sb, i) => {
+        const sx = X(sb.x), sy = Y(sb.y), sw = sb.w * s, sh = sb.h * s;
+        const isBath = sb.type === 'bath';
+        return (
+          <G key={`sub${i}`}>
+            <Rect x={sx} y={sy} width={sw} height={sh} fill={isBath ? '#8fc6d0' : '#c7c0a6'} fillOpacity={0.6} stroke={WALL} strokeWidth={0.55} />
+            {isBath ? (
+              <>
+                <Circle cx={sx + 1.5} cy={sy + 1.9} r={0.85} fill="none" stroke={INK} strokeWidth={0.28} opacity={0.85} />
+                <Rect x={sx + sw - 2.4} y={sy + 1} width={1.5} height={1.15} rx={0.4} fill="none" stroke={INK} strokeWidth={0.28} opacity={0.85} />
+              </>
+            ) : (
+              <Rect x={sx + 0.9} y={sy + 0.9} width={Math.max(1, sw - 1.8)} height={1.3} fill="none" stroke={INK} strokeWidth={0.28} opacity={0.85} />
+            )}
+            {Math.min(sw, sh) > 5.5 && <SvgText x={sx + sw / 2} y={sy + sh / 2 + 0.9} textAnchor="middle" fontSize={1.85} fontWeight="700" fill={INK}>{L(sb.name, hi)}</SvgText>}
+          </G>
+        );
+      })}
       {showName && (
-        <SvgText x={cx} y={showDims ? cy - 0.4 : cy + nameF * 0.35} textAnchor="middle" fontSize={nameF} fontWeight="700" fill={INK}>{L(r.name, hi)}</SvgText>
+        <SvgText x={nameCx} y={showDims ? nameCy - 0.4 : nameCy + nameF * 0.35} textAnchor="middle" fontSize={nameF} fontWeight="700" fill={INK}>{L(r.name, hi)}</SvgText>
       )}
       {showDims && (
-        <SvgText x={cx} y={cy + 3} textAnchor="middle" fontSize={2.15} fill={MUTE}>{ftLbl(r.w)} × {ftLbl(r.h)}</SvgText>
+        <SvgText x={nameCx} y={nameCy + 3} textAnchor="middle" fontSize={2.15} fill={MUTE}>{ftLbl(r.w)} × {ftLbl(r.h)}</SvgText>
       )}
     </G>
   );
