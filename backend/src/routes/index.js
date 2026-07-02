@@ -40,6 +40,7 @@ const rcmCtrl = require('../controllers/ramcharitmanas.controller');
 const rigvedaCtrl = require('../controllers/rigveda.controller');
 const vedaCtrl = require('../controllers/veda.controller');
 const dailyCtrl = require('../controllers/daily.controller');
+const vastuCtrl = require('../controllers/vastu.controller');
 const requireAuth = require('../middleware/auth');
 const requireAdmin = require('../middleware/admin');
 const { avatarUpload, contentImageUpload } = require('../middleware/upload');
@@ -61,7 +62,7 @@ const aiLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Too many requests. Please wait a moment and try again. · बहुत अधिक अनुरोध — कृपया थोड़ी देर बाद प्रयास करें।' },
 });
-router.use(['/ai', '/baby-names', '/name-ask', '/match', '/gochar', '/remedies', '/vedic-reading', '/life-timeline', '/transit-forecast', '/name-suggestions', '/brihat-kundli', '/numerology/interpret'], aiLimiter);
+router.use(['/ai', '/baby-names', '/name-ask', '/match', '/gochar', '/remedies', '/vedic-reading', '/life-timeline', '/transit-forecast', '/name-suggestions', '/brihat-kundli', '/numerology/interpret', '/vastu/ask'], aiLimiter);
 
 router.get('/health', health);
 
@@ -223,6 +224,8 @@ router.post('/numerology/interpret', numerologyCtrl.interpret);
 router.post('/numerology/check-number', numerologyCtrl.checkNumber);
 router.get('/horoscope', horoscopeCtrl.publicList);
 router.post('/horoscope/personalized', horoscopeCtrl.personalized);
+router.post('/vastu/analyze', vastuCtrl.analyze);
+router.post('/vastu/ask', vastuCtrl.ask);
 
 // AI (Gemini) — VedAstro data + user info se rashifal/insights generate
 router.post('/ai/daily-prediction', aiCtrl.dailyPrediction);

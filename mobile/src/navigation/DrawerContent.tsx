@@ -14,7 +14,7 @@ import { useLang } from '../i18n/LanguageProvider';
 
 const NAV_KEY: Record<string, string> = {
   Home: 'nav.home', DailyPrediction: 'nav.dailyPrediction', Choghadiya: 'nav.choghadiya',
-  Predictions: 'nav.predictions', Panchang: 'nav.panchang', JanamPatri: 'nav.janamPatri', BrihatKundli: 'nav.brihatKundli', BabyNames: 'nav.babyNames', Numerology: 'nav.numerology',
+  Predictions: 'nav.predictions', Panchang: 'nav.panchang', JanamPatri: 'nav.janamPatri', BrihatKundli: 'nav.brihatKundli', BabyNames: 'nav.babyNames', Numerology: 'nav.numerology', Vastu: 'nav.vastu',
   AiAstrologer: 'nav.aiAstrologer', Library: 'nav.library', Kundli: 'nav.kundli', Profile: 'nav.profile',
   Notifications: 'nav.notifications', ManageSubscription: 'nav.subscription',
   Help: 'nav.help', SignIn: 'common.logout',
@@ -137,6 +137,7 @@ const NAV: Array<
   { label: 'Brihat Kundli Report', icon: 'book', route: 'BrihatKundli', stack: true },
   { label: 'Child Name Finder', icon: 'spark', route: 'BabyNames', stack: true },
   { label: 'Numerology · Ank Jyotish', icon: 'star', route: 'Numerology', stack: true },
+  { label: 'Vastu Shastra', icon: 'home', route: 'Vastu', stack: true },
   { label: 'Panchang', icon: 'star', route: 'Panchang', stack: true },
   { label: 'Choghadiya', icon: 'clock', route: 'Choghadiya', tab: 'Choghadiya' },
   { label: 'Divine Library', icon: 'book', route: 'Library', tab: 'Library' },

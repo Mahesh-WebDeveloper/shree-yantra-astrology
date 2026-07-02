@@ -8,7 +8,7 @@ import Svg, { Path, Circle, Line, Rect, Polyline, Ellipse, G } from 'react-nativ
  */
 export type ServiceIconName =
   | 'zodiac' | 'milan' | 'calendar' | 'clock' | 'name' | 'orbit'
-  | 'gem' | 'timeline' | 'book' | 'kundli' | 'scroll' | 'star';
+  | 'gem' | 'timeline' | 'book' | 'kundli' | 'scroll' | 'star' | 'vastu';
 
 export function ServiceIcon({ name, color, size = 26 }: { name: ServiceIconName; color: string; size?: number }) {
   const p = { stroke: color, strokeWidth: 1.7, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -97,6 +97,15 @@ export function ServiceIcon({ name, color, size = 26 }: { name: ServiceIconName;
       {name === 'star' && (
         <G {...p}>
           <Path d="M12 3.2l2.5 5.6 6.1.6-4.6 4 1.4 6L12 16.9 6.6 19.4l1.4-6-4.6-4 6.1-.6L12 3.2Z" />
+        </G>
+      )}
+      {name === 'vastu' && (
+        <G {...p}>
+          <Path d="M3.5 11.5 12 4l8.5 7.5" />
+          <Path d="M5.5 10.5v9h13v-9" />
+          <Path d="M9 19.5v-5h6v5" />
+          <Path d="M8 10.5h8M12 7.5v3" />
+          <Path d="M4.8 14.2h14.4M12 10.5v9" opacity={0.7} />
         </G>
       )}
     </Svg>

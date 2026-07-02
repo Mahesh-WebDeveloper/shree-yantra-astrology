@@ -33,6 +33,7 @@ export const STRINGS: Record<string, { en: string; hi: string }> = {
   'nav.janamPatri': { en: 'Janam Patri', hi: 'जन्म पत्रिका' },
   'nav.brihatKundli': { en: 'Brihat Kundli', hi: 'बृहत कुंडली' },
   'nav.numerology': { en: 'Numerology', hi: 'अंकशास्त्र' },
+  'nav.vastu': { en: 'Vastu Shastra', hi: 'वास्तु शास्त्र' },
   'brihat.title': { en: 'Brihat Kundli Report', hi: 'बृहत कुंडली रिपोर्ट' },
   'brihat.entrySub': { en: 'Charts, varga, dasha, dosha, transits and domain-wise advanced report', hi: 'कुंडली, वर्ग, दशा, दोष, गोचर और जीवन-क्षेत्र आधारित विस्तृत रिपोर्ट' },
   'nav.babyNames': { en: 'Child Name Finder', hi: 'शिशु के शुभ नाम' },

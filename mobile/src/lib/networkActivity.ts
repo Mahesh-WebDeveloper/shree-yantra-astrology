@@ -14,6 +14,7 @@ export type NetworkActivityKey =
   | 'profile'
   | 'match'
   | 'forecast'
+  | 'vastu'
   | 'location';
 
 export interface NetworkActivityMeta {

@@ -24,7 +24,7 @@ const REQUEST_TIMEOUT_MS = 30000;
 // which looked like "network error, but retry works". Give AI/heavy endpoints a generous
 // per-attempt timeout so the first attempt actually waits for the response.
 const AI_TIMEOUT_MS = 120000;
-const AI_PATH_RE = /\/api\/(ai\/|vedic-reading|brihat-kundli|match|gochar|remedies|life-timeline|transit-forecast|name-suggestions|baby-names|name-ask|numerology\/interpret|horoscope\/personalized|muhurat\/find)/;
+const AI_PATH_RE = /\/api\/(ai\/|vedic-reading|brihat-kundli|match|gochar|remedies|life-timeline|transit-forecast|name-suggestions|baby-names|name-ask|numerology\/interpret|horoscope\/personalized|muhurat\/find|vastu\/ask)/;
 function timeoutForPath(path: string, explicit?: number): number {
   const clean = path.split('?')[0];
   if (AI_PATH_RE.test(clean)) return Math.max(explicit ?? 0, AI_TIMEOUT_MS);
@@ -45,6 +45,8 @@ function activityForPath(path: string): NetworkActivityMeta | null {
   if (clean.includes('/transit-forecast')) return { key: 'forecast', primary: true, titleEn: 'Computing Year Forecast', titleHi: 'वार्षिक फल की गणना हो रही है', detailEn: 'Saturn and Jupiter transit years are being prepared.', detailHi: 'शनि और गुरु के गोचर वर्ष तैयार हो रहे हैं।' };
   if (clean.includes('/remedies')) return { key: 'remedies', primary: true, titleEn: 'Preparing Remedies', titleHi: 'उपाय तैयार हो रहे हैं', detailEn: 'Chart-based remedies are being prepared.', detailHi: 'कुंडली आधारित उपाय तैयार हो रहे हैं।' };
   if (clean.includes('/vedic-reading')) return { key: 'reading', primary: true, titleEn: 'Preparing Reading', titleHi: 'फलादेश तैयार हो रहा है', detailEn: 'Classical chart indications are being assembled.', detailHi: 'शास्त्रीय कुंडली संकेत जोड़े जा रहे हैं।' };
+  if (clean.includes('/vastu/ask')) return { key: 'vastu', titleEn: 'Preparing Vastu Guidance', titleHi: 'वास्तु मार्गदर्शन तैयार हो रहा है', detailEn: 'Your layout and Vastu rule context are being explained clearly.', detailHi: 'आपके नक्शे और वास्तु नियमों को सरल उत्तर में बदला जा रहा है।' };
+  if (clean.includes('/vastu')) return { key: 'vastu', primary: true, titleEn: 'Checking Vastu Layout', titleHi: 'वास्तु लेआउट जांचा जा रहा है', detailEn: 'Directions, rooms and suggested map are being prepared.', detailHi: 'दिशाएं, कमरे और सुझाया गया नक्शा तैयार हो रहा है।' };
   if (clean.includes('/panchang') || clean.includes('/muhurat')) return { key: 'panchang', primary: true, titleEn: 'Computing Panchang', titleHi: 'पंचांग की गणना हो रही है', detailEn: 'Local time, tithi and nakshatra are being checked.', detailHi: 'स्थानीय समय, तिथि और नक्षत्र जांचे जा रहे हैं।' };
   // daily / period rashifal = the screen's MAIN content (empty until it loads) → full loader
   if (clean.includes('/ai/daily-prediction') || clean.includes('/ai/period-prediction')) return { key: 'ai', primary: true, titleEn: 'Preparing Your Rashifal', titleHi: 'आपका राशिफल तैयार हो रहा है', detailEn: 'Reading your chart and today’s panchang.', detailHi: 'आपकी कुंडली और आज का पंचांग पढ़ा जा रहा है।' };
@@ -104,7 +106,7 @@ function retryCountForPath(path: string, method: string) {
   const safeComputeEndpoints = [
     '/brihat-kundli', '/kundli', '/varga', '/dasha', '/life-timeline', '/gochar', '/transit-forecast',
     '/remedies', '/vedic-reading', '/panchang', '/muhurat', '/festival', '/ai', '/name-suggestions',
-    '/horoscope/personalized', '/match', '/baby-names', '/name-ask',
+    '/horoscope/personalized', '/match', '/baby-names', '/name-ask', '/vastu',
   ];
   if (safeComputeEndpoints.some((endpoint) => clean.includes(endpoint))) return 1;
   return method === 'GET' ? 1 : 0;
@@ -1098,6 +1100,87 @@ export interface VedicReadingResponse {
   source?: string;
 }
 export const getVedicReading = (input: KundliInput) => post<VedicReadingResponse>('/api/vedic-reading', { ...input, lang: apiLang });
+
+// ── Vastu Shastra (rule-engine + grounded AI guide) ──
+export type VastuDirectionKey = 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW' | 'CENTER';
+export type VastuRoomType =
+  | 'mainEntrance' | 'kitchen' | 'masterBedroom' | 'bedroom' | 'pujaRoom' | 'toilet'
+  | 'livingRoom' | 'studyRoom' | 'staircase' | 'overheadWaterTank' | 'undergroundWater' | 'cashLocker';
+export interface VastuDirection { key: VastuDirectionKey; en: string; hi: string; element?: BiText | null }
+export interface VastuSource { id: string; title: string; type: string; note: string; url?: string }
+export interface VastuFinding {
+  id: string;
+  roomType: VastuRoomType;
+  room: BiText;
+  direction: VastuDirection;
+  status: 'good' | 'ok' | 'problem' | 'neutral' | 'unknown';
+  severity: 'positive' | 'low' | 'medium' | 'high';
+  weight: number;
+  score: number;
+  title: BiText;
+  finding: BiText;
+  why: BiText;
+  recommendation: BiText;
+  remedy: BiText;
+  sourceIds: string[];
+  confidence: string;
+}
+export interface VastuPlanRoom {
+  id: string; type: string; direction: VastuDirection; label: BiText;
+  x: number; y: number; w: number; h: number; color: string; note?: string;
+}
+export interface VastuPlan {
+  id: string;
+  title: BiText;
+  subtitle: BiText;
+  viewBox: string;
+  northAtTop: boolean;
+  plot: { width: number; length: number; unit: string; area: number };
+  facing: VastuDirection;
+  entrance: { direction: VastuDirection; label: BiText; x1: number; y1: number; x2: number; y2: number };
+  rooms: VastuPlanRoom[];
+  notes: { title: BiText; text: BiText }[];
+  correctionsForExisting: {
+    roomType: VastuRoomType; room: BiText; current: VastuDirection; suggested: VastuDirection[]; text: BiText; nonDemolition: BiText;
+  }[];
+}
+export interface VastuAnalysisResponse {
+  generatedAt: string;
+  version: string;
+  input: { propertyType: string; facing: VastuDirectionKey; plot: { width: number; length: number; unit: string; area: number }; requirements: any };
+  roomInputs: Record<string, { direction: VastuDirectionKey; size?: string | null; note?: string }>;
+  summary: { score: number | null; band: string; title: BiText; text: BiText; auditedRooms: number; note: BiText };
+  findings: VastuFinding[];
+  priority: VastuFinding[];
+  positives: VastuFinding[];
+  suggestedPlan: VastuPlan;
+  learn: { id: string; title: BiText; body: BiText }[];
+  directions: VastuDirection[];
+  sourcesUsed: VastuSource[];
+  safety: { title: BiText; text: BiText; sourceId: string };
+}
+export interface VastuAskResponse {
+  analysis: VastuAnalysisResponse;
+  answer: string;
+  sections: { title?: string; text?: string }[];
+  remedies: string[];
+  followUpQuestions: string[];
+  confidence: number;
+  sourceNote: string;
+  aiAssisted: boolean;
+}
+export interface VastuAnalyzeInput {
+  propertyType?: 'home' | 'flat' | 'shop' | 'office' | string;
+  facing?: VastuDirectionKey | string;
+  plot?: { width?: number | string; length?: number | string; unit?: string };
+  rooms?: Partial<Record<VastuRoomType, VastuDirectionKey | string | { direction?: VastuDirectionKey | string; size?: string; note?: string }>>;
+  requirements?: { bedrooms?: number; floors?: number; includePujaRoom?: boolean; includeStudy?: boolean };
+  lang?: 'en' | 'hi';
+}
+export const analyzeVastu = (input: VastuAnalyzeInput) =>
+  post<VastuAnalysisResponse>('/api/vastu/analyze', { ...input, lang: apiLang });
+export const askVastu = (input: VastuAnalyzeInput & { question: string; analysis?: VastuAnalysisResponse }) =>
+  post<VastuAskResponse>('/api/vastu/ask', { ...input, lang: apiLang }, 'POST', 60000);
 
 // ── Life Timeline (Vimshottari Dasha — age-wise) ──
 export interface DashaPeriodPhala { effect?: string; good?: string; caution?: string; remedy?: string }

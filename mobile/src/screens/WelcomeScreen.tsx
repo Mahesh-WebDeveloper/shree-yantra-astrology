@@ -180,6 +180,7 @@ const SERVICES: { key: string; en: string; hi: string; subEn: string; subHi: str
   { key: 'muhurat', en: 'Shubh Muhurat', hi: 'शुभ मुहूर्त', subEn: 'Best day & time for griha pravesh, vivah…', subHi: 'गृह प्रवेश, विवाह आदि का शुभ दिन व समय', icon: 'calendar', accent: '#f3cd7e', route: 'Muhurat', tint: ['#9a6418', '#5c3a10', '#2e1d08'], lightTint: ['#fbeccf', '#fef5e2', '#fffbf2'] },
   { key: 'baby', en: 'Child Name Finder', hi: 'शिशु के शुभ नाम', subEn: 'Lucky names with meaning for your child', subHi: 'अर्थ सहित बच्चे के सुंदर व शुभ नाम', icon: 'name', accent: '#8ce0e0', route: 'BabyNames', tint: ['#1f7373', '#114a4a', '#0a2626'], lightTint: ['#d8f0f0', '#e8f9f9', '#f4fdfd'] },
   { key: 'numerology', en: 'Numerology', hi: 'अंकशास्त्र', subEn: 'Mulank, Bhagyank, Lo Shu grid & lucky numbers', subHi: 'मूलांक, भाग्यांक, लो-शु ग्रिड व शुभ अंक', icon: 'name', accent: '#cbb1f2', route: 'Numerology', tint: ['#4a2f7a', '#2f1d54', '#160d2c'], lightTint: ['#ebe1fb', '#f4eefe', '#faf7ff'] },
+  { key: 'vastu', en: 'Vastu Shastra', hi: 'वास्तु शास्त्र', subEn: 'Home audit, corrections and Vastu map', subHi: 'घर का ऑडिट, सुधार और वास्तु नक्शा', icon: 'vastu', accent: '#f0c65e', route: 'Vastu', tint: ['#7a4b14', '#4d2d0d', '#241406'], lightTint: ['#f6ecd8', '#fff4dc', '#fffaf0'] },
 ];
 
 const SERVICE_LIGHT_ACCENT: Record<string, string> = {
@@ -190,6 +191,7 @@ const SERVICE_LIGHT_ACCENT: Record<string, string> = {
   muhurat: '#70420a',
   baby: '#176c70',
   numerology: '#5b2f92',
+  vastu: '#70420a',
 };
 
 const LIGHT_TINT: Record<string, readonly [string, string, string]> = {
@@ -201,6 +203,7 @@ const LIGHT_TINT: Record<string, readonly [string, string, string]> = {
   panchang: ['#f6ecd8', '#fbf4e3', '#fffaf0'],
   patri: ['#f7e6ee', '#fbeef4', '#fff7fb'],
   babynames: ['#dff0ef', '#ecf8f7', '#f6fdfc'],
+  vastu: ['#f6ecd8', '#fff4dc', '#fffaf0'],
 };
 
 const Chevron = ({ c, size = 16 }: { c: string; size?: number }) => (
