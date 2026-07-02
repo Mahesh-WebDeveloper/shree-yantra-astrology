@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Circle, G, Line, Polygon, Rect, Text as SvgText } from 'react-native-svg';
 import { Page } from '../components/Page';
+import { BlueprintCanvas } from '../components/BlueprintCanvas';
+import { BlueprintViewer } from '../components/BlueprintViewer';
 import { GradientText } from '../components/GradientText';
 import { GoldButton } from '../components/GoldButton';
 import { VastuCompass, CompassDir } from '../components/VastuCompass';
@@ -23,91 +24,6 @@ const FACINGS: { key: Facing; en: string; hi: string }[] = [
   { key: 'S', en: 'South', hi: 'दक्षिण' }, { key: 'W', en: 'West', hi: 'पश्चिम' },
 ];
 
-// ── the blueprint drawing ────────────────────────────────────────────────────
-function BlueprintSvg({ bp, selected, onSelect }: { bp: Blueprint; selected: string | null; onSelect: (id: string) => void }) {
-  const { theme } = useTheme();
-  const { lang } = useLang();
-  const hi = lang === 'hi';
-  const PAD = 14;
-  const s = (100 - PAD * 2) / bp.plotW;               // ft → svg units
-  const H = PAD * 2 + bp.plotL * s;
-  const px = (v: number) => PAD + v * s;               // plot coords
-  const bx = (v: number) => PAD + (bp.offX + v) * s;   // built coords
-  const by = (v: number) => PAD + (bp.offY + v) * s;
-  const ink = theme.isDark ? '#fce8a8' : '#26190a';
-  const muted = theme.isDark ? 'rgba(252,232,168,0.6)' : '#5f3808';
-  const bg = theme.isDark ? '#050503' : '#fffaf0';
-  const hasPlot = bp.plotW > bp.builtW || bp.plotL > bp.builtL;
-
-  return (
-    <View style={[styles.svgBox, { borderColor: theme.cardBorder, backgroundColor: bg }]}>
-      <Svg width="100%" height={360} viewBox={`0 0 100 ${H}`}>
-        {/* north arrow */}
-        <G>
-          <Polygon points={`50,${PAD - 11} 48.4,${PAD - 6.5} 51.6,${PAD - 6.5}`} fill={theme.gold1} />
-          <SvgText x={50} y={PAD - 3} textAnchor="middle" fontSize={3.4} fontWeight="700" fill={theme.gold1}>{hi ? 'उत्तर' : 'NORTH'}</SvgText>
-        </G>
-
-        {/* plot boundary (dashed) + setback labels */}
-        {hasPlot && (
-          <>
-            <Rect x={px(0)} y={PAD} width={bp.plotW * s} height={bp.plotL * s} fill="none" stroke={muted} strokeWidth={0.35} strokeDasharray="2 1.4" />
-            <SvgText x={px(bp.plotW / 2)} y={PAD - 0.8} textAnchor="middle" fontSize={2.5} fill={muted}>{hi ? `प्लॉट ${ft(bp.plotW)} × ${ft(bp.plotL)}` : `Plot ${ft(bp.plotW)} × ${ft(bp.plotL)}`}</SvgText>
-            {bp.margins.n > 2 && <SvgText x={bx(bp.builtW / 2)} y={PAD + bp.margins.n * s * 0.55} textAnchor="middle" fontSize={2.4} fill={muted}>{hi ? `उत्तर में खुला ${ft(bp.margins.n)}` : `open N ${ft(bp.margins.n)}`}</SvgText>}
-            {bp.margins.e > 2 && <SvgText x={bx(bp.builtW) + bp.margins.e * s * 0.5} y={by(bp.builtL / 2)} textAnchor="middle" fontSize={2.4} fill={muted}>{hi ? `पूर्व ${ft(bp.margins.e)}` : `E ${ft(bp.margins.e)}`}</SvgText>}
-          </>
-        )}
-
-        {/* built area */}
-        <Rect x={bx(0)} y={by(0)} width={bp.builtW * s} height={bp.builtL * s} fill="none" stroke={theme.gold2} strokeWidth={0.8} />
-
-        {/* rooms */}
-        {bp.rooms.map((r) => {
-          const on = selected === r.id;
-          return (
-            <G key={r.id} onPress={() => onSelect(r.id)}>
-              <Rect
-                x={bx(r.x) + 0.35} y={by(r.y) + 0.35}
-                width={Math.max(1, r.w * s - 0.7)} height={Math.max(1, r.h * s - 0.7)}
-                rx={0.8}
-                fill={r.color} fillOpacity={theme.isDark ? (on ? 0.42 : 0.24) : (on ? 0.5 : 0.3)}
-                stroke={on ? theme.gold1 : r.color} strokeWidth={on ? 0.8 : 0.4}
-              />
-              <SvgText x={bx(r.x + r.w / 2)} y={by(r.y + r.h / 2) - 0.6} textAnchor="middle" fontSize={2.7} fontWeight="700" fill={ink}>{L(r.name, hi)}</SvgText>
-              <SvgText x={bx(r.x + r.w / 2)} y={by(r.y + r.h / 2) + 2.6} textAnchor="middle" fontSize={2.4} fill={muted}>{ft(r.w)} × {ft(r.h)}</SvgText>
-            </G>
-          );
-        })}
-
-        {/* water tank markers */}
-        {bp.markers.map((m) => (
-          <G key={m.id}>
-            {m.kind === 'tank-overhead'
-              ? <Rect x={bx(m.x) - 2} y={by(m.y) - 2} width={4} height={4} fill="none" stroke="#4aa3df" strokeWidth={0.5} />
-              : <Circle cx={bx(m.x)} cy={by(m.y)} r={2.1} fill="none" stroke="#4aa3df" strokeWidth={0.5} />}
-            <SvgText x={bx(m.x)} y={by(m.y) + 5} textAnchor="middle" fontSize={2.1} fill="#4aa3df">{L(m.label, hi)}</SvgText>
-          </G>
-        ))}
-
-        {/* entrance */}
-        <Line x1={bx(bp.entrance.x1)} y1={by(bp.entrance.y1)} x2={bx(bp.entrance.x2)} y2={by(bp.entrance.y2)} stroke={theme.gold1} strokeWidth={1.6} strokeLinecap="round" />
-        <SvgText
-          x={bx((bp.entrance.x1 + bp.entrance.x2) / 2) + (bp.entrance.x1 === bp.entrance.x2 ? (bp.entrance.x1 === 0 ? -2 : 2) : 0)}
-          y={by((bp.entrance.y1 + bp.entrance.y2) / 2) + (bp.entrance.y1 === bp.entrance.y2 ? (bp.entrance.y1 === 0 ? -1.6 : 3.4) : 0)}
-          textAnchor={bp.entrance.x1 === bp.entrance.x2 ? (bp.entrance.x1 === 0 ? 'end' : 'start') : 'middle'}
-          fontSize={2.5} fontWeight="700" fill={theme.gold1}
-        >⌂ {L(bp.entrance.label, hi)}</SvgText>
-
-        {/* dimension lines for the built block */}
-        <Line x1={bx(0)} y1={H - PAD + 4} x2={bx(bp.builtW)} y2={H - PAD + 4} stroke={muted} strokeWidth={0.3} />
-        <SvgText x={bx(bp.builtW / 2)} y={H - PAD + 7} textAnchor="middle" fontSize={2.7} fill={ink}>{hi ? `निर्माण ${ft(bp.builtW)}` : `Built ${ft(bp.builtW)}`}</SvgText>
-        <Line x1={PAD - 4} y1={by(0)} x2={PAD - 4} y2={by(bp.builtL)} stroke={muted} strokeWidth={0.3} />
-        <SvgText x={PAD - 5.6} y={by(bp.builtL / 2)} textAnchor="middle" fontSize={2.7} fill={ink} rotation={-90} origin={`${PAD - 5.6},${by(bp.builtL / 2)}`}>{ft(bp.builtL)}</SvgText>
-      </Svg>
-    </View>
-  );
-}
-
 // ── screen ───────────────────────────────────────────────────────────────────
 export function VastuBlueprintScreen({ navigation }: any) {
   const { theme } = useTheme();
@@ -127,6 +43,7 @@ export function VastuBlueprintScreen({ navigation }: any) {
   const [opts, setOpts] = useState({ pooja: true, dining: true, study: false, store: false, staircase: true, parking: false, tankOverhead: true, tankUnderground: false });
   const [bp, setBp] = useState<Blueprint | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
+  const [fullscreen, setFullscreen] = useState(false);
   const [question, setQuestion] = useState('');
   const [asking, setAsking] = useState(false);
   const [ai, setAi] = useState<VastuAskResponse | null>(null);
@@ -261,11 +178,17 @@ export function VastuBlueprintScreen({ navigation }: any) {
             <Text style={[styles.helper, { color: theme.textMuted }]}>
               {hi ? 'किसी भी कमरे पर टैप करें — नीचे उसका साइज़ बदल सकते हैं।' : 'Tap any room — adjust its size below.'}
             </Text>
-            <BlueprintSvg bp={bp} selected={selected} onSelect={(id) => { hSelect(); setSelected(id === selected ? null : id); }} />
+            <BlueprintCanvas bp={bp} selected={selected} onSelect={(id) => { hSelect(); setSelected(id === selected ? null : id); }} height={390} />
+            <Pressable onPress={() => { hTap(); setFullscreen(true); }} style={[styles.fsBtn, { borderColor: theme.gold2, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(255,247,224,0.95)' }]}>
+              <Text style={[styles.fsBtnTxt, { color: theme.gold1 }]}>⛶ {hi ? 'पूरी स्क्रीन पर देखें (ज़ूम करें)' : 'View fullscreen (zoom)'}</Text>
+            </Pressable>
 
             {selRoom && selRoom.editable && (
               <View style={[styles.editBox, { borderColor: theme.gold2 + '66', backgroundColor: theme.isDark ? 'rgba(233,184,80,0.07)' : 'rgba(255,247,224,0.9)' }]}>
                 <Text style={[styles.editTitle, { color: theme.gold1 }]}>{L(selRoom.name, hi)} — {ft(selRoom.w)} × {ft(selRoom.h)}</Text>
+                <Text style={[styles.editMeta, { color: theme.textMuted }]}>
+                  {hi ? `दिशा-क्षेत्र: ${selRoom.zone} · क्षेत्रफल ${Math.round(selRoom.w * selRoom.h)} वर्ग फ़ीट` : `Zone: ${selRoom.zone} · area ${Math.round(selRoom.w * selRoom.h)} sq ft`}
+                </Text>
                 <View style={styles.editRow}>
                   <Text style={[styles.editLbl, { color: theme.textSoft }]}>{hi ? 'चौड़ाई' : 'Width'}</Text>
                   <Stepper onMinus={() => adjust(selRoom, -1, 0)} onPlus={() => adjust(selRoom, 1, 0)} theme={theme} value={ft(selRoom.w)} />
@@ -322,6 +245,8 @@ export function VastuBlueprintScreen({ navigation }: any) {
         </View>
       )}
 
+      {bp && <BlueprintViewer bp={bp} visible={fullscreen} onClose={() => setFullscreen(false)} />}
+
       <VastuCompass
         visible={showCompass}
         title={hi ? 'घर की फेसिंग दिशा' : 'House Facing Direction'}
@@ -359,9 +284,11 @@ const styles = StyleSheet.create({
   chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 13, paddingVertical: 8, minWidth: 44, alignItems: 'center' },
   chipTxt: { fontFamily: fonts.interSemi, fontSize: 12 },
   toggleWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  svgBox: { borderWidth: 1, borderRadius: 18, overflow: 'hidden' },
+  fsBtn: { borderWidth: 1, borderRadius: 12, paddingVertical: 11, alignItems: 'center', marginTop: 10 },
+  fsBtnTxt: { fontFamily: fonts.interBold, fontSize: 12.5 },
   editBox: { borderWidth: 1, borderRadius: 14, padding: 12, marginTop: 12 },
-  editTitle: { fontFamily: fonts.interBold, fontSize: 13.5, marginBottom: 8 },
+  editTitle: { fontFamily: fonts.interBold, fontSize: 13.5, marginBottom: 2 },
+  editMeta: { fontFamily: fonts.inter, fontSize: 11, marginBottom: 8 },
   editRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 },
   editLbl: { fontFamily: fonts.interSemi, fontSize: 12.5 },
   editNote: { fontFamily: fonts.inter, fontSize: 10.6, lineHeight: 15, marginTop: 10 },
