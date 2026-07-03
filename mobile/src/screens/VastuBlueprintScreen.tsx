@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Page } from '../components/Page';
 import { BlueprintCanvas } from '../components/BlueprintCanvas';
 import { BlueprintViewer } from '../components/BlueprintViewer';
+import { renderAsciiPlan, asciiPlanMarkdown } from '../lib/vastuAscii';
 import { GradientText } from '../components/GradientText';
 import { GoldButton } from '../components/GoldButton';
 import { VastuCompass, CompassDir } from '../components/VastuCompass';
@@ -45,6 +46,7 @@ export function VastuBlueprintScreen({ navigation }: any) {
   const [selected, setSelected] = useState<string | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const [showMandala, setShowMandala] = useState(false);
+  const [viewMode, setViewMode] = useState<'svg' | 'ascii'>('ascii');
   const [question, setQuestion] = useState('');
   const [asking, setAsking] = useState(false);
   const [ai, setAi] = useState<VastuAskResponse | null>(null);
@@ -176,18 +178,47 @@ export function VastuBlueprintScreen({ navigation }: any) {
         <View style={{ gap: 14, marginTop: 14 }} onLayout={onResultsLayout}>
           <View style={[styles.card, { borderColor: theme.gold2 + '55', backgroundColor: theme.isDark ? 'rgba(233,184,80,0.04)' : 'rgba(255,250,236,0.95)' }]}>
             <Text style={[styles.section, { color: theme.goldText, marginTop: 0 }]}>{hi ? 'आपका वास्तु नक्शा' : 'Your Vastu Map'}</Text>
-            <Text style={[styles.helper, { color: theme.textMuted }]}>
-              {hi ? 'किसी भी कमरे पर टैप करें — नीचे उसका साइज़ बदल सकते हैं।' : 'Tap any room — adjust its size below.'}
-            </Text>
-            <BlueprintCanvas bp={bp} selected={selected} showMandala={showMandala} onSelect={(id) => { hSelect(); setSelected(id === selected ? null : id); }} height={390} />
-            <View style={styles.toolRow}>
-              <Pressable onPress={() => { hSelect(); setShowMandala((v) => !v); }} style={[styles.toolBtn, { borderColor: showMandala ? theme.gold1 : theme.gold2, backgroundColor: showMandala ? theme.gold1 : (theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(255,247,224,0.95)') }]}>
-                <Text style={[styles.toolBtnTxt, { color: showMandala ? theme.buttonInk : theme.gold1 }]}>{showMandala ? '✓ ' : ''}🕉 {hi ? 'वास्तु मंडल' : 'Vastu Mandala'}</Text>
-              </Pressable>
-              <Pressable onPress={() => { hTap(); setFullscreen(true); }} style={[styles.toolBtn, { borderColor: theme.gold2, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(255,247,224,0.95)' }]}>
-                <Text style={[styles.toolBtnTxt, { color: theme.gold1 }]}>⛶ {hi ? 'पूरी स्क्रीन (ज़ूम)' : 'Fullscreen (zoom)'}</Text>
-              </Pressable>
+
+            {/* view mode: line map (text) vs SVG drawing */}
+            <View style={styles.segRow}>
+              {(['ascii', 'svg'] as const).map((m) => {
+                const on = viewMode === m;
+                return (
+                  <Pressable key={m} onPress={() => { hSelect(); setViewMode(m); }} style={[styles.seg, { borderColor: on ? theme.gold1 : theme.cardBorder, backgroundColor: on ? theme.gold1 : 'transparent' }]}>
+                    <Text style={[styles.segTxt, { color: on ? theme.buttonInk : theme.gold1 }]}>{m === 'ascii' ? (hi ? '📐 लाइन मैप' : '📐 Line map') : (hi ? '🖼 चित्र नक्शा' : '🖼 Drawing')}</Text>
+                  </Pressable>
+                );
+              })}
             </View>
+
+            {viewMode === 'ascii' ? (
+              <>
+                <Text style={[styles.helper, { color: theme.textMuted }]}>
+                  {hi ? 'रेखाओं से बना नक्शा (वास्तु नियमों से) — दाएँ-बाएँ स्क्रॉल करें। नीचे शेयर/कॉपी करें।' : 'A line-drawn plan (from Vastu rules) — scroll sideways. Share/copy below.'}
+                </Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator style={[styles.asciiBox, { borderColor: theme.gold2 + '55', backgroundColor: theme.isDark ? '#0a0a06' : '#fffdf5' }]}>
+                  <Text style={[styles.asciiTxt, { color: theme.isDark ? '#f0d98a' : '#3a2a10' }]} selectable>{renderAsciiPlan(bp, hi)}</Text>
+                </ScrollView>
+                <Pressable onPress={async () => { hTap(); try { await Share.share({ message: asciiPlanMarkdown(bp, hi) }); } catch {} }} style={[styles.toolBtn, { marginTop: 10, borderColor: theme.gold2, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(255,247,224,0.95)' }]}>
+                  <Text style={[styles.toolBtnTxt, { color: theme.gold1 }]}>📤 {hi ? 'नक्शा शेयर/कॉपी करें (markdown)' : 'Share / copy map (markdown)'}</Text>
+                </Pressable>
+              </>
+            ) : (
+              <>
+                <Text style={[styles.helper, { color: theme.textMuted }]}>
+                  {hi ? 'किसी भी कमरे पर टैप करें — नीचे उसका साइज़ बदल सकते हैं।' : 'Tap any room — adjust its size below.'}
+                </Text>
+                <BlueprintCanvas bp={bp} selected={selected} showMandala={showMandala} onSelect={(id) => { hSelect(); setSelected(id === selected ? null : id); }} height={390} />
+                <View style={styles.toolRow}>
+                  <Pressable onPress={() => { hSelect(); setShowMandala((v) => !v); }} style={[styles.toolBtn, { borderColor: showMandala ? theme.gold1 : theme.gold2, backgroundColor: showMandala ? theme.gold1 : (theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(255,247,224,0.95)') }]}>
+                    <Text style={[styles.toolBtnTxt, { color: showMandala ? theme.buttonInk : theme.gold1 }]}>{showMandala ? '✓ ' : ''}🕉 {hi ? 'वास्तु मंडल' : 'Vastu Mandala'}</Text>
+                  </Pressable>
+                  <Pressable onPress={() => { hTap(); setFullscreen(true); }} style={[styles.toolBtn, { borderColor: theme.gold2, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(255,247,224,0.95)' }]}>
+                    <Text style={[styles.toolBtnTxt, { color: theme.gold1 }]}>⛶ {hi ? 'पूरी स्क्रीन (ज़ूम)' : 'Fullscreen (zoom)'}</Text>
+                  </Pressable>
+                </View>
+              </>
+            )}
 
             {selRoom && (
               <View style={[styles.editBox, { borderColor: theme.gold2 + '66', backgroundColor: theme.isDark ? 'rgba(233,184,80,0.07)' : 'rgba(255,247,224,0.9)' }]}>
@@ -311,6 +342,11 @@ const styles = StyleSheet.create({
   chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 13, paddingVertical: 8, minWidth: 44, alignItems: 'center' },
   chipTxt: { fontFamily: fonts.interSemi, fontSize: 12 },
   toggleWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  segRow: { flexDirection: 'row', gap: 8, marginTop: 4, marginBottom: 10 },
+  seg: { flex: 1, borderWidth: 1, borderRadius: 999, paddingVertical: 9, alignItems: 'center' },
+  segTxt: { fontFamily: fonts.interBold, fontSize: 12.5 },
+  asciiBox: { borderWidth: 1, borderRadius: 12, padding: 10, marginTop: 4 },
+  asciiTxt: { fontFamily: 'monospace', fontSize: 8.5, lineHeight: 11 },
   toolRow: { flexDirection: 'row', gap: 10, marginTop: 10 },
   toolBtn: { flex: 1, borderWidth: 1, borderRadius: 12, paddingVertical: 11, alignItems: 'center' },
   toolBtnTxt: { fontFamily: fonts.interBold, fontSize: 12 },
