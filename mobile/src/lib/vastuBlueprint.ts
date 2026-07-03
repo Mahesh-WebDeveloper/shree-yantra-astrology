@@ -1,10 +1,10 @@
 /**
  * vastuBlueprint.ts — deterministic Vastu house-plan layout engine (NO AI, pure rules).
  *
- * Space-planning model: rooms are assigned to their classical Vastu zone, then packed as
- * PROPORTIONAL ROW-STRIPS (North band / Centre band / South band). Row heights and room
- * widths are sized from realistic per-type target areas — so a living room is large, a
- * bathroom small, and nothing is an equal box. Non-overlapping by construction.
+ * Space-planning model: rooms are assigned to their classical Vastu zone, then placed
+ * inside a 9-zone Vastu grid. Multi-room zones are split into compact sub-cells and
+ * room sizes are balanced from realistic target areas plus the available zone size.
+ * Non-overlapping by construction.
  *
  * Classical placement (Mayamata / Manasara / Brihat Samhita tradition):
  *   SW master · SE kitchen · NE pooja + underground water · N living · NW guest/bath/
@@ -85,15 +85,89 @@ const ROOM_META: Record<string, { name: Bi; color: string; score: number; reason
 const ROW_OF: Record<ZoneKey, 0 | 1 | 2> = { NW: 0, N: 0, NE: 0, W: 1, C: 1, E: 1, SW: 2, S: 2, SE: 2 };
 const HPOS_OF: Record<ZoneKey, 0 | 1 | 2> = { NW: 0, W: 0, SW: 0, N: 1, C: 1, S: 1, NE: 2, E: 2, SE: 2 };
 
-function fitWidths(ideals: number[], total: number, min: number): number[] {
-  const sumI = ideals.reduce((a, b) => a + b, 0) || 1;
-  const w = ideals.map((v) => (total * v) / sumI);
-  const deficit = w.reduce((a, x) => a + Math.max(0, min - x), 0);
-  if (deficit > 0) {
-    const bigSum = w.filter((x) => x > min).reduce((a, x) => a + x, 0);
-    return w.map((x) => (x < min ? min : bigSum > deficit ? x - (deficit * x) / bigSum : x));
+const ROOM_ASPECT: Record<string, number> = {
+  master: 1.05, bedroom: 1.08, guestBedroom: 1.08, kitchen: 1.0, dining: 1.18,
+  living: 1.35, study: 1.1, bath: 0.72, pooja: 0.92, store: 0.82, stairs: 0.78,
+  parking: 1.55, veranda: 1.5, brahmasthan: 1.0,
+};
+
+type Slot = { x: number; y: number; w: number; h: number };
+
+function clamp(n: number, lo: number, hi: number) {
+  return Math.max(lo, Math.min(hi, n));
+}
+
+function splitZone(cell: Slot, count: number): Slot[] {
+  if (count <= 1) return [cell];
+  if (count === 2) {
+    if (cell.w >= cell.h) {
+      const w = cell.w / 2;
+      return [{ x: cell.x, y: cell.y, w, h: cell.h }, { x: cell.x + w, y: cell.y, w: cell.w - w, h: cell.h }];
+    }
+    const h = cell.h / 2;
+    return [{ x: cell.x, y: cell.y, w: cell.w, h }, { x: cell.x, y: cell.y + h, w: cell.w, h: cell.h - h }];
   }
-  return w;
+
+  // Three or more rooms should not become one long strip. A compact sub-grid feels
+  // closer to an architectural block plan and keeps room proportions usable.
+  const cols = Math.max(1, Math.min(count, Math.ceil(Math.sqrt((count * cell.w) / Math.max(1, cell.h)))));
+  const rows = Math.ceil(count / cols);
+  const slots: Slot[] = [];
+  for (let i = 0; i < count; i += 1) {
+    const row = Math.floor(i / cols);
+    const col = i % cols;
+    const isLastRow = row === rows - 1;
+    const colsInRow = isLastRow ? count - row * cols : cols;
+    const rowH = cell.h / rows;
+    const colW = cell.w / colsInRow;
+    slots.push({ x: cell.x + col * colW, y: cell.y + row * rowH, w: colW, h: rowH });
+  }
+  return slots;
+}
+
+function anchorInSlot(slot: Slot, zone: ZoneKey, type: string, scale: number): Slot {
+  const aspect = ROOM_ASPECT[type] || 1;
+  const pad = Math.min(1.2, Math.max(0.35, Math.min(slot.w, slot.h) * 0.05));
+  const maxW = Math.max(1, slot.w - pad * 2);
+  const maxH = Math.max(1, slot.h - pad * 2);
+  const slotArea = maxW * maxH;
+  const minFill =
+    type === 'pooja' ? 0.34
+      : type === 'bath' || type === 'store' || type === 'stairs' ? 0.44
+        : type === 'brahmasthan' || type === 'veranda' ? 0.62
+          : 0.56;
+  const area = clamp((IDEAL_AREA[type] || 100) * scale, slotArea * minFill, slotArea * 0.96);
+  let w = clamp(Math.sqrt(area * aspect), Math.min(5, maxW), maxW);
+  let h = clamp(area / w, Math.min(5, maxH), maxH);
+  if (h > maxH) {
+    h = maxH;
+    w = clamp(area / h, Math.min(5, maxW), maxW);
+  }
+  const col = HPOS_OF[zone];
+  const row = ROW_OF[zone];
+  const x = col === 0 ? slot.x + pad : col === 2 ? slot.x + slot.w - w - pad : slot.x + (slot.w - w) / 2;
+  const y = row === 0 ? slot.y + pad : row === 2 ? slot.y + slot.h - h - pad : slot.y + (slot.h - h) / 2;
+  return { x, y, w, h };
+}
+
+function zoneGrid(builtW: number, builtL: number): Record<ZoneKey, Slot> {
+  const sideW = clamp(builtW * 0.32, Math.min(8, builtW * 0.28), builtW * 0.38);
+  const eastW = sideW;
+  const centreW = Math.max(6, builtW - sideW - eastW);
+  const northH = clamp(builtL * 0.31, Math.min(8, builtL * 0.26), builtL * 0.36);
+  const southH = clamp(builtL * 0.34, Math.min(9, builtL * 0.28), builtL * 0.4);
+  const centreH = Math.max(6, builtL - northH - southH);
+  return {
+    NW: { x: 0, y: 0, w: sideW, h: northH },
+    N: { x: sideW, y: 0, w: centreW, h: northH },
+    NE: { x: sideW + centreW, y: 0, w: eastW, h: northH },
+    W: { x: 0, y: northH, w: sideW, h: centreH },
+    C: { x: sideW, y: northH, w: centreW, h: centreH },
+    E: { x: sideW + centreW, y: northH, w: eastW, h: centreH },
+    SW: { x: 0, y: northH + centreH, w: sideW, h: southH },
+    S: { x: sideW, y: northH + centreH, w: centreW, h: southH },
+    SE: { x: sideW + centreW, y: northH + centreH, w: eastW, h: southH },
+  };
 }
 
 export function buildBlueprint(inp: BlueprintInput): Blueprint {
@@ -135,46 +209,30 @@ export function buildBlueprint(inp: BlueprintInput): Blueprint {
   if (inp.parking && freeW + freeL <= 0) put('NW', 'parking');
   if (zoneRooms[entranceZone].length === 0) put(entranceZone, 'veranda');
 
-  // ── flatten into 3 rows (N / C / S), ordered W→E within each row ──
-  type RowItem = { type: string; name?: Bi; zone: ZoneKey; ideal: number };
-  const rows: RowItem[][] = [[], [], []];
-  (Object.keys(zoneRooms) as ZoneKey[]).forEach((z) => {
-    zoneRooms[z].forEach((r) => rows[ROW_OF[z]].push({ ...r, zone: z, ideal: IDEAL_AREA[r.type] || 100 }));
-  });
-  rows.forEach((row) => row.sort((a, b) => HPOS_OF[a.zone] - HPOS_OF[b.zone] || a.zone.localeCompare(b.zone)));
-
-  // ── row heights: weighted by content, soft-clamped so no band is too thin ──
-  const rowIdeal = rows.map((row) => (row.length ? row.reduce((s, r) => s + r.ideal, 0) : 0.0001));
-  const sumRow = rowIdeal.reduce((a, b) => a + b, 0);
-  let rowH = rowIdeal.map((v) => (builtL * v) / sumRow);
-  // clamp non-empty rows to [0.24, 0.42]·builtL, then renormalize
-  const active = rows.map((r) => r.length > 0);
-  rowH = rowH.map((h, i) => (active[i] ? Math.max(builtL * 0.24, Math.min(builtL * 0.42, h)) : 0));
-  const hSum = rowH.reduce((a, b) => a + b, 0);
-  rowH = rowH.map((h) => (h * builtL) / hSum);
-
+  // ── 9-zone Vastu grid placement (not row strips). The old row-strip packing
+  // made large plots look like arbitrary bars. This keeps each room visually inside
+  // its classical direction zone and uses realistic aspect ratios.
   const rooms: BpRoom[] = [];
-  let y = 0;
-  rows.forEach((row, ri) => {
-    if (!row.length) return;
-    const h = rowH[ri];
-    const widths = fitWidths(row.map((r) => r.ideal), builtW, Math.min(8, builtW / row.length));
-    let x = 0;
-    row.forEach((r, i) => {
-      const w = i === row.length - 1 ? builtW - x : Math.round(widths[i] * 10) / 10;
+  const cells = zoneGrid(builtW, builtL);
+  const areaScale = clamp((builtW * builtL) / (30 * 45), 1, 36);
+  (Object.keys(zoneRooms) as ZoneKey[]).forEach((z) => {
+    const list = zoneRooms[z];
+    if (!list.length) return;
+    const slots = splitZone(cells[z], list.length);
+    list.forEach((r, i) => {
+      const slot = slots[i] || cells[z];
+      const rect = anchorInSlot(slot, z, r.type, areaScale);
       const meta = ROOM_META[r.type];
-      const rw = Math.max(1, Math.round(w * 10) / 10);
-      const rh = Math.round(h * 10) / 10;
+      const rw = Math.max(1, Math.round(rect.w * 10) / 10);
+      const rh = Math.round(rect.h * 10) / 10;
       rooms.push({
-        id: `${r.zone}-${r.type}-${i}`, type: r.type, name: r.name || meta.name, zone: r.zone,
-        x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10, w: rw, h: rh,
-        cell: { x, y, w: rw, h: rh },
-        color: meta.color, direction: DIR_LABEL[r.zone], areaSqft: Math.round(rw * rh),
+        id: `${z}-${r.type}-${i}`, type: r.type, name: r.name || meta.name, zone: z,
+        x: Math.round(rect.x * 10) / 10, y: Math.round(rect.y * 10) / 10, w: rw, h: rh,
+        cell: { x: Math.round(slot.x * 10) / 10, y: Math.round(slot.y * 10) / 10, w: Math.round(slot.w * 10) / 10, h: Math.round(slot.h * 10) / 10 },
+        color: meta.color, direction: DIR_LABEL[z], areaSqft: Math.round(rw * rh),
         vastuScore: meta.score, reason: meta.reason, tip: meta.tip, editable: r.type !== 'brahmasthan',
       });
-      x += w;
     });
-    y += h;
   });
 
   // ── nested partitions: attached bath in each bedroom, utility in the kitchen ──
