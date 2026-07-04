@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Dimensions, Easing, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Animated, BackHandler, Dimensions, Easing, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Svg, { Circle, Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -243,6 +243,15 @@ export function CosmicLoadingOverlay() {
     return () => clearInterval(timer);
   }, [shown, steps.length]);
 
+  // While the blocking loader is visible, swallow the Android hardware back button so the
+  // user can't navigate away mid-load (they'd land on a half-loaded / wrong screen).
+  const blocking = snapshot.primaryActive && shown;
+  useEffect(() => {
+    if (!blocking) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
+    return () => sub.remove();
+  }, [blocking]);
+
   if (!snapshot.active) return null;
   // background/secondary fetch → subtle non-blocking top bar (never covers content or blocks scroll)
   if (!snapshot.primaryActive) return <TopProgressBar theme={theme} />;
@@ -253,8 +262,10 @@ export function CosmicLoadingOverlay() {
     : (['#f8ecd0', '#d49b2e', '#a66f12', '#efd37b'] as const);
 
   return (
-    // pointerEvents="none" → the loader NEVER blocks scroll/touch (fixes the "page stuck on scroll" jank)
-    <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFillObject, styles.overlay, { opacity: fade }]}>
+    // BLOCKING scrim: while the full steps-loader is visible (heavy PRIMARY load) it must
+    // capture ALL touches so the user can't tap/navigate/interact with the screen behind it.
+    // (Background/secondary fetches never reach here — they use the non-blocking TopProgressBar.)
+    <Animated.View pointerEvents="auto" style={[StyleSheet.absoluteFillObject, styles.overlay, { opacity: fade }]}>
       {/* real frosted-glass blur of the screen behind — full screen, guaranteed */}
       <BlurView intensity={theme.isDark ? 36 : 58} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
       {/* brand tint to deepen the blur (covers the WHOLE screen, fixes the right-side cut) */}
