@@ -45,14 +45,16 @@ function furniture(r: BpRoom, x: number, y: number, w: number, h: number): strin
       <line x1="${sx + sw / 3}" y1="${sy}" x2="${sx + sw / 3}" y2="${sy + 2.3}" ${S}/><line x1="${sx + 2 * sw / 3}" y1="${sy}" x2="${sx + 2 * sw / 3}" y2="${sy + 2.3}" ${S}/>
       <rect x="${sx + sw + 0.5}" y="${sy - 2.4}" width="2.2" height="2.4" rx="0.4" ${S}/>
       <rect x="${sx + sw / 2 - 1.8}" y="${sy - 3.4}" width="3.6" height="1.5" rx="0.25" ${S}/>
-      <rect x="${x + w / 2 - 3.2}" y="${y + 0.55}" width="6.4" height="0.7" ${S}/><line x1="${x + w / 2}" y1="${y + 1.25}" x2="${x + w / 2}" y2="${y + 2}" ${S}/>`;
+      <rect x="${x + w / 2 - 3.2}" y="${y + 0.55}" width="6.4" height="0.7" ${S}/><line x1="${x + w / 2}" y1="${y + 1.25}" x2="${x + w / 2}" y2="${y + 2}" ${S}/>
+      <rect x="${x + w - 2.6}" y="${y + h - 3}" width="1.9" height="1.9" rx="0.45" ${S}/>`;
   }
   if (t === 'kitchen') {
     return `<rect x="${x + 0.55}" y="${y + 0.55}" width="${w - 1.1}" height="1.8" ${S}/><rect x="${x + 0.55}" y="${y + 0.55}" width="1.8" height="${h - 1.1}" ${S}/>
       <rect x="${x + w * 0.36}" y="${y + 0.85}" width="2.2" height="1.2" ${S}/><circle cx="${x + w * 0.36 + 0.6}" cy="${y + 1.45}" r="0.32" ${S}/><circle cx="${x + w * 0.36 + 1.6}" cy="${y + 1.45}" r="0.32" ${S}/>
       <circle cx="${x + 1.45}" cy="${y + h * 0.5}" r="0.65" ${S}/>
       <rect x="${x + w - 2.5}" y="${y + h - 2.8}" width="1.9" height="2.4" ${S}/><line x1="${x + w - 2.5}" y1="${y + h - 1.6}" x2="${x + w - 0.6}" y2="${y + h - 1.6}" ${S}/>
-      <rect x="${x + w - 2.5}" y="${y + 0.6}" width="1.9" height="1.6" ${S}/>`;   // storage
+      <rect x="${x + w - 2.5}" y="${y + 0.6}" width="1.9" height="1.6" ${S}/>
+      <path d="M${x + w * 0.36} ${y + 0.5} L${x + w * 0.36 + 2.2} ${y + 0.5} L${x + w * 0.36 + 1.8} ${y - 0.05} L${x + w * 0.36 + 0.4} ${y - 0.05} Z" ${S}/>`;   // storage + chimney hood
   }
   if (t === 'dining') {
     const cx = x + w / 2, cy = y + h / 2, rw = Math.min(w * 0.42, 5.5), rh = Math.min(h * 0.3, 3.2);
@@ -67,8 +69,8 @@ function furniture(r: BpRoom, x: number, y: number, w: number, h: number): strin
   }
   if (t === 'store') { let sh = ''; const n = 3; for (let i = 0; i < n; i++) sh += `<rect x="${x + 0.6}" y="${y + 0.6 + i * (h - 1.2) / n}" width="${w - 1.2}" height="${(h - 1.2) / n - 0.3}" ${S}/>`; return sh; }
   if (t === 'stairs') { let ln = ''; const n = 6, st = (h - 1.4) / n; for (let i = 0; i <= n; i++) ln += `<line x1="${x + 0.6}" y1="${y + 0.7 + i * st}" x2="${x + w - 0.6}" y2="${y + 0.7 + i * st}" ${S}/>`; return `${ln}<polygon points="${x + w / 2},${y + h - 0.8} ${x + w / 2 - 0.45},${y + h - 1.5} ${x + w / 2 + 0.45},${y + h - 1.5}" fill="${FUR}"/>`; }
-  if (t === 'pooja') { const cx = x + w / 2; return `<rect x="${cx - 1.4}" y="${y + h - 2.6}" width="2.8" height="2" ${S}/><polygon points="${cx},${y + 0.5} ${cx - 1.8},${y + h - 2.6} ${cx + 1.8},${y + h - 2.6}" ${S}/>`; }
-  if (t === 'study') return `<rect x="${x + 0.6}" y="${y + 0.6}" width="${Math.min(w * 0.6, 5)}" height="1.6" ${S}/><rect x="${x + w * 0.2}" y="${y + 2.5}" width="1.4" height="1.4" rx="0.3" ${S}/>`;
+  if (t === 'pooja') { const cx = x + w / 2; return `<rect x="${cx - 1.4}" y="${y + h - 2.6}" width="2.8" height="2" ${S}/><polygon points="${cx},${y + 0.5} ${cx - 1.8},${y + h - 2.6} ${cx + 1.8},${y + h - 2.6}" ${S}/><circle cx="${cx - 0.7}" cy="${y + h - 1.5}" r="0.3" ${S}/><circle cx="${cx + 0.7}" cy="${y + h - 1.5}" r="0.3" ${S}/>`; }
+  if (t === 'study') return `<rect x="${x + 0.6}" y="${y + 0.6}" width="${Math.min(w * 0.6, 5)}" height="1.6" ${S}/><rect x="${x + w * 0.2}" y="${y + 2.5}" width="1.4" height="1.4" rx="0.3" ${S}/><rect x="${x + w - 1.6}" y="${y + 0.6}" width="1" height="${Math.min(h - 1.2, 5)}" ${S}/><line x1="${x + w - 1.6}" y1="${y + 2.1}" x2="${x + w - 0.6}" y2="${y + 2.1}" ${S}/><line x1="${x + w - 1.6}" y1="${y + 3.6}" x2="${x + w - 0.6}" y2="${y + 3.6}" ${S}/>`;
   return '';
 }
 
@@ -88,10 +90,12 @@ export function blueprintHtml(bp: Blueprint, hi: boolean, dark: boolean, mandala
   const EX = { l: pm.w + 8, r: pm.e + 9, t: pm.n + 12, b: pm.s + 16 };
   const bcx = W / 2, bcy = H / 2;
 
-  // engineering grid (5 ft)
-  let grid = '';
-  for (let g = 0; g <= W; g += 5) grid += `<line x1="${g}" y1="0" x2="${g}" y2="${H}" stroke="${GRIDC}" stroke-width="${W_DIM}"/>`;
-  for (let g = 0; g <= H; g += 5) grid += `<line x1="0" y1="${g}" x2="${W}" y2="${g}" stroke="${GRIDC}" stroke-width="${W_DIM}"/>`;
+  // engineering grid: 1 ft minor + 5 ft major (as patterns → floor texture)
+  const grid = `<defs>
+    <pattern id="gmin" width="1" height="1" patternUnits="userSpaceOnUse"><path d="M1 0V1M0 1H1" fill="none" stroke="#edf0f6" stroke-width="0.03"/></pattern>
+    <pattern id="gmaj" width="5" height="5" patternUnits="userSpaceOnUse"><path d="M5 0V5M0 5H5" fill="none" stroke="#dbe1ec" stroke-width="0.06"/></pattern>
+  </defs>
+  <rect x="0" y="0" width="${W}" height="${H}" fill="url(#gmin)"/><rect x="0" y="0" width="${W}" height="${H}" fill="url(#gmaj)"/>`;
 
   const bodies: string[] = [], openings: string[] = [], labels: string[] = [];
   let brahma = '';
@@ -106,7 +110,7 @@ export function blueprintHtml(bp: Blueprint, hi: boolean, dark: boolean, mandala
       return;
     }
     // room floor + thin inner walls
-    bodies.push(`<g id="${r.id}"><rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="${F(r.type)}" fill-opacity="0.13" stroke="${WALL}" stroke-width="${W_IN}"/>${furniture(r, r.x, r.y, r.w, r.h)}</g>`);
+    bodies.push(`<g id="${r.id}"><rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="${F(r.type)}" fill-opacity="0.18" stroke="${WALL}" stroke-width="${W_IN}"/>${furniture(r, r.x, r.y, r.w, r.h)}</g>`);
     (r.sub || []).forEach((sb) => bodies.push(`<rect x="${sb.x}" y="${sb.y}" width="${sb.w}" height="${sb.h}" fill="${F(sb.type === 'bath' ? 'bath' : 'store')}" fill-opacity="0.16" stroke="${WALL}" stroke-width="${W_IN}"/>${furniture({ ...r, type: 'bath', x: sb.x, y: sb.y, w: sb.w, h: sb.h } as BpRoom, sb.x, sb.y, sb.w, sb.h)}`));
 
     // door opening + swing (into the room, facing centre)
@@ -141,10 +145,12 @@ export function blueprintHtml(bp: Blueprint, hi: boolean, dark: boolean, mandala
       const ny = r.y + (furnished ? r.h * 0.28 : r.h / 2);
       const maxCh = Math.max(4, Math.floor((r.w - 1) / (nameF * 0.58)));
       const raw = L(r.name, hi), nm = esc(raw.length > maxCh ? raw.slice(0, maxCh - 1) + '…' : raw);
-      const showDim = Math.min(r.w, r.h) > 7.5, pw = Math.min(r.w - 1, Math.max(nm.length * nameF * 0.58, 6));
-      labels.push(`<rect x="${nx - pw / 2}" y="${ny - nameF - 0.2}" width="${pw}" height="${showDim ? nameF + 3.2 : nameF + 1}" rx="0.5" fill="${PAPER}" fill-opacity="0.8"/>
+      const showDim = Math.min(r.w, r.h) > 7.5, pw = Math.min(r.w - 1, Math.max(nm.length * nameF * 0.58, 6.5));
+      const zone = esc(L(r.direction, hi));
+      labels.push(`<rect x="${nx - pw / 2}" y="${ny - nameF - 0.2}" width="${pw}" height="${showDim ? nameF + 4.8 : nameF + 1}" rx="0.5" fill="${PAPER}" fill-opacity="0.82"/>
         <text x="${nx}" y="${ny + (showDim ? 0 : nameF * 0.35)}" text-anchor="middle" font-size="${nameF}" font-weight="700" fill="${INK}" font-family="Georgia,serif">${nm}</text>
-        ${showDim ? `<text x="${nx}" y="${ny + 2.3}" text-anchor="middle" font-size="1.5" fill="${MUTE}">${ftl(r.w)}×${ftl(r.h)} · ${r.areaSqft} ${hi ? 'वर्गफुट' : 'sqft'}</text>` : ''}`);
+        ${showDim ? `<text x="${nx}" y="${ny + 2.1}" text-anchor="middle" font-size="1.5" fill="${MUTE}">${ftl(r.w)}×${ftl(r.h)} · ${r.areaSqft} ${hi ? 'वर्गफुट' : 'sqft'}</text>
+        <text x="${nx}" y="${ny + 4}" text-anchor="middle" font-size="1.4" font-weight="600" fill="#b8860b">◈ ${zone}</text>` : ''}`);
     }
     (r.sub || []).forEach((sb) => { if (Math.min(sb.w, sb.h) > 3.5) labels.push(`<text x="${sb.x + sb.w / 2}" y="${sb.y + sb.h / 2 + 0.5}" text-anchor="middle" font-size="1.3" font-weight="600" fill="${INK}">${esc(L(sb.name, hi))}</text>`); });
   });
@@ -161,6 +167,13 @@ export function blueprintHtml(bp: Blueprint, hi: boolean, dark: boolean, mandala
   if (inp.rainwater) svc.push(svcIcon(W + pm.e * 0.5, H + pm.s * 0.5, '☂', hi ? 'वर्षाजल' : 'Rainwater'));
   if (inp.tankOverhead) svc.push(svcIcon(-pm.w * 0.5, H * 0.82, '▽', hi ? 'पानी टंकी' : 'Water tank'));
   if (inp.solar) svc.push(svcIcon(W * 0.5, -pm.n * 0.28, '☀', hi ? 'सोलर' : 'Solar'));
+  // gate + walkway on the facing side (light paved strip from gate to the main door)
+  const gate = hi ? 'गेट' : 'Gate', wk = 3, ee = bp.entrance;
+  const walk = `fill="#e7e0cf" fill-opacity="0.7" stroke="${PLOTC}" stroke-width="${W_DIM}"`;
+  if (inp.facing === 'E') svc.push(`<rect x="${W}" y="${ee.y1 + 1.6 - wk / 2}" width="${pm.e}" height="${wk}" ${walk}/><line x1="${W + pm.e}" y1="${ee.y1 - 1}" x2="${W + pm.e}" y2="${ee.y1 + 4.2}" stroke="${INK}" stroke-width="${W_IN}"/><text x="${W + pm.e - 0.4}" y="${ee.y1 + 6}" text-anchor="end" font-size="1.5" fill="#4a5566">⊟ ${gate}</text>`);
+  else if (inp.facing === 'W') svc.push(`<rect x="${-pm.w}" y="${ee.y1 + 1.6 - wk / 2}" width="${pm.w}" height="${wk}" ${walk}/><line x1="${-pm.w}" y1="${ee.y1 - 1}" x2="${-pm.w}" y2="${ee.y1 + 4.2}" stroke="${INK}" stroke-width="${W_IN}"/><text x="${-pm.w + 0.4}" y="${ee.y1 + 6}" font-size="1.5" fill="#4a5566">⊟ ${gate}</text>`);
+  else if (inp.facing === 'N') svc.push(`<rect x="${ee.x1 + 1.6 - wk / 2}" y="${-pm.n}" width="${wk}" height="${pm.n}" ${walk}/><line x1="${ee.x1 - 1}" y1="${-pm.n}" x2="${ee.x1 + 4.2}" y2="${-pm.n}" stroke="${INK}" stroke-width="${W_IN}"/><text x="${ee.x1 + 1.6}" y="${-pm.n - 0.6}" text-anchor="middle" font-size="1.5" fill="#4a5566">⊟ ${gate}</text>`);
+  else svc.push(`<rect x="${ee.x1 + 1.6 - wk / 2}" y="${H}" width="${wk}" height="${pm.s}" ${walk}/><line x1="${ee.x1 - 1}" y1="${H + pm.s}" x2="${ee.x1 + 4.2}" y2="${H + pm.s}" stroke="${INK}" stroke-width="${W_IN}"/><text x="${ee.x1 + 1.6}" y="${H + pm.s + 1.8}" text-anchor="middle" font-size="1.5" fill="#4a5566">⊟ ${gate}</text>`);
 
   const mand = mandala ? (() => {
     const zn: [string, string, string][] = [['वायव्य', 'NW', '#c7d2e8'], ['उत्तर', 'N', '#bfe0d0'], ['ईशान', 'NE', '#f2e6a8'], ['पश्चिम', 'W', '#d7cdb0'], ['ब्रह्म', 'C', '#f0d98a'], ['पूर्व', 'E', '#cfe3b8'], ['नैऋत्य', 'SW', '#b8a483'], ['दक्षिण', 'S', '#e6c2a0'], ['आग्नेय', 'SE', '#e9b48f']];
