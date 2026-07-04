@@ -69,8 +69,10 @@ export function RootNavigator() {
         // PERF: freeze covered/blurred stack screens — a theme toggle or state change
         // only re-renders the screen on top, not every screen underneath.
         freezeOnBlur: true,
-        // keep the page below mounted so its exit half of the shared-axis plays
-        detachPreviousScreen: false,
+        // PERF: default detach (true) — the covered screen stays attached DURING the
+        // transition (so the shared-axis exit half still plays) but its native views are
+        // detached afterwards. Keeping every screen attached (false) piled up native views
+        // on deep stacks → memory pressure → device-wide lag on low-end phones.
         transitionSpec: stackSpec,
         // Material "shared axis X" — buttery Google-style list→detail motion,
         // with edge-swipe back enabled (gesture-handler driven).

@@ -87,7 +87,11 @@ export const KeyboardAwareScroll = forwardRef<ScrollView, Props>(function Keyboa
         ref={innerRef}
         keyboardShouldPersistTaps={keyboardShouldPersistTaps}
         onScroll={handleScroll}
-        scrollEventThrottle={scrollEventThrottle ?? 16}
+        // PERF: we only track the offset for the keyboard-lift math — 48ms is plenty.
+        // 16ms fired a JS bridge event every frame on EVERY screen while scrolling,
+        // adding JS-thread pressure exactly when scrolls need it most. Callers that
+        // pass their own onScroll/throttle still get the tight 16ms.
+        scrollEventThrottle={scrollEventThrottle ?? (onScroll ? 16 : 48)}
         contentContainerStyle={[contentContainerStyle, kbInset ? { paddingBottom: kbInset } : null]}
         {...rest}
       >

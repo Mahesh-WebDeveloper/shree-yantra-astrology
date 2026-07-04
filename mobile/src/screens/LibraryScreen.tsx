@@ -10,7 +10,7 @@ import { Screen } from '../components/Screen';
 import { BrandHeader } from '../components/BrandHeader';
 import { GradientText } from '../components/GradientText';
 import { Chevron, Sparkle } from '../components/icons/CommonIcons';
-import { usePlayer, fmtTime } from '../audio/PlayerProvider';
+import { usePlayer, usePlayerTime, fmtTime } from '../audio/PlayerProvider';
 import { Seekbar } from '../audio/Seekbar';
 import { PlayIcon, PauseIcon, PrevIcon, NextIcon } from '../audio/PlayerIcons';
 import { openAppDrawer } from '../navigation/AppDrawerHost';
@@ -139,6 +139,19 @@ function SectionHead({ label, theme }: { label: string; theme: Theme }) {
 const MANTRA_TILE_DARK = ['rgba(230,194,119,0.18)', 'rgba(0,0,0,0.85)'] as const;
 const MANTRA_TILE_LIGHT = ['rgba(176,115,22,0.16)', 'rgba(255,250,240,0.9)'] as const;
 
+// Continue-listening seekbar + time labels — isolated so ONLY these tiny pieces re-render
+// on playback ticks (usePlayerTime), not the whole heavy Library screen.
+function ContinueSeek({ live, onSeek }: { live: boolean; onSeek?: (f: number) => void }) {
+  const { position, duration } = usePlayerTime();
+  const progress = live && duration > 0 ? position / duration : 0.45;
+  return <Seekbar progress={progress} onSeek={live ? onSeek : undefined} showThumb={live} style={{ marginTop: 10 }} />;
+}
+function ContTime({ live, kind, color, right }: { live: boolean; kind: 'pos' | 'dur'; color: string; right?: boolean }) {
+  const { position, duration } = usePlayerTime();
+  const txt = live ? fmtTime(kind === 'pos' ? position : duration) : kind === 'pos' ? '12:45' : '28:36';
+  return <Text style={[styles.timeText, { color, textAlign: right ? 'right' : 'left' }]}>{txt}</Text>;
+}
+
 export function LibraryScreen({ navigation }: any) {
   const { theme } = useTheme();
   const player = usePlayer();
@@ -225,7 +238,6 @@ export function LibraryScreen({ navigation }: any) {
   const gitaCh2 = gitaAudio.find((m) => /chapter\s*0*2\b/i.test(m.title || ''));
   const contTrack: Track = gitaCh2 ? mediaToTrack(gitaCh2) : cont;
   const contLive = isCurrent(contTrack.id);
-  const contProgress = contLive && player.duration > 0 ? player.position / player.duration : 0.45;
   const playContinue = () => { hTap(); player.play(contTrack, gitaCh2 ? gitaQueue : undefined); };
 
   // Ramayan audio (Audioboom playlist) — apni dedicated screen me, Library sections me nahi
@@ -467,9 +479,9 @@ export function LibraryScreen({ navigation }: any) {
               <Text style={[styles.itemSub, { color: theme.textMuted }]} numberOfLines={1}>{contTrack.sub}</Text>
             </View>
           </View>
-          <Seekbar progress={contProgress} onSeek={contLive ? player.seekFraction : undefined} showThumb={contLive} style={{ marginTop: 10 }} />
+          <ContinueSeek live={contLive} onSeek={player.seekFraction} />
           <View style={styles.contFooter}>
-            <Text style={[styles.timeText, { color: theme.textMuted }]}>{contLive ? fmtTime(player.position) : '12:45'}</Text>
+            <ContTime live={contLive} kind="pos" color={theme.textMuted} />
             <View style={styles.transport}>
               <Pressable onPress={player.prev} hitSlop={8} style={[styles.tBtn, { borderColor: 'rgba(233,184,80,0.2)', backgroundColor: 'rgba(233,184,80,0.05)' }]}><PrevIcon color={theme.goldText} /></Pressable>
               <Pressable onPress={playContinue} hitSlop={8}>
@@ -479,7 +491,7 @@ export function LibraryScreen({ navigation }: any) {
               </Pressable>
               <Pressable onPress={player.next} hitSlop={8} style={[styles.tBtn, { borderColor: 'rgba(233,184,80,0.2)', backgroundColor: 'rgba(233,184,80,0.05)' }]}><NextIcon color={theme.goldText} /></Pressable>
             </View>
-            <Text style={[styles.timeText, { color: theme.textMuted, textAlign: 'right' }]}>{contLive ? fmtTime(player.duration) : '28:36'}</Text>
+            <ContTime live={contLive} kind="dur" color={theme.textMuted} right />
           </View>
         </LibCard>
       )}

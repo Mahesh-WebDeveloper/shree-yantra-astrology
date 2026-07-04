@@ -5,15 +5,27 @@ import { runOnJS, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts } from '../theme/tokens';
-import { usePlayer, SHEET_SPRING } from './PlayerProvider';
+import { usePlayer, usePlayerTime, SHEET_SPRING } from './PlayerProvider';
 import { PlayIcon, PauseIcon, PrevIcon, NextIcon, CloseIcon, Equalizer, BookmarkIcon } from './PlayerIcons';
 import { toggleSaved, useLibraryStore } from '../lib/libraryStore';
 import { hSelect } from '../lib/haptics';
 
+// Isolated progress line — the ONLY part that re-renders on playback ticks.
+// The rest of the bar (title, buttons, gesture) stays still → no per-tick work.
+function ProgressLine({ trackColor, fillColor }: { trackColor: string; fillColor: string }) {
+  const { position, duration } = usePlayerTime();
+  const pct = duration > 0 ? Math.min(100, (position / duration) * 100) : 0;
+  return (
+    <View style={[styles.progress, { backgroundColor: trackColor }]}>
+      <View style={[styles.progressFill, { width: `${pct}%`, backgroundColor: fillColor }]} />
+    </View>
+  );
+}
+
 export function NowPlayingBar({ hasBottomNav = true }: { hasBottomNav?: boolean }) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
-  const { track, isPlaying, position, duration, toggle, next, prev, stop, setExpanded, openSheet, sheetY, screenH } = usePlayer();
+  const { track, isPlaying, toggle, next, prev, stop, setExpanded, openSheet, sheetY, screenH } = usePlayer();
   const { width } = useWindowDimensions();
   const { saved } = useLibraryStore();
   const compact = width < 380;
@@ -45,7 +57,6 @@ export function NowPlayingBar({ hasBottomNav = true }: { hasBottomNav?: boolean 
 
   if (!track) return null;
 
-  const pct = duration > 0 ? Math.min(100, (position / duration) * 100) : 0;
   const dockBottom = insets.bottom + (hasBottomNav ? 92 : 14);
   const isSaved = saved.includes(track.id);
 
@@ -63,9 +74,7 @@ export function NowPlayingBar({ hasBottomNav = true }: { hasBottomNav?: boolean 
           ]}
         >
           <View style={[styles.handle, { backgroundColor: theme.cardBorder }]} />
-          <View style={[styles.progress, { backgroundColor: theme.line }]}>
-            <View style={[styles.progressFill, { width: `${pct}%`, backgroundColor: theme.gold1 }]} />
-          </View>
+          <ProgressLine trackColor={theme.line} fillColor={theme.gold1} />
 
           <Pressable style={styles.expandZone} onPress={openSheet} hitSlop={4}>
             <View style={[styles.art, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : 'rgba(176,115,22,0.10)' }]}>

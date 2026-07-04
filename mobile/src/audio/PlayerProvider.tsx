@@ -10,8 +10,6 @@ export const SHEET_SPRING = { damping: 26, stiffness: 240, mass: 0.8 } as const;
 interface PlayerCtx {
   track: Track | null;
   isPlaying: boolean;
-  position: number; // seconds
-  duration: number; // seconds
   /** play this track; optional queue makes next/prev + auto-advance walk that list */
   play: (t: Track, queue?: Track[]) => void;
   toggle: () => void;
@@ -36,6 +34,12 @@ interface PlayerCtx {
 }
 
 const Ctx = createContext<PlayerCtx | null>(null);
+
+// HOT context — position/duration tick several times a second while audio plays.
+// Kept SEPARATE so that only the seekbar/time labels re-render on every tick; screens
+// using usePlayer() (Library, Gita, playlists…) stay perfectly still → no scroll jank.
+interface PlayerTimeCtx { position: number; duration: number }
+const TimeCtx = createContext<PlayerTimeCtx>({ position: 0, duration: 0 });
 
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   // One long-lived player; we swap its source with replace().
@@ -131,29 +135,38 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     setExpanded(false);
   }, [player]);
 
-  const value: PlayerCtx = {
-    track,
-    isPlaying: !!track && !!status?.playing,
-    position: status?.currentTime ?? 0,
-    duration: status?.duration ?? 0,
-    play,
-    toggle,
-    seekTo,
-    seekFraction,
-    next: () => step(1),
-    prev: () => step(-1),
-    stop,
-    // buffering: track selected but expo-audio abhi load/buffer kar raha hai (remote audio)
-    loading: !!track && !!(status as any) && ((status as any).isBuffering === true || (status as any).isLoaded === false),
-    expanded,
-    setExpanded,
-    sheetY,
-    screenH,
-    openSheet,
-    closeSheet,
-  };
+  const isPlaying = !!track && !!status?.playing;
+  // buffering: track selected but expo-audio abhi load/buffer kar raha hai (remote audio)
+  const loading = !!track && !!(status as any) && ((status as any).isBuffering === true || (status as any).isLoaded === false);
+  const next = useCallback(() => step(1), [step]);
+  const prev = useCallback(() => step(-1), [step]);
 
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+  // STABLE value — memoized on discrete events only (track change, play/pause, buffer,
+  // expand). It does NOT change on position ticks, so usePlayer() consumers (screens,
+  // mini-bar shell) do not re-render several times a second while audio plays.
+  const value = useMemo<PlayerCtx>(
+    () => ({
+      track, isPlaying, play, toggle, seekTo, seekFraction, next, prev, stop,
+      loading, expanded, setExpanded, sheetY, screenH, openSheet, closeSheet,
+    }),
+    [track, isPlaying, play, toggle, seekTo, seekFraction, next, prev, stop, loading, expanded, sheetY, screenH, openSheet, closeSheet]
+  );
+
+  const time = useMemo<PlayerTimeCtx>(
+    () => ({ position: status?.currentTime ?? 0, duration: status?.duration ?? 0 }),
+    [status?.currentTime, status?.duration]
+  );
+
+  return (
+    <Ctx.Provider value={value}>
+      <TimeCtx.Provider value={time}>{children}</TimeCtx.Provider>
+    </Ctx.Provider>
+  );
+}
+
+/** HOT hook — re-renders on every playback tick. Use ONLY in seekbars/time labels. */
+export function usePlayerTime(): PlayerTimeCtx {
+  return useContext(TimeCtx);
 }
 
 export function usePlayer(): PlayerCtx {

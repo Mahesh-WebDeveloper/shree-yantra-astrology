@@ -31,8 +31,9 @@ export function Equalizer({ color, playing }: { color: string; playing: boolean 
     const loops = bars.map((b, i) =>
       Animated.loop(
         Animated.sequence([
-          Animated.timing(b, { toValue: 1, duration: 320 + i * 90, useNativeDriver: false }),
-          Animated.timing(b, { toValue: 0.3, duration: 320 + i * 90, useNativeDriver: false }),
+          // scaleY is a transform → native driver (runs on the UI thread; zero JS work per frame)
+          Animated.timing(b, { toValue: 1, duration: 320 + i * 90, useNativeDriver: true }),
+          Animated.timing(b, { toValue: 0.3, duration: 320 + i * 90, useNativeDriver: true }),
         ])
       )
     );

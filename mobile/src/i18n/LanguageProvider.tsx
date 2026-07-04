@@ -2,7 +2,7 @@
  * Language (English / Hindi) — app-wide. Choice AsyncStorage me persist hoti hai.
  * useT() se `t('key', 'fallback')`; useLang() se current lang + setLang toggle.
  */
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STRINGS, Lang } from './strings';
 import { setApiLang } from '../lib/api';
@@ -40,7 +40,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     [lang]
   );
 
-  return <LanguageCtx.Provider value={{ lang, setLang, t }}>{children}</LanguageCtx.Provider>;
+  // memoized so consumers only re-render when the language actually changes
+  const value = useMemo(() => ({ lang, setLang, t }), [lang, setLang, t]);
+  return <LanguageCtx.Provider value={value}>{children}</LanguageCtx.Provider>;
 }
 
 export const useLang = () => useContext(LanguageCtx);

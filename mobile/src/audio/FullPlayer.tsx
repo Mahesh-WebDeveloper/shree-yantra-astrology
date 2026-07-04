@@ -19,7 +19,7 @@ import { fonts } from '../theme/tokens';
 import { CosmicBackground } from '../components/CosmicBackground';
 import { GradientText } from '../components/GradientText';
 import { Seekbar } from './Seekbar';
-import { usePlayer, fmtTime, SHEET_SPRING } from './PlayerProvider';
+import { usePlayer, usePlayerTime, fmtTime, SHEET_SPRING } from './PlayerProvider';
 import { PlayIcon, PauseIcon, PrevIcon, NextIcon, Equalizer, BookmarkIcon } from './PlayerIcons';
 import { toggleSaved, useLibraryStore } from '../lib/libraryStore';
 import { hTap, hPress, hSelect } from '../lib/haptics';
@@ -27,7 +27,8 @@ import { hTap, hPress, hSelect } from '../lib/haptics';
 export function FullPlayer() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
-  const { track, isPlaying, position, duration, toggle, next, prev, seekFraction, expanded, setExpanded, sheetY, screenH, closeSheet } = usePlayer();
+  const { track, isPlaying, toggle, next, prev, seekFraction, expanded, setExpanded, sheetY, screenH, closeSheet } = usePlayer();
+  const { position, duration } = usePlayerTime();
   const { saved } = useLibraryStore();
   const { width } = useWindowDimensions();
   const compact = screenH < 720;
