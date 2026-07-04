@@ -443,6 +443,58 @@ export function PanchangScreen({ navigation }: any) {
             </View>
           )}
 
+          {/* Panchak (Bichhuda / Vinchhudo) — deterministic from Moon in 300°–360° */}
+          {data.panchak && (() => {
+            const p = data.panchak!;
+            const good = p.type.auspicious;
+            const accent = !p.active ? theme.gold2 : good ? '#3ec77a' : '#e06a5a';
+            const AVOID = lang === 'hi'
+              ? ['दक्षिण दिशा की यात्रा आरंभ न करें।', 'घर की छत/स्लैब न डलवाएँ।', 'नई चारपाई/पलंग न बनवाएँ।', 'लकड़ी/ईंधन का बड़ा भंडारण न करें।', 'परिवार में मृत्यु हो तो शव के साथ आटे/कुश के 5 पुतले बनाकर विधिपूर्वक दाह करें।']
+              : ['Do not begin travel toward the South.', 'Do not cast the roof slab of a house.', 'Do not make a new cot/bed.', 'Do not stock large amounts of wood/fuel.', 'If a death occurs, cremate 5 dough/kusha effigies along with the body (classical remedy).'];
+            return (
+              <View style={[styles.card, { borderColor: accent + '66', backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(255,253,247,0.9)' }]}>
+                <View style={styles.pkHead}>
+                  <Text style={[styles.h, { color: theme.gold1, marginBottom: 0 }]}>🌙 {lang === 'hi' ? 'पंचक (बिच्छुड़ो)' : 'Panchak (Bichhuda)'}</Text>
+                  <View style={[styles.pkBadge, { backgroundColor: accent }]}>
+                    <Text style={styles.pkBadgeTxt}>{p.active ? (lang === 'hi' ? 'सक्रिय' : 'ACTIVE') : (lang === 'hi' ? 'नहीं' : 'OFF')}</Text>
+                  </View>
+                </View>
+
+                {p.active ? (
+                  <>
+                    <Text style={[styles.pkType, { color: accent }]}>{good ? '✓ ' : '⚠ '}{lang === 'hi' ? p.type.hi : p.type.en}{good ? (lang === 'hi' ? ' — शुभ' : ' — auspicious') : ''}</Text>
+                    <Text style={[styles.pkEffect, { color: theme.textSoft }]}>{lang === 'hi' ? p.type.effect.hi : p.type.effect.en}</Text>
+                    <View style={[styles.pkWin, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.18)' : 'rgba(255,255,255,0.5)' }]}>
+                      <Text style={[styles.pkWinTxt, { color: theme.text }]}>{lang === 'hi' ? 'आरंभ' : 'From'}: <Text style={{ color: theme.gold1 }}>{p.startLabel}</Text></Text>
+                      <Text style={[styles.pkWinTxt, { color: theme.text }]}>{lang === 'hi' ? 'समाप्ति' : 'Until'}: <Text style={{ color: theme.gold1 }}>{p.endLabel}</Text></Text>
+                    </View>
+                    <Text style={[styles.pkSub, { color: theme.goldText }]}>{lang === 'hi' ? 'पंचक में ये न करें:' : 'Avoid during Panchak:'}</Text>
+                    {AVOID.map((a, i) => (
+                      <View key={i} style={styles.pkRow}>
+                        <Text style={[styles.pkDot, { color: accent }]}>•</Text>
+                        <Text style={[styles.pkItem, { color: theme.textSoft }]}>{a}</Text>
+                      </View>
+                    ))}
+                    <Text style={[styles.pkCan, { color: theme.textMuted }]}>
+                      {lang === 'hi'
+                        ? '✓ पूजा-पाठ, ध्यान, दान व नित्य कर्म पंचक में भी किए जा सकते हैं। अनिवार्य कार्य हो तो शुभ मुहूर्त + महामृत्युंजय/गायत्री जप के साथ करें।'
+                        : '✓ Puja, meditation, charity & daily routine are fine in Panchak. If a task is unavoidable, do it in a good muhurat with Mahamrityunjaya/Gayatri japa.'}
+                    </Text>
+                  </>
+                ) : (
+                  <Text style={[styles.pkEffect, { color: theme.textSoft, marginTop: 2 }]}>
+                    {lang === 'hi'
+                      ? `अभी पंचक नहीं है। अगला पंचक ${p.startLabel} से ${p.endLabel} तक रहेगा (${p.type.hi})।`
+                      : `No Panchak right now. The next Panchak runs from ${p.startLabel} to ${p.endLabel} (${p.type.en}).`}
+                  </Text>
+                )}
+                <Text style={[styles.pkNote, { color: theme.textMuted }]}>
+                  {lang === 'hi' ? 'गणना: चंद्रमा अंतिम 5 नक्षत्र (धनिष्ठा उत्तरार्ध–रेवती) में — लाहिरी अयनांश से सटीक।' : 'Calc: Moon in the last 5 nakshatras (Dhanishtha-half to Revati) — exact via Lahiri ayanamsa.'}
+                </Text>
+              </View>
+            );
+          })()}
+
           {!!(data.observances || []).length && (
             <View style={[styles.card, { borderColor: '#d6a03b66', backgroundColor: theme.isDark ? 'rgba(214,160,59,0.08)' : 'rgba(214,160,59,0.10)' }]}>
               <Text style={[styles.h, { color: theme.gold1 }]}>🪔 {lang === 'hi' ? 'आज के व्रत / उत्सव / सावधानी' : "Today's Vrat / Festival / Caution"}</Text>
@@ -557,6 +609,19 @@ const styles = StyleSheet.create({
 
   bhadra: { borderWidth: 1, borderRadius: 12, padding: 11 },
   bhadraTxt: { fontFamily: fonts.interSemi, fontSize: 12.5, lineHeight: 18, textAlign: 'center' },
+  pkHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  pkBadge: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 },
+  pkBadgeTxt: { fontFamily: fonts.interBold, fontSize: 10, color: '#1a1206', letterSpacing: 0.6 },
+  pkType: { fontFamily: fonts.interBold, fontSize: 14.5, marginTop: 10 },
+  pkEffect: { fontFamily: fonts.inter, fontSize: 12.5, lineHeight: 18.5, marginTop: 5 },
+  pkWin: { flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6, borderWidth: 1, borderRadius: 12, padding: 10, marginTop: 11 },
+  pkWinTxt: { fontFamily: fonts.interSemi, fontSize: 12 },
+  pkSub: { fontFamily: fonts.interSemi, fontSize: 11.5, letterSpacing: 0.5, textTransform: 'uppercase', marginTop: 13, marginBottom: 6 },
+  pkRow: { flexDirection: 'row', gap: 8, alignItems: 'flex-start', marginTop: 4 },
+  pkDot: { fontFamily: fonts.interBold, fontSize: 14, lineHeight: 18 },
+  pkItem: { flex: 1, fontFamily: fonts.inter, fontSize: 12.3, lineHeight: 18 },
+  pkCan: { fontFamily: fonts.inter, fontSize: 11.8, lineHeight: 17.5, marginTop: 11 },
+  pkNote: { fontFamily: fonts.inter, fontSize: 10.5, lineHeight: 15, marginTop: 10, fontStyle: 'italic' },
 
   h: { fontFamily: fonts.cinzelSemi, fontSize: 13.5, letterSpacing: 0.6 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 9 },

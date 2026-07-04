@@ -438,6 +438,12 @@ export interface PanchangResponse {
   samvat?: { vikram: number; shaka: number } | null;
   samvatsara?: string;
   bhadra?: boolean;
+  panchak?: {
+    active: boolean;
+    type: { key: string; en: string; hi: string; auspicious: boolean; effect: { en: string; hi: string } };
+    startAt: number; endAt: number;
+    startLabel: string; endLabel: string;
+  } | null;
   observances?: PanchangObservance[];
   auspicious?: PanchangPeriod[];
   inauspicious: PanchangPeriod[];

@@ -13,6 +13,7 @@ const Settings = require('../models/Settings');
 const Kundli = require('../models/Kundli');
 const { resolveLocation } = require('./location.service');
 const eph = require('../utils/localEphemeris');
+const { computePanchak } = require('./panchak.service');
 const { computeVimshottari } = require('../utils/vimshottari');
 const { fetchT } = require('../utils/httpFetch');
 
@@ -1025,6 +1026,12 @@ async function getPanchang(input) {
     observances.push(...buildPanchangObservances({ ...sunriseElements, karana: elements.karana }, sunriseMasa).filter((o) => o.key === 'bhadra'));
   }
 
+  // Panchak (Bichhuda / Vinchhudo): computed at the selected instant (now if today, else local
+  // noon of the date) from the Moon's sidereal longitude — fully deterministic.
+  const [pkD, pkM, pkY] = dstr.split('/').map(Number);
+  const panchakRef = isSelectedToday ? new Date() : new Date(Date.UTC(pkY, pkM - 1, pkD, 12, 0, 0) - tzMin * 60000);
+  const panchak = computePanchak(panchakRef, tzMin);
+
   const result = {
     date: dstr,
     weekday: WEEKDAYS[wd],
@@ -1058,6 +1065,7 @@ async function getPanchang(input) {
     samvat,
     samvatsara,
     bhadra: !!(elements && elements.karana && elements.karana.isBhadra),
+    panchak,
     observances,
     auspicious,
     inauspicious: [
