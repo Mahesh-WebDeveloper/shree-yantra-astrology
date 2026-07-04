@@ -67,9 +67,9 @@ function furniture(r: BpRoom, x: number, y: number, w: number, h: number): strin
       <line x1="${x + w - 2}" y1="${y + 0.2}" x2="${x + w - 0.45}" y2="${y + 0.2}" ${S}/>
       <rect x="${x + w - 2.2}" y="${y + h - 2.2}" width="1.75" height="1.75" ${S}/><line x1="${x + w - 2.2}" y1="${y + h - 2.2}" x2="${x + w - 0.45}" y2="${y + h - 0.45}" ${S}/>`;
   }
-  if (t === 'store') { let sh = ''; const n = 3; for (let i = 0; i < n; i++) sh += `<rect x="${x + 0.6}" y="${y + 0.6 + i * (h - 1.2) / n}" width="${w - 1.2}" height="${(h - 1.2) / n - 0.3}" ${S}/>`; return sh; }
+  if (t === 'store') { let sh = ''; const rows = Math.min(3, Math.floor((h - 1.2) / 1.6)), rh2 = 1.2; for (let i = 0; i < rows; i++) sh += `<rect x="${x + 0.6}" y="${y + 0.6 + i * (rh2 + 0.5)}" width="${Math.min(w - 1.2, w * 0.55)}" height="${rh2}" ${S}/><line x1="${x + 0.6}" y1="${y + 0.6 + i * (rh2 + 0.5) + rh2 / 2}" x2="${x + 0.6 + Math.min(w - 1.2, w * 0.55)}" y2="${y + 0.6 + i * (rh2 + 0.5) + rh2 / 2}" ${S}/>`; return sh; }
   if (t === 'stairs') { let ln = ''; const n = 6, st = (h - 1.4) / n; for (let i = 0; i <= n; i++) ln += `<line x1="${x + 0.6}" y1="${y + 0.7 + i * st}" x2="${x + w - 0.6}" y2="${y + 0.7 + i * st}" ${S}/>`; return `${ln}<polygon points="${x + w / 2},${y + h - 0.8} ${x + w / 2 - 0.45},${y + h - 1.5} ${x + w / 2 + 0.45},${y + h - 1.5}" fill="${FUR}"/>`; }
-  if (t === 'pooja') { const cx = x + w / 2; return `<rect x="${cx - 1.4}" y="${y + h - 2.6}" width="2.8" height="2" ${S}/><polygon points="${cx},${y + 0.5} ${cx - 1.8},${y + h - 2.6} ${cx + 1.8},${y + h - 2.6}" ${S}/><circle cx="${cx - 0.7}" cy="${y + h - 1.5}" r="0.3" ${S}/><circle cx="${cx + 0.7}" cy="${y + h - 1.5}" r="0.3" ${S}/>`; }
+  if (t === 'pooja') { const cx = x + w / 2; return `<polygon points="${cx},${y + 0.5} ${cx - 1.9},${y + 2.1} ${cx + 1.9},${y + 2.1}" ${S}/><rect x="${cx - 1.5}" y="${y + 2.1}" width="3" height="1.7" ${S}/><circle cx="${cx - 0.7}" cy="${y + 3.3}" r="0.28" ${S}/><circle cx="${cx + 0.7}" cy="${y + 3.3}" r="0.28" ${S}/>`; }
   if (t === 'study') return `<rect x="${x + 0.6}" y="${y + 0.6}" width="${Math.min(w * 0.6, 5)}" height="1.6" ${S}/><rect x="${x + w * 0.2}" y="${y + 2.5}" width="1.4" height="1.4" rx="0.3" ${S}/><rect x="${x + w - 1.6}" y="${y + 0.6}" width="1" height="${Math.min(h - 1.2, 5)}" ${S}/><line x1="${x + w - 1.6}" y1="${y + 2.1}" x2="${x + w - 0.6}" y2="${y + 2.1}" ${S}/><line x1="${x + w - 1.6}" y1="${y + 3.6}" x2="${x + w - 0.6}" y2="${y + 3.6}" ${S}/>`;
   return '';
 }
@@ -137,22 +137,30 @@ export function blueprintHtml(bp: Blueprint, hi: boolean, dark: boolean, mandala
     if (r.x <= eps) openings.push(winV(0, cy));
     if (Math.abs(r.x + r.w - W) <= eps) openings.push(winV(W, cy));
 
-    // label (title + dim + area), never overlapping — plate + top-positioned for furnished rooms
-    const nameF = Math.max(1.5, Math.min(2.5, Math.min(r.w, r.h) * 0.14));
+    // label — MAX 2 lines (name + size), centered, shrink-to-fit (never truncate/overlap).
+    // Area + Vastu zone live in the app's room-detail panel, not on the drawing.
     if (Math.min(r.w, r.h) > 4) {
-      const nx = r.x + r.w / 2 + (r.sub && r.sub[0] ? (r.sub[0].x > r.x ? -r.w * 0.14 : r.w * 0.14) : 0);
+      const raw = L(r.name, hi);
+      let f = Math.min(2.3, Math.max(1.4, Math.min(r.w, r.h) * 0.14));
+      f = Math.min(f, Math.max(1.1, (r.w - 1.4) / (raw.length * 0.58)));   // shrink font to fit width
+      const s0 = r.sub && r.sub[0];
+      const nx = r.x + r.w / 2 + (s0 ? (s0.x > r.x ? -r.w * 0.12 : r.w * 0.12) : 0);
       const furnished = ['living', 'kitchen', 'master', 'bedroom', 'guestBedroom', 'dining'].includes(r.type);
-      const ny = r.y + (furnished ? r.h * 0.28 : r.h / 2);
-      const maxCh = Math.max(4, Math.floor((r.w - 1) / (nameF * 0.58)));
-      const raw = L(r.name, hi), nm = esc(raw.length > maxCh ? raw.slice(0, maxCh - 1) + '…' : raw);
-      const showDim = Math.min(r.w, r.h) > 7.5, pw = Math.min(r.w - 1, Math.max(nm.length * nameF * 0.58, 6.5));
-      const zone = esc(L(r.direction, hi));
-      labels.push(`<rect x="${nx - pw / 2}" y="${ny - nameF - 0.2}" width="${pw}" height="${showDim ? nameF + 4.8 : nameF + 1}" rx="0.5" fill="${PAPER}" fill-opacity="0.82"/>
-        <text x="${nx}" y="${ny + (showDim ? 0 : nameF * 0.35)}" text-anchor="middle" font-size="${nameF}" font-weight="700" fill="${INK}" font-family="Georgia,serif">${nm}</text>
-        ${showDim ? `<text x="${nx}" y="${ny + 2.1}" text-anchor="middle" font-size="1.5" fill="${MUTE}">${ftl(r.w)}×${ftl(r.h)} · ${r.areaSqft} ${hi ? 'वर्गफुट' : 'sqft'}</text>
-        <text x="${nx}" y="${ny + 4}" text-anchor="middle" font-size="1.4" font-weight="600" fill="#b8860b">◈ ${zone}</text>` : ''}`);
+      let ny = r.y + (furnished ? r.h * 0.3 : r.h / 2);
+      if (s0) ny = s0.y <= r.y + 0.1 ? Math.max(ny, s0.y + s0.h + 2.2) : Math.min(ny, s0.y - 2.6);   // clear of the attached bath
+      const showDim = Math.min(r.w, r.h) > 6.5;
+      const pw = Math.min(r.w - 0.8, Math.max(raw.length * f * 0.58 + 0.8, 5.5));
+      labels.push(`<rect x="${nx - pw / 2}" y="${ny - f - 0.25}" width="${pw}" height="${showDim ? f + 2.8 : f + 1}" rx="0.5" fill="${PAPER}" fill-opacity="0.85"/>
+        <text x="${nx}" y="${ny + (showDim ? 0 : f * 0.35)}" text-anchor="middle" font-size="${f}" font-weight="700" fill="${INK}" font-family="Georgia,serif">${esc(raw)}</text>
+        ${showDim ? `<text x="${nx}" y="${ny + 2}" text-anchor="middle" font-size="1.45" fill="${MUTE}">${ftl(r.w)}×${ftl(r.h)}</text>` : ''}`);
     }
-    (r.sub || []).forEach((sb) => { if (Math.min(sb.w, sb.h) > 3.5) labels.push(`<text x="${sb.x + sb.w / 2}" y="${sb.y + sb.h / 2 + 0.5}" text-anchor="middle" font-size="1.3" font-weight="600" fill="${INK}">${esc(L(sb.name, hi))}</text>`); });
+    (r.sub || []).forEach((sb) => {
+      if (Math.min(sb.w, sb.h) <= 3.8) return;
+      const raw = L(sb.name, hi);
+      const f2 = Math.min(1.25, Math.max(0.95, (sb.w - 0.8) / (raw.length * 0.58)));
+      labels.push(`<rect x="${sb.x + sb.w / 2 - (raw.length * f2 * 0.29 + 0.3)}" y="${sb.y + sb.h / 2 - f2 * 0.8}" width="${raw.length * f2 * 0.58 + 0.6}" height="${f2 + 0.6}" rx="0.3" fill="${PAPER}" fill-opacity="0.8"/>
+        <text x="${sb.x + sb.w / 2}" y="${sb.y + sb.h / 2 + 0.45}" text-anchor="middle" font-size="${f2}" font-weight="600" fill="${INK}">${esc(raw)}</text>`);
+    });
   });
 
   // ── outdoor / services in the setback ──
@@ -181,8 +189,11 @@ export function blueprintHtml(bp: Blueprint, hi: boolean, dark: boolean, mandala
   })() : '';
 
   const e = bp.entrance, evert = e.x1 === e.x2, emx = (e.x1 + e.x2) / 2, emy = (e.y1 + e.y2) / 2;
-  const entrance = `<line x1="${e.x1}" y1="${e.y1}" x2="${e.x2}" y2="${e.y2}" stroke="${PAPER}" stroke-width="${W_OUT * 1.4}"/>
-    <text x="${evert ? emx + (e.x1 === 0 ? -1 : 1) * 3 : emx}" y="${evert ? emy : emy + (e.y1 === 0 ? -1.2 : 3)}" text-anchor="${evert ? (e.x1 === 0 ? 'end' : 'start') : 'middle'}" font-size="1.8" font-weight="700" fill="#b8860b">⌂ ${esc(L(e.label, hi))}</text>`;
+  const doorTxt = hi ? '⌂ मुख्य द्वार' : '⌂ MAIN DOOR';
+  const entrance = `<line x1="${e.x1}" y1="${e.y1}" x2="${e.x2}" y2="${e.y2}" stroke="${PAPER}" stroke-width="${W_OUT * 1.4}"/>` +
+    (evert
+      ? `<text x="${emx + (e.x1 === 0 ? -1.6 : 1.9)}" y="${emy}" text-anchor="middle" font-size="1.7" font-weight="700" fill="#b8860b" transform="rotate(${e.x1 === 0 ? -90 : 90} ${emx + (e.x1 === 0 ? -1.6 : 1.9)} ${emy})">${doorTxt}</text>`
+      : `<text x="${emx}" y="${emy + (e.y1 === 0 ? -1.4 : 3.1)}" text-anchor="middle" font-size="1.7" font-weight="700" fill="#b8860b">${doorTxt}</text>`);
 
   const dims = `<g stroke="${INK}" stroke-width="${W_DIM}" fill="${INK}">
     <line x1="0" y1="${H + pm.s + 4}" x2="${W}" y2="${H + pm.s + 4}"/><line x1="0" y1="${H + pm.s + 3.2}" x2="0" y2="${H + pm.s + 4.8}"/><line x1="${W}" y1="${H + pm.s + 3.2}" x2="${W}" y2="${H + pm.s + 4.8}"/>
@@ -203,9 +214,10 @@ export function blueprintHtml(bp: Blueprint, hi: boolean, dark: boolean, mandala
 .sheet{background:${PAPER};border:1px solid #c9cfda;border-radius:8px;margin:8px;padding:6px;box-shadow:0 5px 20px rgba(0,0,0,0.28);}
 svg{width:100%;height:auto;display:block;}
 .tb{display:flex;justify-content:space-between;align-items:baseline;font-family:Georgia,serif;color:${INK};padding:3px 8px 5px;border-bottom:1.5px solid ${INK};margin-bottom:3px;}
-.tb b{font-size:14px;letter-spacing:0.3px;} .tb span{font-size:10px;color:${MUTE};}</style></head>
+.tb b{font-size:14px;letter-spacing:0.3px;} .tb span{font-size:10px;color:${MUTE};}
+.lg{display:flex;justify-content:flex-end;gap:10px;font-family:Inter,Arial,sans-serif;font-size:9px;color:${MUTE};padding:4px 8px 2px;border-top:1px solid #e2e6ee;margin-top:3px;}</style></head>
 <body><div class="sheet">
-  <div class="tb"><b>${hi ? 'वास्तु भूतल नक्शा' : 'VASTU FLOOR PLAN'}</b><span>${ftl(W)}×${ftl(H)} · ${hi ? 'मुख' : 'facing'} ${bp.input.facing} · 1:100</span></div>
+  <div class="tb"><b>${hi ? 'वास्तु भूतल नक्शा' : 'VASTU FLOOR PLAN'}</b><span>${hi ? 'भूतल' : 'Ground Floor'} · ${ftl(W)}×${ftl(H)} · ${hi ? 'मुख' : 'facing'} ${bp.input.facing} · 1:100</span></div>
   <svg viewBox="${-EX.l} ${-EX.t} ${W + EX.l + EX.r} ${H + EX.t + EX.b}" xmlns="http://www.w3.org/2000/svg" font-family="Inter,Arial,sans-serif">
     <rect x="${-pm.w}" y="${-pm.n}" width="${PLW}" height="${PLH}" fill="none" stroke="${PLOTC}" stroke-width="${W_IN}" stroke-dasharray="1.6 1.1"/>
     <text x="${-pm.w}" y="${-pm.n - 1.2}" font-size="1.6" fill="${MUTE}">${hi ? `प्लॉट ${ftl(PLW)}×${ftl(PLH)} (सेटबैक सहित)` : `Plot ${ftl(PLW)}×${ftl(PLH)} (with setbacks)`}</text>
@@ -222,5 +234,6 @@ svg{width:100%;height:auto;display:block;}
     ${compass}
     ${scale}
   </svg>
+  <div class="lg"><span>▮ ${hi ? 'दीवार' : 'Wall'}</span><span>◠ ${hi ? 'दरवाज़ा' : 'Door'}</span><span>☰ ${hi ? 'खिड़की' : 'Window'}</span><span>▭ ${hi ? 'फ़र्नीचर' : 'Furniture'}</span><span>◌ ${hi ? 'ब्रह्मस्थान' : 'Brahmasthan'}</span><span>◉ ${hi ? 'सेवाएँ' : 'Utilities'}</span></div>
 </div></body></html>`;
 }
