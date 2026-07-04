@@ -21,7 +21,7 @@ const FILL: Record<string, string> = {
 // furniture as light SVG strokes (feet coords)
 function furniture(r: BpRoom): string {
   const { x, y, w, h, type: t } = r;
-  const S = 'fill="none" stroke="#5a4a2e" stroke-width="0.14" opacity="0.72"';
+  const S = 'fill="none" stroke="#3d331d" stroke-width="0.17" opacity="0.85"';
   const min = Math.min(w, h);
   if (min < 7) return '';
   if (t === 'master' || t === 'bedroom' || t === 'guestBedroom') {
@@ -61,18 +61,18 @@ function furniture(r: BpRoom): string {
 // door swing toward the built centre
 function door(r: BpRoom, bcx: number, bcy: number): string {
   if (r.type === 'brahmasthan' || r.type === 'veranda') return '';
-  const S = 'fill="none" stroke="#8a744d" stroke-width="0.12"';
+  const S = 'fill="none" stroke="#6b5836" stroke-width="0.14"';
   const dxc = bcx - (r.x + r.w / 2), dyc = bcy - (r.y + r.h / 2);
   const horiz = Math.abs(dxc) > Math.abs(dyc);
   const dw = Math.min(3, Math.max(2, Math.min(r.w, r.h) * 0.3));
   if (horiz) {
     const ex = dxc > 0 ? r.x + r.w : r.x, y0 = r.y + r.h / 2 - dw / 2, dir = dxc > 0 ? 1 : -1;
-    return `<line x1="${ex}" y1="${y0}" x2="${ex}" y2="${y0 + dw}" stroke="#faf6ee" stroke-width="0.5"/>
+    return `<line x1="${ex}" y1="${y0}" x2="${ex}" y2="${y0 + dw}" stroke="#faf6ee" stroke-width="0.95"/>
       <path d="M ${ex} ${y0} A ${dw} ${dw} 0 0 ${dxc > 0 ? 1 : 0} ${ex + dir * dw} ${y0 + dw}" ${S}/>
       <line x1="${ex}" y1="${y0}" x2="${ex + dir * dw}" y2="${y0 + dw}" stroke="#5a4a2e" stroke-width="0.14"/>`;
   }
   const ey = dyc > 0 ? r.y + r.h : r.y, x0 = r.x + r.w / 2 - dw / 2, dir = dyc > 0 ? 1 : -1;
-  return `<line x1="${x0}" y1="${ey}" x2="${x0 + dw}" y2="${ey}" stroke="#faf6ee" stroke-width="0.5"/>
+  return `<line x1="${x0}" y1="${ey}" x2="${x0 + dw}" y2="${ey}" stroke="#faf6ee" stroke-width="0.95"/>
     <path d="M ${x0} ${ey} A ${dw} ${dw} 0 0 ${dyc > 0 ? 0 : 1} ${x0 + dw} ${ey + dir * dw}" ${S}/>
     <line x1="${x0}" y1="${ey}" x2="${x0 + dw}" y2="${ey + dir * dw}" stroke="#5a4a2e" stroke-width="0.14"/>`;
 }
@@ -83,7 +83,7 @@ function windows(r: BpRoom, W: number, H: number): string {
   const eps = 0.2, cx = r.x + r.w / 2, cy = r.y + r.h / 2, wl = Math.min(4, r.w * 0.35), wv = Math.min(4, r.h * 0.35);
   const win = (x1: number, y1: number, x2: number, y2: number, vert: boolean) => {
     const o = 0.28;
-    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#faf6ee" stroke-width="0.55"/>` +
+    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#faf6ee" stroke-width="0.75"/>` +
       (vert ? `<line x1="${x1 - o}" y1="${y1}" x2="${x2 - o}" y2="${y2}" stroke="#5a4a2e" stroke-width="0.1"/><line x1="${x1 + o}" y1="${y1}" x2="${x2 + o}" y2="${y2}" stroke="#5a4a2e" stroke-width="0.1"/>`
         : `<line x1="${x1}" y1="${y1 - o}" x2="${x2}" y2="${y2 - o}" stroke="#5a4a2e" stroke-width="0.1"/><line x1="${x1}" y1="${y1 + o}" x2="${x2}" y2="${y2 + o}" stroke="#5a4a2e" stroke-width="0.1"/>`);
   };
@@ -117,7 +117,7 @@ export function blueprintHtml(bp: Blueprint, hi: boolean, dark: boolean, mandala
   const bcx = W / 2, bcy = H / 2;
 
   const paper = dark ? '#f4efe2' : '#fbf7ee';       // the sheet stays paper-like in both themes
-  const wall = '#2f2718', border = '#7a6640', ink = '#2a2010', mute = '#8a744d';
+  const wall = '#181510', ink = '#221a0c', mute = '#7a6640'; // BOLD near-black walls = pro floor-plan look
 
   // rooms — two passes: bodies (rect + furniture + partitions), then labels on TOP with a
   // translucent plate so the text is always readable over furniture/colour.
@@ -128,10 +128,10 @@ export function blueprintHtml(bp: Blueprint, hi: boolean, dark: boolean, mandala
     const open = r.type === 'brahmasthan';
     const sub = (r.sub || []).map((sb) => {
       const sf = sb.type === 'bath' ? '#a4dde9' : '#d3ccae';
-      return `<rect x="${sb.x}" y="${sb.y}" width="${sb.w}" height="${sb.h}" rx="0.4" fill="${sf}" fill-opacity="0.9" stroke="${wall}" stroke-width="0.18"/>`;
+      return `<rect x="${sb.x}" y="${sb.y}" width="${sb.w}" height="${sb.h}" fill="${sf}" fill-opacity="0.55" stroke="${wall}" stroke-width="0.4"/>`;
     }).join('');
     bodies.push(`<g id="${r.id}">
-      <rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="0.8" fill="${fill}" fill-opacity="${open ? 0.35 : 0.6}" stroke="${border}" stroke-width="0.22" filter="url(#sh)" ${open ? 'stroke-dasharray="1.2 0.8"' : ''}/>
+      <rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="${fill}" fill-opacity="${open ? 0.28 : 0.4}" stroke="${wall}" stroke-width="0.55" ${open ? 'stroke-dasharray="1.2 0.8"' : ''}/>
       ${open ? '' : furniture(r)}
       ${door(r, bcx, bcy)}
       ${windows(r, W, H)}
@@ -159,9 +159,8 @@ export function blueprintHtml(bp: Blueprint, hi: boolean, dark: boolean, mandala
   const roomBodies = bodies.join('');
   const roomLabels = labels.join('');
 
-  // outer double wall
-  const outer = `<rect x="0" y="0" width="${W}" height="${H}" fill="none" stroke="${wall}" stroke-width="0.9"/>
-    <rect x="0.7" y="0.7" width="${W - 1.4}" height="${H - 1.4}" fill="none" stroke="${wall}" stroke-width="0.22"/>`;
+  // bold outer wall (thick near-black perimeter — the main "real floor plan" cue)
+  const outer = `<rect x="0" y="0" width="${W}" height="${H}" fill="none" stroke="${wall}" stroke-width="1.7" stroke-linejoin="miter"/>`;
 
   // entrance
   const e = bp.entrance, evert = e.x1 === e.x2;
