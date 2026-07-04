@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Page } from '../components/Page';
-import { BlueprintCanvas } from '../components/BlueprintCanvas';
-import { BlueprintViewer } from '../components/BlueprintViewer';
+import { BlueprintWeb, BlueprintWebFullscreen } from '../components/BlueprintWeb';
 import { renderAsciiPlan, asciiPlanMarkdown } from '../lib/vastuAscii';
 import { GradientText } from '../components/GradientText';
 import { GoldButton } from '../components/GoldButton';
@@ -46,7 +45,7 @@ export function VastuBlueprintScreen({ navigation }: any) {
   const [selected, setSelected] = useState<string | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const [showMandala, setShowMandala] = useState(false);
-  const [viewMode, setViewMode] = useState<'svg' | 'ascii'>('ascii');
+  const [viewMode, setViewMode] = useState<'svg' | 'ascii'>('svg');
   const [question, setQuestion] = useState('');
   const [asking, setAsking] = useState(false);
   const [ai, setAi] = useState<VastuAskResponse | null>(null);
@@ -206,9 +205,9 @@ export function VastuBlueprintScreen({ navigation }: any) {
             ) : (
               <>
                 <Text style={[styles.helper, { color: theme.textMuted }]}>
-                  {hi ? 'किसी भी कमरे पर टैप करें — नीचे उसका साइज़ बदल सकते हैं।' : 'Tap any room — adjust its size below.'}
+                  {hi ? 'नीचे किसी कमरे पर टैप करके उसका साइज़ बदलें। पूरी स्क्रीन में ज़ूम करें।' : 'Tap a room chip below to resize it. Zoom in fullscreen.'}
                 </Text>
-                <BlueprintCanvas bp={bp} selected={selected} showMandala={showMandala} onSelect={(id) => { hSelect(); setSelected(id === selected ? null : id); }} height={390} />
+                <BlueprintWeb bp={bp} mandala={showMandala} height={430} />
                 <View style={styles.toolRow}>
                   <Pressable onPress={() => { hSelect(); setShowMandala((v) => !v); }} style={[styles.toolBtn, { borderColor: showMandala ? theme.gold1 : theme.gold2, backgroundColor: showMandala ? theme.gold1 : (theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(255,247,224,0.95)') }]}>
                     <Text style={[styles.toolBtnTxt, { color: showMandala ? theme.buttonInk : theme.gold1 }]}>{showMandala ? '✓ ' : ''}🕉 {hi ? 'वास्तु मंडल' : 'Vastu Mandala'}</Text>
@@ -216,6 +215,17 @@ export function VastuBlueprintScreen({ navigation }: any) {
                   <Pressable onPress={() => { hTap(); setFullscreen(true); }} style={[styles.toolBtn, { borderColor: theme.gold2, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(255,247,224,0.95)' }]}>
                     <Text style={[styles.toolBtnTxt, { color: theme.gold1 }]}>⛶ {hi ? 'पूरी स्क्रीन (ज़ूम)' : 'Fullscreen (zoom)'}</Text>
                   </Pressable>
+                </View>
+                {/* room selector (WebView taps can't call back, so pick a room here to edit) */}
+                <View style={styles.roomChips}>
+                  {bp.rooms.filter((r) => r.editable).map((r) => {
+                    const on = selected === r.id;
+                    return (
+                      <Pressable key={r.id} onPress={() => { hSelect(); setSelected(on ? null : r.id); }} style={[styles.rChip, { borderColor: on ? theme.gold1 : theme.cardBorder, backgroundColor: on ? theme.gold1 : 'transparent' }]}>
+                        <Text style={[styles.rChipTxt, { color: on ? theme.buttonInk : theme.gold1 }]}>{L(r.name, hi)}</Text>
+                      </Pressable>
+                    );
+                  })}
                 </View>
               </>
             )}
@@ -295,7 +305,7 @@ export function VastuBlueprintScreen({ navigation }: any) {
         </View>
       )}
 
-      {bp && <BlueprintViewer bp={bp} visible={fullscreen} onClose={() => setFullscreen(false)} />}
+      {bp && <BlueprintWebFullscreen bp={bp} mandala={showMandala} visible={fullscreen} onClose={() => setFullscreen(false)} />}
 
       <VastuCompass
         visible={showCompass}
@@ -347,6 +357,9 @@ const styles = StyleSheet.create({
   segTxt: { fontFamily: fonts.interBold, fontSize: 12.5 },
   asciiBox: { borderWidth: 1, borderRadius: 12, padding: 10, marginTop: 4 },
   asciiTxt: { fontFamily: 'monospace', fontSize: 8.5, lineHeight: 11 },
+  roomChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 12 },
+  rChip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 11, paddingVertical: 6 },
+  rChipTxt: { fontFamily: fonts.interSemi, fontSize: 11.5 },
   toolRow: { flexDirection: 'row', gap: 10, marginTop: 10 },
   toolBtn: { flex: 1, borderWidth: 1, borderRadius: 12, paddingVertical: 11, alignItems: 'center' },
   toolBtnTxt: { fontFamily: fonts.interBold, fontSize: 12 },
