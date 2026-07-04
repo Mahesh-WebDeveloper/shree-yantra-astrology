@@ -379,20 +379,6 @@ export function VastuScreen({ navigation }: any) {
         </Text>
       </LinearGradient>
 
-      {/* CTA → new-home blueprint designer */}
-      <Pressable
-        onPress={() => { hTap(); navigation.navigate('VastuBlueprint'); }}
-        style={({ pressed }) => [styles.bpCta, { borderColor: theme.gold1, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(255,247,224,0.95)', opacity: pressed ? 0.9 : 1 }]}
-      >
-        <Text style={styles.bpCtaEmoji}>🏠</Text>
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={[styles.bpCtaKicker, { color: theme.gold2 }]}>{hi ? 'नया घर बनाने जा रहे हैं?' : 'Building a new home?'}</Text>
-          <Text style={[styles.bpCtaTitle, { color: theme.text }]}>{hi ? 'वास्तु नक्शा डिज़ाइनर — साइज़ के साथ नक्शा बनाएँ' : 'Vastu Map Designer — plan with real sizes'}</Text>
-          <Text style={[styles.bpCtaSub, { color: theme.textMuted }]}>{hi ? 'प्लॉट व ज़रूरतें भरें → हर कमरे की सही दिशा व साइज़ वाला नक्शा' : 'Enter plot & needs → a map with every room in its right place'}</Text>
-        </View>
-        <Text style={[styles.bpCtaArrow, { color: theme.gold1 }]}>›</Text>
-      </Pressable>
-
       <View style={[styles.card, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(255,253,247,0.9)' }]}>
         <Text style={[styles.section, { color: theme.goldText }]}>{hi ? 'मूल जानकारी' : 'Basic Details'}</Text>
         <View style={styles.typeRow}>
@@ -453,8 +439,32 @@ export function VastuScreen({ navigation }: any) {
             <DirectionPicker value={rooms[r.key] || ''} onChange={(v) => setRoomDir(r.key, v)} allowCenter={r.key !== 'mainEntrance'} />
           </View>
         ))}
-        <GoldButton label={busy ? (hi ? 'जांच हो रही है...' : 'Checking...') : (hi ? 'वास्तु ऑडिट और नक्शा बनाएं' : 'Create Vastu Audit and Map')} onPress={runAnalyze} />
-        {busy && <ActivityIndicator color={theme.gold1} style={{ marginTop: 12 }} />}
+        <Pressable
+          onPress={runAnalyze}
+          disabled={busy}
+          style={({ pressed }) => [styles.auditCta, { opacity: pressed || busy ? 0.94 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }]}
+        >
+          <LinearGradient colors={theme.buttonGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.auditCtaInner}>
+            {busy ? (
+              <ActivityIndicator color={theme.buttonInk} />
+            ) : (
+              <View style={styles.auditIconWrap}>
+                <VastuGlyph color={theme.buttonInk} size={22} />
+              </View>
+            )}
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.auditCtaTitle, { color: theme.buttonInk }]} numberOfLines={1}>
+                {busy ? (hi ? 'जांच हो रही है…' : 'Checking…') : (hi ? 'वास्तु ऑडिट बनाएँ' : 'Create Vastu Audit')}
+              </Text>
+              {!busy && (
+                <Text style={[styles.auditCtaSub, { color: theme.buttonInk }]} numberOfLines={1}>
+                  {hi ? 'स्कोर, सुधार व आदर्श नक्शा' : 'Score, fixes & ideal map'}
+                </Text>
+              )}
+            </View>
+            {!busy && <Text style={[styles.auditCtaArrow, { color: theme.buttonInk }]}>→</Text>}
+          </LinearGradient>
+        </Pressable>
       </View>
 
       {analysis && (
@@ -608,12 +618,12 @@ const styles = StyleSheet.create({
   compassBtn: { alignSelf: 'flex-start', borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7, marginBottom: 8 },
   compassBtnTxt: { fontFamily: fonts.interBold, fontSize: 11.5 },
   compassMini: { fontSize: 16 },
-  bpCta: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1.4, borderRadius: 18, padding: 14, marginTop: 14 },
-  bpCtaEmoji: { fontSize: 30 },
-  bpCtaKicker: { fontFamily: fonts.interSemi, fontSize: 10.5, letterSpacing: 0.6, textTransform: 'uppercase' },
-  bpCtaTitle: { fontFamily: fonts.interBold, fontSize: 14, lineHeight: 19, marginTop: 2 },
-  bpCtaSub: { fontFamily: fonts.inter, fontSize: 11.3, lineHeight: 15.5, marginTop: 3 },
-  bpCtaArrow: { fontFamily: fonts.interBold, fontSize: 26 },
+  auditCta: { marginTop: 18, borderRadius: 16, shadowColor: '#3d2809', shadowOpacity: 0.24, shadowRadius: 14, shadowOffset: { width: 0, height: 7 }, elevation: 5 },
+  auditCtaInner: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16, paddingVertical: 15, paddingHorizontal: 18, minHeight: 62 },
+  auditIconWrap: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.28)' },
+  auditCtaTitle: { fontFamily: fonts.cinzelSemi, fontSize: 15, letterSpacing: 0.5 },
+  auditCtaSub: { fontFamily: fonts.inter, fontSize: 11.5, opacity: 0.82, marginTop: 2 },
+  auditCtaArrow: { fontFamily: fonts.interBold, fontSize: 20 },
   helper: { fontFamily: fonts.inter, fontSize: 12, lineHeight: 17, marginBottom: 10 },
   dimRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
   dirWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, G, Line, Polygon, Text as SvgText } from 'react-native-svg';
 import { Magnetometer } from 'expo-sensors';
+import * as Location from 'expo-location';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts } from '../theme/tokens';
 import { useLang } from '../i18n/LanguageProvider';
@@ -37,35 +38,63 @@ export function VastuCompass({ visible, title, instruction, onPick, onClose }: {
   const hi = lang === 'hi';
   const [heading, setHeading] = useState<number | null>(null);
   const [available, setAvailable] = useState(true);
+  const [fused, setFused] = useState(false);      // true = OS sensor-fusion compass (accurate)
   const smooth = useRef<number | null>(null);
 
   useEffect(() => {
     if (!visible) return;
-    let sub: { remove: () => void } | null = null;
+    let headingSub: Location.LocationSubscription | null = null;
+    let magSub: { remove: () => void } | null = null;
     let on = true;
-    (async () => {
+
+    // circular low-pass so the needle settles smoothly (no jitter)
+    const apply = (h: number) => {
+      const prev = smooth.current;
+      if (prev == null) smooth.current = h;
+      else {
+        let d = h - prev;
+        if (d > 180) d -= 360; else if (d < -180) d += 360;
+        smooth.current = (prev + d * 0.3 + 360) % 360;
+      }
+      setHeading(smooth.current);
+    };
+
+    const startMagnetometer = async () => {
       const ok = await Magnetometer.isAvailableAsync().catch(() => false);
       if (!on) return;
       if (!ok) { setAvailable(false); return; }
-      setAvailable(true);
-      Magnetometer.setUpdateInterval(120);
-      sub = Magnetometer.addListener(({ x, y }) => {
-        // heading of the phone's TOP edge, 0° = North (phone held flat)
+      setAvailable(true); setFused(false);
+      Magnetometer.setUpdateInterval(100);
+      magSub = Magnetometer.addListener(({ x, y }) => {
+        // raw heading of the phone's TOP edge, 0° = North (phone held flat)
         let a = Math.atan2(y, x) * (180 / Math.PI);
         if (a < 0) a += 360;
-        const h = (a - 90 + 360) % 360;
-        // circular low-pass to stop jitter
-        const prev = smooth.current;
-        if (prev == null) smooth.current = h;
-        else {
-          let d = h - prev;
-          if (d > 180) d -= 360; else if (d < -180) d += 360;
-          smooth.current = (prev + d * 0.25 + 360) % 360;
-        }
-        setHeading(smooth.current);
+        apply((a - 90 + 360) % 360);
       });
+    };
+
+    (async () => {
+      // 1) PREFERRED: the OS fused compass (accelerometer + magnetometer + declination) —
+      //    the exact same reading as the phone's built-in Compass app. Needs location perm.
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (!on) return;
+        if (status === 'granted') {
+          headingSub = await Location.watchHeadingAsync((h) => {
+            // trueHeading (geographic north, declination-corrected) if the OS can resolve it,
+            // else magHeading. -1 means "not yet available".
+            const deg = h.trueHeading != null && h.trueHeading >= 0 ? h.trueHeading : h.magHeading;
+            if (deg != null && deg >= 0) { setAvailable(true); setFused(true); apply(deg); }
+          });
+          return;
+        }
+      } catch { /* fall through to magnetometer */ }
+      if (!on) return;
+      // 2) FALLBACK: raw magnetometer (works without location permission, less accurate)
+      await startMagnetometer();
     })();
-    return () => { on = false; sub?.remove(); smooth.current = null; };
+
+    return () => { on = false; headingSub?.remove(); magSub?.remove(); smooth.current = null; setHeading(null); };
   }, [visible]);
 
   const hDeg = heading == null ? 0 : heading;
@@ -116,10 +145,14 @@ export function VastuCompass({ visible, title, instruction, onPick, onClose }: {
               <View style={[styles.readout, { borderColor: theme.gold2 + '55', backgroundColor: theme.isDark ? 'rgba(233,184,80,0.08)' : 'rgba(255,247,224,0.9)' }]}>
                 <Text style={[styles.readDir, { color: theme.gold1 }]}>{dir ? (hi ? DIR_INFO[dir].hi : DIR_INFO[dir].en) : '—'}</Text>
                 <Text style={[styles.readSub, { color: theme.textMuted }]}>{dir ? `${hi ? DIR_INFO[dir].en : DIR_INFO[dir].hi} · ${Math.round(hDeg)}°` : (hi ? 'सेंसर पढ़ा जा रहा है…' : 'Reading sensor…')}</Text>
+                <Text style={[styles.accBadge, { color: fused ? '#3ec77a' : theme.textMuted }]}>
+                  {fused ? (hi ? '● सटीक डिवाइस कंपास' : '● Accurate device compass') : (hi ? '○ बेसिक सेंसर — कैलिब्रेट करें' : '○ Basic sensor — please calibrate')}
+                </Text>
               </View>
               <Text style={[styles.tip, { color: theme.textMuted }]}>
-                {hi ? 'सुई अटक रही हो तो फोन को हवा में 8 (आठ) के आकार में 2-3 बार घुमाएँ।'
-                    : 'If the needle sticks, wave the phone in a figure-8 motion 2-3 times.'}
+                {fused
+                  ? (hi ? 'फोन को समतल पकड़ें। सुई असली दिशा दिखा रही है।' : 'Hold the phone flat. The needle shows the true direction.')
+                  : (hi ? 'सुई अटक रही हो तो फोन को हवा में 8 (आठ) के आकार में 2-3 बार घुमाएँ।' : 'If the needle sticks, wave the phone in a figure-8 motion 2-3 times.')}
               </Text>
             </>
           )}
@@ -154,6 +187,7 @@ const styles = StyleSheet.create({
   readout: { borderWidth: 1, borderRadius: 16, paddingVertical: 10, paddingHorizontal: 24, alignItems: 'center', marginTop: 4 },
   readDir: { fontFamily: fonts.playfairBold, fontSize: 26 },
   readSub: { fontFamily: fonts.inter, fontSize: 11.5, marginTop: 2 },
+  accBadge: { fontFamily: fonts.interSemi, fontSize: 10.5, marginTop: 4 },
   tip: { fontFamily: fonts.inter, fontSize: 10.6, lineHeight: 15, textAlign: 'center', marginTop: 8 },
   noSensor: { fontFamily: fonts.interSemi, fontSize: 12.5, lineHeight: 18, textAlign: 'center', marginVertical: 18 },
   btnRow: { flexDirection: 'row', gap: 10, marginTop: 14, alignSelf: 'stretch' },
