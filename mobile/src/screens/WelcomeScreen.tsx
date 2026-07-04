@@ -166,7 +166,7 @@ const FEATURES = [
   { key: 'pred', title: 'My Rashifal', desc: 'YOUR personal horoscope — daily, weekly, monthly & yearly from your birth chart', tint: ['#3d2378', '#241452', '#1a0f3c'] as const, Art: SunArt, route: 'DailyPrediction' },
   { key: 'kundli', title: 'Kundli / Birth Chart', desc: 'View your detailed birth chart and planetary positions', tint: ['#1f3d82', '#142a5c', '#0e1c44'] as const, Art: KundliPng, route: 'Kundli' },
   { key: 'ai', title: 'Ask the Astrologer', desc: 'Ask personal questions using your chart and precise planetary data', tint: ['#4b2d73', '#2c194c', '#160c2b'] as const, Art: JyothishiArt, route: 'AiAstrologer' },
-  { key: 'patri', title: 'Janam Patri + Naamkaran', desc: 'Full kundli for a baby/anyone + lucky names + Vedic PDF export', tint: ['#6a1f3a', '#431229', '#250a17'] as const, Art: PatriArt, route: 'JanamPatri' },
+  { key: 'patri', title: 'Naamkaran — Baby Names', desc: 'Naming ceremony help: lucky baby names by nakshatra + full kundli & Vedic PDF', tint: ['#6a1f3a', '#431229', '#250a17'] as const, Art: PatriArt, route: 'JanamPatri' },
 ];
 
 // ALL SERVICES — horizontal slider. Each card uses the SAME solid gradient

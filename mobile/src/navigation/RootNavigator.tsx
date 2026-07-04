@@ -56,6 +56,7 @@ import { TransitForecastScreen } from '../screens/TransitForecastScreen';
 import { BabyNamesScreen } from '../screens/BabyNamesScreen';
 import { NumerologyScreen } from '../screens/NumerologyScreen';
 import { VastuScreen } from '../screens/VastuScreen';
+import { VastuLearnScreen } from '../screens/VastuLearnScreen';
 import { stackSpec, forSharedAxisX, forFadeThrough } from './transitions';
 
 const Stack = createStackNavigator();
@@ -138,6 +139,7 @@ export function RootNavigator() {
       <Stack.Screen name="BabyNames" component={BabyNamesScreen} />
       <Stack.Screen name="Numerology" component={NumerologyScreen} />
       <Stack.Screen name="Vastu" component={VastuScreen} />
+      <Stack.Screen name="VastuLearn" component={VastuLearnScreen} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       <Stack.Screen name="PrivacySecurity" component={PrivacySecurityScreen} />
       <Stack.Screen name="SetPassword" component={SetPasswordScreen} />

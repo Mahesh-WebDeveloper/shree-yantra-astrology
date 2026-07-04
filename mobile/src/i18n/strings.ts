@@ -93,8 +93,8 @@ export const STRINGS: Record<string, { en: string; hi: string }> = {
   'home.feat.kundli.desc': { en: 'View your detailed birth chart and planetary positions', hi: 'अपनी विस्तृत जन्म कुंडली और ग्रहों की स्थिति देखें' },
   'home.feat.chog.title': { en: 'Choghadiya Muhurat', hi: 'चौघड़िया मुहूर्त' },
   'home.feat.chog.desc': { en: 'Find auspicious timings for important work and decisions', hi: 'महत्वपूर्ण कार्यों के लिए शुभ मुहूर्त जानें' },
-  'home.feat.patri.title': { en: 'Janam Patri + Naamkaran', hi: 'जन्म पत्रिका + नामकरण' },
-  'home.feat.patri.desc': { en: 'Full kundli for a baby/anyone + lucky names + Vedic PDF export', hi: 'शिशु/किसी की भी पूरी कुंडली + शुभ नाम + वैदिक PDF' },
+  'home.feat.patri.title': { en: 'Naamkaran — Baby Names', hi: 'नामकरण — शिशु के शुभ नाम' },
+  'home.feat.patri.desc': { en: 'Naming ceremony help: lucky baby names by nakshatra + full kundli & Vedic PDF', hi: 'नामकरण संस्कार: नक्षत्र अनुसार शिशु के शुभ नाम + पूरी कुंडली व वैदिक PDF' },
   'lib.dynamicAarti': { en: 'AARTI', hi: 'आरती' },
 
   // ── auth (mobile + OTP) ──
