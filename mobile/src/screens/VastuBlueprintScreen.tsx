@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Page } from '../components/Page';
 import { BlueprintWeb, BlueprintWebFullscreen } from '../components/BlueprintWeb';
-import { renderAsciiPlan, asciiPlanMarkdown } from '../lib/vastuAscii';
+import { planTextSummary } from '../lib/blueprintHtml';
 import { GradientText } from '../components/GradientText';
 import { GoldButton } from '../components/GoldButton';
 import { VastuCompass, CompassDir } from '../components/VastuCompass';
@@ -45,7 +45,6 @@ export function VastuBlueprintScreen({ navigation }: any) {
   const [selected, setSelected] = useState<string | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const [showMandala, setShowMandala] = useState(false);
-  const [viewMode, setViewMode] = useState<'svg' | 'ascii'>('svg');
   const [question, setQuestion] = useState('');
   const [asking, setAsking] = useState(false);
   const [ai, setAi] = useState<VastuAskResponse | null>(null);
@@ -177,58 +176,32 @@ export function VastuBlueprintScreen({ navigation }: any) {
         <View style={{ gap: 14, marginTop: 14 }} onLayout={onResultsLayout}>
           <View style={[styles.card, { borderColor: theme.gold2 + '55', backgroundColor: theme.isDark ? 'rgba(233,184,80,0.04)' : 'rgba(255,250,236,0.95)' }]}>
             <Text style={[styles.section, { color: theme.goldText, marginTop: 0 }]}>{hi ? 'आपका वास्तु नक्शा' : 'Your Vastu Map'}</Text>
-
-            {/* view mode: line map (text) vs SVG drawing */}
-            <View style={styles.segRow}>
-              {(['ascii', 'svg'] as const).map((m) => {
-                const on = viewMode === m;
+            <Text style={[styles.helper, { color: theme.textMuted }]}>
+              {hi ? 'पूरी स्क्रीन में ज़ूम करें। नीचे किसी कमरे पर टैप करके उसका साइज़ बदलें।' : 'Zoom in fullscreen. Tap a room chip below to resize it.'}
+            </Text>
+            <BlueprintWeb bp={bp} mandala={showMandala} height={440} />
+            <View style={styles.toolRow}>
+              <Pressable onPress={() => { hSelect(); setShowMandala((v) => !v); }} style={[styles.toolBtn, { borderColor: showMandala ? theme.gold1 : theme.gold2, backgroundColor: showMandala ? theme.gold1 : (theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(255,247,224,0.95)') }]}>
+                <Text style={[styles.toolBtnTxt, { color: showMandala ? theme.buttonInk : theme.gold1 }]}>{showMandala ? '✓ ' : ''}🕉 {hi ? 'वास्तु मंडल' : 'Vastu Mandala'}</Text>
+              </Pressable>
+              <Pressable onPress={() => { hTap(); setFullscreen(true); }} style={[styles.toolBtn, { borderColor: theme.gold2, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(255,247,224,0.95)' }]}>
+                <Text style={[styles.toolBtnTxt, { color: theme.gold1 }]}>⛶ {hi ? 'पूरी स्क्रीन (ज़ूम)' : 'Fullscreen (zoom)'}</Text>
+              </Pressable>
+            </View>
+            <Pressable onPress={async () => { hTap(); try { await Share.share({ message: planTextSummary(bp, hi) }); } catch {} }} style={[styles.toolBtn, { marginTop: 10, borderColor: theme.gold2, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(255,247,224,0.95)' }]}>
+              <Text style={[styles.toolBtnTxt, { color: theme.gold1 }]}>📤 {hi ? 'कमरों की सूची शेयर करें' : 'Share room list'}</Text>
+            </Pressable>
+            {/* room selector (WebView taps can't call back, so pick a room here to edit) */}
+            <View style={styles.roomChips}>
+              {bp.rooms.filter((r) => r.editable).map((r) => {
+                const on = selected === r.id;
                 return (
-                  <Pressable key={m} onPress={() => { hSelect(); setViewMode(m); }} style={[styles.seg, { borderColor: on ? theme.gold1 : theme.cardBorder, backgroundColor: on ? theme.gold1 : 'transparent' }]}>
-                    <Text style={[styles.segTxt, { color: on ? theme.buttonInk : theme.gold1 }]}>{m === 'ascii' ? (hi ? '📐 लाइन मैप' : '📐 Line map') : (hi ? '🖼 चित्र नक्शा' : '🖼 Drawing')}</Text>
+                  <Pressable key={r.id} onPress={() => { hSelect(); setSelected(on ? null : r.id); }} style={[styles.rChip, { borderColor: on ? theme.gold1 : theme.cardBorder, backgroundColor: on ? theme.gold1 : 'transparent' }]}>
+                    <Text style={[styles.rChipTxt, { color: on ? theme.buttonInk : theme.gold1 }]}>{L(r.name, hi)}</Text>
                   </Pressable>
                 );
               })}
             </View>
-
-            {viewMode === 'ascii' ? (
-              <>
-                <Text style={[styles.helper, { color: theme.textMuted }]}>
-                  {hi ? 'रेखाओं से बना नक्शा (वास्तु नियमों से) — दाएँ-बाएँ स्क्रॉल करें। नीचे शेयर/कॉपी करें।' : 'A line-drawn plan (from Vastu rules) — scroll sideways. Share/copy below.'}
-                </Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator style={[styles.asciiBox, { borderColor: theme.gold2 + '55', backgroundColor: theme.isDark ? '#0a0a06' : '#fffdf5' }]}>
-                  <Text style={[styles.asciiTxt, { color: theme.isDark ? '#f0d98a' : '#3a2a10' }]} selectable>{renderAsciiPlan(bp, hi)}</Text>
-                </ScrollView>
-                <Pressable onPress={async () => { hTap(); try { await Share.share({ message: asciiPlanMarkdown(bp, hi) }); } catch {} }} style={[styles.toolBtn, { marginTop: 10, borderColor: theme.gold2, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(255,247,224,0.95)' }]}>
-                  <Text style={[styles.toolBtnTxt, { color: theme.gold1 }]}>📤 {hi ? 'नक्शा शेयर/कॉपी करें (markdown)' : 'Share / copy map (markdown)'}</Text>
-                </Pressable>
-              </>
-            ) : (
-              <>
-                <Text style={[styles.helper, { color: theme.textMuted }]}>
-                  {hi ? 'नीचे किसी कमरे पर टैप करके उसका साइज़ बदलें। पूरी स्क्रीन में ज़ूम करें।' : 'Tap a room chip below to resize it. Zoom in fullscreen.'}
-                </Text>
-                <BlueprintWeb bp={bp} mandala={showMandala} height={430} />
-                <View style={styles.toolRow}>
-                  <Pressable onPress={() => { hSelect(); setShowMandala((v) => !v); }} style={[styles.toolBtn, { borderColor: showMandala ? theme.gold1 : theme.gold2, backgroundColor: showMandala ? theme.gold1 : (theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(255,247,224,0.95)') }]}>
-                    <Text style={[styles.toolBtnTxt, { color: showMandala ? theme.buttonInk : theme.gold1 }]}>{showMandala ? '✓ ' : ''}🕉 {hi ? 'वास्तु मंडल' : 'Vastu Mandala'}</Text>
-                  </Pressable>
-                  <Pressable onPress={() => { hTap(); setFullscreen(true); }} style={[styles.toolBtn, { borderColor: theme.gold2, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(255,247,224,0.95)' }]}>
-                    <Text style={[styles.toolBtnTxt, { color: theme.gold1 }]}>⛶ {hi ? 'पूरी स्क्रीन (ज़ूम)' : 'Fullscreen (zoom)'}</Text>
-                  </Pressable>
-                </View>
-                {/* room selector (WebView taps can't call back, so pick a room here to edit) */}
-                <View style={styles.roomChips}>
-                  {bp.rooms.filter((r) => r.editable).map((r) => {
-                    const on = selected === r.id;
-                    return (
-                      <Pressable key={r.id} onPress={() => { hSelect(); setSelected(on ? null : r.id); }} style={[styles.rChip, { borderColor: on ? theme.gold1 : theme.cardBorder, backgroundColor: on ? theme.gold1 : 'transparent' }]}>
-                        <Text style={[styles.rChipTxt, { color: on ? theme.buttonInk : theme.gold1 }]}>{L(r.name, hi)}</Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </>
-            )}
 
             {selRoom && (
               <View style={[styles.editBox, { borderColor: theme.gold2 + '66', backgroundColor: theme.isDark ? 'rgba(233,184,80,0.07)' : 'rgba(255,247,224,0.9)' }]}>

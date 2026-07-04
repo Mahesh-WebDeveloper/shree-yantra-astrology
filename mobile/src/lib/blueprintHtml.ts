@@ -95,6 +95,21 @@ function windows(r: BpRoom, W: number, H: number): string {
   return s;
 }
 
+/** Readable text summary of the plan (for share/copy) — accurate, not ASCII art. */
+export function planTextSummary(bp: Blueprint, hi: boolean): string {
+  const head = hi
+    ? `🏠 वास्तु नक्शा — निर्माण ${ftl(bp.builtW)} × ${ftl(bp.builtL)}, मुख ${bp.input.facing}`
+    : `🏠 Vastu Plan — Built ${ftl(bp.builtW)} × ${ftl(bp.builtL)}, facing ${bp.input.facing}`;
+  const rows = bp.rooms.map((r) => {
+    const sub = (r.sub || []).map((sb) => `\n     • ${L(sb.name, hi)} (${ftl(sb.w)}×${ftl(sb.h)})`).join('');
+    return `• ${L(r.name, hi)} — ${L(r.direction, hi)} · ${ftl(r.w)}×${ftl(r.h)} · ${r.areaSqft} sq ft${sub}`;
+  }).join('\n');
+  const note = hi
+    ? '\n\nवास्तु नियमों से बनाया गया: नैऋत्य में मुख्य शयन, आग्नेय में रसोई, ईशान में पूजा, केंद्र खुला (ब्रह्मस्थान)।'
+    : '\n\nBy Vastu rules: SW master, SE kitchen, NE pooja, open centre (Brahmasthan).';
+  return `${head}\n\n${rows}${note}`;
+}
+
 export function blueprintHtml(bp: Blueprint, hi: boolean, dark: boolean, mandala = false): string {
   const W = bp.builtW, H = bp.builtL;
   const M = { l: Math.max(7, W * 0.14), r: Math.max(9, W * 0.16), t: 12, b: 16 };
@@ -104,30 +119,43 @@ export function blueprintHtml(bp: Blueprint, hi: boolean, dark: boolean, mandala
   const paper = dark ? '#f4efe2' : '#fbf7ee';       // the sheet stays paper-like in both themes
   const wall = '#2f2718', border = '#7a6640', ink = '#2a2010', mute = '#8a744d';
 
-  // rooms
-  const roomSvg = bp.rooms.map((r) => {
+  // rooms — two passes: bodies (rect + furniture + partitions), then labels on TOP with a
+  // translucent plate so the text is always readable over furniture/colour.
+  const bodies: string[] = [];
+  const labels: string[] = [];
+  bp.rooms.forEach((r) => {
     const fill = FILL[r.type] || '#e6ddc6';
     const open = r.type === 'brahmasthan';
-    const nameF = Math.max(1.7, Math.min(2.7, Math.min(r.w, r.h) * 0.16));
-    const showName = Math.min(r.w, r.h) > 4.5;
-    const showDim = Math.min(r.w, r.h) > 9;
     const sub = (r.sub || []).map((sb) => {
       const sf = sb.type === 'bath' ? '#a4dde9' : '#d3ccae';
-      return `<g><rect x="${sb.x}" y="${sb.y}" width="${sb.w}" height="${sb.h}" rx="0.4" fill="${sf}" fill-opacity="0.85" stroke="${wall}" stroke-width="0.18"/>
-        <text x="${sb.x + sb.w / 2}" y="${sb.y + sb.h / 2 + 0.6}" text-anchor="middle" font-size="1.5" font-weight="600" fill="${ink}">${esc(L(sb.name, hi))}</text></g>`;
+      return `<rect x="${sb.x}" y="${sb.y}" width="${sb.w}" height="${sb.h}" rx="0.4" fill="${sf}" fill-opacity="0.9" stroke="${wall}" stroke-width="0.18"/>`;
     }).join('');
-    const nx = r.x + r.w / 2 + (r.sub && r.sub[0] ? (r.sub[0].x > r.x ? -r.w * 0.15 : r.w * 0.15) : 0);
-    const ny = r.y + r.h / 2 + (r.sub && r.sub[0] ? (r.sub[0].y <= r.y ? r.h * 0.2 : -r.h * 0.15) : 0);
-    return `<g id="${r.id}">
-      <rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="0.8" fill="${fill}" fill-opacity="${open ? 0.35 : 0.62}" stroke="${border}" stroke-width="0.22" filter="url(#sh)" ${open ? 'stroke-dasharray="1.2 0.8"' : ''}/>
+    bodies.push(`<g id="${r.id}">
+      <rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="0.8" fill="${fill}" fill-opacity="${open ? 0.35 : 0.6}" stroke="${border}" stroke-width="0.22" filter="url(#sh)" ${open ? 'stroke-dasharray="1.2 0.8"' : ''}/>
       ${open ? '' : furniture(r)}
       ${door(r, bcx, bcy)}
       ${windows(r, W, H)}
-      ${sub}
-      ${showName ? `<text x="${nx}" y="${ny - (showDim ? 0.3 : -nameF * 0.35)}" text-anchor="middle" font-size="${nameF}" font-weight="700" fill="${ink}" font-family="Georgia,serif">${esc(L(r.name, hi))}</text>` : ''}
-      ${showDim ? `<text x="${nx}" y="${ny + 2.4}" text-anchor="middle" font-size="1.75" fill="${mute}">${ftl(r.w)} × ${ftl(r.h)} · ${r.areaSqft} sq ft</text>` : ''}
-    </g>`;
-  }).join('');
+      ${sub}</g>`);
+
+    // labels (room + each sub) — placed on top, with plate
+    const nameF = Math.max(1.6, Math.min(2.6, Math.min(r.w, r.h) * 0.15));
+    if (Math.min(r.w, r.h) > 4) {
+      const nx = r.x + r.w / 2 + (r.sub && r.sub[0] ? (r.sub[0].x > r.x ? -r.w * 0.14 : r.w * 0.14) : 0);
+      const ny = r.y + r.h / 2 + (r.sub && r.sub[0] ? (r.sub[0].y <= r.y ? r.h * 0.18 : -r.h * 0.14) : 0);
+      const name = esc(L(r.name, hi));
+      const showDim = Math.min(r.w, r.h) > 8;
+      const pw = Math.min(r.w - 0.6, Math.max(name.length * nameF * 0.62, 6));
+      const ph = showDim ? nameF + 3.6 : nameF + 1.4;
+      labels.push(`<g><rect x="${nx - pw / 2}" y="${ny - nameF - 0.4}" width="${pw}" height="${ph}" rx="0.7" fill="${paper}" fill-opacity="0.7"/>
+        <text x="${nx}" y="${ny + (showDim ? 0 : nameF * 0.35)}" text-anchor="middle" font-size="${nameF}" font-weight="700" fill="${ink}" font-family="Georgia,serif">${name}</text>
+        ${showDim ? `<text x="${nx}" y="${ny + 2.5}" text-anchor="middle" font-size="1.6" fill="${mute}">${ftl(r.w)}×${ftl(r.h)} · ${r.areaSqft} sqft</text>` : ''}</g>`);
+    }
+    (r.sub || []).forEach((sb) => {
+      if (Math.min(sb.w, sb.h) > 4) labels.push(`<text x="${sb.x + sb.w / 2}" y="${sb.y + sb.h / 2 + 0.5}" text-anchor="middle" font-size="1.4" font-weight="600" fill="${ink}">${esc(L(sb.name, hi))}</text>`);
+    });
+  });
+  const roomBodies = bodies.join('');
+  const roomLabels = labels.join('');
 
   // outer double wall
   const outer = `<rect x="0" y="0" width="${W}" height="${H}" fill="none" stroke="${wall}" stroke-width="0.9"/>
@@ -186,11 +214,12 @@ export function blueprintHtml(bp: Blueprint, hi: boolean, dark: boolean, mandala
       <pattern id="grid" width="5" height="5" patternUnits="userSpaceOnUse"><path d="M5 0H0V5" fill="none" stroke="#d9cca6" stroke-width="0.06"/></pattern>
     </defs>
     <rect x="0" y="0" width="${W}" height="${H}" fill="url(#grid)"/>
-    ${roomSvg}
+    ${roomBodies}
     ${mand}
     ${outer}
     ${entrance}
     ${markers}
+    ${roomLabels}
     ${dims}
     ${compass}
   </svg>
