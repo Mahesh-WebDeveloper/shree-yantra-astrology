@@ -142,9 +142,11 @@ export function blueprintHtml(bp: Blueprint, hi: boolean, dark: boolean, mandala
     if (Math.min(r.w, r.h) > 4) {
       const nx = r.x + r.w / 2 + (r.sub && r.sub[0] ? (r.sub[0].x > r.x ? -r.w * 0.14 : r.w * 0.14) : 0);
       const ny = r.y + r.h / 2 + (r.sub && r.sub[0] ? (r.sub[0].y <= r.y ? r.h * 0.18 : -r.h * 0.14) : 0);
-      const name = esc(L(r.name, hi));
+      const maxCh = Math.max(4, Math.floor((r.w - 0.6) / (nameF * 0.6)));
+      const raw = L(r.name, hi);
+      const name = esc(raw.length > maxCh ? raw.slice(0, maxCh - 1) + '…' : raw);
       const showDim = Math.min(r.w, r.h) > 8;
-      const pw = Math.min(r.w - 0.6, Math.max(name.length * nameF * 0.62, 6));
+      const pw = Math.min(r.w - 0.4, Math.max(name.length * nameF * 0.6, 6));
       const ph = showDim ? nameF + 3.6 : nameF + 1.4;
       labels.push(`<g><rect x="${nx - pw / 2}" y="${ny - nameF - 0.4}" width="${pw}" height="${ph}" rx="0.7" fill="${paper}" fill-opacity="0.7"/>
         <text x="${nx}" y="${ny + (showDim ? 0 : nameF * 0.35)}" text-anchor="middle" font-size="${nameF}" font-weight="700" fill="${ink}" font-family="Georgia,serif">${name}</text>
