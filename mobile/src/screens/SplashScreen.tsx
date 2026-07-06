@@ -104,7 +104,7 @@ export function SplashScreen({ navigation }: any) {
       ])).start();
     });
 
-    const t = setTimeout(() => navigation.replace(authedRef.current ? 'Main' : 'Onboarding'), 3300);
+    const t = setTimeout(() => navigation.replace(authedRef.current ? 'Main' : 'PhoneAuth'), 3300);
     return () => clearTimeout(t);
   }, [navigation, bloom, ring, tri, binduPop, name, spin, spinRev, orbit1, orbit2, orbit3, pulse, bar, twinkle]);
 

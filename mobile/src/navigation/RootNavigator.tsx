@@ -2,7 +2,6 @@ import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Tabs } from './Tabs';
 import { SplashScreen } from '../screens/SplashScreen';
-import { OnboardingScreen } from '../screens/OnboardingScreen';
 import { SignInScreen } from '../screens/SignInScreen';
 import { RegisterScreen } from '../screens/RegisterScreen';
 import { PhoneAuthScreen } from '../screens/PhoneAuthScreen';
@@ -93,7 +92,6 @@ export function RootNavigator() {
         screenOptions={{ cardStyleInterpolator: forFadeThrough, gestureEnabled: false }}
       >
         <Stack.Screen name="Splash" component={SplashScreen} />
-        <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         <Stack.Screen name="PhoneAuth" component={PhoneAuthScreen} />
         <Stack.Screen name="LanguageSelect" component={LanguageSelectScreen} />
         <Stack.Screen name="BirthDetails" component={BirthDetailsScreen} />
