@@ -71,17 +71,17 @@ export function isProfileComplete(user: AuthUser | null): boolean {
  *  - token, subscribed, profile incomplete    → 'BirthDetails' (finish setup)
  *  - token, subscribed, profile complete      → 'Main'
  */
-export async function getStartRoute(): Promise<'PhoneAuth' | 'Subscribe' | 'BirthDetails' | 'Main'> {
+export async function getStartRoute(): Promise<'LanguageSelect' | 'Subscribe' | 'BirthDetails' | 'Main'> {
   try {
     const token = await AsyncStorage.getItem(TOKEN_KEY);
-    if (!token) return 'PhoneAuth';
+    if (!token) return 'LanguageSelect'; // fresh: pick language → login → subscribe → …
     setAuthToken(token);
     const [prem, user] = await Promise.all([AsyncStorage.getItem('sy.premium'), getStoredUser()]);
     const subscribed = prem === '1' || user?.plan === 'premium';
     if (!subscribed) return 'Subscribe';
     return isProfileComplete(user) ? 'Main' : 'BirthDetails';
   } catch {
-    return 'PhoneAuth';
+    return 'LanguageSelect';
   }
 }
 

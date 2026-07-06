@@ -92,7 +92,7 @@ export function PhoneAuthScreen({ navigation }: any) {
       hSuccess();
       // NEW registration → language → subscription → birth-details onboarding.
       // Existing user: profile adhura (DOB nahi) → birth-details, warna seedha app.
-      navigation.replace(r.isNew ? 'LanguageSelect' : (r.profileComplete ? 'Main' : 'BirthDetails'));
+      navigation.replace(r.isNew ? 'Subscribe' : (r.profileComplete ? 'Main' : 'BirthDetails'));
     } catch (e: any) {
       hError();
       setCode('');
@@ -131,7 +131,7 @@ export function PhoneAuthScreen({ navigation }: any) {
       await saveAuth(r.token, r.user);
       track(r.isNew ? 'register' : 'login', undefined, { method: 'google' });
       hSuccess();
-      navigation.replace(r.isNew ? 'LanguageSelect' : (r.profileComplete ? 'Main' : 'BirthDetails'));
+      navigation.replace(r.isNew ? 'Subscribe' : (r.profileComplete ? 'Main' : 'BirthDetails'));
     } catch (e: any) {
       const cancelled = e?.code === '-5' || /cancel/i.test(String(e?.message || e?.code || ''));
       if (!cancelled) { hError(); dialog(lang === 'hi' ? 'Google साइन-इन विफल' : 'Google Sign-In failed', e?.message || (lang === 'hi' ? 'दोबारा प्रयास करें।' : 'Please try again.')); }

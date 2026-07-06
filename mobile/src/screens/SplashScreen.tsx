@@ -74,12 +74,12 @@ export function SplashScreen({ navigation }: any) {
   // read can never bounce a logged-in user to login (no fixed-timer race).
   const navedRef = useRef(false);
   useEffect(() => {
-    let route: 'PhoneAuth' | 'Subscribe' | 'BirthDetails' | 'Main' | null = null;
+    let route: 'LanguageSelect' | 'Subscribe' | 'BirthDetails' | 'Main' | null = null;
     let minDone = false;
     const go = () => { if (route && !navedRef.current) { navedRef.current = true; navigation.replace(route); } };
-    getStartRoute().then((r) => { route = r; if (minDone) go(); }).catch(() => { route = 'PhoneAuth'; if (minDone) go(); });
+    getStartRoute().then((r) => { route = r; if (minDone) go(); }).catch(() => { route = 'LanguageSelect'; if (minDone) go(); });
     const t = setTimeout(() => { minDone = true; go(); }, 3000);
-    const hard = setTimeout(() => { route = route || 'PhoneAuth'; go(); }, 6500); // fallback if storage hangs
+    const hard = setTimeout(() => { route = route || 'LanguageSelect'; go(); }, 6500); // fallback if storage hangs
     return () => { clearTimeout(t); clearTimeout(hard); };
   }, [navigation]);
 

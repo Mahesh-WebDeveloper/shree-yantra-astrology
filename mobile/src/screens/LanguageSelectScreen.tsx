@@ -88,7 +88,8 @@ export function LanguageSelectScreen({ navigation, route }: any) {
   const { lang, setLang } = useLang();
   const insets = useSafeAreaInsets();
   const [choice, setChoice] = useState<Choice>(lang === 'hi' ? 'hi' : 'en');
-  const next: string = route?.params?.next || 'Subscribe';
+  // Language is now the FIRST onboarding step (right after Splash), so the next step is login.
+  const next: string = route?.params?.next || 'PhoneAuth';
 
   const fade = useRef(new Animated.Value(0)).current;
   const c1 = useRef(new Animated.Value(0)).current;
@@ -107,7 +108,7 @@ export function LanguageSelectScreen({ navigation, route }: any) {
   const onContinue = () => {
     hTap();
     setLang(choice);
-    navigation.replace(next, { onboarding: true });
+    navigation.replace(next);
   };
 
   return (

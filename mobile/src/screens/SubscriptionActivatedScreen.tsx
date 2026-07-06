@@ -13,8 +13,7 @@ import { GradientText } from '../components/GradientText';
 import { GoldButton } from '../components/GoldButton';
 import { CosmicBackground } from '../components/CosmicBackground';
 import { hSuccess, hTap } from '../lib/haptics';
-import { birthFromProfile } from '../lib/birth';
-import { useCurrentUser } from '../lib/auth';
+import { useCurrentUser, getStoredUser, isProfileComplete } from '../lib/auth';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
@@ -206,11 +205,12 @@ export function SubscriptionActivatedScreen({ navigation }: any) {
   const TRIAL = [...TRIAL_BASE, { k: 'Trial Ends', v: `${endD.getDate()} ${TRIAL_MON[endD.getMonth()]} ${endD.getFullYear()}`, icon: 'ends' }];
   const insets = useSafeAreaInsets();
 
-  // After activation: if birth details aren't set yet (fresh onboarding), collect them next;
-  // otherwise straight to the app.
+  // After activation: collect personal details (name/DOB/birth time/location) unless they are
+  // ALREADY fully set. Uses the authoritative stored-user check (not the default-birth
+  // fallback, which has a DOB and would wrongly send a fresh user straight to Home).
   const goHome = async () => {
-    const b = await birthFromProfile().catch(() => null);
-    const target = b && (b as any).dob ? 'Main' : 'BirthDetails';
+    const u = await getStoredUser().catch(() => null);
+    const target = isProfileComplete(u) ? 'Main' : 'BirthDetails';
     navigation.reset({ index: 0, routes: [{ name: target }] });
   };
 
