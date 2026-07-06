@@ -135,11 +135,29 @@ async function sendOtp(phone, code) {
   return true;
 }
 
+const OTP_RESEND_MS = 30 * 1000;      // min gap between OTPs to a number
+const OTP_HOURLY_CAP = 5;              // max OTPs per number per hour
 async function requestOtp({ phone }) {
   phone = normPhone(phone);
   if (!phone || phone.replace(/\D/g, '').length < 10) throw new AuthError('Please enter a valid mobile number.');
+  // SECURITY: per-phone throttle — stops SMS-bomb / SMS-cost abuse (the per-IP limiter alone
+  // is defeated by rotating IPs). Cooldown between sends + an hourly cap per number.
+  const prev = OTP_STORE.get(phone);
+  const now = Date.now();
+  let carry = { windowStart: now, sentInWindow: 1 };
+  if (prev) {
+    if (prev.lastSent && now - prev.lastSent < OTP_RESEND_MS) {
+      throw new AuthError('Please wait a few seconds before requesting another OTP.', 429);
+    }
+    const inWindow = prev.windowStart && now - prev.windowStart < 3600 * 1000;
+    const sentInWindow = inWindow ? (prev.sentInWindow || 0) : 0;
+    if (sentInWindow >= OTP_HOURLY_CAP) {
+      throw new AuthError('Too many OTP requests for this number. Please try again later.', 429);
+    }
+    carry = { windowStart: inWindow ? prev.windowStart : now, sentInWindow: sentInWindow + 1 };
+  }
   const code = gen6();
-  OTP_STORE.set(phone, { code, expires: Date.now() + OTP_TTL_MS, attempts: 0 });
+  OTP_STORE.set(phone, { code, expires: now + OTP_TTL_MS, attempts: 0, lastSent: now, ...carry });
   await sendOtp(phone, code);
   // SECURITY: never return the OTP to the client in production
   return env.isProd ? { sent: true, phone } : { sent: true, phone, devCode: code };

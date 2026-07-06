@@ -187,17 +187,23 @@ const PERKS = [
   { label: 'Divine library\naudio & books', icon: (c: string) => <Svg {...sw(c)}><Path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></Svg> },
 ];
 
-const TRIAL: { k: string; v: string; icon: string; green?: boolean }[] = [
+const TRIAL_MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const TRIAL_BASE: { k: string; v: string; icon: string; green?: boolean }[] = [
   { k: 'Plan', v: 'Premium Astrology', icon: 'plan' },
   { k: 'Trial Amount', v: '₹1 (Today)', icon: 'amount', green: true },
   { k: 'Trial Duration', v: '7 Days', icon: 'duration' },
-  { k: 'Trial Ends', v: '28 May 2025', icon: 'ends' },
 ];
 
 export function SubscriptionActivatedScreen({ navigation }: any) {
   const { theme } = useTheme();
   const user = useCurrentUser();
-  const firstName = (user?.name || 'Friend').trim().split(/\s+/)[0];
+  // real name only — a fresh OTP registrant is seeded as "Friend" and hasn't set their name
+  // yet (that happens on the next screen), so don't greet them by the placeholder.
+  const rawName = (user?.name || '').trim();
+  const firstName = rawName && rawName !== 'Friend' ? rawName.split(/\s+/)[0] : '';
+  // Trial-ends date computed live (today + 7 days) — never a stale hardcoded date
+  const endD = new Date(Date.now() + 7 * 86400000);
+  const TRIAL = [...TRIAL_BASE, { k: 'Trial Ends', v: `${endD.getDate()} ${TRIAL_MON[endD.getMonth()]} ${endD.getFullYear()}`, icon: 'ends' }];
   const insets = useSafeAreaInsets();
 
   // After activation: if birth details aren't set yet (fresh onboarding), collect them next;
@@ -271,7 +277,7 @@ export function SubscriptionActivatedScreen({ navigation }: any) {
           <View style={[styles.ornLine, { backgroundColor: theme.line }]} />
         </View>
         <Text style={[styles.lead, { color: theme.text }]}>
-          Congratulations <Text style={{ fontFamily: fonts.interSemi, color: theme.goldText }}>{firstName}</Text> — your divine guidance journey begins today.
+          Congratulations{firstName ? <Text style={{ fontFamily: fonts.interSemi, color: theme.goldText }}> {firstName}</Text> : ''} — your divine guidance journey begins today.
         </Text>
         <Text style={[styles.leadAccent, { color: theme.green }]}>
           Enjoy your <Text style={{ fontFamily: fonts.interBold }}>₹1 for 7 Days</Text> trial access.

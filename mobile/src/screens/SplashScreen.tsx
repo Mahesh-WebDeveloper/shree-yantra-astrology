@@ -69,14 +69,19 @@ export function SplashScreen({ navigation }: any) {
   const pulse = useRef(new Animated.Value(0)).current;
   const bar = useRef(new Animated.Value(0)).current;
   const twinkle = useRef(STARS.map(() => new Animated.Value(0))).current;
-  // where to open on launch — routed by auth + onboarding completeness (background load).
-  // An abandoned onboarding (OTP done, birth details skipped) resumes at BirthDetails, NOT
-  // straight into Home as the default "Friend" user.
-  const startRef = useRef<'PhoneAuth' | 'BirthDetails' | 'Main'>('PhoneAuth');
-
+  // where to open on launch — routed by auth + onboarding completeness. Navigate as soon as
+  // BOTH the min-splash time has passed AND the (async) route is resolved, so a slow storage
+  // read can never bounce a logged-in user to login (no fixed-timer race).
+  const navedRef = useRef(false);
   useEffect(() => {
-    getStartRoute().then((r) => { startRef.current = r; }).catch(() => {});
-  }, []);
+    let route: 'PhoneAuth' | 'Subscribe' | 'BirthDetails' | 'Main' | null = null;
+    let minDone = false;
+    const go = () => { if (route && !navedRef.current) { navedRef.current = true; navigation.replace(route); } };
+    getStartRoute().then((r) => { route = r; if (minDone) go(); }).catch(() => { route = 'PhoneAuth'; if (minDone) go(); });
+    const t = setTimeout(() => { minDone = true; go(); }, 3000);
+    const hard = setTimeout(() => { route = route || 'PhoneAuth'; go(); }, 6500); // fallback if storage hangs
+    return () => { clearTimeout(t); clearTimeout(hard); };
+  }, [navigation]);
 
   useEffect(() => {
     // ── choreographed entrance ──
@@ -105,10 +110,8 @@ export function SplashScreen({ navigation }: any) {
         Animated.timing(v, { toValue: 0, duration: 900 + i * 130, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
       ])).start();
     });
-
-    const t = setTimeout(() => navigation.replace(startRef.current), 3300);
-    return () => clearTimeout(t);
-  }, [navigation, bloom, ring, tri, binduPop, name, spin, spinRev, orbit1, orbit2, orbit3, pulse, bar, twinkle]);
+    // navigation is handled by the route-resolution effect above (no fixed-timer race)
+  }, [bloom, ring, tri, binduPop, name, spin, spinRev, orbit1, orbit2, orbit3, pulse, bar, twinkle]);
 
   const gold = theme.isDark ? '#e9c873' : '#a9781f';
   const goldFaint = theme.isDark ? 'rgba(233,200,115,0.45)' : 'rgba(169,120,31,0.45)';

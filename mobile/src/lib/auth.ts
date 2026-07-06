@@ -63,19 +63,22 @@ export function isProfileComplete(user: AuthUser | null): boolean {
 }
 
 /**
- * Where the app should open on launch:
- *  - no token                        → 'PhoneAuth' (log in)
- *  - token but onboarding incomplete → 'BirthDetails' (resume — must finish before Home)
- *  - token + complete profile        → 'Main'
- * This closes the bug where an abandoned onboarding (OTP done, details skipped) reopened
- * straight into Home as the default "Friend" user.
+ * Where the app should open on launch — resumes the onboarding at the right step so an
+ * abandoned flow can't slip into Home as the placeholder "Friend" user, and the paywall
+ * isn't bypassed by killing & reopening the app:
+ *  - no token                                 → 'PhoneAuth' (log in)
+ *  - token, not subscribed                    → 'Subscribe' (finish the paywall)
+ *  - token, subscribed, profile incomplete    → 'BirthDetails' (finish setup)
+ *  - token, subscribed, profile complete      → 'Main'
  */
-export async function getStartRoute(): Promise<'PhoneAuth' | 'BirthDetails' | 'Main'> {
+export async function getStartRoute(): Promise<'PhoneAuth' | 'Subscribe' | 'BirthDetails' | 'Main'> {
   try {
     const token = await AsyncStorage.getItem(TOKEN_KEY);
     if (!token) return 'PhoneAuth';
     setAuthToken(token);
-    const user = await getStoredUser();
+    const [prem, user] = await Promise.all([AsyncStorage.getItem('sy.premium'), getStoredUser()]);
+    const subscribed = prem === '1' || user?.plan === 'premium';
+    if (!subscribed) return 'Subscribe';
     return isProfileComplete(user) ? 'Main' : 'BirthDetails';
   } catch {
     return 'PhoneAuth';

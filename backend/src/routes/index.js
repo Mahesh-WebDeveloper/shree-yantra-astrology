@@ -62,7 +62,11 @@ const aiLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Too many requests. Please wait a moment and try again. · बहुत अधिक अनुरोध — कृपया थोड़ी देर बाद प्रयास करें।' },
 });
-router.use(['/ai', '/baby-names', '/name-ask', '/match', '/gochar', '/remedies', '/vedic-reading', '/life-timeline', '/transit-forecast', '/name-suggestions', '/brihat-kundli', '/numerology/interpret', '/vastu/ask'], aiLimiter);
+const PAID_ROUTES = ['/ai', '/baby-names', '/name-ask', '/match', '/gochar', '/remedies', '/vedic-reading', '/life-timeline', '/transit-forecast', '/name-suggestions', '/brihat-kundli', '/numerology/interpret', '/vastu/ask'];
+// SECURITY: these paid VedAstro/LLM endpoints must not be callable anonymously (billing/cost
+// DoS). requireAuth first, then the per-IP rate limiter as defense-in-depth. The mobile app
+// attaches the Bearer token to every request post-login, so authed users are unaffected.
+router.use(PAID_ROUTES, requireAuth, aiLimiter);
 
 router.get('/health', health);
 

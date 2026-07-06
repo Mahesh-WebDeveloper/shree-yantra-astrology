@@ -173,7 +173,7 @@ export function SubscribeNowScreen({ navigation, route }: any) {
           <View style={styles.panelInner} pointerEvents="none" />
           <View style={styles.form}>
             <Text style={styles.trialHead}>{sub.t('trialHead', 'Start your free trial at just ₹1')}</Text>
-            <Text style={styles.trialTiny}>{sub.t('trialTiny', 'for 7 days · then ₹499 / month')}</Text>
+            <Text style={styles.trialTiny}>{sub.t('trialTiny', 'for 7 days')}</Text>
 
             <Pressable onPress={submit} style={({ pressed }) => [styles.ctaWrap, pressed && { transform: [{ scale: 0.985 }], opacity: 0.97 }]}>
               <LinearGradient colors={['#fff1ad', '#f4c34a', '#b67a16']} locations={[0, 0.45, 1]} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.cta}>

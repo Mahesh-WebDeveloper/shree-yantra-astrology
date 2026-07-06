@@ -9,6 +9,14 @@ if (env.isProd) {
   const weakJwt = !process.env.JWT_SECRET || /dev_secret|dev_only_change/i.test(env.jwtSecret) || env.jwtSecret.length < 24;
   if (weakJwt) { console.error('FATAL: set a strong JWT_SECRET (32+ chars) for production.'); process.exit(1); }
   if (!env.corsOrigins.length) { console.error('FATAL: set CORS_ORIGINS to your real admin/web origin(s) for production.'); process.exit(1); }
+  // CORS with credentials must never allow a wildcard origin
+  if (env.corsOrigins.includes('*')) { console.error('FATAL: CORS_ORIGINS must not contain "*" in production (credentials are enabled).'); process.exit(1); }
+  // the admin panel exposes all user PII + delete — reject a default/weak admin password
+  const ap = process.env.ADMIN_PASSWORD || '';
+  if (!ap || ap.length < 10 || /^admin|^password|12345/i.test(ap)) {
+    console.error('FATAL: set a strong ADMIN_PASSWORD (10+ chars, not a default) for production.');
+    process.exit(1);
+  }
 }
 
 // process-level safety nets — log instead of silently dying
