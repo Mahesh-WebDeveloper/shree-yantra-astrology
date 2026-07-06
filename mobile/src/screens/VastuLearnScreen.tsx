@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Page } from '../components/Page';
 import { GradientText } from '../components/GradientText';
@@ -101,14 +101,12 @@ export function VastuLearnScreen({ navigation }: any) {
   const l: L = lang === 'hi' ? 'hi' : 'en';
   const [selected, setSelected] = useState<number | null>(null);
   const scrollRef = useRef<any>(null);
-  const anim = useRef(new Animated.Value(1)).current;
 
-  const playIn = () => {
-    anim.setValue(0);
-    Animated.timing(anim, { toValue: 1, duration: 320, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
-  };
+  // jump back to top on every view change (toc ↔ chapter). NOTE: we deliberately do NOT
+  // wrap the scroll content in an Animated.View with a transform — on Android a transformed
+  // container inside a ScrollView renders into a fixed-size hardware layer, so content
+  // scrolled past its initial bounds turns black. Plain views scroll correctly.
   useEffect(() => {
-    playIn();
     const t = setTimeout(() => {
       const s = scrollRef.current;
       if (s?.scrollToPosition) s.scrollToPosition(0, 0, false);
@@ -117,7 +115,6 @@ export function VastuLearnScreen({ navigation }: any) {
     return () => clearTimeout(t);
   }, [selected]);
 
-  const animStyle = { opacity: anim, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] };
   const goChapter = (i: number) => setSelected(Math.max(0, Math.min(VASTU_CHAPTERS.length - 1, i)));
 
   // ── INDEX ──
@@ -128,7 +125,7 @@ export function VastuLearnScreen({ navigation }: any) {
     ];
     return (
       <Page title={l === 'hi' ? 'वास्तु सीखें' : 'Learn Vastu'} onBack={() => { hTap(); navigation.goBack(); }} scrollRef={scrollRef}>
-        <Animated.View style={animStyle}>
+        <View>
           <LinearGradient colors={theme.isDark ? ['#170f04', '#000000'] : ['#ffffff', '#fff3d6']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.hero, { borderColor: theme.cardBorder }]}>
             <View style={{ flex: 1.25, minWidth: 0 }}>
               <Text style={[styles.eyebrow, { color: theme.gold2 }]}>{l === 'hi' ? 'बिलकुल ज़ीरो से शुरू' : 'Starts from zero'}</Text>
@@ -165,7 +162,7 @@ export function VastuLearnScreen({ navigation }: any) {
               <ChapterRow key={c.id} chapter={c} index={i} l={l} onOpen={() => goChapter(i)} />
             ))}
           </View>
-        </Animated.View>
+        </View>
       </Page>
     );
   }
@@ -178,7 +175,7 @@ export function VastuLearnScreen({ navigation }: any) {
 
   return (
     <Page title={l === 'hi' ? 'वास्तु सीखें' : 'Learn Vastu'} onBack={() => { hTap(); setSelected(null); }} scrollRef={scrollRef}>
-      <Animated.View style={animStyle}>
+      <View>
         <View style={styles.progressWrap}>
           <View style={styles.progressTop}>
             <Text style={[styles.progressTxt, { color: theme.textMuted }]}>{l === 'hi' ? 'अध्याय' : 'Chapter'} {selected + 1}/{total}</Text>
@@ -229,7 +226,7 @@ export function VastuLearnScreen({ navigation }: any) {
             </Pressable>
           </View>
         )}
-      </Animated.View>
+      </View>
     </Page>
   );
 }

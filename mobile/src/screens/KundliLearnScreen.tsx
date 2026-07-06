@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Page } from '../components/Page';
 import { GradientText } from '../components/GradientText';
@@ -110,16 +110,12 @@ export function KundliLearnScreen({ navigation }: any) {
   const l: L = lang === 'hi' ? 'hi' : 'en';
   const [selected, setSelected] = useState<number | null>(null);
   const scrollRef = useRef<any>(null);
-  const anim = useRef(new Animated.Value(1)).current;
 
-  // cross-fade + slight rise whenever we switch view (toc ↔ chapter, or chapter→chapter)
-  const playIn = () => {
-    anim.setValue(0);
-    Animated.timing(anim, { toValue: 1, duration: 320, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
-  };
+  // jump back to top on every view change (toc ↔ chapter). NOTE: no Animated.View +
+  // transform wrapper around the scroll content — on Android a transformed container inside
+  // a ScrollView renders into a fixed-size hardware layer, so content scrolled past its
+  // initial bounds turns black. Plain views scroll correctly.
   useEffect(() => {
-    playIn();
-    // jump back to top on every view change
     const t = setTimeout(() => {
       const s = scrollRef.current;
       if (s?.scrollToPosition) s.scrollToPosition(0, 0, false);
@@ -127,11 +123,6 @@ export function KundliLearnScreen({ navigation }: any) {
     }, 0);
     return () => clearTimeout(t);
   }, [selected]);
-
-  const animStyle = {
-    opacity: anim,
-    transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }],
-  };
 
   const goChapter = (i: number) => setSelected(Math.max(0, Math.min(KUNDLI_CHAPTERS.length - 1, i)));
 
@@ -143,7 +134,7 @@ export function KundliLearnScreen({ navigation }: any) {
     ];
     return (
       <Page title={l === 'hi' ? 'कुंडली सीखें' : 'Learn Kundli'} onBack={() => { hTap(); navigation.goBack(); }} scrollRef={scrollRef}>
-        <Animated.View style={animStyle}>
+        <View>
           <LinearGradient
             colors={theme.isDark ? ['#170f04', '#000000'] : ['#ffffff', '#fff3d6']}
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
@@ -213,7 +204,7 @@ export function KundliLearnScreen({ navigation }: any) {
               <ChapterRow key={c.id} chapter={c} index={i} l={l} onOpen={() => goChapter(i)} />
             ))}
           </View>
-        </Animated.View>
+        </View>
       </Page>
     );
   }
@@ -226,7 +217,7 @@ export function KundliLearnScreen({ navigation }: any) {
 
   return (
     <Page title={l === 'hi' ? 'कुंडली सीखें' : 'Learn Kundli'} onBack={() => { hTap(); setSelected(null); }} scrollRef={scrollRef}>
-      <Animated.View style={animStyle}>
+      <View>
         {/* progress */}
         <View style={styles.progressWrap}>
           <View style={styles.progressTop}>
@@ -285,7 +276,7 @@ export function KundliLearnScreen({ navigation }: any) {
             </Pressable>
           </View>
         )}
-      </Animated.View>
+      </View>
     </Page>
   );
 }
