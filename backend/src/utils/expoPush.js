@@ -12,10 +12,10 @@ const isExpoToken = (t) => typeof t === 'string' && /^ExponentPushToken\[.+\]$/.
  * @param {{title:string, body:string, data?:object}} msg
  * @returns {Promise<{sent:number}>}
  */
-async function sendPush(tokens, { title, body, data } = {}) {
+async function sendPush(tokens, { title, body, data, channelId } = {}) {
   const valid = [...new Set((tokens || []).filter(isExpoToken))];
   if (!valid.length) return { sent: 0 };
-  const messages = valid.map((to) => ({ to, sound: 'default', title, body, data: data || {}, channelId: 'default', priority: 'high' }));
+  const messages = valid.map((to) => ({ to, sound: 'default', title, body, data: data || {}, channelId: channelId || 'default', priority: 'high' }));
   let sent = 0;
   for (let i = 0; i < messages.length; i += 100) {
     const chunk = messages.slice(i, i + 100);

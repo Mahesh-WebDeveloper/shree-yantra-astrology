@@ -8,7 +8,7 @@ import { Page } from '../components/Page';
 import { BellIcon } from '../components/icons/NavIcons';
 import { hTap, hSelect, hSuccess } from '../lib/haptics';
 import { getNotifications, markNotificationRead, AppNotification } from '../lib/api';
-import { getDailyReminder, setDailyReminder } from '../lib/notifications';
+import { getDailyReminder, setDailyReminder, sendTestNotification } from '../lib/notifications';
 import { useT, useLang } from '../i18n/LanguageProvider';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -100,14 +100,25 @@ function DailyReminderCard() {
     setBusy(false);
   };
 
+  const test = async () => {
+    hTap();
+    const ok = await sendTestNotification();
+    if (ok) hSuccess();
+  };
+
   return (
-    <View style={[styles.reminder, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.06)' : 'rgba(255,247,224,0.9)' }]}>
-      <Text style={styles.reminderEmoji}>🌅</Text>
-      <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={[styles.reminderTitle, { color: theme.text }]}>{hi ? 'रोज़ का राशिफल रिमाइंडर' : 'Daily Rashifal Reminder'}</Text>
-        <Text style={[styles.reminderSub, { color: theme.textMuted }]}>{hi ? 'हर सुबह 8:00 बजे सूचना' : 'A gentle nudge every morning at 8:00 AM'}</Text>
+    <View style={[styles.reminderCard, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.06)' : 'rgba(255,247,224,0.9)' }]}>
+      <View style={styles.reminderRow}>
+        <Text style={styles.reminderEmoji}>🌅</Text>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={[styles.reminderTitle, { color: theme.text }]}>{hi ? 'रोज़ का राशिफल रिमाइंडर' : 'Daily Rashifal Reminder'}</Text>
+          <Text style={[styles.reminderSub, { color: theme.textMuted }]}>{hi ? 'हर सुबह 8:00 बजे सूचना' : 'A gentle nudge every morning at 8:00 AM'}</Text>
+        </View>
+        <Switch value={on} onValueChange={toggle} trackColor={{ true: theme.gold1, false: theme.cardBorder }} thumbColor="#fff" />
       </View>
-      <Switch value={on} onValueChange={toggle} trackColor={{ true: theme.gold1, false: theme.cardBorder }} thumbColor="#fff" />
+      <Pressable onPress={test} hitSlop={6} style={[styles.reminderTest, { borderTopColor: theme.cardBorder }]}>
+        <Text style={[styles.reminderTestTxt, { color: theme.gold1 }]}>🔔 {hi ? 'एक टेस्ट सूचना भेजें' : 'Send a test notification'}</Text>
+      </Pressable>
     </View>
   );
 }
@@ -257,10 +268,13 @@ export function NotificationsScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  reminder: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderRadius: 16, padding: 14, marginBottom: 12 },
+  reminderCard: { borderWidth: 1, borderRadius: 16, marginBottom: 12, overflow: 'hidden' },
+  reminderRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
   reminderEmoji: { fontSize: 26 },
   reminderTitle: { fontFamily: fonts.interBold, fontSize: 14 },
   reminderSub: { fontFamily: fonts.inter, fontSize: 11.5, lineHeight: 16, marginTop: 2 },
+  reminderTest: { borderTopWidth: 1, paddingVertical: 10, alignItems: 'center' },
+  reminderTestTxt: { fontFamily: fonts.interSemi, fontSize: 12.5 },
   tabs: { flexDirection: 'row', gap: 8, marginBottom: 6 },
   tabWrap: { flex: 1, borderRadius: radii.pill },
   tab: { paddingVertical: 9, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },

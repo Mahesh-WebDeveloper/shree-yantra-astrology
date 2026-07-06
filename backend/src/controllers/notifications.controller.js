@@ -171,12 +171,14 @@ function audienceQuery(n) {
 }
 
 // gather every Expo push token for the notification's audience and deliver a device push
+const CHANNEL_FOR = { prediction: 'daily', promo: 'offers', account: 'account' };
 async function pushToAudience(n) {
   const users = await User.find({ ...audienceQuery(n), blocked: { $ne: true } }, 'pushTokens').lean();
   const tokens = users.flatMap((u) => u.pushTokens || []).filter(isExpoToken);
   return sendPush(tokens, {
     title: n.title,
     body: n.body,
+    channelId: CHANNEL_FOR[n.type] || 'default',
     data: { screen: 'Notifications', notificationId: String(n._id) },
   });
 }

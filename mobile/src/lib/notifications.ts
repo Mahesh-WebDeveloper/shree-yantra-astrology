@@ -29,14 +29,26 @@ Notifications.setNotificationHandler({
   }),
 });
 
+// Industry standard: separate channels (categories) so the user can control each type in the
+// system settings. Each keeps the brand gold light + a gentle vibration.
+const CHANNELS: { id: string; name: string; importance: number }[] = [
+  { id: 'default', name: 'General', importance: 4 },              // HIGH
+  { id: 'daily', name: 'Daily Rashifal', importance: 4 },         // HIGH
+  { id: 'panchang', name: 'Festivals & Panchang', importance: 4 },// HIGH
+  { id: 'offers', name: 'Offers & Updates', importance: 3 },      // DEFAULT
+  { id: 'account', name: 'Account & Billing', importance: 3 },    // DEFAULT
+];
+
 export async function ensureAndroidChannel() {
   if (Platform.OS !== 'android') return;
-  await Notifications.setNotificationChannelAsync('default', {
-    name: 'General',
-    importance: Notifications.AndroidImportance.HIGH,
-    vibrationPattern: [0, 250, 250, 250],
-    lightColor: '#e9b850',
-  }).catch(() => {});
+  for (const c of CHANNELS) {
+    await Notifications.setNotificationChannelAsync(c.id, {
+      name: c.name,
+      importance: c.importance,
+      vibrationPattern: [0, 220, 180, 220],
+      lightColor: '#e9b850',
+    }).catch(() => {});
+  }
 }
 
 export async function requestPermission(): Promise<boolean> {
@@ -87,6 +99,21 @@ export async function setDailyReminder(on: boolean, hour = 8, minute = 0): Promi
       data: { screen: 'DailyPrediction' },
     },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour, minute, channelId: 'default' },
+  });
+  return true;
+}
+
+/** Fire a sample notification a few seconds from now so the user can verify it works. */
+export async function sendTestNotification(): Promise<boolean> {
+  await ensureAndroidChannel();
+  if (!(await requestPermission())) return false;
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: '🔔 Shree Yantra',
+      body: 'सूचनाएँ चालू हैं ✨ — अब आपको राशिफल, मुहूर्त और पर्व की जानकारी समय पर मिलेगी।',
+      data: { screen: 'Notifications' },
+    },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 3, channelId: 'default' },
   });
   return true;
 }
