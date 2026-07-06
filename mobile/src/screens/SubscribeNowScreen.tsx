@@ -6,10 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { fonts } from '../theme/tokens';
 import { GradientText } from '../components/GradientText';
-import { GoldDatePicker } from '../components/GoldDatePicker';
 import { IMAGES } from '../assets/images';
-import { hPress, hError, hSuccess } from '../lib/haptics';
-import { useDialog } from '../components/DialogProvider';
+import { hPress, hSuccess } from '../lib/haptics';
 import { useScreen, useBranding } from '../context/AppConfigProvider';
 import { useT } from '../i18n/LanguageProvider';
 
@@ -119,32 +117,15 @@ const SCREEN = Dimensions.get('screen');
 
 export function SubscribeNowScreen({ navigation, route }: any) {
   const onboarding = !!route?.params?.onboarding;
-  const dialog = useDialog();
   const insets = useSafeAreaInsets();
   const sub = useScreen('subscribe'); // admin-managed content
   const brand = useBranding();
   const t = useT();
-  const [n, setN] = useState('');
-  const [dob, setDob] = useState('');
-  const [dobDate, setDobDate] = useState<Date | null>(null);
-  const [showPicker, setShowPicker] = useState(false);
-  const [place, setPlace] = useState('');
 
-  const confirmDate = (selected: Date) => {
-    setShowPicker(false);
-    setDobDate(selected);
-    const d = String(selected.getDate()).padStart(2, '0');
-    const m = String(selected.getMonth() + 1).padStart(2, '0');
-    setDob(`${d} / ${m} / ${selected.getFullYear()}`);
-  };
-
+  // Birth details (name / DOB / place) are collected AFTER payment (SubscriptionActivated →
+  // BirthDetails), so this screen no longer asks for them — it is purely the subscribe CTA.
   const submit = () => {
     hPress();
-    if (!n.trim() || !dob || !place.trim()) {
-      hError();
-      dialog('Incomplete details', 'Please enter your name, date of birth and place of birth to continue.');
-      return;
-    }
     hSuccess();
     navigation.navigate('Payment');
   };
@@ -191,9 +172,7 @@ export function SubscribeNowScreen({ navigation, route }: any) {
           <CornerBrackets />
           <View style={styles.panelInner} pointerEvents="none" />
           <View style={styles.form}>
-            <SubField icon={<UserI />} label={t('profile.fullName', 'Full Name')} value={n} onChangeText={setN} placeholder="Enter your name" autoCapitalize="words" />
-            <SubField icon={<CalI />} label={t('profile.dob', 'Date of Birth')} value={dob} placeholder="DD / MM / YYYY" chevron onPress={() => setShowPicker(true)} />
-            <SubField icon={<PinI />} label={t('profile.place', 'Place of Birth')} value={place} onChangeText={setPlace} placeholder="Enter your place of birth" autoCapitalize="words" />
+            <Text style={styles.planLine}>{sub.t('planLine', 'Premium Membership · ₹499 / month')}</Text>
 
             <Pressable onPress={submit} style={({ pressed }) => [styles.ctaWrap, pressed && { transform: [{ scale: 0.985 }], opacity: 0.97 }]}>
               <LinearGradient colors={['#fff1ad', '#f4c34a', '#b67a16']} locations={[0, 0.45, 1]} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.cta}>
@@ -218,14 +197,6 @@ export function SubscribeNowScreen({ navigation, route }: any) {
         </View>
 
       </KeyboardAwareScroll>
-
-      <GoldDatePicker
-        visible={showPicker}
-        initialDate={dobDate}
-        maximumDate={new Date()}
-        onConfirm={confirmDate}
-        onCancel={() => setShowPicker(false)}
-      />
     </View>
   );
 }
@@ -261,6 +232,7 @@ const styles = StyleSheet.create({
   corner: { position: 'absolute', width: 18, height: 18, borderColor: C.gold300, zIndex: 2 },
 
   form: { gap: 12 },
+  planLine: { fontFamily: fonts.interSemi, fontSize: 14, color: C.gold200, textAlign: 'center', letterSpacing: 0.3, marginBottom: 2 },
   field: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 10, paddingHorizontal: 16, backgroundColor: C.fieldBg, borderWidth: 1, borderRadius: 12 },
   fieldFocus: { shadowColor: '#d6a238', shadowOpacity: 0.45, shadowRadius: 14, shadowOffset: { width: 0, height: 0 }, elevation: 4 },
   fieldIcon: { width: 24, alignItems: 'center' },
