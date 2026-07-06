@@ -51,3 +51,7 @@ Thumbs.db
 .idea/
 *.suo
 *.sw?
+
+# Firebase config (contains API key — do not commit)
+google-services.json
+mobile/google-services.json
