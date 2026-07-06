@@ -56,6 +56,32 @@ export async function bootstrapAuth(): Promise<boolean> {
   return false;
 }
 
+/** Is the signed-in user's onboarding actually finished (name + birth details)? */
+export function isProfileComplete(user: AuthUser | null): boolean {
+  const p = user?.profile;
+  return !!(user?.name && p?.dob && p?.tob && (p?.place || (p?.lat != null && p?.lng != null)));
+}
+
+/**
+ * Where the app should open on launch:
+ *  - no token                        → 'PhoneAuth' (log in)
+ *  - token but onboarding incomplete → 'BirthDetails' (resume — must finish before Home)
+ *  - token + complete profile        → 'Main'
+ * This closes the bug where an abandoned onboarding (OTP done, details skipped) reopened
+ * straight into Home as the default "Friend" user.
+ */
+export async function getStartRoute(): Promise<'PhoneAuth' | 'BirthDetails' | 'Main'> {
+  try {
+    const token = await AsyncStorage.getItem(TOKEN_KEY);
+    if (!token) return 'PhoneAuth';
+    setAuthToken(token);
+    const user = await getStoredUser();
+    return isProfileComplete(user) ? 'Main' : 'BirthDetails';
+  } catch {
+    return 'PhoneAuth';
+  }
+}
+
 /** Stored user me partial merge karke wapas save (profile bhi deep-merge). */
 export async function updateStoredUser(patch: Partial<AuthUser>): Promise<AuthUser | null> {
   const cur = await getStoredUser();

@@ -138,7 +138,7 @@ export function SubscribeNowScreen({ navigation, route }: any) {
       <View style={styles.topGlow} pointerEvents="none"><RadialGlow size={420} opacity={0.22} /></View>
 
       <KeyboardAwareScroll
-        contentContainerStyle={[styles.app, { paddingTop: insets.top + 18, paddingBottom: insets.bottom + 22 }]}
+        contentContainerStyle={[styles.app, { paddingTop: insets.top + 18, paddingBottom: insets.bottom + 22, flexGrow: 1, justifyContent: 'center' }]}
         showsVerticalScrollIndicator={false}
       >
         {/* HERO */}
@@ -172,7 +172,8 @@ export function SubscribeNowScreen({ navigation, route }: any) {
           <CornerBrackets />
           <View style={styles.panelInner} pointerEvents="none" />
           <View style={styles.form}>
-            <Text style={styles.planLine}>{sub.t('planLine', 'Premium Membership · ₹499 / month')}</Text>
+            <Text style={styles.trialHead}>{sub.t('trialHead', 'Start your free trial at just ₹1')}</Text>
+            <Text style={styles.trialTiny}>{sub.t('trialTiny', 'for 7 days · then ₹499 / month')}</Text>
 
             <Pressable onPress={submit} style={({ pressed }) => [styles.ctaWrap, pressed && { transform: [{ scale: 0.985 }], opacity: 0.97 }]}>
               <LinearGradient colors={['#fff1ad', '#f4c34a', '#b67a16']} locations={[0, 0.45, 1]} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.cta}>
@@ -187,12 +188,6 @@ export function SubscribeNowScreen({ navigation, route }: any) {
               <Text style={styles.noteText}>{sub.t('subtitle', 'Unlock Premium Predictions & Remedies')}</Text>
               <Sparkle />
             </View>
-
-            {onboarding && (
-              <Pressable onPress={() => { hPress(); navigation.replace('BirthDetails'); }} hitSlop={8} style={styles.skipBtn}>
-                <Text style={styles.skipText}>{t('sub.skip', 'Skip for now — I’ll subscribe later')}</Text>
-              </Pressable>
-            )}
           </View>
         </View>
 
@@ -233,6 +228,8 @@ const styles = StyleSheet.create({
 
   form: { gap: 12 },
   planLine: { fontFamily: fonts.interSemi, fontSize: 14, color: C.gold200, textAlign: 'center', letterSpacing: 0.3, marginBottom: 2 },
+  trialHead: { fontFamily: fonts.playfairBold, fontSize: 21, lineHeight: 27, color: C.gold200, textAlign: 'center', letterSpacing: 0.2 },
+  trialTiny: { fontFamily: fonts.inter, fontSize: 10.5, color: C.textMute, textAlign: 'center', letterSpacing: 0.4, marginTop: 3, marginBottom: 4 },
   field: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 10, paddingHorizontal: 16, backgroundColor: C.fieldBg, borderWidth: 1, borderRadius: 12 },
   fieldFocus: { shadowColor: '#d6a238', shadowOpacity: 0.45, shadowRadius: 14, shadowOffset: { width: 0, height: 0 }, elevation: 4 },
   fieldIcon: { width: 24, alignItems: 'center' },

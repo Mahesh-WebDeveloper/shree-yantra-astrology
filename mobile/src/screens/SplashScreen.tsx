@@ -5,7 +5,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { fonts } from '../theme/tokens';
 import { ShimmerText } from '../components/ShimmerText';
 import { CosmicBackground } from '../components/CosmicBackground';
-import { bootstrapAuth } from '../lib/auth';
+import { getStartRoute } from '../lib/auth';
 
 /**
  * Splash — a living Sri Yantra mandala (the app's namesake) that comes alive on
@@ -69,11 +69,13 @@ export function SplashScreen({ navigation }: any) {
   const pulse = useRef(new Animated.Value(0)).current;
   const bar = useRef(new Animated.Value(0)).current;
   const twinkle = useRef(STARS.map(() => new Animated.Value(0))).current;
-  // saved login? — token storage se load karke api client ko de do (background)
-  const authedRef = useRef(false);
+  // where to open on launch — routed by auth + onboarding completeness (background load).
+  // An abandoned onboarding (OTP done, birth details skipped) resumes at BirthDetails, NOT
+  // straight into Home as the default "Friend" user.
+  const startRef = useRef<'PhoneAuth' | 'BirthDetails' | 'Main'>('PhoneAuth');
 
   useEffect(() => {
-    bootstrapAuth().then((ok) => { authedRef.current = ok; }).catch(() => {});
+    getStartRoute().then((r) => { startRef.current = r; }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -104,7 +106,7 @@ export function SplashScreen({ navigation }: any) {
       ])).start();
     });
 
-    const t = setTimeout(() => navigation.replace(authedRef.current ? 'Main' : 'PhoneAuth'), 3300);
+    const t = setTimeout(() => navigation.replace(startRef.current), 3300);
     return () => clearTimeout(t);
   }, [navigation, bloom, ring, tri, binduPop, name, spin, spinRev, orbit1, orbit2, orbit3, pulse, bar, twinkle]);
 
