@@ -149,14 +149,16 @@ export function PhoneAuthScreen({ navigation }: any) {
         contentContainerStyle={[styles.shell, { paddingTop: insets.top + 18, paddingBottom: insets.bottom + 28 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* back */}
-        <Pressable
-          onPress={() => { hTap(); step === 'otp' ? setStep('phone') : navigation.goBack(); }}
-          style={[styles.back, { borderColor: 'rgba(201,150,46,0.4)', backgroundColor: theme.isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,250,240,0.7)' }]}
-          hitSlop={6}
-        >
-          <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={gold} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M19 12H5M12 19l-7-7 7-7" /></Svg>
-        </Pressable>
+        {/* back — only on the OTP step (phone step is the stack root, so back would be a no-op) */}
+        {step === 'otp' && (
+          <Pressable
+            onPress={() => { hTap(); setStep('phone'); }}
+            style={[styles.back, { borderColor: 'rgba(201,150,46,0.4)', backgroundColor: theme.isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,250,240,0.7)' }]}
+            hitSlop={6}
+          >
+            <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={gold} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M19 12H5M12 19l-7-7 7-7" /></Svg>
+          </Pressable>
+        )}
 
         {/* hero */}
         <View style={styles.hero}>
