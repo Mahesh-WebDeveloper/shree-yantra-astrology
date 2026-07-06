@@ -7,6 +7,7 @@ import { Page } from '../components/Page';
 import { Card } from '../components/Card';
 import { useDialog } from '../components/DialogProvider';
 import { hTap } from '../lib/haptics';
+import { setPremium } from '../lib/premiumStore';
 
 // Deeper "Billing & Account" screen. Reached from Manage Subscription → a low-key link,
 // so it sits 3 screens in. Mostly benign billing info; cancellation is a small, muted link
@@ -30,7 +31,7 @@ export function BillingOptionsScreen({ navigation }: any) {
       'You will lose access to all premium predictions, kundli analysis, remedies and consultations. This cannot be undone from the app.',
       [
         { text: 'KEEP MY PREMIUM', style: 'cancel' },
-        { text: 'Cancel anyway', style: 'destructive', onPress: () => navigation.goBack() },
+        { text: 'Cancel anyway', style: 'destructive', onPress: () => { setPremium(false); navigation.goBack(); } },
       ],
     );
   };

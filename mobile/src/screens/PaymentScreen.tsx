@@ -13,6 +13,7 @@ import { CosmicBackground } from '../components/CosmicBackground';
 import { TopBar } from '../components/TopBar';
 import { BellIcon } from '../components/icons/NavIcons';
 import { hTap, hSelect, hSuccess, hError } from '../lib/haptics';
+import { setPremium } from '../lib/premiumStore';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -152,6 +153,7 @@ export function PaymentScreen({ navigation }: any) {
     if (!canPay) { hError(); return; }
     hSuccess();
     setProcessing(true);
+    setPremium(true); // placeholder/demo unlock — no real gateway yet
     setTimeout(() => navigation.replace ? navigation.replace('SubscriptionActivated') : navigation.navigate('SubscriptionActivated'), 1400);
   };
 

@@ -29,7 +29,7 @@ const FAQS = [
   { q: 'Can I cancel my Premium subscription?', a: "Yes, cancel anytime from Profile → Manage Subscription. You'll continue to enjoy Premium until the end of the billing cycle." },
   { q: 'Are the astrologers verified?', a: 'All our astrologers go through a 7-step verification including qualification check, test consultations and user-rating review.' },
   { q: 'How accurate are the predictions?', a: 'Vedic astrology is a science of probabilities, not absolutes. Our 4.8★ user rating reflects the average accuracy reported by our community.' },
-  { q: 'How do I talk to an astrologer?', a: 'Open the Consult tab, pick an astrologer, and start chat or call. Premium members get free 5-min sessions every day.' },
+  { q: 'How do I talk to an astrologer?', a: 'Open “Ask the Astrologer” from the home screen and ask your questions any time — your answers use your exact birth chart and planetary data.' },
 ];
 
 function Faq({ q, a, open, onToggle, theme }: { q: string; a: string; open: boolean; onToggle: () => void; theme: Theme }) {

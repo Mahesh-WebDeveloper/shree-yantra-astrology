@@ -21,6 +21,7 @@ import { openAppDrawer } from '../navigation/AppDrawerHost';
 import { useDialog } from '../components/DialogProvider';
 import { hTap, hSelect, hSuccess } from '../lib/haptics';
 import { clearAuth, useCurrentUser, updateStoredUser } from '../lib/auth';
+import { usePremium } from '../lib/premiumStore';
 import { uploadAvatar, removeAvatarApi, avatarUrl } from '../lib/api';
 import { useScreen } from '../context/AppConfigProvider';
 import { useLang } from '../i18n/LanguageProvider';
@@ -87,11 +88,12 @@ export function ProfileScreen({ navigation }: any) {
   const pscr = useScreen('profile'); // admin-managed badges/labels
 
   // live user → name / meta / info (warna static demo)
+  const localPrem = usePremium();
   const displayName = user?.name || PROFILE.name;
-  const isPremium = user?.plan === 'premium';
+  const isPremium = user?.plan === 'premium' || localPrem;
   const since = monthYear(user?.createdAt);
   const metaText = user
-    ? `${isPremium ? 'Premium' : 'Free'} Member${since ? ` · Since ${since}` : ''}`
+    ? `${isPremium ? 'Premium Member' : 'Member'}${since ? ` · Since ${since}` : ''}`
     : PROFILE.meta;
   const infoItems: InfoItem[] = user
     ? [
@@ -238,15 +240,17 @@ export function ProfileScreen({ navigation }: any) {
         <GradientText style={styles.name}>{displayName}</GradientText>
         <Text style={[styles.meta, { color: theme.textSoft }]}>{metaText}</Text>
 
-        <LinearGradient
-          colors={theme.buttonGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={styles.premium}
-        >
-          <CrownIcon color={theme.buttonInk} size={13} />
-          <Text style={[styles.premiumText, { color: theme.buttonInk }]}>{isPremium ? pscr.t('premiumBadge', 'PREMIUM MEMBER') : pscr.t('freeBadge', 'FREE MEMBER')}</Text>
-        </LinearGradient>
+        {isPremium ? (
+          <LinearGradient colors={theme.buttonGradient} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.premium}>
+            <CrownIcon color={theme.buttonInk} size={13} />
+            <Text style={[styles.premiumText, { color: theme.buttonInk }]}>{pscr.t('premiumBadge', 'PREMIUM MEMBER')}</Text>
+          </LinearGradient>
+        ) : (
+          <Pressable onPress={() => { hTap(); navigation.navigate('Subscribe'); }} style={({ pressed }) => [styles.premium, { backgroundColor: 'transparent', borderWidth: 1, borderColor: theme.gold1, opacity: pressed ? 0.9 : 1 }]}>
+            <CrownIcon color={theme.gold1} size={13} />
+            <Text style={[styles.premiumText, { color: theme.gold1 }]}>GO PREMIUM →</Text>
+          </Pressable>
+        )}
 
         <View style={styles.stats}>
           {STATS.map((s) => (

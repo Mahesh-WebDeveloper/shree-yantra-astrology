@@ -10,6 +10,7 @@ import { fonts } from '../theme/tokens';
 import { GradientText } from '../components/GradientText';
 import { hTap, hSelect } from '../lib/haptics';
 import { clearAuth, getStoredUser } from '../lib/auth';
+import { usePremium } from '../lib/premiumStore';
 import { useLang } from '../i18n/LanguageProvider';
 
 const NAV_KEY: Record<string, string> = {
@@ -163,11 +164,13 @@ export function DrawerContent({ close, progress }: { close: () => void; progress
 
   // logged-in user (drawer har open par remount hota hai → mount par fresh load)
   const [firstName, setFirstName] = useState('Guest');
-  const [isPremium, setIsPremium] = useState(false);
+  const [planPremium, setPlanPremium] = useState(false);
+  const localPrem = usePremium();
+  const isPremium = planPremium || localPrem;
   useEffect(() => {
     getStoredUser().then((u) => {
       if (u?.name) setFirstName(u.name.trim().split(/\s+/)[0]);
-      setIsPremium(u?.plan === 'premium');
+      setPlanPremium(u?.plan === 'premium');
     });
   }, []);
 
@@ -292,9 +295,11 @@ export function DrawerContent({ close, progress }: { close: () => void; progress
             <Text style={[styles.namaste, { color: theme.textSoft }]}>
               {tr('drawer.namaste', 'Namaste')}, <Text style={{ color: theme.gold1, fontFamily: fonts.interSemi }}>{firstName}</Text>
             </Text>
-            <View style={[styles.badge, { borderColor: isDark ? 'rgba(201,150,46,0.5)' : theme.cardBorder }]}>
-              <Text style={[styles.badgeText, { color: theme.gold1 }]}>{isPremium ? 'PREMIUM' : 'FREE'}</Text>
-            </View>
+            {isPremium && (
+              <View style={[styles.badge, { borderColor: isDark ? 'rgba(201,150,46,0.5)' : theme.cardBorder }]}>
+                <Text style={[styles.badgeText, { color: theme.gold1 }]}>PREMIUM</Text>
+              </View>
+            )}
           </View>
         </View>
 

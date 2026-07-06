@@ -63,7 +63,7 @@ export const STRINGS: Record<string, { en: string; hi: string }> = {
   'profile.email': { en: 'Email', hi: 'ईमेल' },
   'profile.mobile': { en: 'Mobile', hi: 'मोबाइल' },
   'profile.premiumMember': { en: 'PREMIUM MEMBER', hi: 'प्रीमियम सदस्य' },
-  'profile.freeMember': { en: 'FREE MEMBER', hi: 'मुफ़्त सदस्य' },
+  'profile.freeMember': { en: 'GO PREMIUM →', hi: 'प्रीमियम लें →' },
   'edit.personal': { en: 'Personal Details', hi: 'व्यक्तिगत विवरण' },
   'edit.birthDetails': { en: 'Birth Details', hi: 'जन्म विवरण' },
 
@@ -161,15 +161,15 @@ export const STRINGS: Record<string, { en: string; hi: string }> = {
 
   // ── Vedic Astrologer (astrologer chat) ──
   'ai.title': { en: 'Vedic Astrologer', hi: 'ज्योतिषी जी' },
-  'ai.heroTitle': { en: 'Chart-Grounded Answers', hi: 'कुंडली आधारित उत्तर' },
-  'ai.heroText': { en: 'Ask about today, kundli, dasha, timing, relationships, career, remedies, or spiritual guidance.', hi: 'आज, कुंडली, दशा, समय, संबंध, करियर, उपाय या आध्यात्मिक मार्गदर्शन के बारे में पूछें।' },
-  'ai.sourceLead': { en: 'Your answer is prepared from your saved birth details and precise chart & panchang calculations.', hi: 'आपका उत्तर आपकी सहेजी हुई जन्म जानकारी और सटीक कुंडली व पंचांग गणना से तैयार किया जाता है।' },
+  'ai.heroTitle': { en: 'Ask Clearly', hi: 'आसान प्रश्न पूछें' },
+  'ai.heroText': { en: 'Timing, career, remedies or personal guidance.', hi: 'समय, करियर, उपाय या मार्गदर्शन।' },
+  'ai.sourceLead': { en: 'Uses your birth details and chart data.', hi: 'जन्म विवरण और कुंडली डेटा से उत्तर।' },
   'ai.askLabel': { en: 'Ask your question', hi: 'अपना प्रश्न पूछें' },
   'ai.placeholder': { en: 'Type your question...', hi: 'अपना प्रश्न लिखें...' },
   'ai.asking': { en: 'ASKING...', hi: 'पूछा जा रहा है...' },
   'ai.askButton': { en: 'ASK ASTROLOGER', hi: 'ज्योतिषी से पूछें' },
   'ai.emptyTitle': { en: 'Personal guidance starts here', hi: 'व्यक्तिगत मार्गदर्शन यहां शुरू होता है' },
-  'ai.emptyText': { en: 'For best results, complete your birth date, birth time, and birth place in profile. The app will use that context automatically.', hi: 'बेहतर परिणाम के लिए प्रोफाइल में जन्म तिथि, जन्म समय और जन्म स्थान पूरा करें। ऐप उस संदर्भ का उपयोग अपने आप करेगा।' },
+  'ai.emptyText': { en: 'Complete birth details in Profile for better answers.', hi: 'बेहतर उत्तर के लिए प्रोफाइल में जन्म विवरण पूरा करें।' },
   'ai.question': { en: 'Question', hi: 'प्रश्न' },
   'ai.loading': { en: "Reading your chart and today's panchang...", hi: 'आपकी कुंडली और आज का पंचांग पढ़ा जा रहा है...' },
   'ai.retry': { en: 'TRY AGAIN', hi: 'फिर प्रयास करें' },
@@ -179,10 +179,10 @@ export const STRINGS: Record<string, { en: string; hi: string }> = {
   'ai.basis': { en: 'Calculation basis', hi: 'गणना का आधार' },
   'ai.remedies': { en: 'Suggested remedies', hi: 'सुझाए गए उपाय' },
   'ai.defaultSource': { en: 'Based on your precise birth chart and Panchang data.', hi: 'आपकी सटीक जन्म कुंडली और पंचांग डेटा पर आधारित।' },
-  'ai.quick.today': { en: 'What should I focus on today?', hi: 'आज मुझे किस पर ध्यान देना चाहिए?' },
-  'ai.quick.time': { en: 'Which time is better for important work?', hi: 'महत्वपूर्ण काम के लिए कौन सा समय बेहतर है?' },
-  'ai.quick.dasha': { en: 'What does my current dasha mean?', hi: 'मेरी वर्तमान दशा का क्या अर्थ है?' },
-  'ai.quick.remedy': { en: 'Suggest a simple remedy for today.', hi: 'आज के लिए कोई सरल उपाय बताएं।' },
+  'ai.quick.today': { en: "Today's focus?", hi: 'आज ध्यान कहाँ दें?' },
+  'ai.quick.time': { en: 'Best time today?', hi: 'आज शुभ समय?' },
+  'ai.quick.dasha': { en: 'My current dasha?', hi: 'मेरी दशा?' },
+  'ai.quick.remedy': { en: 'Simple remedy?', hi: 'सरल उपाय?' },
 
   // ── help ──
   'help.faq': { en: 'Frequently Asked Questions', hi: 'अक्सर पूछे जाने वाले प्रश्न' },
