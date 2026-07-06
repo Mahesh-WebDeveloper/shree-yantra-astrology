@@ -1213,13 +1213,6 @@ export function KundliScreen({ navigation }: any) {
           </KundliCard>
         )}
       </View>
-
-      <GoldButton
-        label={t('kundli.unlock', 'Unlock Full Analysis')}
-        icon={<CrownIcon color={theme.buttonInk} />}
-        onPress={() => navigation.navigate('Subscribe')}
-        style={styles.cta}
-      />
     </Screen>
   );
 }

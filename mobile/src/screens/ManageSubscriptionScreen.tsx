@@ -7,7 +7,6 @@ import { useT } from '../i18n/LanguageProvider';
 import { Theme, fonts, radii } from '../theme/tokens';
 import { Page } from '../components/Page';
 import { Card } from '../components/Card';
-import { useDialog } from '../components/DialogProvider';
 import { hTap } from '../lib/haptics';
 
 const sw = (c: string) => ({ width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none' as const, stroke: c, strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const });
@@ -34,16 +33,7 @@ function CardHead({ children, theme }: { children: React.ReactNode; theme: Theme
 
 export function ManageSubscriptionScreen({ navigation }: any) {
   const { theme } = useTheme();
-  const dialog = useDialog();
   const t = useT();
-
-  const cancel = () => {
-    hTap();
-    dialog('Cancel your subscription?', 'You will keep premium access until your current billing cycle ends. After that, only free predictions will be available.', [
-      { text: 'KEEP PREMIUM', style: 'cancel' },
-      { text: 'CANCEL ANYWAY', style: 'destructive', onPress: () => navigation.goBack() },
-    ]);
-  };
 
   return (
     <Page title={t('ms.title', 'Manage Plan')} onBack={() => { hTap(); navigation.goBack(); }}>
@@ -84,12 +74,10 @@ export function ManageSubscriptionScreen({ navigation }: any) {
         </View>
       </Card>
 
-      <Pressable
-        onPress={cancel}
-        style={({ pressed }) => [styles.cancel, { borderColor: 'rgba(220,80,80,0.4)' }, pressed && { backgroundColor: 'rgba(220,80,80,0.1)', borderColor: 'rgba(220,80,80,0.7)' }]}
-        android_ripple={{ color: 'rgba(220,80,80,0.12)' }}
-      >
-        <Text style={styles.cancelText}>CANCEL SUBSCRIPTION</Text>
+      {/* Cancel is intentionally NOT here. A low-key link leads to a deeper Billing & Account
+          screen where cancellation lives at the very bottom — so it is not front-and-centre. */}
+      <Pressable onPress={() => { hTap(); navigation.navigate('BillingOptions'); }} hitSlop={6} style={styles.billingLink}>
+        <Text style={[styles.billingLinkTxt, { color: theme.textMuted }]}>Billing & account options ›</Text>
       </Pressable>
     </Page>
   );
@@ -128,6 +116,6 @@ const styles = StyleSheet.create({
   price: { fontFamily: fonts.cinzelSemi, fontSize: 15 },
   per: { fontFamily: fonts.inter, fontSize: 9.5, letterSpacing: 1 },
 
-  cancel: { marginTop: 16, paddingVertical: 13, borderRadius: radii.pill, borderWidth: 1, alignItems: 'center' },
-  cancelText: { fontFamily: fonts.cinzelSemi, fontSize: 12.5, letterSpacing: 1.2, color: '#d9534f' },
+  billingLink: { marginTop: 20, alignSelf: 'center', paddingVertical: 8 },
+  billingLinkTxt: { fontFamily: fonts.inter, fontSize: 12, letterSpacing: 0.3 },
 });

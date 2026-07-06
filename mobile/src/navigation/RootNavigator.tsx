@@ -12,6 +12,7 @@ import { DailyPredictionScreen } from '../screens/DailyPredictionScreen';
 import { AiAstrologerScreen } from '../screens/AiAstrologerScreen';
 import { NotificationsScreen } from '../screens/NotificationsScreen';
 import { ManageSubscriptionScreen } from '../screens/ManageSubscriptionScreen';
+import { BillingOptionsScreen } from '../screens/BillingOptionsScreen';
 import { HelpScreen } from '../screens/HelpScreen';
 import { SubscribeNowScreen } from '../screens/SubscribeNowScreen';
 import { PaymentScreen } from '../screens/PaymentScreen';
@@ -149,6 +150,7 @@ export function RootNavigator() {
       <Stack.Screen name="SetPassword" component={SetPasswordScreen} />
       <Stack.Screen name="Notifications" component={NotificationsScreen} />
       <Stack.Screen name="ManageSubscription" component={ManageSubscriptionScreen} />
+      <Stack.Screen name="BillingOptions" component={BillingOptionsScreen} />
       <Stack.Screen name="Help" component={HelpScreen} />
       <Stack.Screen name="Subscribe" component={SubscribeNowScreen} />
       <Stack.Screen name="Payment" component={PaymentScreen} />
