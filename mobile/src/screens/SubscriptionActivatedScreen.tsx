@@ -10,8 +10,9 @@ import { useTheme } from '../theme/ThemeProvider';
 import { Theme, fonts, radii } from '../theme/tokens';
 import { Card } from '../components/Card';
 import { GradientText } from '../components/GradientText';
+import { GoldButton } from '../components/GoldButton';
 import { CosmicBackground } from '../components/CosmicBackground';
-import { hSuccess } from '../lib/haptics';
+import { hSuccess, hTap } from '../lib/haptics';
 import { birthFromProfile } from '../lib/birth';
 import { useCurrentUser } from '../lib/auth';
 
@@ -207,14 +208,12 @@ export function SubscriptionActivatedScreen({ navigation }: any) {
     navigation.reset({ index: 0, routes: [{ name: target }] });
   };
 
-  // celebratory haptic + content reveal on mount, then auto-redirect to home
+  // celebratory haptic + content reveal on mount (user taps Continue when ready — no
+  // confusing auto-redirect)
   const enter = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     hSuccess();
     Animated.timing(enter, { toValue: 1, duration: 520, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
-    // auto-redirect to the welcome/home screen after the celebration
-    const t = setTimeout(goHome, 5000);
-    return () => clearTimeout(t);
   }, [enter]);
   const entranceStyle = {
     opacity: enter,
@@ -310,11 +309,9 @@ export function SubscriptionActivatedScreen({ navigation }: any) {
           ))}
         </View>
 
-        {/* auto-redirect hint — buttons removed since we navigate home automatically */}
-        <View style={styles.redirectRow}>
-          <Text style={[styles.dot, { color: theme.gold2 }]}>◆</Text>
-          <Text style={[styles.redirectText, { color: dim }]}>Taking you home…</Text>
-          <Text style={[styles.dot, { color: theme.gold2 }]}>◆</Text>
+        {/* explicit CTA — user proceeds when ready (no auto-redirect) */}
+        <View style={styles.ctaRow}>
+          <GoldButton label="Continue" onPress={() => { hTap(); goHome(); }} />
         </View>
         </Animated.View>
       </ScrollView>
@@ -367,7 +364,6 @@ const styles = StyleSheet.create({
   perkIc: { width: 46, height: 46, borderRadius: 23, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   perkText: { fontFamily: fonts.inter, fontSize: 11, textAlign: 'center', lineHeight: 15 },
 
-  redirectRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, marginTop: 26 },
-  redirectText: { fontFamily: fonts.interMed, fontSize: 12.5, letterSpacing: 0.6 },
+  ctaRow: { marginTop: 26 },
   dot: { fontSize: 8 },
 });
