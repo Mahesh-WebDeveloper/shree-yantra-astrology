@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, LayoutAnimation, Platform, UIManager, Linking } from 'react-native';
-import Svg, { Path, Circle, Polyline, Line } from 'react-native-svg';
+import Svg, { Path, Polyline } from 'react-native-svg';
 import { useTheme } from '../theme/ThemeProvider';
 import { Theme, fonts, radii } from '../theme/tokens';
 import { Page } from '../components/Page';
@@ -11,7 +11,7 @@ import { useAppConfig } from '../context/AppConfigProvider';
 import { useT } from '../i18n/LanguageProvider';
 import { getFaq } from '../lib/api';
 
-const QUICK_KEY: Record<string, string> = { chat: 'help.chat', call: 'help.call', email: 'help.emailSupport', kb: 'help.kb' };
+const QUICK_KEY: Record<string, string> = { chat: 'help.chat', email: 'help.emailSupport' };
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -21,9 +21,7 @@ const sw = (c: string, n = 1.7) => ({ width: 24, height: 24, viewBox: '0 0 24 24
 
 const QUICK = [
   { key: 'chat', label: 'Chat with us', icon: (c: string) => <Svg {...sw(c)}><Path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></Svg> },
-  { key: 'call', label: 'Call helpline', icon: (c: string) => <Svg {...sw(c)}><Path d="M22 16.92V21a1 1 0 0 1-1.11 1A19.94 19.94 0 0 1 2 4.11 1 1 0 0 1 3 3h4a1 1 0 0 1 1 .75l1.5 6a1 1 0 0 1-.27 1L7 13a16 16 0 0 0 4 4l2.25-2.23a1 1 0 0 1 1-.27l6 1.5A1 1 0 0 1 22 17z" /></Svg> },
   { key: 'email', label: 'Email support', icon: (c: string) => <Svg {...sw(c)}><Path d="M4 4h16v16H4z" /><Polyline points="4 4 12 13 20 4" /></Svg> },
-  { key: 'kb', label: 'Knowledge base', icon: (c: string) => <Svg {...sw(c)}><Circle cx={12} cy={12} r={10} /><Path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2-3 4" /><Line x1={12} y1={17} x2={12.01} y2={17} /></Svg> },
 ];
 
 const FAQS = [
@@ -63,7 +61,6 @@ export function HelpScreen({ navigation }: any) {
   const { config } = useAppConfig();
   const t = useT();
   const supportEmail = config.support?.email || 'support@shreeyantra.app';
-  const supportPhone = (config.support?.phone || '').replace(/\s/g, '') || '18002667890';
   const [openFaq, setOpenFaq] = useState(0); // first open by default (matches web)
 
   // FAQ admin-panel se (fallback static)
@@ -83,14 +80,10 @@ export function HelpScreen({ navigation }: any) {
 
   const onQuick = (key: string) => {
     hTap();
-    if (key === 'call') {
-      Linking.openURL(`tel:${supportPhone}`).catch(() => dialog('Call helpline', supportPhone));
-    } else if (key === 'email') {
+    if (key === 'email') {
       Linking.openURL(`mailto:${supportEmail}?subject=Support%20Request`).catch(() => dialog('Email support', supportEmail));
-    } else if (key === 'chat') {
-      dialog('Live Chat', 'Connecting you to our cosmic support team — a guide will join within a minute. 🌟');
     } else {
-      dialog('Knowledge Base', 'Browse step-by-step guides, astrology basics and account help — articles coming soon.');
+      dialog('Live Chat', 'Connecting you to our cosmic support team — a guide will join within a minute. 🌟');
     }
   };
 

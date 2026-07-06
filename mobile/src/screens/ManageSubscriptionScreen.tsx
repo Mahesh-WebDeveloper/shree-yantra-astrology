@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import Svg, { Path, Polygon, Rect, Circle, Polyline, Line } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -8,8 +8,7 @@ import { Theme, fonts, radii } from '../theme/tokens';
 import { Page } from '../components/Page';
 import { Card } from '../components/Card';
 import { useDialog } from '../components/DialogProvider';
-import { hTap, hSelect } from '../lib/haptics';
-import { getPlans, Plan } from '../lib/api';
+import { hTap } from '../lib/haptics';
 
 const sw = (c: string) => ({ width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none' as const, stroke: c, strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const });
 
@@ -25,22 +24,8 @@ const PERKS = [
 const BILLING = [
   ['Plan', 'Monthly'],
   ['Amount', '₹499 / month'],
-  ['Started On', '24 Apr 2025'],
-  ['Next Billing', '24 Jun 2025'],
+  ['Billing', 'Auto-renews monthly'],
   ['Payment Method', 'UPI · Google Pay'],
-];
-
-const PLANS = [
-  { key: 'monthly', name: 'Monthly', sub: 'Renews every month', price: '₹499', per: '/MONTH' },
-  { key: 'quarterly', name: 'Quarterly', sub: 'Renews every 3 months', price: '₹1,299', per: '/QUARTER', save: 'SAVE 15%' },
-  { key: 'yearly', name: 'Yearly', sub: 'Renews every year', price: '₹3,999', per: '/YEAR', save: 'SAVE 33%' },
-];
-
-const HISTORY = [
-  ['24 May 2025 · UPI', '₹499'],
-  ['24 Apr 2025 · UPI', '₹499'],
-  ['24 Mar 2025 · Card', '₹499'],
-  ['24 Feb 2025 · Card', '₹499'],
 ];
 
 function CardHead({ children, theme }: { children: React.ReactNode; theme: Theme }) {
@@ -51,36 +36,6 @@ export function ManageSubscriptionScreen({ navigation }: any) {
   const { theme } = useTheme();
   const dialog = useDialog();
   const t = useT();
-  const [current, setCurrent] = useState('monthly');
-  const [livePlans, setLivePlans] = useState<Plan[] | null>(null);
-
-  useEffect(() => {
-    let on = true;
-    getPlans().then((r) => { if (on && r.plans.length) setLivePlans(r.plans); }).catch(() => {});
-    return () => { on = false; };
-  }, []);
-
-  const plans = useMemo(() => {
-    if (!livePlans) return PLANS;
-    return livePlans.map((p) => ({
-      key: p._id,
-      name: p.name,
-      sub: `${p.durationDays} days`,
-      price: p.priceINR === 0 ? 'Free' : `₹${p.priceINR}`,
-      per: p.durationDays >= 365 ? '/YEAR' : p.durationDays >= 90 ? '/QUARTER' : '/PLAN',
-      save: p.badge || undefined,
-      features: p.features,
-    }));
-  }, [livePlans]);
-
-  const switchPlan = (key: string, name: string, price: string) => {
-    if (key === current) return;
-    hTap();
-    dialog(`Switch to ${name}?`, `Your new ${name.toLowerCase()} plan (${price}) will activate from the next billing cycle.`, [
-      { text: 'KEEP CURRENT', style: 'cancel' },
-      { text: 'SWITCH PLAN', onPress: () => { hSelect(); setCurrent(key); } },
-    ]);
-  };
 
   const cancel = () => {
     hTap();
@@ -127,57 +82,6 @@ export function ManageSubscriptionScreen({ navigation }: any) {
             </View>
           ))}
         </View>
-      </Card>
-
-      <Text style={[styles.section, { color: theme.goldText }]}>Change Plan</Text>
-      <View style={{ gap: 10 }}>
-        {plans.map((p) => {
-          const isCurrent = p.key === current;
-          return (
-            <Pressable
-              key={p.key}
-              onPress={() => switchPlan(p.key, p.name, p.price)}
-              style={({ pressed }) => [
-                styles.planCard,
-                { backgroundColor: isCurrent ? (theme.isDark ? 'rgba(233,184,80,0.08)' : '#ffffff') : theme.cardBg, borderColor: isCurrent ? theme.gold1 : theme.cardBorder, borderWidth: isCurrent ? 1.5 : 1 },
-                !theme.isDark && styles.lightPlanShadow,
-                pressed && !isCurrent && { transform: [{ scale: 0.985 }], borderColor: theme.gold2 },
-              ]}
-            >
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <View style={styles.planTitleRow}>
-                  <Text style={[styles.planTitle, { color: theme.text }]}>{p.name}</Text>
-                  {isCurrent && (
-                    <View style={[styles.currentPill, { borderColor: 'rgba(74,222,128,0.4)', backgroundColor: 'rgba(74,222,128,0.12)' }]}>
-                      <Text style={styles.currentText}>CURRENT</Text>
-                    </View>
-                  )}
-                </View>
-                <Text style={[styles.planMeta, { color: theme.textMuted }]}>{p.sub}</Text>
-                {p.save && (
-                  <LinearGradient colors={theme.buttonGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.savePill}>
-                    <Text style={[styles.saveText, { color: theme.buttonInk }]}>{p.save}</Text>
-                  </LinearGradient>
-                )}
-              </View>
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text style={[styles.price, { color: theme.goldText }]}>{p.price}</Text>
-                <Text style={[styles.per, { color: theme.textMuted }]}>{p.per}</Text>
-              </View>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      {/* History */}
-      <Card style={{ marginTop: 14 }}>
-        <CardHead theme={theme}>PAYMENT HISTORY</CardHead>
-        {HISTORY.map(([k, v], i) => (
-          <View key={k} style={[styles.row, { borderBottomColor: theme.line }, i === HISTORY.length - 1 && styles.noBorder]}>
-            <Text style={[styles.histK, { color: theme.textSoft }]}>{k}</Text>
-            <Text style={[styles.rowV, { color: theme.goldText }]}>{v}</Text>
-          </View>
-        ))}
       </Card>
 
       <Pressable
