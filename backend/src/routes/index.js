@@ -101,6 +101,7 @@ router.get('/app-config', appConfigCtrl.publicGet);
 router.get('/faq', faqCtrl.publicList);
 router.get('/notifications', requireAuth, notificationsCtrl.publicList);
 router.patch('/notifications/:id/read', requireAuth, notificationsCtrl.markRead);
+router.post('/notifications/register-token', requireAuth, notificationsCtrl.registerToken);
 
 // analytics (app se events aate hain — public)
 router.post('/analytics/track', analyticsCtrl.track);

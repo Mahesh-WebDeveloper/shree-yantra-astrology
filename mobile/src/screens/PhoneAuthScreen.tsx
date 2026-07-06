@@ -14,6 +14,7 @@ import { hPress, hError, hSuccess, hTap } from '../lib/haptics';
 import { useDialog } from '../components/DialogProvider';
 import { requestOtp, verifyOtp, googleLogin } from '../lib/api';
 import { saveAuth } from '../lib/auth';
+import { registerForPush } from '../lib/notifications';
 import { track } from '../lib/analytics';
 import { useT, useLang } from '../i18n/LanguageProvider';
 
@@ -88,6 +89,7 @@ export function PhoneAuthScreen({ navigation }: any) {
     try {
       const r = await verifyOtp({ phone: '+91' + digits.slice(-10), code: full });
       await saveAuth(r.token, r.user);
+      registerForPush(); // register device for push (prompts permission)
       track(r.isNew ? 'register' : 'login', undefined, { method: 'otp' });
       hSuccess();
       // NEW registration → language → subscription → birth-details onboarding.
@@ -129,6 +131,7 @@ export function PhoneAuthScreen({ navigation }: any) {
       if (!idToken) throw new Error('No Google token');
       const r = await googleLogin(idToken);
       await saveAuth(r.token, r.user);
+      registerForPush(); // register device for push (prompts permission)
       track(r.isNew ? 'register' : 'login', undefined, { method: 'google' });
       hSuccess();
       navigation.replace(r.isNew ? 'Subscribe' : (r.profileComplete ? 'Main' : 'BirthDetails'));

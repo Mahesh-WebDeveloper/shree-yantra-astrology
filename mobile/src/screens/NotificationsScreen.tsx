@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { View, Text, StyleSheet, Pressable, LayoutAnimation, Platform, UIManager, Switch } from 'react-native';
 import Svg, { Path, Polygon, Polyline, Circle, Rect, Line } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme/ThemeProvider';
@@ -8,7 +8,8 @@ import { Page } from '../components/Page';
 import { BellIcon } from '../components/icons/NavIcons';
 import { hTap, hSelect, hSuccess } from '../lib/haptics';
 import { getNotifications, markNotificationRead, AppNotification } from '../lib/api';
-import { useT } from '../i18n/LanguageProvider';
+import { getDailyReminder, setDailyReminder } from '../lib/notifications';
+import { useT, useLang } from '../i18n/LanguageProvider';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -79,6 +80,38 @@ const relTime = (iso: string) => {
   return `${d.getDate()} ${MONS[d.getMonth()]}`;
 };
 
+// Local daily "आज का राशिफल" reminder — scheduled on the device (works offline, no server).
+function DailyReminderCard() {
+  const { theme } = useTheme();
+  const { lang } = useLang();
+  const hi = lang === 'hi';
+  const [on, setOn] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => { getDailyReminder().then((r) => setOn(r.on)); }, []);
+
+  const toggle = async (next: boolean) => {
+    if (busy) return;
+    hSelect();
+    setBusy(true);
+    setOn(next); // optimistic
+    const ok = await setDailyReminder(next, 8, 0);
+    if (!ok && next) setOn(false); // permission denied
+    setBusy(false);
+  };
+
+  return (
+    <View style={[styles.reminder, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.06)' : 'rgba(255,247,224,0.9)' }]}>
+      <Text style={styles.reminderEmoji}>🌅</Text>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text style={[styles.reminderTitle, { color: theme.text }]}>{hi ? 'रोज़ का राशिफल रिमाइंडर' : 'Daily Rashifal Reminder'}</Text>
+        <Text style={[styles.reminderSub, { color: theme.textMuted }]}>{hi ? 'हर सुबह 8:00 बजे सूचना' : 'A gentle nudge every morning at 8:00 AM'}</Text>
+      </View>
+      <Switch value={on} onValueChange={toggle} trackColor={{ true: theme.gold1, false: theme.cardBorder }} thumbColor="#fff" />
+    </View>
+  );
+}
+
 export function NotificationsScreen({ navigation }: any) {
   const { theme } = useTheme();
   const t = useT();
@@ -141,6 +174,8 @@ export function NotificationsScreen({ navigation }: any) {
       onBack={() => { hTap(); navigation.goBack(); }}
       right={<BellIcon color={theme.gold1} size={20} />}
     >
+      <DailyReminderCard />
+
       <View style={styles.tabs}>
         {TABS.map((t) => {
           const active = t.key === tab;
@@ -222,6 +257,10 @@ export function NotificationsScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
+  reminder: { flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderRadius: 16, padding: 14, marginBottom: 12 },
+  reminderEmoji: { fontSize: 26 },
+  reminderTitle: { fontFamily: fonts.interBold, fontSize: 14 },
+  reminderSub: { fontFamily: fonts.inter, fontSize: 11.5, lineHeight: 16, marginTop: 2 },
   tabs: { flexDirection: 'row', gap: 8, marginBottom: 6 },
   tabWrap: { flex: 1, borderRadius: radii.pill },
   tab: { paddingVertical: 9, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },

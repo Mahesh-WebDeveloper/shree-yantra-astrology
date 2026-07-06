@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 
 const asyncHandler = require('../middleware/asyncHandler');
 const Notification = require('../models/Notification');
+const User = require('../models/User');
+const { sendPush, isExpoToken } = require('../utils/expoPush');
 const { i18nValue, langFromReq, normalizeTranslations } = require('../utils/localize');
 
 function badRequest(message) {
@@ -144,9 +146,11 @@ exports.create = asyncHandler(async (req, res) => {
   applyPayload(notification, req.body, req.user);
   if (!notification.title) throw badRequest('Title zaroori hai');
   if (!notification.body) throw badRequest('Body zaroori hai');
-  if (req.body.sendNow === true || req.body.sendNow === 'true') notification.sentAt = new Date();
+  const sendNow = req.body.sendNow === true || req.body.sendNow === 'true';
+  if (sendNow) notification.sentAt = new Date();
   await notification.save();
-  res.status(201).json({ notification });
+  const push = sendNow ? await pushToAudience(notification).catch(() => ({ sent: 0 })) : { sent: 0 };
+  res.status(201).json({ notification, pushed: push.sent });
 });
 
 exports.update = asyncHandler(async (req, res) => {
@@ -158,13 +162,41 @@ exports.update = asyncHandler(async (req, res) => {
   res.json({ notification });
 });
 
+// audience → Mongo query for the users a notification targets
+function audienceQuery(n) {
+  if (n.audience === 'premium') return { plan: 'premium' };
+  if (n.audience === 'free') return { plan: { $ne: 'premium' } };
+  if (n.audience === 'user' && n.targetUserId) return { _id: n.targetUserId };
+  return {}; // 'all'
+}
+
+// gather every Expo push token for the notification's audience and deliver a device push
+async function pushToAudience(n) {
+  const users = await User.find({ ...audienceQuery(n), blocked: { $ne: true } }, 'pushTokens').lean();
+  const tokens = users.flatMap((u) => u.pushTokens || []).filter(isExpoToken);
+  return sendPush(tokens, {
+    title: n.title,
+    body: n.body,
+    data: { screen: 'Notifications', notificationId: String(n._id) },
+  });
+}
+
 exports.send = asyncHandler(async (req, res) => {
   ensureObjectId(req.params.id);
   const notification = await Notification.findById(req.params.id);
   if (!notification) throw notFound('Notification not found');
   notification.sentAt = new Date();
   await notification.save();
-  res.json({ notification });
+  const push = await pushToAudience(notification).catch(() => ({ sent: 0 }));
+  res.json({ notification, pushed: push.sent });
+});
+
+// device registers its Expo push token (called by the app after login)
+exports.registerToken = asyncHandler(async (req, res) => {
+  const token = String((req.body && req.body.token) || '').trim();
+  if (!isExpoToken(token)) throw badRequest('Invalid push token');
+  await User.updateOne({ _id: req.user._id }, { $addToSet: { pushTokens: token } });
+  res.json({ ok: true });
 });
 
 exports.remove = asyncHandler(async (req, res) => {

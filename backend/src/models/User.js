@@ -50,6 +50,9 @@ const userSchema = new mongoose.Schema(
     interests: { type: [String], default: [] }, // love|career|wealth|health
     profile: { type: profileSchema, default: () => ({}) },
 
+    // Expo push tokens for this user's device(s) — used to deliver push notifications
+    pushTokens: { type: [String], default: [] },
+
     // subscription mirror (payment se update hoga)
     plan: { type: String, enum: ['free', 'premium'], default: 'free' },
 

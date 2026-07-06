@@ -881,6 +881,8 @@ export interface AppNotification {
 }
 export const getNotifications = () => get<{ notifications: AppNotification[] }>(withLang('/api/notifications'));
 export const markNotificationRead = (id: string) => post<{ notification: AppNotification }>(`/api/notifications/${id}/read`, {}, 'PATCH');
+// register this device's Expo push token so the server can send push notifications
+export const registerPushToken = (token: string) => post<{ ok: boolean }>('/api/notifications/register-token', { token, platform: 'android' });
 
 export interface AppConfigData {
   onboardingSlides: { _id?: string; title: string; subtitle?: string; imageUrl?: string; order?: number; isActive?: boolean }[];

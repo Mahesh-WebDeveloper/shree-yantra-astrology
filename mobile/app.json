@@ -37,6 +37,12 @@
     "plugins": [
       "expo-font",
       [
+        "expo-notifications",
+        {
+          "color": "#e9b850"
+        }
+      ],
+      [
         "expo-location",
         {
           "locationWhenInUsePermission": "Shree Yantra uses your device compass to show the exact Vastu direction."

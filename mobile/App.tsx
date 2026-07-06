@@ -20,6 +20,8 @@ import { markActivityStale } from './src/lib/networkActivity';
 import { AppConfigProvider } from './src/context/AppConfigProvider';
 import { LanguageProvider } from './src/i18n/LanguageProvider';
 import { initAnalytics, trackScreen } from './src/lib/analytics';
+import { addTapListener, registerForPush } from './src/lib/notifications';
+import { getAuthToken } from './src/lib/api';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -47,6 +49,16 @@ function Root() {
   useEffect(() => {
     if (showApp) SplashScreen.hideAsync().catch(() => {});
   }, [showApp]);
+
+  // Notifications: deep-link when the user taps one, and (if already logged in) register the
+  // push token with the backend. Fresh logins register from PhoneAuth after saveAuth.
+  useEffect(() => {
+    const unsub = addTapListener((screen, params) => {
+      try { (navigationRef as any)?.navigate(screen, params); } catch {}
+    });
+    const t = setTimeout(() => { if (getAuthToken()) registerForPush(); }, 1500);
+    return () => { unsub(); clearTimeout(t); };
+  }, []);
 
   if (!showApp) {
     return <View style={{ flex: 1, backgroundColor: theme.bgDeep }} />;
