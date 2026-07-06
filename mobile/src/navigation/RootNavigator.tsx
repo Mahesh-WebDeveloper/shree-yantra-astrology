@@ -69,10 +69,12 @@ export function RootNavigator() {
         // PERF: freeze covered/blurred stack screens — a theme toggle or state change
         // only re-renders the screen on top, not every screen underneath.
         freezeOnBlur: true,
-        // PERF: default detach (true) — the covered screen stays attached DURING the
-        // transition (so the shared-axis exit half still plays) but its native views are
-        // detached afterwards. Keeping every screen attached (false) piled up native views
-        // on deep stacks → memory pressure → device-wide lag on low-end phones.
+        // MUST stay false. With transparent cards + freezeOnBlur, letting the stack detach
+        // the previous screen after the push transition (the default) blanks the TOP screen
+        // on Android — content vanishes to a black screen and touches freeze right as the
+        // transition settles (regression seen app-wide in v42). Frozen screens don't
+        // re-render anyway, so the memory cost of staying attached is acceptable.
+        detachPreviousScreen: false,
         transitionSpec: stackSpec,
         // Material "shared axis X" — buttery Google-style list→detail motion,
         // with edge-swipe back enabled (gesture-handler driven).
