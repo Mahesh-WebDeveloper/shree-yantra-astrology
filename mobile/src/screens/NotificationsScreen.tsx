@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, LayoutAnimation, Platform, UIManager, Switch, Alert } from 'react-native';
 import Svg, { Path, Polygon, Polyline, Circle, Rect, Line } from 'react-native-svg';
+import { Swipeable } from 'react-native-gesture-handler';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
@@ -72,6 +73,7 @@ const relTime = (iso: string) => {
 };
 
 // Local daily "आज का राशिफल" reminder — scheduled on the device (works offline, no server).
+const REMINDER_HOUR = 6; // 6:00 AM
 function DailyReminderCard() {
   const { theme } = useTheme();
   const { lang } = useLang();
@@ -79,29 +81,52 @@ function DailyReminderCard() {
   const [on, setOn] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  React.useEffect(() => { getDailyReminder().then((r) => setOn(r.on)); }, []);
+  React.useEffect(() => {
+    getDailyReminder().then((r) => {
+      setOn(r.on);
+      if (r.on && r.hour !== REMINDER_HOUR) setDailyReminder(true, REMINDER_HOUR, 0); // migrate old 8 AM → 6 AM
+    });
+  }, []);
 
   const toggle = async (next: boolean) => {
     if (busy) return;
     hSelect();
     setBusy(true);
     setOn(next); // optimistic
-    const ok = await setDailyReminder(next, 8, 0);
-    if (!ok && next) setOn(false); // permission denied
+    const ok = await setDailyReminder(next, REMINDER_HOUR, 0);
+    if (ok && next) hSuccess();
+    if (!ok && next) {
+      setOn(false); // permission denied
+      Alert.alert(
+        hi ? 'सूचना की अनुमति चाहिए' : 'Notifications permission needed',
+        hi ? 'रिमाइंडर पाने के लिए Settings में इस ऐप की सूचनाएँ चालू करें।' : 'Enable notifications for this app in Settings to receive the reminder.'
+      );
+    }
     setBusy(false);
   };
 
   return (
-    <View style={[styles.reminderCard, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.06)' : 'rgba(255,247,224,0.9)' }]}>
+    <Pressable onPress={() => toggle(!on)} style={[styles.reminderCard, { borderColor: on ? theme.gold3 : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.06)' : 'rgba(255,247,224,0.9)' }]}>
       <View style={styles.reminderRow}>
-        <Text style={styles.reminderEmoji}>🌅</Text>
+        <View style={[styles.reminderIcon, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : '#fff' }]}>
+          <Text style={styles.reminderEmoji}>🌅</Text>
+        </View>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={[styles.reminderTitle, { color: theme.text }]}>{hi ? 'रोज़ का राशिफल रिमाइंडर' : 'Daily Rashifal Reminder'}</Text>
-          <Text style={[styles.reminderSub, { color: theme.textMuted }]}>{hi ? 'हर सुबह 8:00 बजे सूचना' : 'A gentle nudge every morning at 8:00 AM'}</Text>
+          <Text style={[styles.reminderSub, { color: on ? theme.gold2 : theme.textMuted }]}>
+            {on
+              ? (hi ? '✓ हर सुबह 6:00 बजे राशिफल की सूचना मिलेगी' : '✓ You’ll be notified every day at 6:00 AM')
+              : (hi ? 'हर सुबह 6:00 बजे अपना राशिफल पाएँ' : 'Get your rashifal every morning at 6:00 AM')}
+          </Text>
         </View>
-        <Switch value={on} onValueChange={toggle} trackColor={{ true: theme.gold1, false: theme.cardBorder }} thumbColor="#fff" />
+        <View style={styles.reminderRight}>
+          <View style={[styles.timePill, { borderColor: on ? theme.gold3 : theme.cardBorder, backgroundColor: on ? (theme.isDark ? 'rgba(233,184,80,0.14)' : 'rgba(233,184,80,0.14)') : 'transparent' }]}>
+            <Text style={[styles.timePillTxt, { color: on ? theme.gold1 : theme.textMuted }]}>6:00 AM</Text>
+          </View>
+          <Switch value={on} onValueChange={toggle} trackColor={{ true: theme.gold1, false: theme.cardBorder }} thumbColor="#fff" />
+        </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -112,6 +137,7 @@ export function NotificationsScreen({ navigation }: any) {
   const [live, setLive] = useState<AppNotification[] | null>(null);
   const [read, setRead] = useState<Set<string>>(new Set());     // local optimistic read
   const [gone, setGone] = useState<Set<string>>(new Set());     // local optimistic delete
+  const [expanded, setExpanded] = useState<Set<string>>(new Set()); // long-body read-more
 
   const load = useCallback(() => {
     getNotifications().then((r) => {
@@ -142,10 +168,22 @@ export function NotificationsScreen({ navigation }: any) {
 
   const selectTab = (k: 'all' | Cat) => { if (k === tab) return; hSelect(); easeNext(); setTab(k); };
 
+  const markReadLocal = (n: Note) => {
+    if (n.unread) { setRead((r) => new Set(r).add(n.id)); bumpUnread(-1); markNotificationRead(n.id).catch(() => {}); }
+  };
+
   const openNote = (n: Note) => {
     hTap();
-    if (n.unread) { easeNext(); setRead((r) => new Set(r).add(n.id)); bumpUnread(-1); markNotificationRead(n.id).catch(() => {}); }
+    if (n.unread) easeNext();
+    markReadLocal(n);
     if (n.go) requestAnimationFrame(() => navigation.navigate(n.go as never));
+  };
+
+  const toggleExpand = (n: Note) => {
+    hSelect();
+    easeNext();
+    setExpanded((e) => { const s = new Set(e); s.has(n.id) ? s.delete(n.id) : s.add(n.id); return s; });
+    markReadLocal(n); // reading the full text counts as read
   };
 
   const markAll = () => {
@@ -246,36 +284,55 @@ export function NotificationsScreen({ navigation }: any) {
           <View key={s.day}>
             <Text style={[styles.day, { color: theme.gold2 }]}>{t(`notif.${s.day.toLowerCase()}`, s.day)}</Text>
             <View style={{ gap: 10 }}>
-              {s.items.map((n) => (
-                <Pressable
-                  key={n.id}
-                  onPress={() => openNote(n)}
-                  style={({ pressed }) => [
-                    styles.row,
-                    {
-                      backgroundColor: n.unread ? (theme.isDark ? 'rgba(233,184,80,0.07)' : 'rgba(176,115,22,0.06)') : theme.cardBg,
-                      borderColor: n.unread ? theme.gold3 : theme.cardBorder,
-                      opacity: n.unread ? 1 : 0.72,
-                    },
-                    pressed && { transform: [{ scale: 0.99 }], borderColor: theme.gold2 },
-                  ]}
-                >
-                  <View style={[styles.icon, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : '#ffffff' }]}>
-                    {ICONS[n.icon](theme.gold1)}
-                  </View>
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text style={[styles.title, { color: theme.text }]}>{n.title}</Text>
-                    <Text style={[styles.msg, { color: theme.textSoft }]}>{n.msg}</Text>
-                    <Text style={[styles.time, { color: theme.textMuted }]}>{n.ts}</Text>
-                  </View>
-                  <View style={styles.rightCol}>
-                    {n.unread && <View style={[styles.dot, { backgroundColor: theme.gold1, shadowColor: theme.gold1 }]} />}
-                    <Pressable onPress={() => deleteOne(n)} hitSlop={10} style={({ pressed }) => [styles.del, pressed && { opacity: 0.5 }]}>
-                      <TrashIcon c={theme.textMuted} size={15} />
+              {s.items.map((n) => {
+                const isLong = n.msg.length > 90;
+                const isOpen = expanded.has(n.id);
+                return (
+                  <Swipeable
+                    key={n.id}
+                    friction={1.8}
+                    rightThreshold={44}
+                    overshootRight={false}
+                    onSwipeableOpen={() => deleteOne(n)}
+                    renderRightActions={() => (
+                      <View style={styles.swipeDel}>
+                        <TrashIcon c="#fff" size={18} />
+                        <Text style={styles.swipeDelTxt}>{t('common.delete', 'Delete')}</Text>
+                      </View>
+                    )}
+                  >
+                    <Pressable
+                      onPress={() => openNote(n)}
+                      style={({ pressed }) => [
+                        styles.row,
+                        {
+                          backgroundColor: n.unread ? (theme.isDark ? 'rgba(20,14,4,0.98)' : 'rgba(255,250,238,1)') : theme.cardBg,
+                          borderColor: n.unread ? theme.gold3 : theme.cardBorder,
+                          opacity: n.unread ? 1 : 0.74,
+                        },
+                        pressed && { borderColor: theme.gold2 },
+                      ]}
+                    >
+                      <View style={[styles.icon, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : '#ffffff' }]}>
+                        {ICONS[n.icon](theme.gold1)}
+                      </View>
+                      <View style={{ flex: 1, minWidth: 0 }}>
+                        <Text style={[styles.title, { color: theme.text }]}>{n.title}</Text>
+                        <Text style={[styles.msg, { color: theme.textSoft }]} numberOfLines={isOpen ? undefined : 2}>{n.msg}</Text>
+                        {isLong && (
+                          <Pressable onPress={() => toggleExpand(n)} hitSlop={8} style={styles.readMoreWrap}>
+                            <Text style={[styles.readMore, { color: theme.gold2 }]}>
+                              {isOpen ? t('notif.less', 'Show less ⌃') : t('notif.more', 'Read more ⌄')}
+                            </Text>
+                          </Pressable>
+                        )}
+                        <Text style={[styles.time, { color: theme.textMuted }]}>{n.ts}</Text>
+                      </View>
+                      {n.unread && <View style={[styles.dot, { backgroundColor: theme.gold1, shadowColor: theme.gold1 }]} />}
                     </Pressable>
-                  </View>
-                </Pressable>
-              ))}
+                  </Swipeable>
+                );
+              })}
             </View>
           </View>
         ))
@@ -287,9 +344,13 @@ export function NotificationsScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   reminderCard: { borderWidth: 1, borderRadius: 16, marginBottom: 12, overflow: 'hidden' },
   reminderRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
-  reminderEmoji: { fontSize: 26 },
+  reminderIcon: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  reminderEmoji: { fontSize: 22 },
   reminderTitle: { fontFamily: fonts.interBold, fontSize: 14 },
-  reminderSub: { fontFamily: fonts.inter, fontSize: 11.5, lineHeight: 16, marginTop: 2 },
+  reminderSub: { fontFamily: fonts.inter, fontSize: 11.5, lineHeight: 16, marginTop: 3 },
+  reminderRight: { alignItems: 'center', gap: 7 },
+  timePill: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 },
+  timePillTxt: { fontFamily: fonts.interBold, fontSize: 10.5, letterSpacing: 0.3 },
   tabs: { flexDirection: 'row', gap: 6, marginBottom: 6 },
   tabWrap: { flex: 1, borderRadius: radii.pill },
   tab: { paddingVertical: 9, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
@@ -305,10 +366,12 @@ const styles = StyleSheet.create({
   icon: { width: 40, height: 40, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   title: { fontFamily: fonts.playfair, fontSize: 14.5 },
   msg: { fontFamily: fonts.inter, fontSize: 12.5, lineHeight: 18, marginTop: 3 },
-  rightCol: { alignItems: 'flex-end', justifyContent: 'space-between', gap: 10, minHeight: 40 },
-  dot: { width: 8, height: 8, borderRadius: 4, shadowOpacity: 0.9, shadowRadius: 5, shadowOffset: { width: 0, height: 0 }, elevation: 3 },
-  del: { padding: 2 },
+  dot: { width: 8, height: 8, borderRadius: 4, marginTop: 4, marginLeft: 4, shadowOpacity: 0.9, shadowRadius: 5, shadowOffset: { width: 0, height: 0 }, elevation: 3 },
+  readMoreWrap: { marginTop: 5, alignSelf: 'flex-start' },
+  readMore: { fontFamily: fonts.interSemi, fontSize: 11.5, letterSpacing: 0.3 },
   time: { fontFamily: fonts.inter, fontSize: 10, letterSpacing: 0.8, marginTop: 6 },
+  swipeDel: { backgroundColor: '#c0392b', justifyContent: 'center', alignItems: 'center', width: 82, borderRadius: radii.lg, gap: 3 },
+  swipeDelTxt: { color: '#fff', fontFamily: fonts.interSemi, fontSize: 11, letterSpacing: 0.4 },
 
   empty: { alignItems: 'center', paddingVertical: 60 },
   emptyIcon: { width: 72, height: 72, borderRadius: 36, borderWidth: 1, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
