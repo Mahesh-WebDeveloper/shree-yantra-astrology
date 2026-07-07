@@ -11,11 +11,13 @@ const path = require('path');
 let messaging = null;
 (function init() {
   try {
-    const admin = require('firebase-admin');
+    // modular API (firebase-admin v12+) — the default export's `credential` can be undefined
+    const { initializeApp, cert, getApps } = require('firebase-admin/app');
+    const { getMessaging } = require('firebase-admin/messaging');
     const file = process.env.FIREBASE_SERVICE_ACCOUNT || path.join(__dirname, '..', '..', 'firebase-service-account.json');
     const svc = require(path.resolve(file));
-    if (!admin.apps.length) admin.initializeApp({ credential: admin.credential.cert(svc) });
-    messaging = admin.messaging();
+    const app = getApps().length ? getApps()[0] : initializeApp({ credential: cert(svc) });
+    messaging = getMessaging(app);
     console.log('✅ FCM ready (project:', svc.project_id + ')');
   } catch (e) {
     console.warn('⚠️  FCM not configured — server push disabled:', e.message);
