@@ -55,6 +55,7 @@ const TAG: Record<string, string> = {
   Auspicious: 'शुभ', Neutral: 'सामान्य', Inauspicious: 'अशुभ',
   Good: 'अच्छा', Bad: 'अशुभ', Active: 'सक्रिय', Upcoming: 'आगामी', Present: 'मौजूद', Clear: 'मुक्त',
   Strong: 'प्रबल', Forming: 'बन रहा है', Favourable: 'अनुकूल', Favorable: 'अनुकूल', Watch: 'ध्यान दें', Low: 'कम',
+  Exalted: 'उच्च', Debilitated: 'नीच', 'Own Sign': 'स्वराशि', Friendly: 'मित्र राशि',
 };
 // Planets
 const PLANET: Record<string, string> = {
@@ -65,6 +66,69 @@ const PLANET: Record<string, string> = {
 const SIGN: Record<string, string> = {
   Aries: 'मेष', Taurus: 'वृषभ', Gemini: 'मिथुन', Cancer: 'कर्क', Leo: 'सिंह', Virgo: 'कन्या',
   Libra: 'तुला', Scorpio: 'वृश्चिक', Sagittarius: 'धनु', Capricorn: 'मकर', Aquarius: 'कुंभ', Pisces: 'मीन',
+};
+const NAKSHATRA: Record<string, string> = {
+  Ashwini: 'अश्विनी', Bharani: 'भरणी', Krittika: 'कृत्तिका', Rohini: 'रोहिणी',
+  Mrigashira: 'मृगशीर्ष', Mrigashirsha: 'मृगशीर्ष', Ardra: 'आर्द्रा', Punarvasu: 'पुनर्वसु',
+  Pushya: 'पुष्य', Ashlesha: 'आश्लेषा', Magha: 'मघा',
+  'Purva Phalguni': 'पूर्वा फाल्गुनी', 'Poorva Phalguni': 'पूर्वा फाल्गुनी',
+  'Uttara Phalguni': 'उत्तरा फाल्गुनी', Hasta: 'हस्त', Chitra: 'चित्रा', Swati: 'स्वाती',
+  Vishakha: 'विशाखा', Anuradha: 'अनुराधा', Jyeshtha: 'ज्येष्ठा', Jyeshta: 'ज्येष्ठा',
+  Mula: 'मूल', Moola: 'मूल',
+  'Purva Ashadha': 'पूर्वाषाढ़ा', 'Poorva Ashadha': 'पूर्वाषाढ़ा',
+  'Uttara Ashadha': 'उत्तराषाढ़ा', Shravana: 'श्रवण',
+  Dhanishta: 'धनिष्ठा', Dhanishtha: 'धनिष्ठा',
+  Shatabhisha: 'शतभिषा', Shatabhishak: 'शतभिषा', Shathabhisha: 'शतभिषा',
+  'Purva Bhadrapada': 'पूर्व भाद्रपद', 'Poorva Bhadrapada': 'पूर्व भाद्रपद',
+  'Uttara Bhadrapada': 'उत्तर भाद्रपद', Revati: 'रेवती',
+};
+const TITHI: Record<string, string> = {
+  Pratipada: 'प्रतिपदा', Dwitiya: 'द्वितीया', Tritiya: 'तृतीया', Chaturthi: 'चतुर्थी',
+  Panchami: 'पंचमी', Shashthi: 'षष्ठी', Sashti: 'षष्ठी', Saptami: 'सप्तमी',
+  Ashtami: 'अष्टमी', Navami: 'नवमी', Dashami: 'दशमी', Ekadashi: 'एकादशी',
+  Dwadashi: 'द्वादशी', Trayodashi: 'त्रयोदशी', Chaturdashi: 'चतुर्दशी',
+  Purnima: 'पूर्णिमा', Poornima: 'पूर्णिमा', Amavasya: 'अमावस्या',
+};
+const PAKSHA: Record<string, string> = {
+  Shukla: 'शुक्ल पक्ष', Krishna: 'कृष्ण पक्ष', 'Shukla Paksha': 'शुक्ल पक्ष', 'Krishna Paksha': 'कृष्ण पक्ष',
+  Waxing: 'शुक्ल पक्ष', Waning: 'कृष्ण पक्ष',
+};
+const PANCHANG_YOGA: Record<string, string> = {
+  Vishkambha: 'विष्कम्भ', Priti: 'प्रीति', Ayushman: 'आयुष्मान', Saubhagya: 'सौभाग्य',
+  Shobhana: 'शोभन', Atiganda: 'अतिगण्ड', Sukarma: 'सुकर्मा', Dhriti: 'धृति',
+  Shoola: 'शूल', Shula: 'शूल', Ganda: 'गण्ड', Vriddhi: 'वृद्धि', Dhruva: 'ध्रुव',
+  Vyaghata: 'व्याघात', Harshana: 'हर्षण', Vajra: 'वज्र', Siddhi: 'सिद्धि',
+  Vyatipata: 'व्यतीपात', Variyana: 'वरीयान', Parigha: 'परिघ', Shiva: 'शिव',
+  Siddha: 'सिद्ध', Sadhya: 'साध्य', Shubha: 'शुभ', Shukla: 'शुक्ल',
+  Brahma: 'ब्रह्म', Indra: 'इंद्र', Vaidhriti: 'वैधृति',
+};
+const KARANA: Record<string, string> = {
+  Bava: 'बव', Balava: 'बालव', Kaulava: 'कौलव', Taitila: 'तैतिल', Gara: 'गर',
+  Garaja: 'गर', Vanija: 'वणिज', Vishti: 'विष्टि', Bhadra: 'भद्रा',
+  Shakuni: 'शकुनि', Chatushpada: 'चतुष्पाद', Naga: 'नाग', Kimstughna: 'किंस्तुघ्न',
+  Kinstughna: 'किंस्तुघ्न',
+};
+const AREA: Record<string, string> = {
+  Energy: 'ऊर्जा', Love: 'प्रेम', Career: 'करियर', Finance: 'धन', Health: 'स्वास्थ्य',
+  Relationship: 'रिश्ते', Relationships: 'रिश्ते', Money: 'धन', Wealth: 'धन',
+  Family: 'परिवार', Education: 'शिक्षा', Business: 'व्यापार', Work: 'काम',
+};
+const MOOD: Record<string, string> = {
+  Energy: 'ऊर्जा', Love: 'प्रेम', Career: 'करियर', Finance: 'धन', Health: 'स्वास्थ्य',
+};
+const COLOR: Record<string, string> = {
+  Gold: 'सुनहरा', Golden: 'सुनहरा', Yellow: 'पीला', White: 'सफेद', Red: 'लाल',
+  Green: 'हरा', Blue: 'नीला', Black: 'काला', Orange: 'नारंगी', Pink: 'गुलाबी',
+  Purple: 'बैंगनी', Silver: 'चांदी जैसा', Cream: 'क्रीम', Brown: 'भूरा',
+  Grey: 'धूसर', Gray: 'धूसर',
+};
+const PANCHANG_LABEL: Record<string, string> = {
+  Tithi: 'तिथि', Paksha: 'पक्ष', Nakshatra: 'नक्षत्र', Yoga: 'योग', Karana: 'करण',
+  Moon: 'चंद्र', Sun: 'सूर्य', Sunrise: 'सूर्योदय', Sunset: 'सूर्यास्त',
+  Moonrise: 'चंद्रोदय', Moonset: 'चंद्रास्त', 'Rahu Kaal': 'राहु काल', RahuKaal: 'राहु काल',
+  Rahu: 'राहु काल', Yamaganda: 'यमगण्ड', Gulika: 'गुलिक काल', 'Dur Muhurat': 'दुर मुहूर्त',
+  Durmuhurtham: 'दुर मुहूर्त', Abhijit: 'अभिजित मुहूर्त', 'Lucky Time': 'शुभ समय',
+  'Best Focus': 'सर्वोत्तम ध्यान समय',
 };
 // Choghadiya period descriptions
 const PERIOD_DESC: Record<string, string> = {
@@ -134,6 +198,112 @@ export const aSign = (n: string | undefined, lang: Lang) => pick(SIGN, n, lang);
 export const aPeriodDesc = (n: string | undefined, lang: Lang) => (lang === 'hi' && n && PERIOD_DESC[n] ? PERIOD_DESC[n] : '');
 export const aBlurb = (n: string | undefined, lang: Lang) => pick(BLURB, n, lang);
 export const aActivity = (id: string, lang: Lang, fallback: string) => (lang === 'hi' && ACTIVITY[id] ? ACTIVITY[id] : fallback);
+
+const PANCHANG_TERM: Record<string, string> = {
+  ...PLANET,
+  ...SIGN,
+  ...NAKSHATRA,
+  ...TITHI,
+  ...PANCHANG_YOGA,
+  ...KARANA,
+  ...PAKSHA,
+};
+const TEXT_TERM: Record<string, string> = {
+  'Moon sign': 'चंद्र राशि',
+  'Moon Sign': 'चंद्र राशि',
+  'Moon in': 'चंद्र',
+  Ascendant: 'लग्न',
+  Lagna: 'लग्न',
+  'Current dasha': 'वर्तमान दशा',
+  'Current Dasha': 'वर्तमान दशा',
+  Mahadasha: 'महादशा',
+  Dasha: 'दशा',
+  Nakshatra: 'नक्षत्र',
+  Tithi: 'तिथि',
+  Paksha: 'पक्ष',
+  Karana: 'करण',
+  Pada: 'चरण',
+  House: 'भाव',
+  house: 'भाव',
+  Direct: 'मार्गी',
+  Retrograde: 'वक्री',
+  Combust: 'अस्त',
+  'Today nakshatra': 'आज का नक्षत्र',
+  'Today Nakshatra': 'आज का नक्षत्र',
+  Today: 'आज',
+  'LIVE DATA': 'वास्तविक डेटा',
+  'Live Data': 'वास्तविक डेटा',
+  'Chart Data + AI': 'कुंडली आधारित',
+  'Astro Basis': 'ज्योतिष आधार',
+  'Jyotish Aadhar': 'ज्योतिष आधार',
+  "Today's Cosmic Mood": 'आज के ग्रह भाव',
+  "Today's Panchang": 'आज का पंचांग',
+  'Best Timing Today': 'आज का शुभ समय',
+  'More Insights': 'और जानकारी',
+  'Do And Avoid': 'क्या करें और क्या न करें',
+  Do: 'करें',
+  Avoid: 'बचें',
+  'Suggested Remedies': 'सुझाए गए उपाय',
+  'Suggested remedies': 'सुझाए गए उपाय',
+  'Calculation basis': 'गणना आधार',
+  'Ask the Astrologer': 'ज्योतिषी से पूछें',
+  'Source |': 'स्रोत |',
+  'Precise Vedic chart & Panchang data': 'सटीक वैदिक कुंडली और पंचांग डेटा',
+  'Planetary positions': 'ग्रह स्थिति',
+  'running now': 'अभी चल रही है',
+  Running: 'चल रही है',
+  Active: 'सक्रिय',
+  Upcoming: 'आगामी',
+  Present: 'मौजूद',
+  Clear: 'मुक्त',
+  Monday: 'सोमवार',
+  Tuesday: 'मंगलवार',
+  Wednesday: 'बुधवार',
+  Thursday: 'गुरुवार',
+  Friday: 'शुक्रवार',
+  Saturday: 'शनिवार',
+  Sunday: 'रविवार',
+};
+
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const replaceFromMap = (text: string, map: Record<string, string>) => Object.keys(map)
+  .sort((a, b) => b.length - a.length)
+  .reduce((out, key) => {
+    const left = /^[A-Za-z0-9]/.test(key) ? '\\b' : '';
+    const right = /[A-Za-z0-9]$/.test(key) ? '\\b' : '';
+    return out.replace(new RegExp(`${left}${escapeRegExp(key)}${right}`, 'gi'), map[key]);
+  }, text);
+
+export const aNakshatra = (n: string | undefined, lang: Lang) => pick(NAKSHATRA, n, lang);
+export const aTithi = (n: string | undefined, lang: Lang) => pick(TITHI, n, lang);
+export const aPanchangLabel = (n: string | undefined, lang: Lang) => pick(PANCHANG_LABEL, n, lang);
+export const aPanchangTerm = (n: string | undefined, lang: Lang) => pick(PANCHANG_TERM, n, lang);
+export const aArea = (n: string | undefined, lang: Lang) => pick(AREA, n, lang);
+export const aMood = (n: string | undefined, lang: Lang) => pick(MOOD, n, lang);
+export const aColor = (n: string | undefined, lang: Lang) => pick(COLOR, n, lang);
+export const sanitizeBranding = (text: string | undefined, lang: Lang) => {
+  const raw = String(text || '');
+  const generic = lang === 'hi' ? 'गणना प्रणाली' : 'calculation engine';
+  return raw
+    .replace(/\bVedAstro(?:\s+API)?\b/gi, generic)
+    .replace(/\bVedastro(?:\s+API)?\b/gi, generic)
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+export const aAstroText = (text: string | undefined, lang: Lang) => {
+  const clean = sanitizeBranding(text, lang);
+  if (lang !== 'hi' || !clean) return clean;
+  return replaceFromMap(
+    replaceFromMap(
+      replaceFromMap(
+        replaceFromMap(clean, { ...PANCHANG_LABEL, ...TEXT_TERM }),
+        { ...PANCHANG_TERM, ...AREA, ...MOOD, ...COLOR, ...TAG, ...PHRASE }
+      ),
+      YOGA
+    ),
+    DOSHA
+  );
+};
 
 // Ramayana kanda names
 const KANDA: Record<string, string> = {

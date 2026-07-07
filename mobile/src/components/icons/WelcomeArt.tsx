@@ -7,9 +7,9 @@ import Svg, {
 const Gold = ({ id, dark = true }: { id: string; dark?: boolean }) => (
   <Defs>
     <LinearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-      <Stop offset="0%" stopColor={dark ? '#fce8a8' : '#70420a'} />
-      <Stop offset="60%" stopColor={dark ? '#e9b850' : '#5f3808'} />
-      <Stop offset="100%" stopColor={dark ? '#a17613' : '#332006'} />
+      <Stop offset="0%" stopColor={dark ? '#fce8a8' : '#111827'} />
+      <Stop offset="60%" stopColor={dark ? '#e9b850' : '#1f2937'} />
+      <Stop offset="100%" stopColor={dark ? '#a17613' : '#7c2d12'} />
     </LinearGradient>
   </Defs>
 );
@@ -64,7 +64,7 @@ export function ZodiacWheel({ size = 120, dark = true }: { size?: number; dark?:
       <Gold id="zwg" dark={dark} />
       <RadialGradient id="zwbg" cx="50%" cy="50%" r="50%">
         <Stop offset="0%" stopColor={dark ? '#0d0d28' : '#ffffff'} />
-        <Stop offset="100%" stopColor={dark ? '#000000' : '#fff3d8'} />
+        <Stop offset="100%" stopColor={dark ? '#000000' : '#f8fafc'} />
       </RadialGradient>
       <Circle cx={100} cy={100} r={96} fill="url(#zwbg)" stroke={s} strokeWidth={dark ? 1.5 : 2.6} />
       <Circle cx={100} cy={100} r={86} fill="none" stroke={s} strokeWidth={dark ? 0.8 : 1.4} opacity={dark ? 0.7 : 0.95} />

@@ -31,11 +31,11 @@ export function Card({ children, style, contentStyle, padded = true, radius = ra
       colors={
         theme.isDark
           ? ['#fce8a8', '#e9b850', '#a17613', '#f6d27a']
-          : ['#e9cf8e', '#c89023', '#9a6810', '#dfb24f']
+          : ['#e2e8f0', '#cbd5e1', '#d97706', '#f59e0b']
       }
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      style={[styles.border, { borderRadius: radius, padding: BORDER_W, shadowColor: theme.isDark ? '#000000' : '#6e4a12', shadowOpacity: theme.isDark ? 0.18 : 0.22 }, style]}
+      style={[styles.border, { borderRadius: radius, padding: BORDER_W, shadowColor: theme.isDark ? '#000000' : '#0f172a', shadowOpacity: theme.isDark ? 0.18 : 0.10 }, style]}
     >
       <View
         style={[
@@ -48,7 +48,7 @@ export function Card({ children, style, contentStyle, padded = true, radius = ra
         <View
           style={[
             styles.topGlow,
-            { backgroundColor: theme.isDark ? 'rgba(252,232,168,0.45)' : 'rgba(154,104,16,0.5)' },
+            { backgroundColor: theme.isDark ? 'rgba(252,232,168,0.45)' : 'rgba(15,23,42,0.10)' },
           ]}
         />
         {children}

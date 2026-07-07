@@ -22,7 +22,7 @@ import { getKundli, getDasha, getAiInsights, getVargaCharts, ApiPlanet, KundliIn
 import { birthFromProfile } from '../lib/birth';
 import { useScreen } from '../context/AppConfigProvider';
 import { useT, useLang } from '../i18n/LanguageProvider';
-import { aSign, aPlanet, aDosha, aYoga, aYogaDetail, aPhrase, aTag } from '../i18n/astro';
+import { aSign, aPlanet, aDosha, aYoga, aYogaDetail, aPhrase, aTag, aNakshatra, aAstroText } from '../i18n/astro';
 import { ChartExplainModal } from '../components/ChartExplainModal';
 import { ExplainView, explainHouse, explainPlanet, planetFromAbbr } from '../data/jyotish';
 
@@ -62,15 +62,16 @@ function planetsBySign(planets: ApiPlanet[], lang: 'en' | 'hi' = 'en'): Record<n
 }
 const houseNum = (h?: string) => { const m = (h || '').match(/\d+/); return m ? Number(m[0]) : null; };
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const fmtDob = (ddmmyyyy: string) => { const [d, m, y] = ddmmyyyy.split('-'); return `${d} ${MON[(Number(m) || 1) - 1]} ${y}`; }; // 15-06-1990 → 15 Jun 1990
+const MON_HI = ['जन', 'फ़र', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुल', 'अग', 'सित', 'अक्तू', 'नव', 'दिस'];
+const fmtDob = (ddmmyyyy: string, lang: 'en' | 'hi' = 'en') => { const [d, m, y] = ddmmyyyy.split('-'); const mon = lang === 'hi' ? MON_HI[(Number(m) || 1) - 1] : MON[(Number(m) || 1) - 1]; return `${lang === 'hi' ? toDev(d) : d} ${mon} ${lang === 'hi' ? toDev(y) : y}`; }; // 15-06-1990 → 15 Jun 1990
 // "00:00 18/06/2026 +05:30" → "Jun 2026"
-const fmtMonYr = (std: string) => { const p = String(std).split(' '); const dmy = (p[1] || '').split('/'); return dmy.length === 3 ? `${MON[(Number(dmy[1]) || 1) - 1]} ${dmy[2]}` : std; };
+const fmtMonYr = (std: string, lang: 'en' | 'hi' = 'en') => { const p = String(std).split(' '); const dmy = (p[1] || '').split('/'); if (dmy.length !== 3) return lang === 'hi' ? aAstroText(std, lang) : std; const mon = lang === 'hi' ? MON_HI[(Number(dmy[1]) || 1) - 1] : MON[(Number(dmy[1]) || 1) - 1]; return `${mon} ${lang === 'hi' ? toDev(dmy[2]) : dmy[2]}`; };
 function dashaToRows(dasha: { lord: string; start: string; end: string; durationText: string }[], lang: 'en' | 'hi' = 'en'): PlanetRow[] {
   const hi = lang === 'hi';
   return dasha.map((d, i) => ({
     glyph: GLYPH[d.lord] || '✦',
     name: hi ? aPlanet(d.lord, lang) : d.lord.toUpperCase(),
-    detail: `${fmtMonYr(d.start)} – ${fmtMonYr(d.end)} · ${hi ? d.durationText.replace(/years?/i, 'वर्ष').replace(/months?/i, 'माह') : d.durationText}${i === 0 ? ` · ${hi ? 'अभी चल रही है' : 'running now'}` : ''}`,
+    detail: `${fmtMonYr(d.start, lang)} – ${fmtMonYr(d.end, lang)} · ${hi ? aAstroText(d.durationText.replace(/years?/i, 'वर्ष').replace(/months?/i, 'माह'), lang) : d.durationText}${i === 0 ? ` · ${hi ? 'अभी चल रही है' : 'running now'}` : ''}`,
     tag: aTag(i === 0 ? 'Active' : 'Upcoming', lang),
     strength: (i === 0 ? 'solid' : 'plain') as PlanetRow['strength'],
   }));
@@ -82,7 +83,7 @@ function yogaToRows(yogas: { name: string; description: string }[], lang: 'en' |
   return yogas.map((y) => ({
     glyph: '✦',
     name: hi ? aYoga(prettyName(y.name), lang) : prettyName(y.name),
-    detail: hi ? aYogaDetail(y.description || 'Beneficial yoga present in your chart', lang) : (y.description || 'Beneficial yoga present in your chart'),
+    detail: hi ? aAstroText(aYogaDetail(y.description || 'Beneficial yoga present in your chart', lang), lang) : aAstroText(y.description || 'Beneficial yoga present in your chart', lang),
     tag: aTag('Present', lang),
     strength: 'soft' as PlanetRow['strength'],
   }));
@@ -91,12 +92,11 @@ function doshaToRows(doshas: { name: string; present: boolean; detail: string; t
   const hi = lang === 'hi';
   const G: Record<string, string> = { 'Mangal Dosha': '♂', 'Kaal Sarp Dosha': '☊', 'Sade Sati': '♄' };
   return doshas.map((d) => {
-    const det = hi ? aPhrase(d.detail, lang) : d.detail;
-    const src = hi ? aPhrase(d.source, lang) : d.source;
+    const det = hi ? aAstroText(aPhrase(d.detail, lang), lang) : aAstroText(d.detail, lang);
     return {
       glyph: G[d.name] || '☉',
       name: hi ? aDosha(d.name, lang) : d.name,
-      detail: src ? `${det} · ${src}` : det,
+      detail: det,
       tag: aTag(d.tag || (d.present ? 'Present' : 'Clear'), lang),
       strength: (d.present ? 'plain' : 'solid') as PlanetRow['strength'],
     };
@@ -107,13 +107,21 @@ function toPlanetRows(planets: ApiPlanet[], lang: 'en' | 'hi' = 'en'): PlanetRow
   const hi = lang === 'hi';
   return planets
     .filter((p) => p.sign)
-    .map((p) => ({
-      glyph: GLYPH[p.planet] || '✦',
-      name: hi ? aPlanet(p.planet, lang) : p.planet.toUpperCase(),
-      detail: `${(p.house || '').replace('House', hi ? 'भाव ' : 'House ')} · ${hi ? aSign(p.sign, lang) : p.sign} · ${(p.degreeInSign || '').split("'")[0]}`,
-      tag: p.isRetrograde === 'True' ? (hi ? 'वक्री' : 'Retrograde') : (p.isCombust === 'True' ? (hi ? 'अस्त' : 'Combust') : ((p.nakshatra || '').split(' - ')[0] || (hi ? 'मार्गी' : 'Direct'))),
-      strength: (p.isRetrograde === 'True' ? 'soft' : 'plain') as PlanetRow['strength'],
-    }));
+    .map((p) => {
+      const rawNakshatra = (p.nakshatra || '').split(' - ')[0];
+      const house = hi ? aAstroText((p.house || '').replace(/House/i, 'House '), lang) : (p.house || '').replace('House', 'House ');
+      return {
+        glyph: GLYPH[p.planet] || '✦',
+        name: hi ? aPlanet(p.planet, lang) : p.planet.toUpperCase(),
+        detail: `${house} · ${hi ? aSign(p.sign, lang) : p.sign} · ${(p.degreeInSign || '').split("'")[0]}`,
+        tag: p.isRetrograde === 'True'
+          ? (hi ? 'वक्री' : 'Retrograde')
+          : (p.isCombust === 'True'
+            ? (hi ? 'अस्त' : 'Combust')
+            : (rawNakshatra ? aNakshatra(rawNakshatra, lang) : (hi ? 'मार्गी' : 'Direct'))),
+        strength: (p.isRetrograde === 'True' ? 'soft' : 'plain') as PlanetRow['strength'],
+      };
+    });
 }
 function toChartPlanets(planets: ApiPlanet[], lang: 'en' | 'hi' = 'en'): ChartPlanet[] {
   const counts: Record<number, number> = {};
@@ -833,7 +841,7 @@ export function KundliScreen({ navigation }: any) {
         if (on && dr.dasha && dr.dasha.length) {
           setDashaRows(dashaToRows(dr.dasha, lang));
           const d0 = dr.dasha[0];
-          setCurrentDasha({ title: `${lang === 'hi' ? aPlanet(d0.lord, lang) : d0.lord} ${lang === 'hi' ? 'महादशा' : 'Mahadasha'}`, range: `${fmtMonYr(d0.start)} – ${fmtMonYr(d0.end)}` });
+          setCurrentDasha({ title: `${lang === 'hi' ? aPlanet(d0.lord, lang) : d0.lord} ${lang === 'hi' ? 'महादशा' : 'Mahadasha'}`, range: `${fmtMonYr(d0.start, lang)} – ${fmtMonYr(d0.end, lang)}` });
         }
       } catch (_) { /* dasha optional — demo dikhega */ }
       // AI insights (richer prose) — computed insights ko override karta hai
@@ -856,11 +864,29 @@ export function KundliScreen({ navigation }: any) {
     return () => clearTimeout(id);
   }, [tab, vargaCharts, visibleVarga]);
 
-  const planetRows = live ? toPlanetRows(live, lang) : PLANETS;
+  const fallbackPlanets = useMemo(() => PLANETS.map((r) => ({
+    ...r,
+    name: lang === 'hi' ? aPlanet(r.name, lang) : r.name,
+    detail: aAstroText(r.detail, lang),
+    tag: aAstroText(aTag(r.tag, lang), lang),
+  })), [lang]);
+  const fallbackDashaRows = useMemo(() => DASHA_TIMELINE.map((r) => ({
+    ...r,
+    name: lang === 'hi' ? aPlanet(r.name, lang) : r.name,
+    detail: aAstroText(r.detail, lang),
+    tag: aAstroText(aTag(r.tag, lang), lang),
+  })), [lang]);
+  const fallbackDoshas = useMemo(() => DOSHAS.map((r) => ({
+    ...r,
+    name: lang === 'hi' ? aDosha(r.name, lang) : r.name,
+    detail: aAstroText(r.detail, lang),
+    tag: aAstroText(aTag(r.tag, lang), lang),
+  })), [lang]);
+  const planetRows = live ? toPlanetRows(live, lang) : fallbackPlanets;
   const fallbackYogas = useMemo(() => YOGAS.map((y) => ({
     ...y,
     name: lang === 'hi' ? aYoga(y.name, lang) : y.name,
-    detail: lang === 'hi' ? aYogaDetail(y.detail, lang) : y.detail,
+    detail: lang === 'hi' ? aAstroText(aYogaDetail(y.detail, lang), lang) : aAstroText(y.detail, lang),
     tag: aTag(y.tag, lang),
   })), [lang]);
   const chartPlanets = live ? toChartPlanets(live, lang) : CHART_PLANETS;
@@ -895,7 +921,9 @@ export function KundliScreen({ navigation }: any) {
         </View>
         <GradientText style={styles.heroName}>{birthName || PROFILE.name}</GradientText>
         <Text style={[styles.heroSub, { color: theme.isDark ? 'rgba(216,203,168,0.7)' : '#6d5b38' }]}>
-          {ascendant && moonSign ? `${aSign(ascendant, lang)} ${t('kundli.ascendant', 'Ascendant')} · ${t('kundli.moonIn', 'Moon in')} ${aSign(moonSign, lang)}` : PROFILE.ascendant}
+          {ascendant && moonSign
+            ? `${aSign(ascendant, lang)} ${aAstroText(t('kundli.ascendant', 'Ascendant'), lang)} · ${aAstroText(t('kundli.moonIn', 'Moon in'), lang)} ${aSign(moonSign, lang)}`
+            : aAstroText(PROFILE.ascendant, lang)}
         </Text>
 
         <Text style={[styles.liveStatus, { color: err ? '#c0392b' : (live ? theme.green : theme.textMuted) }]}>
@@ -904,7 +932,7 @@ export function KundliScreen({ navigation }: any) {
 
         <View style={styles.metaGrid}>
           {[
-            { k: t('kundli.metaDob', 'DOB'), v: birthDob ? fmtDob(birthDob) : PROFILE.dob },
+            { k: t('kundli.metaDob', 'DOB'), v: birthDob ? fmtDob(birthDob, lang) : PROFILE.dob },
             { k: t('kundli.metaTime', 'Time'), v: birthTob || PROFILE.time },
             { k: t('kundli.metaPlace', 'Place'), v: birthPlace || PROFILE.place },
           ].map((m) => (
@@ -1138,14 +1166,14 @@ export function KundliScreen({ navigation }: any) {
                     <View key={i} style={styles.insightRow}>
                       <View style={[styles.insightDot, { backgroundColor: theme.gold1 }]} />
                       <View style={{ flex: 1 }}>
-                        <Text style={[styles.insightTitle, { color: theme.gold1 }]}>{it.title}</Text>
-                        <Text style={[styles.insight, { color: theme.textSoft, marginTop: 2 }]}>{it.text}</Text>
+                        <Text style={[styles.insightTitle, { color: theme.gold1 }]}>{aAstroText(it.title, lang)}</Text>
+                        <Text style={[styles.insight, { color: theme.textSoft, marginTop: 2 }]}>{aAstroText(it.text, lang)}</Text>
                       </View>
                     </View>
                   ))}
                 </View>
               ) : (
-                <Text style={[styles.insight, { color: theme.textSoft }]}>{KEY_INSIGHT}</Text>
+                <Text style={[styles.insight, { color: theme.textSoft }]}>{aAstroText(KEY_INSIGHT, lang)}</Text>
               )}
             </KundliCard>
             <KundliCard>
@@ -1156,10 +1184,10 @@ export function KundliScreen({ navigation }: any) {
               <CardHead>{t('kundli.currentDasha', 'CURRENT DASHA')}</CardHead>
               <View style={styles.dashaRow}>
                 <View style={styles.dashaText}>
-                  <Text style={[styles.dashaTitle, { color: theme.text }]}>{currentDasha?.title || 'Jupiter Mahadasha'}</Text>
-                  <Text style={[styles.dashaRange, { color: theme.textMuted }]}>{currentDasha?.range || CURRENT_DASHA.range}</Text>
+                  <Text style={[styles.dashaTitle, { color: theme.text }]}>{currentDasha?.title || (lang === 'hi' ? 'गुरु महादशा' : 'Jupiter Mahadasha')}</Text>
+                  <Text style={[styles.dashaRange, { color: theme.textMuted }]}>{aAstroText(currentDasha?.range || CURRENT_DASHA.range, lang)}</Text>
                 </View>
-                <Pill label={currentDasha ? t('kundli.running', 'Running') : CURRENT_DASHA.tag} solid />
+                <Pill label={currentDasha ? aAstroText(t('kundli.running', 'Running'), lang) : aAstroText(CURRENT_DASHA.tag, lang)} solid />
               </View>
             </KundliCard>
           </View>
@@ -1195,7 +1223,7 @@ export function KundliScreen({ navigation }: any) {
         {tab === 'dasha' && (
           <KundliCard>
             <CardHead>{t('kundli.vimshottari', 'VIMSHOTTARI TIMELINE')}</CardHead>
-            <RowList rows={dashaRows || DASHA_TIMELINE} />
+            <RowList rows={dashaRows || fallbackDashaRows} />
           </KundliCard>
         )}
 
@@ -1209,7 +1237,7 @@ export function KundliScreen({ navigation }: any) {
         {tab === 'dosha' && (
           <KundliCard>
             <CardHead>{t('kundli.doshaCheck', 'DOSHA CHECK')}</CardHead>
-            <RowList rows={doshaRowsLive || DOSHAS} />
+            <RowList rows={doshaRowsLive || fallbackDoshas} />
           </KundliCard>
         )}
       </View>

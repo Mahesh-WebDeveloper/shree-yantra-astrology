@@ -8,7 +8,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { Theme, fonts, radii } from '../theme/tokens';
 import { hTap } from '../lib/haptics';
 import { useT, useLang } from '../i18n/LanguageProvider';
-import { aSign } from '../i18n/astro';
+import { aNakshatra, aSign } from '../i18n/astro';
 import { birthFromProfile } from '../lib/birth';
 import { getVedicReading, VedicReadingResponse, ReadingPrediction } from '../lib/api';
 import { useAutoScroll } from '../lib/useAutoScroll';
@@ -99,7 +99,7 @@ export function VedicReadingScreen({ navigation }: any) {
                 <Chip label={lang === 'hi' ? 'वर्ण' : 'Varna'} value={L(j.varna)} theme={theme} />
               </View>
               {j.gandmool?.present && (
-                <Text style={[styles.flag, { color: '#e0a92e' }]}>⚠ {lang === 'hi' ? 'गण्डमूल नक्षत्र' : 'Gandmool Nakshatra'}{j.gandmool.nakshatra ? ` (${j.gandmool.nakshatra})` : ''} — {L(j.gandmool.note)}</Text>
+                <Text style={[styles.flag, { color: '#e0a92e' }]}>⚠ {lang === 'hi' ? 'गण्डमूल नक्षत्र' : 'Gandmool Nakshatra'}{j.gandmool.nakshatra ? ` (${aNakshatra(j.gandmool.nakshatra, lang)})` : ''} — {L(j.gandmool.note)}</Text>
               )}
               {j.lagnaSandhi && <Text style={[styles.flag, { color: '#e0a92e' }]}>⚠ {lang === 'hi' ? 'लग्न संधि (सीमा-जन्म)' : 'Lagna Sandhi (borderline birth)'}</Text>}
             </View>
@@ -111,7 +111,7 @@ export function VedicReadingScreen({ navigation }: any) {
               <Text style={[styles.h, { color: theme.gold1 }]}>{lang === 'hi' ? 'नामाक्षर' : 'Naming Syllable (Naamakshar)'}</Text>
               <View style={styles.namRow}>
                 <GradientText style={styles.namSyl}>{data.naamakshar.syllable}</GradientText>
-                <Text style={[styles.namNote, { color: theme.textSoft }]}>{L(data.naamakshar.note)} — {data.naamakshar.nakshatra} {lang === 'hi' ? 'चरण' : 'pada'} {data.naamakshar.pada}</Text>
+                <Text style={[styles.namNote, { color: theme.textSoft }]}>{L(data.naamakshar.note)} — {aNakshatra(data.naamakshar.nakshatra, lang)} {lang === 'hi' ? 'चरण' : 'pada'} {data.naamakshar.pada}</Text>
               </View>
             </View>
           )}

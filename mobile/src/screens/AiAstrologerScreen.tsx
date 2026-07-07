@@ -10,7 +10,8 @@ import { fonts, radii } from '../theme/tokens';
 import { askAiAstrologer, AiAstrologerResponse } from '../lib/api';
 import { birthFromProfile } from '../lib/birth';
 import { hTap } from '../lib/haptics';
-import { useT } from '../i18n/LanguageProvider';
+import { useT, useLang } from '../i18n/LanguageProvider';
+import { aAstroText } from '../i18n/astro';
 
 const RETRYABLE_AI_ERROR = /timed out|Network request failed|Failed to fetch|NetworkError|temporarily unavailable|timeout|504|503|502|429|408|समय सीमा|नेटवर्क अनुरोध/i;
 
@@ -46,6 +47,7 @@ function InfoIcon({ color }: { color: string }) {
 export function AiAstrologerScreen({ navigation, route }: any) {
   const { theme } = useTheme();
   const t = useT();
+  const { lang } = useLang();
   const [question, setQuestion] = useState('');
   const [history, setHistory] = useState<ChatTurn[]>([]);
   const [sending, setSending] = useState(false);
@@ -61,6 +63,7 @@ export function AiAstrologerScreen({ navigation, route }: any) {
     }
     return raw || t('ai.unavailable', 'Could not get an answer. Please try again.');
   };
+  const tx = (value?: string) => aAstroText(value || '', lang);
 
   const quickQuestions = [
     t('ai.quick.today', 'What should I focus on today?'),
@@ -106,7 +109,7 @@ export function AiAstrologerScreen({ navigation, route }: any) {
     <Page title={t('ai.title', 'Vedic Astrologer')} onBack={() => navigation.goBack()} scrollRef={scrollRef}>
       <Card>
         <View style={styles.heroRow}>
-          <View style={[styles.heroIcon, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : '#ffffff' }]}>
+          <View style={[styles.heroIcon, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : '#f8fafc' }]}>
             <SparkIcon color={theme.gold1} size={24} />
           </View>
           <View style={{ flex: 1 }}>
@@ -116,7 +119,7 @@ export function AiAstrologerScreen({ navigation, route }: any) {
             </Text>
           </View>
         </View>
-        <View style={[styles.sourceRow, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.45)' : '#ffffff' }]}>
+        <View style={[styles.sourceRow, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.45)' : '#f8fafc' }]}>
           <InfoIcon color={theme.gold1} />
           <Text style={[styles.sourceText, { color: theme.textSoft }]}>
             {t('ai.sourceLead', 'The answer uses your saved birth details and precise chart/panchang data before AI writes the explanation.')}
@@ -126,19 +129,19 @@ export function AiAstrologerScreen({ navigation, route }: any) {
 
       <Card style={{ marginTop: 14 }}>
         <Text style={[styles.inputLabel, { color: theme.goldText }]}>{t('ai.askLabel', 'Ask your question')}</Text>
-        <View style={[styles.inputBox, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.64)' : '#fffdf7' }]}>
+        <View style={[styles.inputBox, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.64)' : '#ffffff' }]}>
           <TextInput
             value={question}
             onChangeText={setQuestion}
             placeholder={t('ai.placeholder', 'Type your question...')}
-            placeholderTextColor={theme.isDark ? 'rgba(216,203,168,0.44)' : 'rgba(95,77,45,0.62)'}
+            placeholderTextColor={theme.isDark ? 'rgba(216,203,168,0.44)' : '#64748b'}
             multiline
             style={[styles.input, { color: theme.text }]}
             textAlignVertical="top"
           />
         </View>
         <Text style={[styles.voiceHint, { color: theme.textMuted }]}>
-          {t('ai.voiceHint', '🎤 Keyboard ke mic se bol kar bhi prashna pooch sakte hain · uttar "सुनें" se sun bhi sakte hain')}
+          {t('ai.voiceHint', 'Mic se bol sakte hain. Answer sunne ke liye Listen tap karein.')}
         </Text>
         <Pressable disabled={sending || !question.trim()} onPress={() => sendQuestion(question)} style={({ pressed }) => [styles.sendWrap, pressed && { transform: [{ scale: 0.98 }] }, (!question.trim() || sending) && { opacity: 0.55 }]}>
           <LinearGradient colors={theme.buttonGradient} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.sendBtn}>
@@ -156,7 +159,7 @@ export function AiAstrologerScreen({ navigation, route }: any) {
             onPress={() => sendQuestion(q)}
             style={({ pressed }) => [
               styles.quickChip,
-              { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(176,115,22,0.08)' },
+              { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : '#ffffff' },
               pressed && { transform: [{ scale: 0.98 }] },
               sending && { opacity: 0.6 },
             ]}
@@ -200,7 +203,7 @@ export function AiAstrologerScreen({ navigation, route }: any) {
                 onPress={() => sendQuestion(turn.question, turn.id)}
                 style={({ pressed }) => [
                   styles.retryBtn,
-                  { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(176,115,22,0.08)' },
+                  { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : '#ffffff' },
                   pressed && { transform: [{ scale: 0.98 }] },
                   sending && { opacity: 0.55 },
                 ]}
@@ -215,38 +218,38 @@ export function AiAstrologerScreen({ navigation, route }: any) {
               <View style={styles.answerHead}>
                 <Text style={[styles.answerTitle, { color: theme.goldText }]}>{t('ai.answer', 'Answer')}</Text>
                 <SpeakButton text={[
-                  turn.response.answer,
-                  ...turn.response.sections.map((s) => `${s.title}. ${s.text}`),
-                  ...(turn.response.remedies || []).map((r) => `${r.title}. ${r.body || ''}`),
+                  tx(turn.response.answer),
+                  ...turn.response.sections.map((s) => `${tx(s.title)}. ${tx(s.text)}`),
+                  ...(turn.response.remedies || []).map((r) => `${tx(r.title)}. ${tx(r.body || '')}`),
                 ]} />
               </View>
-              <Text style={[styles.answerBody, { color: theme.text }]}>{turn.response.answer}</Text>
+              <Text style={[styles.answerBody, { color: theme.text }]}>{tx(turn.response.answer)}</Text>
 
               {turn.response.sections.map((section, index) => (
-                <View key={`${section.title}-${index}`} style={[styles.sectionBox, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.42)' : 'rgba(176,115,22,0.05)' }]}>
-                  <Text style={[styles.sectionTitle, { color: theme.goldText }]}>{section.title}</Text>
-                  <Text style={[styles.sectionText, { color: theme.textSoft }]}>{section.text}</Text>
+                <View key={`${section.title}-${index}`} style={[styles.sectionBox, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.42)' : '#f8fafc' }]}>
+                  <Text style={[styles.sectionTitle, { color: theme.goldText }]}>{tx(section.title)}</Text>
+                  <Text style={[styles.sectionText, { color: theme.textSoft }]}>{tx(section.text)}</Text>
                 </View>
               ))}
 
               {!!turn.response.vedastroBasis.length && (
                 <View style={styles.basisWrap}>
-                  <Text style={[styles.smallHeading, { color: theme.goldText }]}>{t('ai.basis', 'Calculation basis')}</Text>
+                  <Text style={[styles.smallHeading, { color: theme.goldText }]}>{tx(t('ai.basis', 'Calculation basis'))}</Text>
                   {turn.response.vedastroBasis.map((item) => (
-                    <Text key={item} style={[styles.basisText, { color: theme.textSoft }]}>{item}</Text>
+                    <Text key={item} style={[styles.basisText, { color: theme.textSoft }]}>{tx(item)}</Text>
                   ))}
                 </View>
               )}
 
               {!!turn.response.remedies?.length && (
                 <View style={styles.basisWrap}>
-                  <Text style={[styles.smallHeading, { color: theme.goldText }]}>{t('ai.remedies', 'Suggested remedies')}</Text>
+                  <Text style={[styles.smallHeading, { color: theme.goldText }]}>{tx(t('ai.remedies', 'Suggested remedies'))}</Text>
                   {turn.response.remedies.map((r, index) => (
                     <View key={`${r.title}-${index}`} style={[styles.remedyBox, { borderColor: theme.cardBorder }]}>
-                      <Text style={[styles.remedyTitle, { color: theme.text }]}>{r.title}</Text>
-                      {!!r.body && <Text style={[styles.remedyText, { color: theme.textSoft }]}>{r.body}</Text>}
+                      <Text style={[styles.remedyTitle, { color: theme.text }]}>{tx(r.title)}</Text>
+                      {!!r.body && <Text style={[styles.remedyText, { color: theme.textSoft }]}>{tx(r.body)}</Text>}
                       {!![r.timing, r.mantra].filter(Boolean).length && (
-                        <Text style={[styles.remedyMeta, { color: theme.goldText }]}>{[r.timing, r.mantra].filter(Boolean).join(' | ')}</Text>
+                        <Text style={[styles.remedyMeta, { color: theme.goldText }]}>{tx([r.timing, r.mantra].filter(Boolean).join(' | '))}</Text>
                       )}
                     </View>
                   ))}
@@ -254,7 +257,7 @@ export function AiAstrologerScreen({ navigation, route }: any) {
               )}
 
               <Text style={[styles.sourceNote, { color: theme.textMuted }]}>
-                {turn.response.sourceNote || t('ai.defaultSource', 'Based on your precise birth chart and Panchang data.')}
+                {tx(turn.response.sourceNote || t('ai.defaultSource', 'Based on your precise birth chart and Panchang data.'))}
               </Text>
 
               <View style={styles.followWrap}>
@@ -265,11 +268,11 @@ export function AiAstrologerScreen({ navigation, route }: any) {
                     onPress={() => sendQuestion(q)}
                     style={({ pressed }) => [
                       styles.followChip,
-                      { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(176,115,22,0.08)' },
+                      { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : '#ffffff' },
                       pressed && { transform: [{ scale: 0.98 }] },
                     ]}
                   >
-                    <Text style={[styles.followText, { color: theme.text }]}>{q}</Text>
+                    <Text style={[styles.followText, { color: theme.text }]}>{tx(q)}</Text>
                   </Pressable>
                 ))}
               </View>

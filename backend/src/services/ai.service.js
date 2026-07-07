@@ -682,7 +682,7 @@ Return STRICT JSON only. Keep mood labels EXACTLY "Energy", "Love", "Career", "H
  "advice":"one short do/avoid tip for today",
  "confidence": <0.4-0.95>,
  ${saralField(lang)},
- "sourceNote":"short note: based on precise chart/panchang data (do NOT mention AI)"
+ "sourceNote":"short note: based on precise chart/panchang data (do NOT mention AI or provider/API names)"
 }`;
     let out; let aiFailed = false;
     try { out = await callAI(prompt, { json: true }); }
@@ -726,26 +726,32 @@ function questionKey(question) {
   return crypto.createHash('sha1').update(String(question).trim().toLowerCase()).digest('hex');
 }
 
+function stripProviderText(value, lang = 'en') {
+  const replacement = lang === 'hi' ? 'गणना प्रणाली' : 'calculation engine';
+  return asText(value).replace(/\bVedAstro(?:\s+API)?\b/gi, replacement).replace(/\s+/g, ' ').trim();
+}
+
 function ensureAskShape(out, ctx, question, lang) {
   const src = out && typeof out === 'object' ? out : {};
   const defaults = dailyDefaults(lang);
-  const answer = firstText(
+  const clean = (value) => stripProviderText(value, lang);
+  const answer = clean(firstText(
     src.answer,
     lang === 'hi'
       ? 'आपके जन्म विवरण और उपलब्ध कुंडली-पंचांग डेटा के आधार पर अभी सबसे अच्छा मार्गदर्शन यह है कि निर्णय शांत मन से लें और आज के पंचांग के अनुसार समय का ध्यान रखें।'
       : 'Based on your birth details and available chart/panchang data, the best guidance is to act calmly and use today’s panchang as a timing support.'
-  );
+  ));
   const sections = asList(src.sections).slice(0, 5).map((s) => ({
-    title: firstText(s.title, lang === 'hi' ? 'मार्गदर्शन' : 'Guidance'),
-    text: firstText(s.text, answer),
+    title: clean(firstText(s.title, lang === 'hi' ? 'मार्गदर्शन' : 'Guidance')),
+    text: clean(firstText(s.text, answer)),
   }));
-  const vedastroBasis = asList(src.vedastroBasis).map(asText).filter(Boolean).slice(0, 8);
-  const followUpQuestions = asList(src.followUpQuestions).map(asText).filter(Boolean).slice(0, 4);
+  const vedastroBasis = asList(src.vedastroBasis).map(clean).filter(Boolean).slice(0, 8);
+  const followUpQuestions = asList(src.followUpQuestions).map(clean).filter(Boolean).slice(0, 4);
   const remedies = asList(src.remedies).slice(0, 4).map((r) => ({
-    title: firstText(r.title, lang === 'hi' ? 'सरल उपाय' : 'Simple remedy'),
-    body: firstText(r.body, r.text, defaults.advice),
-    timing: firstText(r.timing),
-    mantra: firstText(r.mantra),
+    title: clean(firstText(r.title, lang === 'hi' ? 'सरल उपाय' : 'Simple remedy')),
+    body: clean(firstText(r.body, r.text, defaults.advice)),
+    timing: clean(firstText(r.timing)),
+    mantra: clean(firstText(r.mantra)),
   }));
 
   return {
@@ -763,7 +769,7 @@ function ensureAskShape(out, ctx, question, lang) {
       ? ['मेरे लिए आज कौन सा समय बेहतर है?', 'इस विषय में कौन सा सरल उपाय करूं?']
       : ['Which time is better for me today?', 'What simple remedy should I follow for this?']),
     confidence: Math.max(0.4, Math.min(0.95, Number(src.confidence) || 0.72)),
-    sourceNote: firstText(src.sourceNote, defaults.sourceNote),
+    sourceNote: clean(firstText(src.sourceNote, defaults.sourceNote)),
     generatedFor: ctx.today ? ctx.today.date : todayStr(),
     basis: {
       moonSign: ctx.moonSign,
@@ -935,7 +941,7 @@ WRITING STYLE — give TWO LAYERS for every point (MANY users have ZERO astrolog
 - "sections": 3 to 6 well-titled sections. EACH section's "text" MUST do BOTH, in this order:
    (a) TECHNICAL BASIS — name the exact astrological factor used (which graha / house / sign / yoga / transit / dasha) — the precise reason.
    (b) SIMPLE MEANING — then re-explain the SAME thing in very easy, everyday words, starting that part on a new line with "${lang === 'hi' ? 'आसान भाषा में:' : 'In simple words:'}" so someone with no astrology knowledge fully understands what it means for their real life.
-- "vedastroBasis": short PRECISE technical facts actually used (e.g. "Saturn transit Pisces = 8th from Moon (Leo) → Dhaiya"), bullet style.
+- "vedastroBasis" (internal key): short PRECISE calculation facts actually used (e.g. "Saturn transit Pisces = 8th from Moon (Leo) → Dhaiya"), bullet style. Never mention any provider, API, or brand name.
 - Be warm, encouraging, practical. NEVER leave jargon without its simple explanation.
 Return STRICT JSON only:
 {
@@ -945,7 +951,7 @@ Return STRICT JSON only:
  "remedies":[{"title":"optional remedy","body":"simple practical steps","timing":"best timing","mantra":"optional mantra"}],
  "followUpQuestions":["3-4 useful next questions"],
  "confidence":<0.4-0.95>,
- "sourceNote":"short note: based on precise chart/panchang data (do NOT mention AI)"
+ "sourceNote":"short note: based on precise chart/panchang data (do NOT mention AI or provider/API names)"
 }`;
     const out = await callAI(prompt, { json: true });
     return ensureAskShape(out, ctx, question, lang);

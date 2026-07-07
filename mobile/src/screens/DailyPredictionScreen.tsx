@@ -17,6 +17,7 @@ import { birthFromProfile } from '../lib/birth';
 import { naamRashi } from '../lib/naamRashi';
 import { useScreen } from '../context/AppConfigProvider';
 import { useT, useLang } from '../i18n/LanguageProvider';
+import { aArea, aAstroText, aColor, aMood, aPanchangLabel, aPanchangTerm, aSign } from '../i18n/astro';
 
 const DEFAULT_BIRTH = { dob: '01-01-2000', tob: '06:42', tz: '+05:30', place: 'Jaipur' };
 
@@ -97,6 +98,11 @@ const asText = (v: any) => {
 };
 
 const clampPct = (n: any, fallback: number) => Math.max(0, Math.min(100, Number(n) || fallback));
+const panchangName = (v: any, lang: 'en' | 'hi') => {
+  if (!v) return '';
+  if (lang === 'hi' && typeof v === 'object' && v.hi) return v.hi;
+  return aPanchangTerm(asText(v), lang);
+};
 
 export function DailyPredictionScreen({ navigation }: any) {
   const { theme } = useTheme();
@@ -141,51 +147,54 @@ export function DailyPredictionScreen({ navigation }: any) {
   }, [lang]);
 
   const today = pred?.basis?.today;
-  const predText = pred?.overall || FALLBACK_TEXT;
-  const detailText = pred?.detailedSummary || pred?.transitSummary || '';
+  const predText = aAstroText(pred?.overall || FALLBACK_TEXT, lang);
+  const detailText = aAstroText(pred?.detailedSummary || pred?.transitSummary || '', lang);
   const moonSign = pred?.basis?.moonSign || panch?.moon.sign || 'Moon Sign';
   // user's rashi identity shown prominently = naam-rashi (by name) when known, else moon sign
   const displayRashi = naamRashi(birthName) || (pred?.basis?.moonSign || panch?.moon.sign || null);
   const ascendant = pred?.basis?.ascendant || 'Lagna';
   const dasha = pred?.basis?.dasha || 'Dasha';
-  const luckyColour = pred?.luckyColour || 'Gold';
+  const luckyColour = aColor(pred?.luckyColour || 'Gold', lang);
   const luckyNumber = pred ? String(pred.luckyNumber) : '7';
   const confidence = pred?.confidence ? Math.round(pred.confidence * 100) : null;
+  const displayRashiText = lang === 'hi'
+    ? aSign(displayRashi || moonSign, lang)
+    : String(displayRashi || moonSign).toUpperCase();
 
   const basisCells = useMemo(() => [
-    { label: t('dp.moonSign', 'Moon Sign'), value: moonSign },
-    { label: t('dp.lagna', 'Lagna'), value: ascendant },
-    { label: t('dp.dasha', 'Dasha'), value: dasha },
-    { label: t('dp.nakshatra', 'Nakshatra'), value: asText(today?.nakshatra) || panch?.nakshatra.name || 'Today' },
-  ], [moonSign, ascendant, dasha, today, panch, t]);
+    { label: aAstroText(t('dp.moonSign', 'Moon Sign'), lang), value: aAstroText(aSign(moonSign, lang), lang) },
+    { label: aAstroText(t('dp.lagna', 'Lagna'), lang), value: aAstroText(aSign(ascendant, lang), lang) },
+    { label: aAstroText(t('dp.dasha', 'Dasha'), lang), value: aAstroText(dasha, lang) },
+    { label: aAstroText(t('dp.nakshatra', 'Nakshatra'), lang), value: panchangName(today?.nakshatra, lang) || panchangName(panch?.nakshatra, lang) || aAstroText('Today', lang) },
+  ], [moonSign, ascendant, dasha, today, panch, t, lang]);
 
   const panchCells = useMemo(() => {
     if (panch) {
       return [
-        { lbl: 'Tithi', val: panch.tithi.name, tone: 'plain' as Tone },
-        { lbl: 'Paksha', val: panch.tithi.paksha, tone: 'plain' as Tone },
-        { lbl: 'Nakshatra', val: `${panch.nakshatra.name} Pada ${panch.nakshatra.pada}`, tone: 'good' as Tone },
-        { lbl: 'Yoga', val: panch.yoga.name, tone: 'plain' as Tone },
-        { lbl: 'Karana', val: panch.karana.name, tone: 'plain' as Tone },
-        { lbl: 'Moon', val: panch.moon.sign || '-', tone: 'good' as Tone },
-        { lbl: 'Sunrise', val: panch.sunrise, tone: 'plain' as Tone },
-        { lbl: 'Sunset', val: panch.sunset, tone: 'plain' as Tone },
-        ...panch.inauspicious.map((p) => ({ lbl: p.name, val: `${p.start} - ${p.end}`, tone: 'caution' as Tone })),
+        { lbl: aPanchangLabel('Tithi', lang), val: lang === 'hi' ? (panch.tithi.hi || aPanchangTerm(panch.tithi.name, lang)) : panch.tithi.name, tone: 'plain' as Tone },
+        { lbl: aPanchangLabel('Paksha', lang), val: lang === 'hi' ? (panch.tithi.pakshaHi || aPanchangTerm(panch.tithi.paksha, lang)) : panch.tithi.paksha, tone: 'plain' as Tone },
+        { lbl: aPanchangLabel('Nakshatra', lang), val: `${lang === 'hi' ? (panch.nakshatra.hi || aPanchangTerm(panch.nakshatra.name, lang)) : panch.nakshatra.name} ${lang === 'hi' ? 'चरण' : 'Pada'} ${panch.nakshatra.pada}`, tone: 'good' as Tone },
+        { lbl: aPanchangLabel('Yoga', lang), val: lang === 'hi' ? (panch.yoga.hi || aPanchangTerm(panch.yoga.name, lang)) : panch.yoga.name, tone: 'plain' as Tone },
+        { lbl: aPanchangLabel('Karana', lang), val: lang === 'hi' ? (panch.karana.hi || aPanchangTerm(panch.karana.name, lang)) : panch.karana.name, tone: 'plain' as Tone },
+        { lbl: aPanchangLabel('Moon', lang), val: aSign(panch.moon.sign || '-', lang), tone: 'good' as Tone },
+        { lbl: aPanchangLabel('Sunrise', lang), val: panch.sunrise, tone: 'plain' as Tone },
+        { lbl: aPanchangLabel('Sunset', lang), val: panch.sunset, tone: 'plain' as Tone },
+        ...panch.inauspicious.map((p) => ({ lbl: aPanchangLabel(p.name, lang), val: `${p.start} - ${p.end}`, tone: 'caution' as Tone })),
       ];
     }
     if (today) {
       return [
-        { lbl: 'Tithi', val: asText(today.tithi) || '-', tone: 'plain' as Tone },
-        { lbl: 'Paksha', val: today.paksha || '-', tone: 'plain' as Tone },
-        { lbl: 'Nakshatra', val: asText(today.nakshatra) || '-', tone: 'good' as Tone },
-        { lbl: 'Yoga', val: asText(today.yoga) || '-', tone: 'plain' as Tone },
-        { lbl: 'Moon', val: today.transitMoon || '-', tone: 'good' as Tone },
-        { lbl: 'Sunrise', val: today.sunrise || '-', tone: 'plain' as Tone },
-        ...(today.inauspicious || []).map((p) => ({ lbl: p.name, val: `${p.start} - ${p.end}`, tone: 'caution' as Tone })),
+        { lbl: aPanchangLabel('Tithi', lang), val: panchangName(today.tithi, lang) || '-', tone: 'plain' as Tone },
+        { lbl: aPanchangLabel('Paksha', lang), val: aPanchangTerm(today.paksha, lang) || '-', tone: 'plain' as Tone },
+        { lbl: aPanchangLabel('Nakshatra', lang), val: panchangName(today.nakshatra, lang) || '-', tone: 'good' as Tone },
+        { lbl: aPanchangLabel('Yoga', lang), val: panchangName(today.yoga, lang) || '-', tone: 'plain' as Tone },
+        { lbl: aPanchangLabel('Moon', lang), val: aSign(today.transitMoon || '-', lang), tone: 'good' as Tone },
+        { lbl: aPanchangLabel('Sunrise', lang), val: today.sunrise || '-', tone: 'plain' as Tone },
+        ...(today.inauspicious || []).map((p) => ({ lbl: aPanchangLabel(p.name, lang), val: `${p.start} - ${p.end}`, tone: 'caution' as Tone })),
       ];
     }
     return null;
-  }, [panch, today]);
+  }, [panch, today, lang]);
 
   const timeWindows = useMemo(() => {
     const fromAi = pred?.timeWindows || [];
@@ -202,16 +211,36 @@ export function DailyPredictionScreen({ navigation }: any) {
     ];
   }, [pred, today, panch]);
 
-  const areas = pred?.areas?.length ? pred.areas : FALLBACK_AREAS;
-  const remedies = pred?.remedies?.length ? pred.remedies : FALLBACK_REMEDIES;
-  const doList = pred?.doList?.length ? pred.doList : ['Complete priority work first', 'Keep communication calm', 'Use the right timing for new work'];
-  const avoidList = pred?.avoidList?.length ? pred.avoidList : ['Rushed decisions', 'Unnecessary arguments', 'Impulsive spending'];
-  const focus = pred?.focus?.length ? pred.focus : ['Clarity', 'Patience', 'Routine'];
-  const aiQuestions = pred?.aiQuestions?.length ? pred.aiQuestions : [
+  const fallbackAreas = lang === 'hi' ? [
+    { title: 'Love', text: 'रिश्तों में गर्मजोशी रखें और छोटी बातों को बड़ा न बनाएं।', action: 'पहले सुनें, फिर शांत होकर जवाब दें।', score: 70 },
+    { title: 'Career', text: 'काम में प्राथमिकता साफ रखें, अधूरे काम आगे बढ़ सकते हैं।', action: 'मल्टीटास्किंग से पहले एक जरूरी काम पूरा करें।', score: 68 },
+    { title: 'Finance', text: 'खर्च और निवेश में सोच-समझकर निर्णय लें।', action: 'गैर-जरूरी खरीदारी आज टालें।', score: 64 },
+    { title: 'Health', text: 'दिनचर्या, पानी और आराम से ऊर्जा बेहतर रहेगी।', action: 'समय पर भोजन करें और पर्याप्त आराम लें।', score: 72 },
+  ] : FALLBACK_AREAS;
+  const fallbackRemedies = lang === 'hi' ? FALLBACK_REMEDIES.map((r, i) => ({
+    ...r,
+    title: ['सुबह की प्रार्थना', 'सरल दान', 'शांत वाणी'][i] || r.title,
+    body: ['दिन की शुरुआत छोटी प्रार्थना या कृतज्ञता से करें।', 'जरूरतमंद को भोजन, फल या पानी दें।', 'वाद-विवाद से बचें और पूरे दिन शांत शब्द चुनें।'][i] || r.body,
+    timing: ['सुबह', 'दिन में', 'पूरे दिन'][i] || r.timing,
+  })) : FALLBACK_REMEDIES;
+  const areas = pred?.areas?.length ? pred.areas : fallbackAreas;
+  const remedies = pred?.remedies?.length ? pred.remedies : fallbackRemedies;
+  const doList = pred?.doList?.length ? pred.doList : (lang === 'hi'
+    ? ['पहले जरूरी काम पूरा करें', 'बातचीत शांत रखें', 'नए काम के लिए सही समय चुनें']
+    : ['Complete priority work first', 'Keep communication calm', 'Use the right timing for new work']);
+  const avoidList = pred?.avoidList?.length ? pred.avoidList : (lang === 'hi'
+    ? ['जल्दबाजी में निर्णय', 'अनावश्यक बहस', 'अचानक खर्च']
+    : ['Rushed decisions', 'Unnecessary arguments', 'Impulsive spending']);
+  const focus = pred?.focus?.length ? pred.focus : (lang === 'hi' ? ['स्पष्टता', 'धैर्य', 'दिनचर्या'] : ['Clarity', 'Patience', 'Routine']);
+  const aiQuestions = pred?.aiQuestions?.length ? pred.aiQuestions : (lang === 'hi' ? [
+    'आज करियर में मुझे किस बात पर ध्यान देना चाहिए?',
+    'महत्वपूर्ण काम के लिए कौन सा समय बेहतर है?',
+    'आज मुझे कौन सा सरल उपाय करना चाहिए?',
+  ] : [
     'What should I focus on in career today?',
     'Which time is best for important work?',
     'What simple remedy should I follow today?',
-  ];
+  ]);
 
   const toggleSave = () => { setSaved((s) => { hSelect(); return !s; }); };
   const openAiQuestion = (question?: string) => {
@@ -267,16 +296,16 @@ export function DailyPredictionScreen({ navigation }: any) {
       <Card>
         <View style={{ alignItems: 'center' }}>
           <ZodiacIcon sign={displayRashi || moonSign} size={96} theme={theme} />
-          <Text style={[styles.sign, { color: theme.goldText }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{String(displayRashi || moonSign).toUpperCase()}</Text>
+          <Text style={[styles.sign, { color: theme.goldText }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{displayRashiText}</Text>
           <Text style={[styles.hindi, { color: theme.textSoft }]}>{t('dp.moonBased', 'Moon sign based guidance')}</Text>
         </View>
         <View style={[styles.dateRow, { borderTopColor: theme.line }]}>
           <CalendarIcon color={theme.gold1} size={15} />
           <Text style={[styles.dateText, { color: theme.gold1 }]}>
-            {predLoading ? t('dp.personalising', 'Personalising your day...') : pred ? `${t('dp.sourceTag', 'Chart Data + AI')} | ${pred.generatedFor || 'Today'}` : 'Today'}
+            {predLoading ? t('dp.personalising', 'Personalising your day...') : pred ? `${aAstroText(t('dp.sourceTag', 'Chart Data + AI'), lang)} | ${pred.generatedFor || aAstroText('Today', lang)}` : aAstroText('Today', lang)}
           </Text>
         </View>
-        {!!pred?.headline && <Text style={[styles.headline, { color: theme.goldText }]}>{pred.headline}</Text>}
+        {!!pred?.headline && <Text style={[styles.headline, { color: theme.goldText }]}>{aAstroText(pred.headline, lang)}</Text>}
         <Text style={[styles.predBody, { color: theme.text }]}>{predText}</Text>
         {!!detailText && <Text style={[styles.detailBody, { color: theme.textSoft }]}>{detailText}</Text>}
         {!!predError && <Text style={[styles.errorText, { color: theme.red }]}>{t('dp.aiFallback', 'AI fallback active')}: {predError}</Text>}
@@ -285,7 +314,7 @@ export function DailyPredictionScreen({ navigation }: any) {
           {focus.map((item) => (
             <View key={item} style={[styles.focusChip, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : '#ffffff' }]}>
               <MiniSpark color={theme.gold1} />
-              <Text style={[styles.focusText, { color: theme.goldText }]} numberOfLines={1}>{item}</Text>
+              <Text style={[styles.focusText, { color: theme.goldText }]} numberOfLines={1}>{aAstroText(item, lang)}</Text>
             </View>
           ))}
         </View>
@@ -311,7 +340,7 @@ export function DailyPredictionScreen({ navigation }: any) {
       </Card>
 
       <Card style={{ marginTop: 14 }}>
-        <SectionH theme={theme}>{t('dp.astroBasis', 'Astro Basis')}</SectionH>
+        <SectionH theme={theme}>{aAstroText(t('dp.astroBasis', 'Astro Basis'), lang)}</SectionH>
         <View style={styles.basisGrid}>
           {basisCells.map((b) => (
             <View key={b.label} style={[styles.basisCell, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.44)' : 'rgba(176,115,22,0.05)' }]}>
@@ -320,11 +349,11 @@ export function DailyPredictionScreen({ navigation }: any) {
             </View>
           ))}
         </View>
-        {!!pred?.transitSummary && <Text style={[styles.summaryText, { color: theme.textSoft }]}>{pred.transitSummary}</Text>}
+        {!!pred?.transitSummary && <Text style={[styles.summaryText, { color: theme.textSoft }]}>{aAstroText(pred.transitSummary, lang)}</Text>}
       </Card>
 
       <Card style={{ marginTop: 14 }}>
-        <SectionH theme={theme}>{t('dp.cosmicMood', "Today's Cosmic Mood")}</SectionH>
+        <SectionH theme={theme}>{aAstroText(t('dp.cosmicMood', "Today's Cosmic Mood"), lang)}</SectionH>
         <View style={{ gap: 14, marginTop: 6 }}>
           {MOODS.map((m) => {
             const pct = clampPct(pred?.moods?.find((x) => x.label === m.label)?.pct, m.pct);
@@ -334,7 +363,7 @@ export function DailyPredictionScreen({ navigation }: any) {
                   <View style={[styles.moodIc, { backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : 'rgba(176,115,22,0.10)' }]}>
                     {m.icon(theme.gold1)}
                   </View>
-                  <Text style={[styles.moodLbl, { color: theme.text }]}>{m.label}</Text>
+                  <Text style={[styles.moodLbl, { color: theme.text }]}>{aMood(m.label, lang)}</Text>
                   <Text style={[styles.moodPct, { color: theme.goldText }]}>{pct}%</Text>
                 </View>
                 <View style={[styles.track, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(176,115,22,0.16)' }]}>
@@ -347,13 +376,13 @@ export function DailyPredictionScreen({ navigation }: any) {
       </Card>
 
       <Card style={{ marginTop: 14 }}>
-        <SectionH theme={theme}>{t('dp.panchang', "Today's Panchang")}</SectionH>
+        <SectionH theme={theme}>{aAstroText(t('dp.panchang', "Today's Panchang"), lang)}</SectionH>
         {(panch || today) && (
           <View style={styles.panchDateRow}>
             <Text style={[styles.panchDate, { color: theme.gold1 }]}>
-              {panch ? `${panch.weekday} | ${panch.date}` : `${today?.weekday || 'Today'} | ${today?.date || pred?.generatedFor || ''}`}
+              {panch ? `${aAstroText(panch.weekday, lang)} | ${panch.date}` : `${aAstroText(today?.weekday || 'Today', lang)} | ${today?.date || pred?.generatedFor || ''}`}
             </Text>
-            <Text style={[styles.panchLive, { color: theme.green }]}>LIVE DATA</Text>
+            <Text style={[styles.panchLive, { color: theme.green }]}>{aAstroText('LIVE DATA', lang)}</Text>
           </View>
         )}
         {panchCells ? (
@@ -368,19 +397,19 @@ export function DailyPredictionScreen({ navigation }: any) {
         ) : (
           <Text style={[styles.summaryText, { color: theme.textSoft }]}>{t('dp.panchangEmpty', 'Panchang will appear after your birth place and network data are available.')}</Text>
         )}
-        {!!pred?.panchangSummary && <Text style={[styles.summaryText, { color: theme.textSoft }]}>{pred.panchangSummary}</Text>}
+        {!!pred?.panchangSummary && <Text style={[styles.summaryText, { color: theme.textSoft }]}>{aAstroText(pred.panchangSummary, lang)}</Text>}
       </Card>
 
       {!!timeWindows.length && (
         <Card style={{ marginTop: 14 }}>
-          <SectionH theme={theme}>{t('dp.bestTiming', 'Best Timing Today')}</SectionH>
+          <SectionH theme={theme}>{aAstroText(t('dp.bestTiming', 'Best Timing Today'), lang)}</SectionH>
           <View style={{ gap: 10, marginTop: 6 }}>
             {timeWindows.map((item, index) => (
               <View key={`${item.label}-${index}`} style={[styles.timingRow, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.42)' : 'rgba(176,115,22,0.05)' }]}>
                 <View style={[styles.timingDot, { backgroundColor: accent((item.quality || 'neutral') as Tone) }]} />
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.timingTitle, { color: theme.text }]}>{item.label}</Text>
-                  <Text style={[styles.timingBody, { color: theme.textSoft }]}>{item.advice || 'Use this timing with calm focus.'}</Text>
+                  <Text style={[styles.timingTitle, { color: theme.text }]}>{aAstroText(item.label, lang)}</Text>
+                  <Text style={[styles.timingBody, { color: theme.textSoft }]}>{aAstroText(item.advice || (lang === 'hi' ? 'इस समय को शांत मन और स्पष्ट ध्यान के साथ उपयोग करें।' : 'Use this timing with calm focus.'), lang)}</Text>
                 </View>
                 <Text style={[styles.timingTime, { color: theme.goldText }]}>{item.time}</Text>
               </View>
@@ -390,7 +419,7 @@ export function DailyPredictionScreen({ navigation }: any) {
       )}
 
       <Card style={{ marginTop: 14 }}>
-        <SectionH theme={theme}>{t('dp.moreInsights', 'More Insights')}</SectionH>
+        <SectionH theme={theme}>{aAstroText(t('dp.moreInsights', 'More Insights'), lang)}</SectionH>
         <View style={styles.insightGrid}>
           {areas.map((it) => {
             const icon = AREA_ICONS[it.title] || AREA_ICONS.Career;
@@ -400,9 +429,9 @@ export function DailyPredictionScreen({ navigation }: any) {
                   <View style={styles.insightIc}>{icon(theme.gold1)}</View>
                   {!!it.score && <Text style={[styles.scoreText, { color: theme.goldText }]}>{clampPct(it.score, 70)}%</Text>}
                 </View>
-                <Text style={[styles.insightTitle, { color: theme.goldText }]}>{it.title}</Text>
-                <Text style={[styles.insightBody, { color: theme.textSoft }]}>{it.text}</Text>
-                {!!it.action && <Text style={[styles.insightAction, { color: theme.text }]}>{it.action}</Text>}
+                <Text style={[styles.insightTitle, { color: theme.goldText }]}>{aArea(it.title, lang)}</Text>
+                <Text style={[styles.insightBody, { color: theme.textSoft }]}>{aAstroText(it.text, lang)}</Text>
+                {!!it.action && <Text style={[styles.insightAction, { color: theme.text }]}>{aAstroText(it.action, lang)}</Text>}
               </View>
             );
           })}
@@ -410,21 +439,21 @@ export function DailyPredictionScreen({ navigation }: any) {
       </Card>
 
       <Card style={{ marginTop: 14 }}>
-        <SectionH theme={theme}>{t('dp.doAvoid', 'Do And Avoid')}</SectionH>
+        <SectionH theme={theme}>{aAstroText(t('dp.doAvoid', 'Do And Avoid'), lang)}</SectionH>
         <View style={styles.doAvoidGrid}>
           <View style={[styles.doAvoidBox, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(39,119,56,0.12)' : 'rgba(31,143,79,0.08)' }]}>
-            <Text style={[styles.doAvoidTitle, { color: theme.green }]}>{t('dp.do', 'Do')}</Text>
-            {doList.map((item) => <Text key={item} style={[styles.listText, { color: theme.text }]}>{item}</Text>)}
+            <Text style={[styles.doAvoidTitle, { color: theme.green }]}>{aAstroText(t('dp.do', 'Do'), lang)}</Text>
+            {doList.map((item) => <Text key={item} style={[styles.listText, { color: theme.text }]}>{aAstroText(item, lang)}</Text>)}
           </View>
           <View style={[styles.doAvoidBox, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(160,48,48,0.12)' : 'rgba(192,57,43,0.08)' }]}>
-            <Text style={[styles.doAvoidTitle, { color: theme.red }]}>{t('dp.avoid', 'Avoid')}</Text>
-            {avoidList.map((item) => <Text key={item} style={[styles.listText, { color: theme.text }]}>{item}</Text>)}
+            <Text style={[styles.doAvoidTitle, { color: theme.red }]}>{aAstroText(t('dp.avoid', 'Avoid'), lang)}</Text>
+            {avoidList.map((item) => <Text key={item} style={[styles.listText, { color: theme.text }]}>{aAstroText(item, lang)}</Text>)}
           </View>
         </View>
       </Card>
 
       <Card style={{ marginTop: 14 }}>
-        <SectionH theme={theme}>{t('dp.remedies', 'Suggested Remedies')}</SectionH>
+        <SectionH theme={theme}>{aAstroText(t('dp.remedies', 'Suggested Remedies'), lang)}</SectionH>
         <View style={{ gap: 12, marginTop: 6 }}>
           {remedies.map((r, index) => {
             const rr = r as any;
@@ -439,9 +468,9 @@ export function DailyPredictionScreen({ navigation }: any) {
                   {icon(theme.gold1)}
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.remedyTitle, { color: theme.text }]}>{r.title}</Text>
-                  <Text style={[styles.remedyBody, { color: theme.textSoft }]}>{body}</Text>
-                  {!!timing && <Text style={[styles.remedyTag, { color: theme.gold2 }]}>{timing}</Text>}
+                  <Text style={[styles.remedyTitle, { color: theme.text }]}>{aAstroText(r.title, lang)}</Text>
+                  <Text style={[styles.remedyBody, { color: theme.textSoft }]}>{aAstroText(body, lang)}</Text>
+                  {!!timing && <Text style={[styles.remedyTag, { color: theme.gold2 }]}>{aAstroText(timing, lang)}</Text>}
                   {!!rr.mantra && <Text style={[styles.mantraSmall, { color: theme.goldText }]}>{rr.mantra}</Text>}
                 </View>
               </View>
@@ -452,10 +481,10 @@ export function DailyPredictionScreen({ navigation }: any) {
 
       {!!pred?.mantra?.text && (
         <Card style={{ marginTop: 14 }}>
-          <SectionH theme={theme}>{pred.mantra.title || "Today's Mantra"}</SectionH>
+          <SectionH theme={theme}>{aAstroText(pred.mantra.title || (lang === 'hi' ? 'आज का मंत्र' : "Today's Mantra"), lang)}</SectionH>
           <Text style={[styles.mantraText, { color: theme.goldText }]}>{pred.mantra.text}</Text>
           <Text style={[styles.summaryText, { color: theme.textSoft }]}>
-            {[pred.mantra.count, pred.mantra.bestTime].filter(Boolean).join(' | ')}
+            {aAstroText([pred.mantra.count, pred.mantra.bestTime].filter(Boolean).join(' | '), lang)}
           </Text>
         </Card>
       )}
@@ -463,7 +492,7 @@ export function DailyPredictionScreen({ navigation }: any) {
       <SaralVivaran text={pred?.saralVivaran} />
 
       <Card style={{ marginTop: 14 }}>
-        <SectionH theme={theme}>{t('dp.askAi', 'Ask the Astrologer')}</SectionH>
+        <SectionH theme={theme}>{aAstroText(t('dp.askAi', 'Ask the Astrologer'), lang)}</SectionH>
         <Text style={[styles.summaryText, { color: theme.textSoft }]}>{t('dp.askAiLead', "These questions will use your saved birth details, today's precise astrology data, and the current language mode.")}</Text>
         <View style={styles.questionWrap}>
           {aiQuestions.map((q) => (
@@ -476,7 +505,7 @@ export function DailyPredictionScreen({ navigation }: any) {
                 pressed && { transform: [{ scale: 0.98 }] },
               ]}
             >
-              <Text style={[styles.questionText, { color: theme.text }]}>{q}</Text>
+              <Text style={[styles.questionText, { color: theme.text }]}>{aAstroText(q, lang)}</Text>
             </Pressable>
           ))}
         </View>
@@ -502,8 +531,8 @@ export function DailyPredictionScreen({ navigation }: any) {
           </Svg>
         </View>
         <Text style={[styles.noteText, { color: theme.textSoft }]}>
-          <Text style={{ color: theme.goldText, fontFamily: fonts.interBold }}>{t('dp.source', 'Source | ')}</Text>
-          {pred?.sourceNote || dp.t('noteText', 'Predictions are based on your precise chart and Panchang data.')}
+          <Text style={{ color: theme.goldText, fontFamily: fonts.interBold }}>{aAstroText(t('dp.source', 'Source | '), lang)}</Text>
+          {aAstroText(pred?.sourceNote || dp.t('noteText', 'Predictions are based on your precise chart and Panchang data.'), lang)}
         </Text>
       </LinearGradient>
 

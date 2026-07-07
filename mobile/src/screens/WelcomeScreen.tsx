@@ -50,8 +50,8 @@ const GoldGlow = React.memo(function GoldGlow({ size, style, opacity = 0.16, dar
     <Svg width={size} height={size} style={[{ position: 'absolute' }, style, { opacity }]} pointerEvents="none">
       <Defs>
         <RadialGradient id="gg" cx="50%" cy="50%" r="50%">
-          <Stop offset="0%" stopColor={dark ? '#e9b850' : '#6b4308'} stopOpacity={dark ? 0.6 : 0.32} />
-          <Stop offset="65%" stopColor={dark ? '#e9b850' : '#6b4308'} stopOpacity={0} />
+          <Stop offset="0%" stopColor={dark ? '#e9b850' : '#111827'} stopOpacity={dark ? 0.6 : 0.18} />
+          <Stop offset="65%" stopColor={dark ? '#e9b850' : '#111827'} stopOpacity={0} />
         </RadialGradient>
       </Defs>
       <Circle cx={size / 2} cy={size / 2} r={size / 2} fill="url(#gg)" />
@@ -99,7 +99,7 @@ const BgZodiac = React.memo(function BgZodiac({ size, dark = true }: { size: num
         key={`g${i}`}
         x={100 + Math.cos(a) * 86} y={100 + Math.sin(a) * 86}
         textAnchor="middle" alignmentBaseline="central"
-        fontSize={11} fontWeight="bold" fill={dark ? '#f3c75e' : '#5f3808'}
+        fontSize={11} fontWeight="bold" fill={dark ? '#f3c75e' : '#111827'}
       >
         {g}
       </SvgText>
@@ -111,8 +111,8 @@ const BgZodiac = React.memo(function BgZodiac({ size, dark = true }: { size: num
       <Svg width={size} height={size} viewBox="0 0 200 200">
         <Defs>
           <SvgGrad id="bgz" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0%" stopColor={dark ? '#e9b850' : '#70420a'} />
-            <Stop offset="100%" stopColor={dark ? '#6b4d10' : '#332006'} />
+            <Stop offset="0%" stopColor={dark ? '#e9b850' : '#111827'} />
+            <Stop offset="100%" stopColor={dark ? '#6b4d10' : '#7c2d12'} />
           </SvgGrad>
         </Defs>
         <Circle cx={100} cy={100} r={96} fill="none" stroke="url(#bgz)" strokeWidth={dark ? 1.4 : 2.2} />
@@ -227,7 +227,7 @@ function ServiceCard({ s, index, theme, lang, onPress }: { s: typeof SERVICES[nu
   const hi = lang === 'hi';
   const ringColors = theme.isDark
     ? (['#fce8a8', '#e9b850', '#a17613', '#f6d27a'] as const)
-    : (['#f8ecd0', '#d49b2e', '#a66f12', '#efd37b'] as const);
+    : (['#e2e8f0', '#cbd5e1', '#d97706', '#f59e0b'] as const);
   const innerTint = theme.isDark ? s.tint : s.lightTint;
   const accent = theme.isDark ? s.accent : (SERVICE_LIGHT_ACCENT[s.key] || theme.gold1);
   return (
@@ -326,7 +326,7 @@ export function WelcomeScreen({ navigation }: any) {
 
       {/* gold glow + spinning zodiac-wheel watermark behind the brand (web .bg-zodiac-left) */}
       <View style={styles.watermark} pointerEvents="none">
-        <GoldGlow size={320} style={{ top: -10 }} dark={theme.isDark} opacity={theme.isDark ? 0.16 : 0.22} />
+        <GoldGlow size={320} style={{ top: -10 }} dark={theme.isDark} opacity={theme.isDark ? 0.16 : 0.12} />
         <View style={{ opacity: theme.isDark ? 0.6 : 0.88 }}>
           <BgZodiac size={262} dark={theme.isDark} />
         </View>
@@ -372,11 +372,11 @@ export function WelcomeScreen({ navigation }: any) {
         style={({ pressed }) => [pressed && { transform: [{ scale: 0.99 }] }]}
       >
         <LinearGradient
-          colors={theme.isDark ? ['rgba(122,82,20,0.34)', 'rgba(28,20,10,0.5)'] : ['#fdf2d4', '#fffaf0']}
+          colors={theme.isDark ? ['rgba(122,82,20,0.34)', 'rgba(28,20,10,0.5)'] : ['#ffffff', '#f8fafc']}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
           style={[styles.panchCard, { borderColor: theme.isDark ? 'rgba(201,150,46,0.3)' : theme.cardBorder }]}
         >
-          <View style={[styles.panchIcon, { borderColor: theme.isDark ? 'rgba(243,205,126,0.55)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.4)' : 'rgba(95,56,8,0.08)' }]}>
+          <View style={[styles.panchIcon, { borderColor: theme.isDark ? 'rgba(243,205,126,0.55)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.4)' : '#f8fafc' }]}>
             <ServiceIcon name="calendar" color={theme.gold1} size={26} />
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
@@ -436,7 +436,7 @@ export function WelcomeScreen({ navigation }: any) {
           <Pressable
             onPress={() => { hTap(); navigation.navigate('DailyPrediction'); }}
             android_ripple={{ color: theme.ripple }}
-            style={({ pressed }) => [styles.horoBtn, { borderColor: theme.isDark ? 'rgba(246,210,122,0.5)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : 'rgba(95,56,8,0.08)' }, pressed && { transform: [{ scale: 0.98 }] }]}
+            style={({ pressed }) => [styles.horoBtn, { borderColor: theme.isDark ? 'rgba(246,210,122,0.5)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : '#f8fafc' }, pressed && { transform: [{ scale: 0.98 }] }]}
           >
             <Text style={[styles.horoBtnText, { color: theme.gold1 }]}>{t('home.readFull', 'Read Full Prediction')}</Text>
             <Chevron c={theme.gold1} size={15} />
@@ -458,7 +458,7 @@ export function WelcomeScreen({ navigation }: any) {
           // the ring stays visible the whole way around (no dark dead-corner).
           const borderColors = theme.isDark
             ? (['#fce8a8', '#e9b850', '#a17613', '#f6d27a'] as const)
-            : (['#f8ecd0', '#d49b2e', '#a66f12', '#efd37b'] as const);
+            : (['#e2e8f0', '#cbd5e1', '#d97706', '#f59e0b'] as const);
           return (
             <Pressable
               key={f.key}
@@ -527,7 +527,7 @@ export function WelcomeScreen({ navigation }: any) {
             <GradientText style={styles.predTitle}>{hasPred ? (pred!.headline || pred!.overall) : (lang === 'hi' ? 'आज का फलादेश देखें' : "See today's reading")}</GradientText>
             <View style={styles.predMeta}>
               {bannerChips.map((m) => (
-                <View key={m} style={[styles.predChip, { borderColor: 'rgba(201,150,46,0.25)', backgroundColor: 'rgba(233,184,80,0.07)' }]}>
+                <View key={m} style={[styles.predChip, { borderColor: theme.isDark ? 'rgba(201,150,46,0.25)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.07)' : '#f8fafc' }]}>
                   <Text style={[styles.predChipText, { color: theme.gold2 }]}>{m}</Text>
                 </View>
               ))}
@@ -537,7 +537,7 @@ export function WelcomeScreen({ navigation }: any) {
             </Text>
             <Pressable
               onPress={() => { hTap(); navigation.navigate('DailyPrediction'); }}
-              style={[styles.predBtn, { borderColor: theme.isDark ? 'rgba(246,210,122,0.5)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.7)' : 'rgba(95,56,8,0.07)' }]}
+              style={[styles.predBtn, { borderColor: theme.isDark ? 'rgba(246,210,122,0.5)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.7)' : '#f8fafc' }]}
             >
               <Text style={[styles.predBtnText, { color: theme.gold1 }]}>{t('home.viewDetails', 'View Details')}</Text>
               <Chevron c={theme.gold1} size={13} />
@@ -562,7 +562,7 @@ export function WelcomeScreen({ navigation }: any) {
               style={({ pressed }) => [styles.listRow, { borderBottomColor: theme.isDark ? 'rgba(201,150,46,0.10)' : theme.line }, i === arr.length - 1 && { borderBottomWidth: 0 }, pressed && { transform: [{ scale: 0.985 }] }]}
             >
               <View style={styles.listLeft}>
-                <View style={[styles.listIc, { borderColor: row.danger ? 'rgba(245,100,100,0.25)' : (theme.isDark ? 'rgba(246,210,122,0.20)' : theme.cardBorder), backgroundColor: row.danger ? 'rgba(245,100,100,0.06)' : (theme.isDark ? 'rgba(0,0,0,0.5)' : '#fff7e5') }]}>
+                <View style={[styles.listIc, { borderColor: row.danger ? 'rgba(245,100,100,0.25)' : (theme.isDark ? 'rgba(246,210,122,0.20)' : theme.cardBorder), backgroundColor: row.danger ? 'rgba(245,100,100,0.06)' : (theme.isDark ? 'rgba(0,0,0,0.5)' : '#f8fafc') }]}>
                   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={ic} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">{row.icon()}</Svg>
                 </View>
                 <Text style={[styles.listLabel, { color: theme.text }]}>{t(row.lkey, row.label)}</Text>

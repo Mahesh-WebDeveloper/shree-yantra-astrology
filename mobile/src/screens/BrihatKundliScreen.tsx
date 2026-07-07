@@ -19,7 +19,7 @@ import { ApiDosha, ApiPlanet, BrihatAshtakavarga, BrihatAvakhada, BrihatDomain, 
 import { useAutoScroll } from '../lib/useAutoScroll';
 import { useDialog } from '../components/DialogProvider';
 import { useLang, useT } from '../i18n/LanguageProvider';
-import { aSign } from '../i18n/astro';
+import { aNakshatra, aSign } from '../i18n/astro';
 
 function BookIcon({ color, size = 22 }: { color: string; size?: number }) {
   return (
@@ -165,7 +165,10 @@ function RoadmapItem({ title, status }: { title: string; status: string }) {
 }
 
 const PLANET_HI: Record<string, string> = { Sun: 'सूर्य', Moon: 'चंद्र', Mars: 'मंगल', Mercury: 'बुध', Jupiter: 'गुरु', Venus: 'शुक्र', Saturn: 'शनि', Rahu: 'राहु', Ketu: 'केतु' };
-const nakName = (n: any): string => (!n ? '-' : typeof n === 'string' ? n : n.Name || '-');
+const nakName = (n: any, lang: 'en' | 'hi' = 'en'): string => {
+  const raw = !n ? '-' : typeof n === 'string' ? n : n.Name || n.name || '-';
+  return raw === '-' ? raw : aNakshatra(raw, lang);
+};
 const houseNum = (h: any): string => { const m = String(h ?? '').match(/\d+/); return m ? m[0] : '-'; };
 const degShort = (d: any): string => { const n = String(d ?? '').match(/\d+/g); return n && n.length >= 2 ? `${n[0]}°${n[1]}'` : (n && n[0] ? `${n[0]}°` : '-'); };
 
@@ -181,7 +184,7 @@ function AvakhadaCard({ a }: { a: BrihatAvakhada }) {
     [L('Nadi', 'नाड़ी'), tx(a.nadi, lang)],
     [L('Tatva', 'तत्व'), tx(a.tatva, lang)],
     [L('Paya', 'पाया'), a.paya ? tx(a.paya, lang) : '-'],
-    [L('Nakshatra', 'नक्षत्र'), `${a.nakshatra.name}${a.nakshatra.pada ? ' • ' + a.nakshatra.pada : ''}`],
+    [L('Nakshatra', 'नक्षत्र'), `${aNakshatra(a.nakshatra.name, lang)}${a.nakshatra.pada ? ' • ' + a.nakshatra.pada : ''}`],
     [L('Nakshatra Lord', 'नक्षत्र स्वामी'), tx(a.nakshatra.lord, lang)],
     [L('Rashi', 'राशि'), safeSign(a.rashi.name, lang)],
     [L('Rashi Lord', 'राशि स्वामी'), tx(a.rashi.lord, lang)],
@@ -224,7 +227,7 @@ function PlanetTable({ planets }: { planets: ApiPlanet[] }) {
             <Text style={[styles.cP, styles.tdTxt, { color: theme.text }]} numberOfLines={1}>{(lang === 'hi' ? PLANET_HI[p.planet] : null) || p.planet}{retro ? ' (R)' : ''}</Text>
             <Text style={[styles.cS, styles.tdTxt, { color: theme.textSoft }]} numberOfLines={1}>{p.sign ? safeSign(p.sign, lang) : '-'}</Text>
             <Text style={[styles.cD, styles.tdTxt, { color: theme.textSoft }]} numberOfLines={1}>{degShort(p.degreeInSign)}</Text>
-            <Text style={[styles.cN, styles.tdTxt, { color: theme.textSoft }]} numberOfLines={1}>{nakName(p.nakshatra)}</Text>
+            <Text style={[styles.cN, styles.tdTxt, { color: theme.textSoft }]} numberOfLines={1}>{nakName(p.nakshatra, lang)}</Text>
             <Text style={[styles.cH, styles.tdTxt, { color: theme.textSoft }]} numberOfLines={1}>{houseNum(p.house)}</Text>
           </View>
         );

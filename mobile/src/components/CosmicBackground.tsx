@@ -18,12 +18,12 @@ export const CosmicBackground = React.memo(function CosmicBackground() {
     return (
       <Svg pointerEvents="none" style={StyleSheet.absoluteFill} width="100%" height="100%" viewBox="0 0 390 844" preserveAspectRatio="none">
         <Defs>
-          <RadialGradient id="lg1" cx="18%" cy="5%" r="42%">
-            <Stop offset="0%" stopColor="#e6bd63" stopOpacity={0.16} />
+          <RadialGradient id="lg1" cx="16%" cy="4%" r="38%">
+            <Stop offset="0%" stopColor="#f59e0b" stopOpacity={0.055} />
             <Stop offset="100%" stopColor="#ffffff" stopOpacity={0} />
           </RadialGradient>
-          <RadialGradient id="lg2" cx="88%" cy="18%" r="38%">
-            <Stop offset="0%" stopColor="#b77b1b" stopOpacity={0.10} />
+          <RadialGradient id="lg2" cx="88%" cy="16%" r="34%">
+            <Stop offset="0%" stopColor="#111827" stopOpacity={0.028} />
             <Stop offset="100%" stopColor="#ffffff" stopOpacity={0} />
           </RadialGradient>
         </Defs>

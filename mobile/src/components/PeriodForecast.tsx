@@ -7,9 +7,9 @@ import { birthFromProfile } from '../lib/birth';
 import { getPeriodPrediction, PeriodPrediction, PredPeriod } from '../lib/api';
 import { SpeakButton } from './SpeakButton';
 import { SaralVivaran } from './SaralVivaran';
+import { aArea, aAstroText } from '../i18n/astro';
 
 const DEFAULT_BIRTH = { dob: '01-01-2000', tob: '06:42', tz: '+05:30', place: 'Jaipur' };
-const AREA_HI: Record<string, string> = { Love: 'प्रेम', Career: 'करियर', Finance: 'धन', Health: 'स्वास्थ्य' };
 const barColor = (s: number) => (s >= 70 ? '#3ec77a' : s >= 50 ? '#e0a92e' : '#e06a5a');
 
 function AreaCard({ a, theme, lang }: { a: PeriodPrediction['areas'][0]; theme: Theme; lang: 'en' | 'hi' }) {
@@ -17,14 +17,14 @@ function AreaCard({ a, theme, lang }: { a: PeriodPrediction['areas'][0]; theme: 
   return (
     <View style={[styles.area, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(255,253,247,0.85)' }]}>
       <View style={styles.areaHead}>
-        <Text style={[styles.areaTitle, { color: theme.text }]}>{lang === 'hi' ? (AREA_HI[a.title] || a.title) : a.title}</Text>
+        <Text style={[styles.areaTitle, { color: theme.text }]}>{aArea(a.title, lang)}</Text>
         <Text style={[styles.areaScore, { color: col }]}>{a.score}%</Text>
       </View>
       <View style={[styles.barTrack, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)' }]}>
         <View style={[styles.barFill, { width: `${Math.max(6, a.score)}%`, backgroundColor: col }]} />
       </View>
-      <Text style={[styles.areaText, { color: theme.textSoft }]}>{a.text}</Text>
-      {!!a.action && <Text style={[styles.areaAction, { color: theme.gold1 }]}>→ {a.action}</Text>}
+      <Text style={[styles.areaText, { color: theme.textSoft }]}>{aAstroText(a.text, lang)}</Text>
+      {!!a.action && <Text style={[styles.areaAction, { color: theme.gold1 }]}>→ {aAstroText(a.action, lang)}</Text>}
     </View>
   );
 }
@@ -76,18 +76,18 @@ export function PeriodForecast({ period }: { period: PredPeriod }) {
   const majorDates = data.majorDates || [];
   const remedies = data.remedies || [];
   const speakText = [
-    data.headline, data.overall,
-    ...areas.map((a) => `${a.title}. ${a.text}`),
-    ...highlights.map((h) => `${h.label}. ${h.text}`),
-    data.advice || '',
+    aAstroText(data.headline, lang), aAstroText(data.overall, lang),
+    ...areas.map((a) => `${aArea(a.title, lang)}. ${aAstroText(a.text, lang)}`),
+    ...highlights.map((h) => `${aAstroText(h.label, lang)}. ${aAstroText(h.text, lang)}`),
+    aAstroText(data.advice || '', lang),
   ].filter((x): x is string => !!x);
 
   return (
     <View style={{ gap: 14 }}>
       {/* overall */}
       <View style={[styles.card, { borderColor: theme.gold2 + '55', backgroundColor: theme.isDark ? 'rgba(201,150,46,0.07)' : 'rgba(244,195,74,0.1)' }]}>
-        {!!data.headline && <Text style={[styles.headline, { color: theme.goldText }]}>{data.headline}</Text>}
-        {!!data.overall && <Text style={[styles.overall, { color: theme.text }]}>{data.overall}</Text>}
+        {!!data.headline && <Text style={[styles.headline, { color: theme.goldText }]}>{aAstroText(data.headline, lang)}</Text>}
+        {!!data.overall && <Text style={[styles.overall, { color: theme.text }]}>{aAstroText(data.overall, lang)}</Text>}
         <View style={{ marginTop: 12 }}><SpeakButton text={speakText} /></View>
       </View>
 
@@ -104,8 +104,8 @@ export function PeriodForecast({ period }: { period: PredPeriod }) {
           <Text style={[styles.h, { color: theme.gold1 }]}>{lang === 'hi' ? 'अवधि-वार' : 'Phase by phase'}</Text>
           {phases.map((p, i) => (
             <View key={i} style={[styles.phase, { borderTopColor: theme.line }]}>
-              <Text style={[styles.phaseTitle, { color: theme.gold2 }]}>{p.title}</Text>
-              <Text style={[styles.phaseText, { color: theme.textSoft }]}>{p.text}</Text>
+              <Text style={[styles.phaseTitle, { color: theme.gold2 }]}>{aAstroText(p.title, lang)}</Text>
+              <Text style={[styles.phaseText, { color: theme.textSoft }]}>{aAstroText(p.text, lang)}</Text>
             </View>
           ))}
         </View>
@@ -117,8 +117,8 @@ export function PeriodForecast({ period }: { period: PredPeriod }) {
           <Text style={[styles.h, { color: theme.gold1 }]}>{lang === 'hi' ? 'मुख्य बातें' : 'Highlights'}</Text>
           {highlights.map((hl, i) => (
             <View key={i} style={styles.hlRow}>
-              <Text style={[styles.hlLabel, { color: theme.gold2 }]}>{hl.label}</Text>
-              <Text style={[styles.hlText, { color: theme.textSoft }]}>{hl.text}</Text>
+              <Text style={[styles.hlLabel, { color: theme.gold2 }]}>{aAstroText(hl.label, lang)}</Text>
+              <Text style={[styles.hlText, { color: theme.textSoft }]}>{aAstroText(hl.text, lang)}</Text>
             </View>
           ))}
         </View>
@@ -129,7 +129,7 @@ export function PeriodForecast({ period }: { period: PredPeriod }) {
         <View style={[styles.card, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(255,253,247,0.85)' }]}>
           <Text style={[styles.h, { color: theme.gold1 }]}>{lang === 'hi' ? 'शुभ दिन / तिथियाँ' : 'Good Days / Key Dates'}</Text>
           {[...bestDays, ...majorDates].map((d, i) => (
-            <Text key={i} style={[styles.dateLine, { color: theme.textSoft }]}>•  {d}</Text>
+            <Text key={i} style={[styles.dateLine, { color: theme.textSoft }]}>•  {aAstroText(d, lang)}</Text>
           ))}
         </View>
       )}
@@ -140,8 +140,8 @@ export function PeriodForecast({ period }: { period: PredPeriod }) {
           <Text style={[styles.h, { color: theme.gold1 }]}>{lang === 'hi' ? 'उपाय' : 'Remedies'}</Text>
           {remedies.map((r, i) => (
             <View key={i} style={styles.remedy}>
-              <Text style={[styles.remedyTitle, { color: theme.text }]}>• {r.title}</Text>
-              {!!r.body && <Text style={[styles.remedyBody, { color: theme.textMuted }]}>{r.body}</Text>}
+              <Text style={[styles.remedyTitle, { color: theme.text }]}>• {aAstroText(r.title, lang)}</Text>
+              {!!r.body && <Text style={[styles.remedyBody, { color: theme.textMuted }]}>{aAstroText(r.body, lang)}</Text>}
             </View>
           ))}
         </View>
@@ -149,7 +149,7 @@ export function PeriodForecast({ period }: { period: PredPeriod }) {
 
       {!!data.advice && (
         <View style={[styles.adviceBox, { borderColor: theme.gold2 + '55', backgroundColor: theme.isDark ? 'rgba(201,150,46,0.08)' : 'rgba(244,195,74,0.12)' }]}>
-          <Text style={[styles.adviceText, { color: theme.text }]}>💛 {data.advice}</Text>
+          <Text style={[styles.adviceText, { color: theme.text }]}>💛 {aAstroText(data.advice, lang)}</Text>
         </View>
       )}
 
