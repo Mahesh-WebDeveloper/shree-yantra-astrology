@@ -20,8 +20,9 @@ import { markActivityStale } from './src/lib/networkActivity';
 import { AppConfigProvider } from './src/context/AppConfigProvider';
 import { LanguageProvider } from './src/i18n/LanguageProvider';
 import { initAnalytics, trackScreen } from './src/lib/analytics';
-import { addTapListener, registerForPush } from './src/lib/notifications';
+import { addTapListener, addReceivedListener, registerForPush } from './src/lib/notifications';
 import { getAuthToken } from './src/lib/api';
+import { refreshUnread, bumpUnread } from './src/lib/notificationStore';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -55,9 +56,12 @@ function Root() {
   useEffect(() => {
     const unsub = addTapListener((screen, params) => {
       try { (navigationRef as any)?.navigate(screen, params); } catch {}
+      refreshUnread(); // opening one may change the count
     });
-    const t = setTimeout(() => { if (getAuthToken()) registerForPush(); }, 1500);
-    return () => { unsub(); clearTimeout(t); };
+    // a push arriving while the app is open bumps the live badge instantly
+    const unsubRecv = addReceivedListener(() => bumpUnread(1));
+    const t = setTimeout(() => { if (getAuthToken()) { registerForPush(); refreshUnread(); } }, 1500);
+    return () => { unsub(); unsubRecv(); clearTimeout(t); };
   }, []);
 
   if (!showApp) {

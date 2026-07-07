@@ -100,8 +100,12 @@ router.get('/plans', plansCtrl.publicList);
 router.get('/app-config', appConfigCtrl.publicGet);
 router.get('/faq', faqCtrl.publicList);
 router.get('/notifications', requireAuth, notificationsCtrl.publicList);
-router.patch('/notifications/:id/read', requireAuth, notificationsCtrl.markRead);
+router.get('/notifications/unread-count', requireAuth, notificationsCtrl.unreadCount);
 router.post('/notifications/register-token', requireAuth, notificationsCtrl.registerToken);
+router.patch('/notifications/read-all', requireAuth, notificationsCtrl.markAllRead);
+router.patch('/notifications/:id/read', requireAuth, notificationsCtrl.markRead);
+router.delete('/notifications/:id', requireAuth, notificationsCtrl.hideOne);
+router.delete('/notifications', requireAuth, notificationsCtrl.clearAll);
 
 // analytics (app se events aate hain — public)
 router.post('/analytics/track', analyticsCtrl.track);

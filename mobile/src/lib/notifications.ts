@@ -109,6 +109,12 @@ export async function setDailyReminder(on: boolean, hour = 8, minute = 0): Promi
   return true;
 }
 
+/** Fires when a push ARRIVES while the app is open (foreground). Returns an unsubscribe fn. */
+export function addReceivedListener(onReceived: () => void) {
+  const sub = Notifications.addNotificationReceivedListener(() => onReceived());
+  return () => sub.remove();
+}
+
 /** Deep-link when the user TAPS a notification. Returns an unsubscribe fn. */
 export function addTapListener(onScreen: (screen: string, params?: any) => void) {
   const sub = Notifications.addNotificationResponseReceivedListener((resp) => {

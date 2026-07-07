@@ -879,8 +879,12 @@ export const getPlans = () => get<{ plans: Plan[] }>(withLang('/api/plans'));
 export interface AppNotification {
   _id: string; title: string; body: string; type: string; sentAt?: string; createdAt: string; read?: boolean;
 }
-export const getNotifications = () => get<{ notifications: AppNotification[] }>(withLang('/api/notifications'));
+export const getNotifications = () => get<{ notifications: AppNotification[]; unreadCount: number }>(withLang('/api/notifications'));
+export const getUnreadCount = () => get<{ unreadCount: number }>('/api/notifications/unread-count');
 export const markNotificationRead = (id: string) => post<{ notification: AppNotification }>(`/api/notifications/${id}/read`, {}, 'PATCH');
+export const markAllNotificationsRead = () => post<{ ok: boolean; unreadCount: number }>('/api/notifications/read-all', {}, 'PATCH');
+export const deleteNotification = (id: string) => del<{ ok: boolean; unreadCount: number }>(`/api/notifications/${id}`);
+export const clearAllNotifications = () => del<{ ok: boolean; unreadCount: number }>('/api/notifications');
 // register this device's Expo push token so the server can send push notifications
 export const registerPushToken = (token: string) => post<{ ok: boolean }>('/api/notifications/register-token', { token, platform: 'android' });
 

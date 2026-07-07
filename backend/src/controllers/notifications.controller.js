@@ -77,12 +77,17 @@ function applyPayload(notification, body, user) {
 function recipientFilter(user) {
   return {
     sentAt: { $ne: null, $lte: new Date() },
+    hiddenBy: { $ne: user._id }, // user hasn't cleared/deleted it
     $or: [
       { audience: 'all' },
       { audience: user.plan === 'premium' ? 'premium' : 'free' },
       { audience: 'user', targetUserId: user._id },
     ],
   };
+}
+
+function countUnread(user) {
+  return Notification.countDocuments({ ...recipientFilter(user), 'readBy.user': { $ne: user._id } });
 }
 
 function withReadState(notification, userId) {
@@ -108,7 +113,35 @@ exports.publicList = asyncHandler(async (req, res) => {
     .sort({ sentAt: -1, createdAt: -1 })
     .limit(100)
     .lean();
-  res.json({ notifications: notifications.map((n) => withReadState(localizeNotification(n, lang), req.user._id)) });
+  const mapped = notifications.map((n) => withReadState(localizeNotification(n, lang), req.user._id));
+  res.json({ notifications: mapped, unreadCount: mapped.filter((n) => !n.read).length });
+});
+
+// lightweight badge poll
+exports.unreadCount = asyncHandler(async (req, res) => {
+  res.json({ unreadCount: await countUnread(req.user) });
+});
+
+// mark every notification the user can see as read
+exports.markAllRead = asyncHandler(async (req, res) => {
+  await Notification.updateMany(
+    { ...recipientFilter(req.user), 'readBy.user': { $ne: req.user._id } },
+    { $push: { readBy: { user: req.user._id, readAt: new Date() } } }
+  );
+  res.json({ ok: true, unreadCount: 0 });
+});
+
+// user hides ("deletes") a single notification for themselves
+exports.hideOne = asyncHandler(async (req, res) => {
+  ensureObjectId(req.params.id);
+  await Notification.updateOne({ _id: req.params.id }, { $addToSet: { hiddenBy: req.user._id } });
+  res.json({ ok: true, unreadCount: await countUnread(req.user) });
+});
+
+// user clears all their notifications
+exports.clearAll = asyncHandler(async (req, res) => {
+  await Notification.updateMany(recipientFilter(req.user), { $addToSet: { hiddenBy: req.user._id } });
+  res.json({ ok: true, unreadCount: 0 });
 });
 
 exports.markRead = asyncHandler(async (req, res) => {

@@ -105,11 +105,11 @@ export default function NotificationsPage() {
               <Textarea value={draft.body || ''} onChange={(event) => setDraft({ ...draft, body: event.target.value })} required />
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Type">
+              <Field label="Category">
                 <Select value={draft.type} onChange={(event) => setDraft({ ...draft, type: event.target.value as NotificationItem['type'] })}>
-                  <option value="promo">Promo</option>
-                  <option value="account">Account</option>
-                  <option value="prediction">Prediction</option>
+                  <option value="prediction">Predictions / Rashifal 🔔</option>
+                  <option value="promo">Offers &amp; Updates ⭐</option>
+                  <option value="account">Account &amp; Billing 👑</option>
                 </Select>
               </Field>
               <Field label="Audience">

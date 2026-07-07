@@ -7,11 +7,12 @@ import { fonts } from '../theme/tokens';
 import { GradientText } from './GradientText';
 import { PressableScale } from './PressableScale';
 import { BrandEmblem, MenuIcon, BellIcon } from './icons/NavIcons';
+import { useUnreadCount } from '../lib/notificationStore';
 
 interface Props {
   onMenu?: () => void;
   onBell?: () => void;
-  /** notification badge count */
+  /** override the live unread badge (defaults to the real unread count) */
   badge?: number;
   showEmblem?: boolean;
 }
@@ -24,16 +25,18 @@ interface Props {
  * purple gradient, no top gap. The brand is centred between a menu button
  * (left) and a bell button (right). No negative margins → never overflows.
  */
-export function BrandHeader({ onMenu, onBell, badge = 3, showEmblem = true }: Props) {
+export function BrandHeader({ onMenu, onBell, badge, showEmblem = true }: Props) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
+  const liveUnread = useUnreadCount();
+  const count = badge !== undefined ? badge : liveUnread;
 
   const barBg = theme.isDark ? '#000000' : '#ffffff';
   const goldBorder = theme.isDark ? 'rgba(233,184,80,0.5)' : theme.cardBorder;
 
   const btnColors = theme.isDark
     ? (['rgba(233,184,80,0.18)', 'rgba(233,184,80,0.04)'] as const)
-    : (['#ffffff', '#fff3d8'] as const);
+    : (['#ffffff', '#f8fafc'] as const);
   const btnBorder = theme.isDark ? 'rgba(233,184,80,0.45)' : theme.cardBorder;
 
   const Btn = ({ onPress, children }: { onPress?: () => void; children: React.ReactNode }) => (
@@ -52,7 +55,7 @@ export function BrandHeader({ onMenu, onBell, badge = 3, showEmblem = true }: Pr
           backgroundColor: barBg,
           paddingTop: insets.top + 8,
           borderColor: goldBorder,
-          shadowColor: theme.isDark ? '#000' : 'rgba(61,40,9,0.24)',
+          shadowColor: theme.isDark ? '#000' : 'rgba(15,23,42,0.18)',
         },
       ]}
     >
@@ -74,9 +77,9 @@ export function BrandHeader({ onMenu, onBell, badge = 3, showEmblem = true }: Pr
 
       <Btn onPress={onBell}>
         <BellIcon color={theme.gold1} size={20} />
-        {badge > 0 && (
+        {count > 0 && (
           <View style={styles.badge}>
-            <Text style={styles.badgeText}>{badge}</Text>
+            <Text style={styles.badgeText}>{count > 99 ? '99+' : count}</Text>
           </View>
         )}
       </Btn>

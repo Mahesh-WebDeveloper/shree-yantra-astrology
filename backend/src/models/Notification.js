@@ -28,6 +28,9 @@ const notificationSchema = new mongoose.Schema(
     scheduledAt: Date,
     sentAt: Date,
     readBy: { type: [readReceiptSchema], default: [] },
+    // per-user "clear/delete": broadcasts are shared docs, so a user hiding one just adds
+    // their id here; publicList filters these out. Never deletes the doc for other users.
+    hiddenBy: { type: [mongoose.Schema.Types.ObjectId], ref: 'User', default: [] },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true }
