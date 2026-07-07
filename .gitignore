@@ -55,3 +55,7 @@ Thumbs.db
 # Firebase config (contains API key — do not commit)
 google-services.json
 mobile/google-services.json
+
+# Firebase Admin service-account key (secret — never commit)
+firebase-service-account.json
+backend/firebase-service-account.json

@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const asyncHandler = require('../middleware/asyncHandler');
 const Notification = require('../models/Notification');
 const User = require('../models/User');
-const { sendPush, isExpoToken } = require('../utils/expoPush');
+const { sendFcm } = require('../utils/fcm');
 const { i18nValue, langFromReq, normalizeTranslations } = require('../utils/localize');
 
 function badRequest(message) {
@@ -174,13 +174,18 @@ function audienceQuery(n) {
 const CHANNEL_FOR = { prediction: 'daily', promo: 'offers', account: 'account' };
 async function pushToAudience(n) {
   const users = await User.find({ ...audienceQuery(n), blocked: { $ne: true } }, 'pushTokens').lean();
-  const tokens = users.flatMap((u) => u.pushTokens || []).filter(isExpoToken);
-  return sendPush(tokens, {
+  const tokens = users.flatMap((u) => u.pushTokens || []);
+  const res = await sendFcm(tokens, {
     title: n.title,
     body: n.body,
     channelId: CHANNEL_FOR[n.type] || 'default',
     data: { screen: 'Notifications', notificationId: String(n._id) },
   });
+  // prune dead tokens FCM reported so we stop re-sending to them
+  if (res.invalid && res.invalid.length) {
+    await User.updateMany({ pushTokens: { $in: res.invalid } }, { $pull: { pushTokens: { $in: res.invalid } } }).catch(() => {});
+  }
+  return res;
 }
 
 exports.send = asyncHandler(async (req, res) => {
@@ -196,7 +201,7 @@ exports.send = asyncHandler(async (req, res) => {
 // device registers its Expo push token (called by the app after login)
 exports.registerToken = asyncHandler(async (req, res) => {
   const token = String((req.body && req.body.token) || '').trim();
-  if (!isExpoToken(token)) throw badRequest('Invalid push token');
+  if (token.length < 20) throw badRequest('Invalid push token');
   await User.updateOne({ _id: req.user._id }, { $addToSet: { pushTokens: token } });
   res.json({ ok: true });
 });

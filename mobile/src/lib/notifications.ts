@@ -15,7 +15,6 @@ import * as Device from 'expo-device';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { registerPushToken } from './api';
 
-const PROJECT_ID = '9b966b0c-f9bf-404f-a82b-c7566494b28b'; // from app.json extra.eas.projectId
 const DAILY_KEY = 'sy.dailyReminder';
 const DAILY_ID = 'daily-rashifal';
 
@@ -60,18 +59,18 @@ export async function requestPermission(): Promise<boolean> {
   } catch { return false; }
 }
 
-/** Fetch the Expo push token and register it with the backend (for server-sent push). */
+/** Fetch the native FCM device token and register it with the backend (server sends via FCM). */
 export async function registerForPush(): Promise<string | null> {
   try {
     if (!Device.isDevice) return null; // emulators can't get a real push token
     await ensureAndroidChannel();
     if (!(await requestPermission())) return null;
-    const res = await Notifications.getExpoPushTokenAsync({ projectId: PROJECT_ID });
-    const token = res?.data || null;
+    const res = await Notifications.getDevicePushTokenAsync(); // native FCM token on Android
+    const token = res && typeof res.data === 'string' ? res.data : null;
     if (token) await registerPushToken(token).catch(() => {});
     return token;
   } catch {
-    return null; // FCM not set up yet on Android → skip; local notifications still work
+    return null; // FCM not ready yet → skip; local notifications still work
   }
 }
 
