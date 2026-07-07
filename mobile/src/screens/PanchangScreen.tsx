@@ -61,6 +61,17 @@ const Arrow = ({ dir, c }: { dir: 'l' | 'r'; c: string }) => (
   </Svg>
 );
 
+// expand/collapse chevron so festival cards clearly read as tappable
+const Chevron = ({ open, c }: { open: boolean; c: string }) => (
+  <Svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" style={{ transform: [{ rotate: open ? '180deg' : '0deg' }] }}>
+    <Path d="M6 9l6 6 6-6" />
+  </Svg>
+);
+
+// normalise a label for de-duping; detect Bhadra/Vishti (shown in its own card, so drop from lists)
+const norm = (s?: string) => String(s || '').toLowerCase().replace(/[^a-z0-9ऀ-ॿ]/gi, '');
+const isBhadra = (s?: string) => /bhadra|vishti/.test(norm(s)) || /भद्रा|विष्टि/.test(String(s || ''));
+
 function endLabel(e: AngaEnd | undefined, lang: 'en' | 'hi') {
   if (!e) return '';
   const nd = e.nextDay ? (lang === 'hi' ? ' (अगले दिन)' : ' (next day)') : '';
@@ -71,10 +82,10 @@ function endLabel(e: AngaEnd | undefined, lang: 'en' | 'hi') {
 function AngCard({ label, value, num, sub, end, theme, lang }: { label: string; value: string; num?: number; sub?: string; end?: AngaEnd; theme: Theme; lang: 'en' | 'hi' }) {
   return (
     <View style={[styles.ang, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(255,253,247,0.85)' }]}>
-      <Text style={[styles.angLabel, { color: theme.gold2 }]}>{label}{num ? `  ${num}` : ''}</Text>
-      <Text style={[styles.angValue, { color: theme.text }]} numberOfLines={1}>{toEng(value) || '—'}</Text>
-      {!!sub && <Text style={[styles.angSub, { color: theme.textMuted }]} numberOfLines={1}>{sub}</Text>}
-      {!!end && <Text style={[styles.angEnd, { color: theme.gold1 }]} numberOfLines={1}>{endLabel(end, lang)}</Text>}
+      <Text style={[styles.angLabel, { color: theme.gold2 }]} numberOfLines={1}>{label}{num ? `  ${num}` : ''}</Text>
+      <Text style={[styles.angValue, { color: theme.text }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{toEng(value) || '—'}</Text>
+      {!!sub && <Text style={[styles.angSub, { color: theme.textMuted }]} numberOfLines={2}>{sub}</Text>}
+      {!!end && <Text style={[styles.angEnd, { color: theme.gold1 }]} numberOfLines={2}>{endLabel(end, lang)}</Text>}
     </View>
   );
 }
@@ -97,8 +108,8 @@ function TimingTile({ label, value, sub, theme }: { label: string; value: string
   return (
     <View style={[styles.timeTile, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.025)' : 'rgba(255,253,247,0.86)' }]}>
       <Text style={[styles.timeLabel, { color: theme.textMuted }]} numberOfLines={1}>{label}</Text>
-      <Text style={[styles.timeValue, { color: theme.text }]} numberOfLines={1}>{value}</Text>
-      {!!sub && <Text style={[styles.timeSub, { color: theme.gold2 }]} numberOfLines={1}>{sub}</Text>}
+      <Text style={[styles.timeValue, { color: theme.text }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{value}</Text>
+      {!!sub && <Text style={[styles.timeSub, { color: theme.gold2 }]} numberOfLines={2}>{sub}</Text>}
     </View>
   );
 }
@@ -343,6 +354,31 @@ export function PanchangScreen({ navigation }: any) {
     const source = q.length >= 2 ? remoteFestivals : festivals;
     return source.flatMap((f) => (f.observances || []).map((obs) => ({ date: f.date, weekday: f.weekday, weekdayHi: f.weekdayHi, tithi: f.tithi, obs })));
   }, [festivals, remoteFestivals, festivalQuery]);
+
+  // Today's observances — de-duped; Bhadra/Vishti dropped here since it has its own card above.
+  const observancesClean = useMemo(() => {
+    const seen = new Set<string>();
+    return (data?.observances || []).filter((o) => {
+      if (data?.bhadra && isBhadra(o.name?.en || o.name?.hi)) return false;
+      const k = o.key || norm(o.name?.en || o.name?.hi);
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+  }, [data]);
+
+  // Upcoming festivals — drop exact duplicates (same day + same festival) the API may repeat,
+  // and drop Bhadra/Vishti (it's a caution shown in its own card, not a festival).
+  const festivalRowsClean = useMemo(() => {
+    const seen = new Set<string>();
+    return festivalRows.filter((f) => {
+      if (isBhadra(f.obs.name?.en || f.obs.name?.hi) || isBhadra(f.obs.key)) return false;
+      const k = `${f.date}|${f.obs.key || norm(f.obs.name?.en || f.obs.name?.hi)}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+  }, [festivalRows]);
   const openFestival = async (row: FestivalRow, withAi = false) => {
     hTap();
     const requestId = detailRequestRef.current + 1;
@@ -495,11 +531,11 @@ export function PanchangScreen({ navigation }: any) {
             );
           })()}
 
-          {!!(data.observances || []).length && (
+          {!!observancesClean.length && (
             <View style={[styles.card, { borderColor: '#d6a03b66', backgroundColor: theme.isDark ? 'rgba(214,160,59,0.08)' : 'rgba(214,160,59,0.10)' }]}>
               <Text style={[styles.h, { color: theme.gold1 }]}>🪔 {lang === 'hi' ? 'आज के व्रत / उत्सव / सावधानी' : "Today's Vrat / Festival / Caution"}</Text>
               <View style={{ gap: 10, marginTop: 10 }}>
-                {data.observances!.map((o) => (
+                {observancesClean.map((o) => (
                   <View key={o.key} style={[styles.obsRow, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.45)' }]}>
                     <View style={[styles.obsBadge, { backgroundColor: o.importance === 'major' ? '#d6a03b' : o.type === 'caution' ? '#e06a5a' : '#3ec77a' }]} />
                     <View style={{ flex: 1 }}>
@@ -525,7 +561,7 @@ export function PanchangScreen({ navigation }: any) {
               />
               <View style={{ gap: 9, marginTop: 10 }}>
                 {searchingFestival && <View style={styles.detailLoading}><ActivityIndicator color={theme.gold1} /><Text style={[styles.obsText, { color: theme.textMuted }]}>{lang === 'hi' ? 'भविष्य के उत्सव खोज रहे हैं' : 'Searching future festivals'}</Text></View>}
-                {festivalRows.slice(0, 10).map((f) => {
+                {festivalRowsClean.slice(0, 10).map((f) => {
                   const active = selectedFestival?.date === f.date && selectedFestival?.obs.key === f.obs.key;
                   const tithiText = lang === 'hi'
                     ? [f.tithi?.hi || f.tithi?.name, f.tithi?.pakshaHi || f.tithi?.paksha].filter(Boolean).join(' · ')
@@ -538,7 +574,11 @@ export function PanchangScreen({ navigation }: any) {
                           <View style={styles.festivalBody}>
                             <Text style={[styles.festivalTitle, { color: theme.text }]} numberOfLines={2}>{L(f.obs.name)}</Text>
                             {!!tithiText && <Text style={[styles.festivalMeta, { color: theme.textMuted }]} numberOfLines={2}>{toEng(tithiText)}</Text>}
-                            <Text style={[styles.festivalHint, { color: theme.textMuted }]} numberOfLines={2}>{L(f.obs.guidance)}</Text>
+                            <Text style={[styles.festivalHint, { color: theme.textMuted }]} numberOfLines={active ? undefined : 2}>{L(f.obs.guidance)}</Text>
+                            <View style={styles.festExpand}>
+                              <Text style={[styles.festExpandTxt, { color: theme.gold2 }]}>{active ? (lang === 'hi' ? 'विवरण छिपाएँ' : 'Hide details') : (lang === 'hi' ? 'विवरण देखें' : 'View details')}</Text>
+                              <Chevron open={active} c={theme.gold2} />
+                            </View>
                           </View>
                         </Pressable>
                         <View style={styles.festivalActions}>
@@ -553,7 +593,7 @@ export function PanchangScreen({ navigation }: any) {
                     </View>
                   );
                 })}
-                {!festivalRows.length && <Text style={[styles.emptyTxt, { color: theme.textMuted }]}>{lang === 'hi' ? 'कोई परिणाम नहीं मिला' : 'No results found'}</Text>}
+                {!festivalRowsClean.length && <Text style={[styles.emptyTxt, { color: theme.textMuted }]}>{lang === 'hi' ? 'कोई परिणाम नहीं मिला' : 'No results found'}</Text>}
               </View>
             </View>
           )}
@@ -658,6 +698,8 @@ const styles = StyleSheet.create({
   festivalTitle: { fontFamily: fonts.interSemi, fontSize: 14, lineHeight: 19 },
   festivalMeta: { fontFamily: fonts.inter, fontSize: 11.5, lineHeight: 16, marginTop: 4 },
   festivalHint: { fontFamily: fonts.inter, fontSize: 11, lineHeight: 15, marginTop: 4 },
+  festExpand: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 7 },
+  festExpandTxt: { fontFamily: fonts.interSemi, fontSize: 10.5, letterSpacing: 0.3 },
   upDate: { fontFamily: fonts.interSemi, fontSize: 12 },
   upWeek: { fontFamily: fonts.inter, fontSize: 10.5, marginTop: 2 },
   aiChip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 6, minWidth: 72, alignItems: 'center' },
