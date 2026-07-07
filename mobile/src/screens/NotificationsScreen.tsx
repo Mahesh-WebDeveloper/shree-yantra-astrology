@@ -8,7 +8,7 @@ import { Page } from '../components/Page';
 import { BellIcon } from '../components/icons/NavIcons';
 import { hTap, hSelect, hSuccess } from '../lib/haptics';
 import { getNotifications, markNotificationRead, AppNotification } from '../lib/api';
-import { getDailyReminder, setDailyReminder, sendTestNotification } from '../lib/notifications';
+import { getDailyReminder, setDailyReminder } from '../lib/notifications';
 import { useT, useLang } from '../i18n/LanguageProvider';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -18,7 +18,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 const sw = (c: string) => ({ width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none' as const, stroke: c, strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const });
 
 type NType = 'predictions' | 'account';
-type Icon = 'star' | 'crown' | 'clock' | 'chart' | 'chat';
+type Icon = 'star' | 'crown' | 'clock' | 'chart' | 'chat' | 'bell';
 
 interface Note { id: string; type: NType; icon: Icon; title: string; msg: string; time: string; unread?: boolean; go?: string; }
 
@@ -26,8 +26,9 @@ const ICONS: Record<Icon, (c: string) => React.ReactNode> = {
   star: (c) => <Svg {...sw(c)}><Polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></Svg>,
   crown: (c) => <Svg {...sw(c)}><Path d="M2 8l4 6 5-7 5 7 4-4-2 12H4z" /></Svg>,
   clock: (c) => <Svg {...sw(c)}><Circle cx={12} cy={12} r={10} /><Polyline points="12 6 12 12 16 14" /></Svg>,
-  chart: (c) => <Svg {...sw(c)}><Rect x={3} y={3} width={18} height={18} /><Line x1={3} y1={3} x2={21} y2={21} /><Line x1={21} y1={3} x2={3} y2={21} /></Svg>,
+  chart: (c) => <Svg {...sw(c)}><Line x1={3} y1={21} x2={21} y2={21} /><Rect x={5} y={11} width={3.4} height={8} /><Rect x={10.3} y={7} width={3.4} height={12} /><Rect x={15.6} y={3.5} width={3.4} height={15.5} /></Svg>,
   chat: (c) => <Svg {...sw(c)}><Path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></Svg>,
+  bell: (c) => <Svg {...sw(c)}><Path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><Path d="M13.73 21a2 2 0 0 1-3.46 0" /></Svg>,
 };
 
 const SECTIONS: { day: string; items: Note[] }[] = [
@@ -64,7 +65,7 @@ const easeNext = () => LayoutAnimation.configureNext(LayoutAnimation.create(220,
 
 // backend notification → screen Note shape
 const ntype = (t: string): NType => (t === 'account' ? 'account' : 'predictions');
-const nicon = (t: string): Icon => (t === 'account' ? 'crown' : t === 'promo' ? 'star' : 'chart');
+const nicon = (t: string): Icon => (t === 'account' ? 'crown' : t === 'promo' ? 'star' : 'bell');
 const relDay = (iso: string) => {
   const d = new Date(iso); const now = new Date();
   const sd = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
@@ -100,12 +101,6 @@ function DailyReminderCard() {
     setBusy(false);
   };
 
-  const test = async () => {
-    hTap();
-    const ok = await sendTestNotification();
-    if (ok) hSuccess();
-  };
-
   return (
     <View style={[styles.reminderCard, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.06)' : 'rgba(255,247,224,0.9)' }]}>
       <View style={styles.reminderRow}>
@@ -116,9 +111,6 @@ function DailyReminderCard() {
         </View>
         <Switch value={on} onValueChange={toggle} trackColor={{ true: theme.gold1, false: theme.cardBorder }} thumbColor="#fff" />
       </View>
-      <Pressable onPress={test} hitSlop={6} style={[styles.reminderTest, { borderTopColor: theme.cardBorder }]}>
-        <Text style={[styles.reminderTestTxt, { color: theme.gold1 }]}>🔔 {hi ? 'एक टेस्ट सूचना भेजें' : 'Send a test notification'}</Text>
-      </Pressable>
     </View>
   );
 }
@@ -273,8 +265,6 @@ const styles = StyleSheet.create({
   reminderEmoji: { fontSize: 26 },
   reminderTitle: { fontFamily: fonts.interBold, fontSize: 14 },
   reminderSub: { fontFamily: fonts.inter, fontSize: 11.5, lineHeight: 16, marginTop: 2 },
-  reminderTest: { borderTopWidth: 1, paddingVertical: 10, alignItems: 'center' },
-  reminderTestTxt: { fontFamily: fonts.interSemi, fontSize: 12.5 },
   tabs: { flexDirection: 'row', gap: 8, marginBottom: 6 },
   tabWrap: { flex: 1, borderRadius: radii.pill },
   tab: { paddingVertical: 9, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },

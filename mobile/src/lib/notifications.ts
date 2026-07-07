@@ -102,21 +102,6 @@ export async function setDailyReminder(on: boolean, hour = 8, minute = 0): Promi
   return true;
 }
 
-/** Fire a sample notification a few seconds from now so the user can verify it works. */
-export async function sendTestNotification(): Promise<boolean> {
-  await ensureAndroidChannel();
-  if (!(await requestPermission())) return false;
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: '🔔 Shree Yantra',
-      body: 'सूचनाएँ चालू हैं ✨ — अब आपको राशिफल, मुहूर्त और पर्व की जानकारी समय पर मिलेगी।',
-      data: { screen: 'Notifications' },
-    },
-    trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 3, channelId: 'default' },
-  });
-  return true;
-}
-
 /** Deep-link when the user TAPS a notification. Returns an unsubscribe fn. */
 export function addTapListener(onScreen: (screen: string, params?: any) => void) {
   const sub = Notifications.addNotificationResponseReceivedListener((resp) => {
