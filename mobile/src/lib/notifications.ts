@@ -28,14 +28,19 @@ Notifications.setNotificationHandler({
   }),
 });
 
+// Branded temple-bell sound, bundled at android/app/src/main/res/raw/bell.wav
+export const BELL_SOUND = 'bell.wav';
+
 // Industry standard: separate channels (categories) so the user can control each type in the
-// system settings. Each keeps the brand gold light + a gentle vibration.
+// system settings. Each plays the brand bell + gold light + a gentle vibration.
+// NOTE: Android channels are immutable once created — the `sy_` ids are a fresh set so the
+// bell sound reliably takes effect (renaming forces the new sound even on an update-install).
 const CHANNELS: { id: string; name: string; importance: number }[] = [
-  { id: 'default', name: 'General', importance: 4 },              // HIGH
-  { id: 'daily', name: 'Daily Rashifal', importance: 4 },         // HIGH
-  { id: 'panchang', name: 'Festivals & Panchang', importance: 4 },// HIGH
-  { id: 'offers', name: 'Offers & Updates', importance: 3 },      // DEFAULT
-  { id: 'account', name: 'Account & Billing', importance: 3 },    // DEFAULT
+  { id: 'sy_general', name: 'General', importance: 4 },              // HIGH
+  { id: 'sy_daily', name: 'Daily Rashifal', importance: 4 },         // HIGH
+  { id: 'sy_panchang', name: 'Festivals & Panchang', importance: 4 },// HIGH
+  { id: 'sy_offers', name: 'Offers & Updates', importance: 3 },      // DEFAULT
+  { id: 'sy_account', name: 'Account & Billing', importance: 3 },    // DEFAULT
 ];
 
 export async function ensureAndroidChannel() {
@@ -44,6 +49,7 @@ export async function ensureAndroidChannel() {
     await Notifications.setNotificationChannelAsync(c.id, {
       name: c.name,
       importance: c.importance,
+      sound: BELL_SOUND,
       vibrationPattern: [0, 220, 180, 220],
       lightColor: '#e9b850',
     }).catch(() => {});
@@ -95,9 +101,10 @@ export async function setDailyReminder(on: boolean, hour = 8, minute = 0): Promi
     content: {
       title: '🌅 आज का राशिफल तैयार है',
       body: 'आपका आज का व्यक्तिगत राशिफल देखें — शुभ रंग, अंक और समय के साथ।',
+      sound: BELL_SOUND,
       data: { screen: 'DailyPrediction' },
     },
-    trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour, minute, channelId: 'default' },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour, minute, channelId: 'sy_daily' },
   });
   return true;
 }

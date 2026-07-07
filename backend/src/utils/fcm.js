@@ -45,7 +45,8 @@ async function sendFcm(tokens, { title, body, data, channelId } = {}) {
         tokens: chunk,
         notification: { title, body },
         data: strData,
-        android: { priority: 'high', notification: { channelId: channelId || 'default', color: '#e9b850', sound: 'default' } },
+        // channelId's own sound (bell) wins on Android 8+; `sound: 'bell'` covers older devices
+        android: { priority: 'high', notification: { channelId: channelId || 'sy_general', color: '#e9b850', sound: 'bell' } },
       });
       sent += res.successCount;
       res.responses.forEach((r, idx) => {

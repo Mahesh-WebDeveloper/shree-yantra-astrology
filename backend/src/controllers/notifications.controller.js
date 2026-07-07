@@ -171,14 +171,14 @@ function audienceQuery(n) {
 }
 
 // gather every Expo push token for the notification's audience and deliver a device push
-const CHANNEL_FOR = { prediction: 'daily', promo: 'offers', account: 'account' };
+const CHANNEL_FOR = { prediction: 'sy_daily', promo: 'sy_offers', account: 'sy_account' };
 async function pushToAudience(n) {
   const users = await User.find({ ...audienceQuery(n), blocked: { $ne: true } }, 'pushTokens').lean();
   const tokens = users.flatMap((u) => u.pushTokens || []);
   const res = await sendFcm(tokens, {
     title: n.title,
     body: n.body,
-    channelId: CHANNEL_FOR[n.type] || 'default',
+    channelId: CHANNEL_FOR[n.type] || 'sy_general',
     data: { screen: 'Notifications', notificationId: String(n._id) },
   });
   // prune dead tokens FCM reported so we stop re-sending to them
