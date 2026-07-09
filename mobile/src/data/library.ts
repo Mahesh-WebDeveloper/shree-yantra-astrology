@@ -61,7 +61,6 @@ export interface LibraryItem {
 export const MANTRAS: LibraryItem[] = [
   { id: 'maha',    type: 'mantra', title: 'Mahamrityunjaya Mantra', subtitle: '108 Times', color: 'purple', trackId: 'mahamrityunjaya', glyph: 'sun' },
   { id: 'gayatri', type: 'mantra', title: 'Gayatri Mantra',         subtitle: '108 Times', color: 'gold',   trackId: 'gayatri',         glyph: 'target' },
-  { id: 'hanuman', type: 'mantra', title: 'Hanuman Chalisa',        subtitle: '1 Path',    color: 'gold',   trackId: 'temple-bells',    glyph: 'star' },
   { id: 'shiva',   type: 'mantra', title: 'Om Namah Shivaya',       subtitle: '108 Times', color: 'blue',   trackId: 'om-namah',        glyph: 'sun' },
   { id: 'lakshmi', type: 'mantra', title: 'Mahalakshmi Mantra',     subtitle: '108 Times', color: 'gold',   trackId: 'gita-ch2',        glyph: 'target' },
   { id: 'durga',   type: 'mantra', title: 'Durga Mantra',           subtitle: '108 Times', color: 'rose',   trackId: 'meditation',      glyph: 'sun' },
@@ -129,6 +128,16 @@ export const BOOKS: Record<string, BookDoc> = {
     chapters: [
       { title: 'बालकांड', verses: [
         { ref: 'चौपाई 1.1', sa: 'बंदउ गुरु पद पदुम परागा। सुरुचि सुबास सरस अनुरागा।।', en: '' },
+      ] },
+    ],
+  },
+  'hanuman-chalisa': {
+    id: 'hanuman-chalisa', eyebrow: 'Tulsidas · Awadhi', title: 'Hanuman Chalisa', hindi: 'श्री हनुमान\nचालीसा', cover: 'gold',
+    language: ['Hindi', 'English'], trackId: 'temple-bells',
+    intro: 'Goswami Tulsidas rachit 40 chaupaiyon ka bhajan — Shri Hanuman ki stuti. Devanagari + roman + English arth, aur har chaupai ka AI se saral arth.',
+    chapters: [
+      { title: 'Hanuman Chalisa', verses: [
+        { ref: 'चौपाई 1', sa: 'जय हनुमान ज्ञान गुन सागर। जय कपीस तिहुँ लोक उजागर॥', en: 'Victory to you, Hanuman, ocean of wisdom and virtue!' },
       ] },
     ],
   },
@@ -209,6 +218,7 @@ export const SCRIPTURES: LibraryItem[] = BOOK_LIST.map((b) => ({
   subtitle: b.id === 'gita' ? '18 Chapters · 700 Verses'
     : b.id === 'ramayan' ? 'Sanskrit & English · 7 Kanda'
     : b.id === 'ramcharitmanas' ? 'Hindi · 7 Kand · 1074 Verses'
+    : b.id === 'hanuman-chalisa' ? 'Hindi & English · 40 Chaupai · AI'
     : b.id === 'rigveda' ? 'Sanskrit & English · 10 Mandala'
     : b.id === 'atharvaveda' ? 'Sanskrit & English · 20 Kanda'
     : b.id === 'yajurveda' ? 'Sanskrit & English · 40 Adhyaya'

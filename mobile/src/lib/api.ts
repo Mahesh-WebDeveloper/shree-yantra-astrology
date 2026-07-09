@@ -958,8 +958,8 @@ export interface VedaSectionFull { veda: string; book: number; bookName?: string
 export const getVedaBooks = (veda: string) => get<{ veda: string; books: VedaBook[] }>(`/api/veda/${veda}`);
 export const getVedaSections = (veda: string, book: number) => get<{ veda: string; book: number; sections: VedaSectionInfo[] }>(`/api/veda/${veda}/${book}`);
 export const getVedaSection = (veda: string, book: number, section: number) => get<{ section: VedaSectionFull }>(`/api/veda/${veda}/${book}/${section}`);
-export const getVedaExplanation = (veda: string, book: number, section: number, verse: number) =>
-  post<VerseExplanation>('/api/ai/veda-explain', { veda, book, section, verse });
+export const getVedaExplanation = (veda: string, book: number, section: number, verse: number, lang?: 'en' | 'hi') =>
+  post<VerseExplanation>('/api/ai/veda-explain', { veda, book, section, verse, lang });
 
 // ── Daily Spiritual Boost (roz naya shlok + AI explanation) ──
 export interface DailyShloka {

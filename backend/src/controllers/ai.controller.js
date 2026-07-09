@@ -146,8 +146,9 @@ exports.vedaExplain = asyncHandler(async (req, res) => {
   if (!doc) return res.status(404).json({ error: 'Section nahi mila' });
   const m = (doc.verses || []).find((x) => Number(x.verse) === verse);
   if (!m) return res.status(404).json({ error: 'Mantra nahi mila' });
+  const lang = req.body.lang === 'en' ? 'en' : 'hi';
   res.json(await ai.generateVedaExplanation({
-    veda, book, section, verse, sanskrit: m.sanskrit, english: m.english,
+    veda, book, section, verse, sanskrit: m.sanskrit, english: m.english, lang,
   }));
 });
 

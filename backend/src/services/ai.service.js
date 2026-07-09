@@ -1029,9 +1029,25 @@ Return STRICT JSON: {"period":"<exactly one period name from the list>","reason"
 // Mool paath Gemini ko dekar: saral Hindi anuvad + kahani (katha) jaisa explanation + jeevan ki seekh.
 // Reusable — Ramcharitmanas, Gita, Valmiki Ramayan, aur aage saari books ke liye ek hi engine.
 // Cache: book-specific key se (content fixed — ek baar generate, hamesha reuse).
-async function generateVerseExplanation({ cacheKey, book, refLabel, sourceText, sourceScript, hint }) {
-  return cached(cacheKey, 'verse-explain', async () => {
-    const prompt = `तुम ${book} के विद्वान व्याख्याकार और कुशल कथावाचक हो।
+async function generateVerseExplanation({ cacheKey, book, refLabel, sourceText, sourceScript, hint, lang }) {
+  const en = lang === 'en';
+  // English cache is a separate key so existing Hindi caches stay valid.
+  const key = en ? `${cacheKey}|en` : cacheKey;
+  return cached(key, 'verse-explain', async () => {
+    const prompt = en
+      ? `You are a learned commentator and a warm, gifted storyteller for ${book}.
+Below is ${refLabel} (original text in ${sourceScript}):
+
+"""
+${sourceText}
+"""
+Explain this text in simple, clear English so that even a complete beginner who knows nothing about it understands easily. Do not invent anything — base everything only on this text.
+- "anuvad": a simple English meaning/translation of this text (2-4 sentences).
+- "katha": explain the scene like a short, vivid story — the context, the feeling and the imagery, as if a loving storyteller is narrating it (3-5 sentences).
+- "seekh": what lesson we learn from this for our own life — practical and inspiring, with a tiny everyday example (2-3 sentences).
+Explain any hard spiritual/Sanskrit term in plain everyday English with a small example. Write ONLY in English.
+Return STRICT JSON: {"anuvad":"...","katha":"...","seekh":"..."}`
+      : `तुम ${book} के विद्वान व्याख्याकार और कुशल कथावाचक हो।
 नीचे ${refLabel} दिया गया है (${sourceScript} में मूल पाठ):
 
 """
@@ -1098,16 +1114,21 @@ function generateRigvedaExplanation({ mandala, sukta, verse, sanskrit, english }
 }
 
 // Generic Veda (Yajur/Sama/Atharva) — bookLabel/sectionLabel display ke saath
-const VEDA_HI = { yajurveda: 'यजुर्वेद', samaveda: 'सामवेद', atharvaveda: 'अथर्ववेद', mahabharata: 'महाभारत', upanishads: 'उपनिषद्' };
-function generateVedaExplanation({ veda, book, section, verse, sanskrit, english }) {
-  const name = VEDA_HI[veda] || veda;
-  const unit = veda === 'mahabharata' ? 'श्लोक' : 'मंत्र';
+const VEDA_HI = { yajurveda: 'यजुर्वेद', samaveda: 'सामवेद', atharvaveda: 'अथर्ववेद', mahabharata: 'महाभारत', upanishads: 'उपनिषद्', 'hanuman-chalisa': 'श्री हनुमान चालीसा' };
+const VEDA_EN = { 'hanuman-chalisa': 'the Hanuman Chalisa (by Goswami Tulsidas)' };
+function generateVedaExplanation({ veda, book, section, verse, sanskrit, english, lang }) {
+  const en = lang === 'en';
+  const name = en ? (VEDA_EN[veda] || VEDA_HI[veda] || veda) : (VEDA_HI[veda] || veda);
+  const isChalisa = veda === 'hanuman-chalisa';
+  const script = isChalisa ? (en ? 'Awadhi/Hindi' : 'अवधी/हिंदी') : (en ? 'Sanskrit' : 'संस्कृत');
+  const unit = isChalisa ? (en ? 'verse' : 'चौपाई/दोहा') : (veda === 'mahabharata' ? 'श्लोक' : 'मंत्र');
   return generateVerseExplanation({
+    lang,
     cacheKey: `veda|explain|v1|${veda}|${book}|${section}|${verse}`,
     book: name,
-    refLabel: `${name} — ${book}.${section}.${verse} (${unit})`,
+    refLabel: en ? `verse ${verse} of ${name}` : `${name} — ${book}.${section}.${verse} (${unit})`,
     sourceText: sanskrit,
-    sourceScript: 'संस्कृत',
+    sourceScript: script,
     hint: english,
   });
 }

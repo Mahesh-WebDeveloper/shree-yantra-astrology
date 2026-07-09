@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ActivityIndicator, Pressable } from 'react-nati
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts, radii } from '../theme/tokens';
 import { hTap } from '../lib/haptics';
-import { useT } from '../i18n/LanguageProvider';
+import { useLang } from '../i18n/LanguageProvider';
 import { VerseExplanation } from '../lib/api';
 
 /**
@@ -13,7 +13,8 @@ import { VerseExplanation } from '../lib/api';
  */
 export function VerseMeaning({ fetcher }: { fetcher: () => Promise<VerseExplanation> }) {
   const { theme } = useTheme();
-  const t = useT();
+  const { lang } = useLang();
+  const hi = lang === 'hi';
   const [open, setOpen] = useState(false);
   const [exp, setExp] = useState<VerseExplanation | null>(null);
   const [loading, setLoading] = useState(false);
@@ -37,7 +38,7 @@ export function VerseMeaning({ fetcher }: { fetcher: () => Promise<VerseExplanat
     !text ? null : (
       <View style={[styles.mBox, { borderTopColor: boxBorder }]}>
         <Text style={[styles.mLabel, { color: theme.gold2 }]}>{label}</Text>
-        <Text style={[styles.mText, { color: theme.text }]}>{text}</Text>
+        <Text style={[styles.mText, { color: theme.text, fontFamily: hi ? fonts.devanagari : fonts.inter, fontSize: hi ? 15 : 14 }]}>{text}</Text>
       </View>
     );
 
@@ -52,20 +53,20 @@ export function VerseMeaning({ fetcher }: { fetcher: () => Promise<VerseExplanat
         ]}
       >
         <Text style={[styles.btnText, { color: theme.gold1 }]}>
-          📖  {open ? t('ai.hideMeaning', 'Hide Hindi meaning') : t('ai.showMeaning', 'See meaning in Hindi')}
+          📖  {open ? (hi ? 'अर्थ छिपाएँ' : 'Hide explanation') : (hi ? 'सरल अर्थ जानें' : 'Understand in simple words')}
         </Text>
       </Pressable>
 
       {open && (
         <View style={{ marginTop: 12 }}>
-          {loading && <View style={{ paddingVertical: 14, alignItems: 'center' }}><ActivityIndicator color={theme.gold1} /></View>}
-          {err && <Text style={[styles.errSmall, { color: theme.textMuted }]}>{t('ai.meaningErr', 'Arth load nahi ho paya — phir try karein.')}</Text>}
+          {loading && <View style={{ paddingVertical: 14, alignItems: 'center' }}><ActivityIndicator color={theme.gold1} /><Text style={[styles.aiNote, { color: theme.textMuted, marginTop: 8 }]}>{hi ? 'AI सरल अर्थ तैयार कर रहा है…' : 'AI is preparing a simple explanation…'}</Text></View>}
+          {err && <Text style={[styles.errSmall, { color: theme.textMuted }]}>{hi ? 'अर्थ लोड नहीं हो पाया — फिर प्रयास करें।' : 'Could not load — please try again.'}</Text>}
           {exp && (
             <>
-              <Box label={t('ai.anuvad', 'Meaning')} text={exp.anuvad} />
-              <Box label={t('ai.katha', 'Story')} text={exp.katha} />
-              <Box label={t('ai.seekh', 'Lesson')} text={exp.seekh} />
-              <Text style={[styles.aiNote, { color: theme.textMuted }]}>✦ {t('ai.aiNote', 'Detailed explanation')}</Text>
+              <Box label={hi ? 'अर्थ' : 'Meaning'} text={exp.anuvad} />
+              <Box label={hi ? 'कथा' : 'Story'} text={exp.katha} />
+              <Box label={hi ? 'जीवन की सीख' : 'Lesson for life'} text={exp.seekh} />
+              <Text style={[styles.aiNote, { color: theme.textMuted }]}>✦ {hi ? 'AI द्वारा सरल व्याख्या' : 'Simple explanation by AI'}</Text>
             </>
           )}
         </View>
