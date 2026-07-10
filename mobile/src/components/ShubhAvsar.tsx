@@ -9,9 +9,12 @@ import { GradientText } from './GradientText';
 import { OCCASIONS, Occasion } from '../data/occasions';
 
 /**
- * "🌸 Shubh Avsar" — the Library highlight, shown as a premium horizontal slider just below
- * the filter chips. Large glowing occasion cards; one tap → the complete ritual guide.
+ * "🌸 Shubh Avsar" — the Library highlight: a premium, horizontally-scrolling slider just below
+ * the filter chips. Pure-black cards (dark) with an accent glow; one tap → the full ritual guide.
  */
+const CARD_W = 144;
+const GAP = 12;
+
 function OccasionCard({ o, onOpen }: { o: Occasion; onOpen: (id: string) => void }) {
   const { theme } = useTheme();
   const { lang } = useLang();
@@ -25,27 +28,18 @@ function OccasionCard({ o, onOpen }: { o: Occasion; onOpen: (id: string) => void
         style={[
           styles.card,
           {
-            borderColor: theme.isDark ? o.accent + '66' : theme.cardBorder,
-            backgroundColor: theme.isDark ? '#000000' : 'rgba(255,253,247,0.92)',
+            borderColor: theme.isDark ? o.accent + '77' : theme.cardBorder,
+            backgroundColor: theme.isDark ? '#000000' : 'rgba(255,253,247,0.95)',
             shadowColor: o.accent,
             transform: [{ scale }],
           },
         ]}
       >
-        {/* soft accent glow wash at the top (kept subtle so the card stays deep black) */}
-        {theme.isDark && (
-          <LinearGradient
-            colors={[o.accent + '24', 'transparent']}
-            start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
-            style={styles.wash}
-          />
-        )}
-
         <View style={[styles.discWrap, { shadowColor: o.accent }]}>
           <LinearGradient
-            colors={[o.accent + (theme.isDark ? '46' : '2a'), o.accent + '10']}
+            colors={[o.accent + (theme.isDark ? '4d' : '2a'), o.accent + '10']}
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-            style={[styles.disc, { borderColor: o.accent + '99' }]}
+            style={[styles.disc, { borderColor: o.accent + 'aa' }]}
           >
             <Text style={styles.emoji}>{o.emoji}</Text>
           </LinearGradient>
@@ -54,8 +48,8 @@ function OccasionCard({ o, onOpen }: { o: Occasion; onOpen: (id: string) => void
         <Text style={[styles.label, { color: theme.text }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{hi ? o.hi : o.en}</Text>
         <Text style={[styles.sub, { color: theme.textMuted }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{hi ? o.subHi : o.subEn}</Text>
 
-        <View style={[styles.badges, { borderTopColor: theme.isDark ? 'rgba(233,184,80,0.18)' : theme.cardBorder }]}>
-          <Text style={[styles.badge, { color: theme.gold2 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+        <View style={[styles.badges, { borderTopColor: theme.isDark ? 'rgba(233,184,80,0.2)' : theme.cardBorder }]}>
+          <Text style={[styles.badge, { color: theme.gold2 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
             📿 {hi ? 'मंत्र' : 'Mantra'}  ·  🪔 {hi ? 'आरती' : 'Aarti'}  ·  📖 {hi ? 'विधि' : 'Vidhi'}
           </Text>
         </View>
@@ -78,25 +72,24 @@ export function ShubhAvsar({ onOpen }: { onOpen: (id: string) => void }) {
         <Text style={styles.headEmoji}>🌸</Text>
       </View>
       <Text style={[styles.headSub, { color: dim }]}>
-        {hi ? 'हर मंगल कार्य की पूरी पूजा विधि — एक टैप में' : 'Complete puja guide for every occasion — one tap'}
+        {hi ? 'हर मंगल कार्य की पूरी पूजा विधि — साइड में स्लाइड करें →' : 'Full puja guide for every occasion — swipe →'}
       </Text>
 
       <ScrollView
         horizontal
+        nestedScrollEnabled
         showsHorizontalScrollIndicator={false}
-        decelerationRate="fast"
-        snapToInterval={CARD_W + GAP}
-        snapToAlignment="start"
         contentContainerStyle={styles.track}
       >
-        {OCCASIONS.map((o) => <OccasionCard key={o.id} o={o} onOpen={onOpen} />)}
+        {OCCASIONS.map((o) => (
+          <View key={o.id} style={{ width: CARD_W, marginRight: GAP }}>
+            <OccasionCard o={o} onOpen={onOpen} />
+          </View>
+        ))}
       </ScrollView>
     </View>
   );
 }
-
-const CARD_W = 150;
-const GAP = 12;
 
 const styles = StyleSheet.create({
   section: { marginBottom: 18 },
@@ -105,18 +98,18 @@ const styles = StyleSheet.create({
   headTitle: { fontFamily: fonts.cinzelSemi, fontSize: 17, letterSpacing: 2, textAlign: 'center' },
   headSub: { fontFamily: fonts.inter, fontSize: 11.5, textAlign: 'center', marginTop: 5, marginBottom: 14 },
 
-  track: { gap: GAP, paddingHorizontal: 2, paddingBottom: 6, paddingRight: 6 },
+  track: { paddingLeft: 2, paddingRight: 4, paddingBottom: 8 },
   card: {
-    width: CARD_W, borderWidth: 1, borderRadius: 20, paddingVertical: 18, paddingHorizontal: 12,
-    alignItems: 'center', overflow: 'hidden',
-    shadowOpacity: 0.4, shadowRadius: 13, shadowOffset: { width: 0, height: 5 }, elevation: 6,
+    width: CARD_W, borderWidth: 1, borderRadius: 20, paddingVertical: 18, paddingHorizontal: 10,
+    alignItems: 'center',
+    shadowOpacity: 0.42, shadowRadius: 13, shadowOffset: { width: 0, height: 5 }, elevation: 6,
   },
-  wash: { position: 'absolute', top: 0, left: 0, right: 0, height: 78 },
-  discWrap: { shadowOpacity: 0.6, shadowRadius: 12, shadowOffset: { width: 0, height: 0 }, marginBottom: 12 },
+  discWrap: { shadowOpacity: 0.65, shadowRadius: 12, shadowOffset: { width: 0, height: 0 }, marginBottom: 12 },
   disc: { width: 62, height: 62, borderRadius: 31, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   emoji: { fontSize: 31 },
-  label: { fontFamily: fonts.playfair, fontSize: 16.5, textAlign: 'center', alignSelf: 'stretch' },
+  label: { fontFamily: fonts.playfair, fontSize: 16, textAlign: 'center', alignSelf: 'stretch' },
   sub: { fontFamily: fonts.inter, fontSize: 10.5, textAlign: 'center', marginTop: 4, alignSelf: 'stretch' },
-  badges: { borderTopWidth: 1, marginTop: 13, paddingTop: 10, alignSelf: 'stretch', alignItems: 'center' },
-  badge: { fontFamily: fonts.interSemi, fontSize: 9.5, letterSpacing: 0.2, textAlign: 'center', alignSelf: 'stretch' },
+  // fixed-height row so the chip text sits perfectly centered both ways
+  badges: { borderTopWidth: 1, marginTop: 13, paddingTop: 4, alignSelf: 'stretch', height: 34, alignItems: 'center', justifyContent: 'center' },
+  badge: { fontFamily: fonts.interSemi, fontSize: 9.5, letterSpacing: 0.2, textAlign: 'center', textAlignVertical: 'center', includeFontPadding: false, alignSelf: 'stretch' },
 });

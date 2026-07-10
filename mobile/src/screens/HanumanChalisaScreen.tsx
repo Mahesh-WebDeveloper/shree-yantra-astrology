@@ -121,8 +121,8 @@ const styles = StyleSheet.create({
   heroTitle: { fontFamily: fonts.cinzelSemi, fontSize: 14, letterSpacing: 2, textAlign: 'center', marginTop: 6 },
   heroAuthor: { fontFamily: fonts.interSemi, fontSize: 12, marginTop: 8 },
   heroTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, justifyContent: 'center', alignItems: 'center', marginTop: 14 },
-  heroTag: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 11, paddingVertical: 5, alignItems: 'center', justifyContent: 'center' },
-  heroTagTxt: { fontFamily: fonts.interSemi, fontSize: 10.5, textAlign: 'center' },
+  heroTag: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, alignItems: 'center', justifyContent: 'center' },
+  heroTagTxt: { fontFamily: fonts.interSemi, fontSize: 10.5, textAlign: 'center', textAlignVertical: 'center', includeFontPadding: false },
 
   introCard: { borderWidth: 1, borderRadius: 16, padding: 14, marginBottom: 16, gap: 12 },
   introRow: { gap: 3 },

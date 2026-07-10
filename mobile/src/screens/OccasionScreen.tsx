@@ -257,8 +257,8 @@ const styles = StyleSheet.create({
   para: { fontFamily: fonts.inter, fontSize: 13.5, lineHeight: 21 },
 
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 2 },
-  chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 11, paddingVertical: 6, alignItems: 'center', justifyContent: 'center' },
-  chipTxt: { fontFamily: fonts.inter, fontSize: 12, textAlign: 'center' },
+  chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7, alignItems: 'center', justifyContent: 'center' },
+  chipTxt: { fontFamily: fonts.inter, fontSize: 12, textAlign: 'center', textAlignVertical: 'center', includeFontPadding: false },
 
   stepRow: { flexDirection: 'row', gap: 11, alignItems: 'flex-start' },
   stepNum: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
@@ -270,8 +270,8 @@ const styles = StyleSheet.create({
   mantraRoman: { fontFamily: fonts.inter, fontSize: 12, fontStyle: 'italic', marginTop: 6, lineHeight: 18 },
   mantraMeaning: { fontFamily: fonts.inter, fontSize: 13, lineHeight: 20, marginTop: 8 },
   mantraMeta: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 10 },
-  metaPill: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4, alignItems: 'center', justifyContent: 'center' },
-  metaPillTxt: { fontFamily: fonts.interSemi, fontSize: 10.5, textAlign: 'center' },
+  metaPill: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5, alignItems: 'center', justifyContent: 'center' },
+  metaPillTxt: { fontFamily: fonts.interSemi, fontSize: 10.5, textAlign: 'center', textAlignVertical: 'center', includeFontPadding: false },
   mantraBenefit: { fontFamily: fonts.inter, fontSize: 11.5, lineHeight: 17, marginTop: 9, fontStyle: 'italic' },
 
   dodont: { flexDirection: 'row', gap: 10 },
