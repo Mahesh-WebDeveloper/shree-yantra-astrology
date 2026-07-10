@@ -152,6 +152,28 @@ exports.vedaExplain = asyncHandler(async (req, res) => {
   }));
 });
 
+// POST /api/ai/occasion-guide  { occasion, lang } — full authentic ritual guide for a Shubh Avsar
+exports.occasionGuide = asyncHandler(async (req, res) => {
+  const occasion = String(req.body.occasion || '');
+  const lang = req.body.lang === 'en' ? 'en' : 'hi';
+  if (!occasion) return res.status(400).json({ error: 'Chahiye: occasion' });
+  try {
+    res.json(await ai.generateOccasionGuide({ occasion, lang }));
+  } catch (e) {
+    if (e && e.status === 400) return res.status(400).json({ error: 'Invalid occasion' });
+    throw e;
+  }
+});
+
+// POST /api/ai/occasion-ask  { occasion, question, lang } — AI ritual assistant Q&A
+exports.occasionAsk = asyncHandler(async (req, res) => {
+  const occasion = String(req.body.occasion || '');
+  const question = String(req.body.question || '').trim();
+  const lang = req.body.lang === 'en' ? 'en' : 'hi';
+  if (!occasion || !question) return res.status(400).json({ error: 'Chahiye: occasion, question' });
+  res.json(await ai.answerOccasionQuestion({ occasion, question, lang }));
+});
+
 // POST /api/ai/daily-shloka-explain  { id } — daily shlok ka complete jeevan-upyogi explanation
 exports.dailyShlokaExplain = asyncHandler(async (req, res) => {
   const id = String(req.body.id || '');

@@ -39,6 +39,7 @@ import { VedaScreen } from '../screens/VedaScreen';
 import { VedaBookScreen } from '../screens/VedaBookScreen';
 import { VedaVerseScreen } from '../screens/VedaVerseScreen';
 import { HanumanChalisaScreen } from '../screens/HanumanChalisaScreen';
+import { OccasionScreen } from '../screens/OccasionScreen';
 import { DailyShlokaScreen } from '../screens/DailyShlokaScreen';
 import { MatchScreen } from '../screens/MatchScreen';
 import { GocharScreen } from '../screens/GocharScreen';
@@ -126,6 +127,7 @@ export function RootNavigator() {
       <Stack.Screen name="VedaBook" component={VedaBookScreen} />
       <Stack.Screen name="VedaVerse" component={VedaVerseScreen} />
       <Stack.Screen name="HanumanChalisa" component={HanumanChalisaScreen} />
+      <Stack.Screen name="Occasion" component={OccasionScreen} />
       <Stack.Screen name="DailyShloka" component={DailyShlokaScreen} />
       <Stack.Screen name="KundliMatch" component={MatchScreen} />
       <Stack.Screen name="Gochar" component={GocharScreen} />

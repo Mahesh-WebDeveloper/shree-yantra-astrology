@@ -252,5 +252,7 @@ router.post('/ai/ramayan-explain', aiCtrl.ramayanExplain);
 router.post('/ai/rigveda-explain', aiCtrl.rigvedaExplain);
 router.post('/ai/veda-explain', aiCtrl.vedaExplain);
 router.post('/ai/daily-shloka-explain', aiCtrl.dailyShlokaExplain);
+router.post('/ai/occasion-guide', aiCtrl.occasionGuide);
+router.post('/ai/occasion-ask', aiCtrl.occasionAsk);
 
 module.exports = router;

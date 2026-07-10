@@ -8,6 +8,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { Theme, fonts } from '../theme/tokens';
 import { Screen } from '../components/Screen';
 import { BrandHeader } from '../components/BrandHeader';
+import { ShubhAvsar } from '../components/ShubhAvsar';
 import { GradientText } from '../components/GradientText';
 import { Chevron, Sparkle } from '../components/icons/CommonIcons';
 import { usePlayer, usePlayerTime, fmtTime } from '../audio/PlayerProvider';
@@ -364,6 +365,11 @@ export function LibraryScreen({ navigation }: any) {
             </React.Fragment>
           ))}
         </View>
+      </Animated.View>
+
+      {/* ── 🌸 Shubh Avsar — occasion guide (the highlight; always visible) ── */}
+      <Animated.View style={rise(0.08)}>
+        <ShubhAvsar onOpen={(id) => navigation.navigate('Occasion', { id })} />
       </Animated.View>
 
       {/* ── Filter chips (content-type filters) ── */}

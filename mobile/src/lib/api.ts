@@ -961,6 +961,20 @@ export const getVedaSection = (veda: string, book: number, section: number) => g
 export const getVedaExplanation = (veda: string, book: number, section: number, verse: number, lang?: 'en' | 'hi') =>
   post<VerseExplanation>('/api/ai/veda-explain', { veda, book, section, verse, lang });
 
+// ── Shubh Avsar — authentic Hindu occasion ritual guide (bilingual, AI, cached) ──
+export interface OccasionMantra { sanskrit: string; transliteration: string; meaning: string; when: string; benefit: string; count: string }
+export interface OccasionFaq { q: string; a: string }
+export interface OccasionGuide {
+  significance: string; muhurat: string;
+  samagri: string[]; steps: string[]; mantras: OccasionMantra[];
+  dos: string[]; donts: string[]; faqs: OccasionFaq[];
+  regionalNote: string; disclaimer: string; aiAssisted?: boolean;
+}
+export const getOccasionGuide = (occasion: string, lang: 'en' | 'hi') =>
+  post<OccasionGuide>('/api/ai/occasion-guide', { occasion, lang }, 'POST', 120000);
+export const askOccasion = (occasion: string, question: string, lang: 'en' | 'hi') =>
+  post<{ answer: string }>('/api/ai/occasion-ask', { occasion, question, lang }, 'POST', 120000);
+
 // ── Daily Spiritual Boost (roz naya shlok + AI explanation) ──
 export interface DailyShloka {
   id: string; book: string; hindi: string; cover: string; refLabel: string;

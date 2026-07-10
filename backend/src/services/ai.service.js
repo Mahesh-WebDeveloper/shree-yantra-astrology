@@ -1706,10 +1706,93 @@ ${writeIn(L)}`;
   });
 }
 
+// ── SHUBH AVSAR — authentic Hindu occasion / ritual guide (bilingual, AI-assisted, cached) ──
+const OCCASION_META = {
+  'vivah':        { hi: 'विवाह (शादी) संस्कार', en: 'Vivah (the Hindu marriage ceremony)', deity: 'Ganesha, Lakshmi-Narayana' },
+  'grah-pravesh': { hi: 'गृह प्रवेश', en: 'Grah Pravesh (housewarming)', deity: 'Ganesha, Vastu Purusha, Lakshmi' },
+  'naamkaran':    { hi: 'नामकरण संस्कार', en: 'Naamkaran (baby naming ceremony)', deity: 'Ganesha' },
+  'business':     { hi: 'नए व्यापार/दुकान का आरंभ', en: 'opening a new business / shop', deity: 'Ganesha, Lakshmi, Kubera' },
+  'vehicle':      { hi: 'वाहन पूजा', en: 'new vehicle puja', deity: 'Ganesha' },
+  'bhoomi-pujan': { hi: 'भूमि पूजन (निर्माण आरंभ)', en: 'Bhoomi Pujan (ground-breaking ceremony)', deity: 'Bhumi Devi, Vastu Purusha, Naga Devta, Ganesha' },
+  'birthday':     { hi: 'जन्मदिन (आयुष्य पूजा)', en: 'a Hindu birthday (Ayushya / long-life puja)', deity: 'Ayushya Devata, Satyanarayana' },
+  'education':    { hi: 'विद्या आरंभ / अक्षर आरंभ', en: 'Vidyarambh (beginning of a child’s learning)', deity: 'Saraswati, Ganesha' },
+  'daily-puja':   { hi: 'नित्य (रोज़ की) पूजा', en: 'daily home puja', deity: 'Panchadeva (Ganesha, Vishnu, Shiva, Devi, Surya)' },
+  'festival':     { hi: 'त्योहार की पूजा', en: 'festival worship', deity: 'the deity of the festival' },
+  'vrat':         { hi: 'व्रत (उपवास)', en: 'Vrat (a religious fast)', deity: 'the deity of the vrat' },
+  'dosh-nivaran': { hi: 'ग्रह दोष निवारण', en: 'planetary dosha remedies (shanti)', deity: 'Navagraha, Shiva (Mahamrityunjaya)' },
+};
+
+async function generateOccasionGuide({ occasion, lang }) {
+  const meta = OCCASION_META[occasion];
+  if (!meta) throw Object.assign(new Error('Unknown occasion'), { status: 400 });
+  const en = lang === 'en';
+  const name = en ? meta.en : meta.hi;
+  return cached(`occasion|guide|v1|${occasion}|${en ? 'en' : 'hi'}`, 'occasion-guide', async () => {
+    const prompt = en
+      ? `You are a knowledgeable, humble Hindu family priest (purohit) and Vedic scholar. Give an AUTHENTIC, traditional ritual guide for: ${name} (presiding deity: ${meta.deity}).
+STRICT AUTHENTICITY: base everything only on well-established, traditional Hindu practice (Grihya Sutras / Puranas / common Dharmashastra custom). Do NOT invent mantras or steps. Where customs genuinely differ by region (North/South/Gujarat/Maharashtra/Bengal etc.), say so briefly in "regionalNote" rather than presenting one version as the only truth. Keep language extremely simple — imagine explaining to a first-time, elderly user. Explain each step practically (which direction to face, what to place, what to offer).
+Return STRICT JSON with these keys (all text in simple English, EXCEPT mantra.sanskrit which stays in Devanagari):
+{
+ "significance":"2-4 sentences on what this occasion is and why it matters spiritually",
+ "muhurat":"1-2 sentences on how the auspicious time is chosen (or say any time is fine if it is not muhurat-bound)",
+ "samagri":["8-14 common puja items"],
+ "steps":["6-12 ordered, practical steps of the puja vidhi"],
+ "mantras":[{"sanskrit":"मंत्र देवनागरी में","transliteration":"roman","meaning":"simple English meaning","when":"when to chant","benefit":"why / benefit","count":"e.g. 3 / 11 / 108"}],
+ "dos":["4-6 things to do"],
+ "donts":["4-6 things to avoid"],
+ "faqs":[{"q":"common question","a":"clear answer"}],
+ "regionalNote":"1-2 sentences on regional variation, or empty",
+ "disclaimer":"one line: confirm exact family tradition with a local priest"
+}
+Give 2-4 authentic, widely-accepted mantras and 3-5 FAQs.`
+      : `तुम एक ज्ञानी, विनम्र हिंदू परिवार-पुरोहित और वैदिक विद्वान हो। "${name}" (मुख्य देवता: ${meta.deity}) के लिए प्रामाणिक, पारंपरिक पूजा विधि दो।
+प्रामाणिकता अनिवार्य: केवल सुस्थापित पारंपरिक हिंदू परंपरा (गृह्यसूत्र/पुराण/धर्मशास्त्र की सामान्य परंपरा) के आधार पर लिखो। कोई मंत्र या विधि मत गढ़ो। जहाँ क्षेत्र अनुसार (उत्तर/दक्षिण/गुजरात/महाराष्ट्र/बंगाल आदि) रीति सचमुच बदलती है, उसे "regionalNote" में संक्षेप में बताओ — एक ही रूप को अंतिम सत्य मत बताओ। भाषा बेहद सरल रखो, जैसे किसी बुज़ुर्ग/पहली बार करने वाले को समझा रहे हो। हर चरण व्यावहारिक रूप से समझाओ (किस दिशा में मुँह, क्या रखें, क्या चढ़ाएँ)।
+STRICT JSON लौटाओ इन keys के साथ (सारा पाठ सरल हिंदी देवनागरी में; केवल mantra.sanskrit देवनागरी संस्कृत में):
+{
+ "significance":"2-4 वाक्य: यह अवसर क्या है और आध्यात्मिक रूप से क्यों महत्वपूर्ण",
+ "muhurat":"1-2 वाक्य: शुभ मुहूर्त कैसे चुनें (या यदि मुहूर्त आवश्यक नहीं तो कहो कभी भी)",
+ "samagri":["8-14 सामान्य पूजा सामग्री"],
+ "steps":["6-12 क्रमवार, व्यावहारिक पूजा विधि"],
+ "mantras":[{"sanskrit":"मंत्र देवनागरी में","transliteration":"roman","meaning":"सरल हिंदी अर्थ","when":"कब जपें","benefit":"लाभ","count":"जैसे 3/11/108"}],
+ "dos":["4-6 करने योग्य बातें"],
+ "donts":["4-6 न करने योग्य बातें"],
+ "faqs":[{"q":"आम प्रश्न","a":"स्पष्ट उत्तर"}],
+ "regionalNote":"1-2 वाक्य क्षेत्रीय भिन्नता, या खाली",
+ "disclaimer":"एक पंक्ति: सटीक पारिवारिक परंपरा हेतु स्थानीय पुरोहित से पुष्टि कर लें"
+}
+2-4 प्रामाणिक, सर्वमान्य मंत्र और 3-5 FAQ दो।`;
+    const out = await callAI(prompt, { json: true });
+    const arr = (x) => (Array.isArray(x) ? x : []);
+    return {
+      significance: out.significance || '', muhurat: out.muhurat || '',
+      samagri: arr(out.samagri), steps: arr(out.steps), mantras: arr(out.mantras),
+      dos: arr(out.dos), donts: arr(out.donts), faqs: arr(out.faqs),
+      regionalNote: out.regionalNote || '', disclaimer: out.disclaimer || '',
+      aiAssisted: true,
+    };
+  });
+}
+
+async function answerOccasionQuestion({ occasion, question, lang }) {
+  const meta = OCCASION_META[occasion] || { en: occasion, hi: occasion, deity: '' };
+  const en = lang === 'en';
+  const name = en ? meta.en : meta.hi;
+  const q = String(question || '').slice(0, 500);
+  const prompt = en
+    ? `You are a humble, knowledgeable Hindu family priest helping with: ${name}. Answer the user's question authentically and simply, based only on well-established Hindu tradition. If customs vary by region, say so. If you are genuinely not sure, say so honestly instead of inventing. Keep it short and practical (2-5 sentences), in simple English.
+User's question: "${q}"
+Return STRICT JSON: {"answer":"..."}`
+    : `तुम एक विनम्र, ज्ञानी हिंदू परिवार-पुरोहित हो और "${name}" में सहायता कर रहे हो। उपयोगकर्ता के प्रश्न का प्रामाणिक व सरल उत्तर दो, केवल सुस्थापित हिंदू परंपरा के आधार पर। यदि क्षेत्र अनुसार भिन्नता हो तो बताओ। यदि सचमुच निश्चित न हो तो ईमानदारी से कहो, कुछ मत गढ़ो। उत्तर छोटा व व्यावहारिक रखो (2-5 वाक्य), सरल हिंदी देवनागरी में।
+प्रश्न: "${q}"
+STRICT JSON लौटाओ: {"answer":"..."}`;
+  const out = await callAI(prompt, { json: true });
+  return { answer: out.answer || '' };
+}
+
 module.exports = {
   generateDailyPrediction, generatePeriodPrediction, generateTraditionalReading, generateDashaPhala, generateNames, generateNameSuggestions, generateBabyNames, answerNameQuestion, generateTransitForecast, askAstrologer, generateInsights, generateChoghadiyaMessage, generateMuhuratPick, generateSignRashifal, generateNumerologyReading,
   generateRcmExplanation, generateGitaExplanation, generateRamayanExplanation, generateRigvedaExplanation,
   generateVedaExplanation, generateDailyShlokaExplain, generateMatchExplanation, generateGocharExplanation,
-  generateRemediesExplanation,
+  generateRemediesExplanation, generateOccasionGuide, answerOccasionQuestion,
   callAI,
 };
