@@ -1,59 +1,62 @@
 import React, { useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Animated, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme/ThemeProvider';
-import { fonts, radii } from '../theme/tokens';
+import { fonts } from '../theme/tokens';
 import { hTap } from '../lib/haptics';
 import { useLang } from '../i18n/LanguageProvider';
 import { GradientText } from './GradientText';
 import { OCCASIONS, Occasion } from '../data/occasions';
 
 /**
- * "🌸 Shubh Avsar" — the highlight of the Library screen. Large, one-tap occasion cards in a
- * 2-column grid, sized for elderly / first-time users. One tap → complete ritual guide.
+ * "🌸 Shubh Avsar" — the Library highlight, shown as a premium horizontal slider just below
+ * the filter chips. Large glowing occasion cards; one tap → the complete ritual guide.
  */
 function OccasionCard({ o, onOpen }: { o: Occasion; onOpen: (id: string) => void }) {
   const { theme } = useTheme();
   const { lang } = useLang();
   const hi = lang === 'hi';
   const scale = useRef(new Animated.Value(1)).current;
-  const spring = (to: number) => Animated.spring(scale, { toValue: to, useNativeDriver: true, speed: 40, bounciness: 6 }).start();
+  const spring = (to: number) => Animated.spring(scale, { toValue: to, useNativeDriver: true, speed: 40, bounciness: 7 }).start();
 
   return (
-    <Pressable
-      onPress={() => { hTap(); onOpen(o.id); }}
-      onPressIn={() => spring(0.96)}
-      onPressOut={() => spring(1)}
-      style={styles.cell}
-    >
+    <Pressable onPress={() => { hTap(); onOpen(o.id); }} onPressIn={() => spring(0.95)} onPressOut={() => spring(1)}>
       <Animated.View
         style={[
           styles.card,
           {
             borderColor: theme.isDark ? o.accent + '66' : theme.cardBorder,
-            backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(255,253,247,0.9)',
+            backgroundColor: theme.isDark ? '#000000' : 'rgba(255,253,247,0.92)',
             shadowColor: o.accent,
             transform: [{ scale }],
           },
         ]}
       >
-        {/* glowing icon disc */}
+        {/* soft accent glow wash at the top (kept subtle so the card stays deep black) */}
+        {theme.isDark && (
+          <LinearGradient
+            colors={[o.accent + '24', 'transparent']}
+            start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
+            style={styles.wash}
+          />
+        )}
+
         <View style={[styles.discWrap, { shadowColor: o.accent }]}>
           <LinearGradient
-            colors={[o.accent + (theme.isDark ? '3a' : '2a'), o.accent + '12']}
+            colors={[o.accent + (theme.isDark ? '46' : '2a'), o.accent + '10']}
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-            style={[styles.disc, { borderColor: o.accent + '80' }]}
+            style={[styles.disc, { borderColor: o.accent + '99' }]}
           >
             <Text style={styles.emoji}>{o.emoji}</Text>
           </LinearGradient>
         </View>
 
-        <Text style={[styles.label, { color: theme.text }]} numberOfLines={1}>{hi ? o.hi : o.en}</Text>
-        <Text style={[styles.sub, { color: theme.textMuted }]} numberOfLines={1}>{hi ? o.subHi : o.subEn}</Text>
+        <Text style={[styles.label, { color: theme.text }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{hi ? o.hi : o.en}</Text>
+        <Text style={[styles.sub, { color: theme.textMuted }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{hi ? o.subHi : o.subEn}</Text>
 
-        <View style={[styles.badges, { borderTopColor: theme.cardBorder }]}>
-          <Text style={[styles.badge, { color: theme.gold2 }]} numberOfLines={1}>
-            📿 {hi ? 'मंत्र' : 'Mantra'} · 🪔 {hi ? 'आरती' : 'Aarti'} · 📖 {hi ? 'विधि' : 'Vidhi'}
+        <View style={[styles.badges, { borderTopColor: theme.isDark ? 'rgba(233,184,80,0.18)' : theme.cardBorder }]}>
+          <Text style={[styles.badge, { color: theme.gold2 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+            📿 {hi ? 'मंत्र' : 'Mantra'}  ·  🪔 {hi ? 'आरती' : 'Aarti'}  ·  📖 {hi ? 'विधि' : 'Vidhi'}
           </Text>
         </View>
       </Animated.View>
@@ -78,31 +81,42 @@ export function ShubhAvsar({ onOpen }: { onOpen: (id: string) => void }) {
         {hi ? 'हर मंगल कार्य की पूरी पूजा विधि — एक टैप में' : 'Complete puja guide for every occasion — one tap'}
       </Text>
 
-      <View style={styles.grid}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        decelerationRate="fast"
+        snapToInterval={CARD_W + GAP}
+        snapToAlignment="start"
+        contentContainerStyle={styles.track}
+      >
         {OCCASIONS.map((o) => <OccasionCard key={o.id} o={o} onOpen={onOpen} />)}
-      </View>
+      </ScrollView>
     </View>
   );
 }
 
+const CARD_W = 150;
+const GAP = 12;
+
 const styles = StyleSheet.create({
-  section: { marginTop: 6, marginBottom: 18 },
+  section: { marginBottom: 18 },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
   headEmoji: { fontSize: 15 },
   headTitle: { fontFamily: fonts.cinzelSemi, fontSize: 17, letterSpacing: 2, textAlign: 'center' },
   headSub: { fontFamily: fonts.inter, fontSize: 11.5, textAlign: 'center', marginTop: 5, marginBottom: 14 },
 
-  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 12 },
-  cell: { width: '48.5%' },
+  track: { gap: GAP, paddingHorizontal: 2, paddingBottom: 6, paddingRight: 6 },
   card: {
-    borderWidth: 1, borderRadius: 18, paddingVertical: 16, paddingHorizontal: 12, alignItems: 'center',
-    shadowOpacity: 0.34, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 5,
+    width: CARD_W, borderWidth: 1, borderRadius: 20, paddingVertical: 18, paddingHorizontal: 12,
+    alignItems: 'center', overflow: 'hidden',
+    shadowOpacity: 0.4, shadowRadius: 13, shadowOffset: { width: 0, height: 5 }, elevation: 6,
   },
-  discWrap: { shadowOpacity: 0.5, shadowRadius: 10, shadowOffset: { width: 0, height: 0 }, marginBottom: 11 },
-  disc: { width: 60, height: 60, borderRadius: 30, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  emoji: { fontSize: 30 },
-  label: { fontFamily: fonts.playfair, fontSize: 16.5, textAlign: 'center' },
-  sub: { fontFamily: fonts.inter, fontSize: 11, textAlign: 'center', marginTop: 3 },
-  badges: { borderTopWidth: 1, marginTop: 12, paddingTop: 9, alignSelf: 'stretch', alignItems: 'center' },
-  badge: { fontFamily: fonts.interSemi, fontSize: 10, letterSpacing: 0.2 },
+  wash: { position: 'absolute', top: 0, left: 0, right: 0, height: 78 },
+  discWrap: { shadowOpacity: 0.6, shadowRadius: 12, shadowOffset: { width: 0, height: 0 }, marginBottom: 12 },
+  disc: { width: 62, height: 62, borderRadius: 31, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  emoji: { fontSize: 31 },
+  label: { fontFamily: fonts.playfair, fontSize: 16.5, textAlign: 'center', alignSelf: 'stretch' },
+  sub: { fontFamily: fonts.inter, fontSize: 10.5, textAlign: 'center', marginTop: 4, alignSelf: 'stretch' },
+  badges: { borderTopWidth: 1, marginTop: 13, paddingTop: 10, alignSelf: 'stretch', alignItems: 'center' },
+  badge: { fontFamily: fonts.interSemi, fontSize: 9.5, letterSpacing: 0.2, textAlign: 'center', alignSelf: 'stretch' },
 });

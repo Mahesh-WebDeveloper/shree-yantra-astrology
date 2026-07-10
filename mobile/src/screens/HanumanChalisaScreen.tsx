@@ -61,9 +61,11 @@ export function HanumanChalisaScreen({ navigation }: any) {
         <GradientText style={styles.heroTitle}>SHRI HANUMAN CHALISA</GradientText>
         <Text style={[styles.heroAuthor, { color: theme.gold2 }]}>{hi ? 'रचयिता — गोस्वामी तुलसीदास' : 'by Goswami Tulsidas'}</Text>
         <View style={styles.heroTags}>
-          <Text style={[styles.heroTag, { color: theme.gold1, borderColor: theme.gold3 }]}>{hi ? '43 पद' : '43 verses'}</Text>
-          <Text style={[styles.heroTag, { color: theme.gold1, borderColor: theme.gold3 }]}>{hi ? 'हिंदी + English' : 'Hindi + English'}</Text>
-          <Text style={[styles.heroTag, { color: theme.gold1, borderColor: theme.gold3 }]}>{hi ? 'AI अर्थ' : 'AI meaning'}</Text>
+          {[hi ? '43 पद' : '43 verses', hi ? 'हिंदी + English' : 'Hindi + English', hi ? 'AI अर्थ' : 'AI meaning'].map((tag) => (
+            <View key={tag} style={[styles.heroTag, { borderColor: theme.gold3, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.08)' : 'rgba(233,184,80,0.06)' }]}>
+              <Text style={[styles.heroTagTxt, { color: theme.gold1 }]} numberOfLines={1}>{tag}</Text>
+            </View>
+          ))}
         </View>
       </LinearGradient>
 
@@ -118,8 +120,9 @@ const styles = StyleSheet.create({
   heroDeva: { fontFamily: fonts.devanagari, fontSize: 24, textAlign: 'center' },
   heroTitle: { fontFamily: fonts.cinzelSemi, fontSize: 14, letterSpacing: 2, textAlign: 'center', marginTop: 6 },
   heroAuthor: { fontFamily: fonts.interSemi, fontSize: 12, marginTop: 8 },
-  heroTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, justifyContent: 'center', marginTop: 14 },
-  heroTag: { fontFamily: fonts.interSemi, fontSize: 10.5, borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, overflow: 'hidden' },
+  heroTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, justifyContent: 'center', alignItems: 'center', marginTop: 14 },
+  heroTag: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 11, paddingVertical: 5, alignItems: 'center', justifyContent: 'center' },
+  heroTagTxt: { fontFamily: fonts.interSemi, fontSize: 10.5, textAlign: 'center' },
 
   introCard: { borderWidth: 1, borderRadius: 16, padding: 14, marginBottom: 16, gap: 12 },
   introRow: { gap: 3 },

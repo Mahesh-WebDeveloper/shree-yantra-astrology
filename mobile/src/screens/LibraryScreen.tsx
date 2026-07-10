@@ -367,11 +367,6 @@ export function LibraryScreen({ navigation }: any) {
         </View>
       </Animated.View>
 
-      {/* ── 🌸 Shubh Avsar — occasion guide (the highlight; always visible) ── */}
-      <Animated.View style={rise(0.08)}>
-        <ShubhAvsar onOpen={(id) => navigation.navigate('Occasion', { id })} />
-      </Animated.View>
-
       {/* ── Filter chips (content-type filters) ── */}
       <Animated.View style={rise(0.08)}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catsScroll} contentContainerStyle={styles.catsContent}>
@@ -400,6 +395,13 @@ export function LibraryScreen({ navigation }: any) {
         })}
       </ScrollView>
       </Animated.View>
+
+      {/* ── 🌸 Shubh Avsar — occasion slider (below the filter slider; the highlight) ── */}
+      {filter === 'all' && (
+        <Animated.View style={rise(0.12)}>
+          <ShubhAvsar onOpen={(id) => navigation.navigate('Occasion', { id })} />
+        </Animated.View>
+      )}
 
       <Animated.View style={rise(0.16)}>
       {/* ── SAVED (only when the Saved filter is active) ── */}

@@ -122,7 +122,9 @@ export function OccasionScreen({ route, navigation }: any) {
             <Section icon="🪔" title={hi ? 'पूजा सामग्री' : 'Puja Samagri'}>
               <View style={styles.chipWrap}>
                 {guide.samagri.map((s, i) => (
-                  <Text key={i} style={[styles.chip, { color: theme.text, borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.06)' : '#fff' }]}>{s}</Text>
+                  <View key={i} style={[styles.chip, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.06)' : '#fff' }]}>
+                    <Text style={[styles.chipTxt, { color: theme.text }]}>{s}</Text>
+                  </View>
                 ))}
               </View>
             </Section>
@@ -152,8 +154,8 @@ export function OccasionScreen({ route, navigation }: any) {
                     {!!m.transliteration && <Text style={[styles.mantraRoman, { color: theme.textMuted }]}>{m.transliteration}</Text>}
                     {!!m.meaning && <Text style={[styles.mantraMeaning, { color: theme.textSoft }]}>{m.meaning}</Text>}
                     <View style={styles.mantraMeta}>
-                      {!!m.when && <Text style={[styles.metaPill, { color: theme.gold1, borderColor: theme.gold3 }]}>🕐 {m.when}</Text>}
-                      {!!m.count && <Text style={[styles.metaPill, { color: theme.gold1, borderColor: theme.gold3 }]}>🔢 {m.count}</Text>}
+                      {!!m.when && <View style={[styles.metaPill, { borderColor: theme.gold3 }]}><Text style={[styles.metaPillTxt, { color: theme.gold1 }]}>🕐 {m.when}</Text></View>}
+                      {!!m.count && <View style={[styles.metaPill, { borderColor: theme.gold3 }]}><Text style={[styles.metaPillTxt, { color: theme.gold1 }]}>🔢 {m.count}</Text></View>}
                     </View>
                     {!!m.benefit && <Text style={[styles.mantraBenefit, { color: theme.textMuted }]}>✦ {m.benefit}</Text>}
                   </View>
@@ -255,7 +257,8 @@ const styles = StyleSheet.create({
   para: { fontFamily: fonts.inter, fontSize: 13.5, lineHeight: 21 },
 
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 2 },
-  chip: { fontFamily: fonts.inter, fontSize: 12, borderWidth: 1, borderRadius: 999, paddingHorizontal: 11, paddingVertical: 6, overflow: 'hidden' },
+  chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 11, paddingVertical: 6, alignItems: 'center', justifyContent: 'center' },
+  chipTxt: { fontFamily: fonts.inter, fontSize: 12, textAlign: 'center' },
 
   stepRow: { flexDirection: 'row', gap: 11, alignItems: 'flex-start' },
   stepNum: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
@@ -267,7 +270,8 @@ const styles = StyleSheet.create({
   mantraRoman: { fontFamily: fonts.inter, fontSize: 12, fontStyle: 'italic', marginTop: 6, lineHeight: 18 },
   mantraMeaning: { fontFamily: fonts.inter, fontSize: 13, lineHeight: 20, marginTop: 8 },
   mantraMeta: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 10 },
-  metaPill: { fontFamily: fonts.interSemi, fontSize: 10.5, borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4, overflow: 'hidden' },
+  metaPill: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4, alignItems: 'center', justifyContent: 'center' },
+  metaPillTxt: { fontFamily: fonts.interSemi, fontSize: 10.5, textAlign: 'center' },
   mantraBenefit: { fontFamily: fonts.inter, fontSize: 11.5, lineHeight: 17, marginTop: 9, fontStyle: 'italic' },
 
   dodont: { flexDirection: 'row', gap: 10 },
