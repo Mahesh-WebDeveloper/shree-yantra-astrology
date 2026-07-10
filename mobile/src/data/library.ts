@@ -149,6 +149,14 @@ export const BOOKS: Record<string, BookDoc> = {
       { title: 'आरतियाँ', verses: [{ ref: 'गणेश', sa: 'जय गणेश जय गणेश जय गणेश देवा।', en: '' }] },
     ],
   },
+  'mantra-sangrah': {
+    id: 'mantra-sangrah', eyebrow: 'भक्ति · Bhakti', title: 'Mantra Sangrah', hindi: 'मंत्र\nसंग्रह', cover: 'purple',
+    language: ['Hindi', 'English'], trackId: 'gayatri',
+    intro: 'Sabse mukhya, sarvमान्य mantra — Mahamrityunjaya, Gayatri, ॐ नमः शिवाय, Hare Krishna, Ganesh mool, Mahalakshmi, Shani — arth, kab v kitni baar japें, aur AI se saral samajh.',
+    chapters: [
+      { title: 'मंत्र', verses: [{ ref: 'महामृत्युंजय', sa: 'ॐ त्र्यम्बकं यजामहे सुगन्धिं पुष्टिवर्धनम्।', en: '' }] },
+    ],
+  },
   mahabharat: {
     id: 'mahabharat', eyebrow: 'Veda Vyasa · Gita Press', title: 'Mahabharata', hindi: 'महाभारत', cover: 'blue',
     language: ['Sanskrit', 'Hindi', 'English'], trackId: 'meditation',
@@ -228,6 +236,7 @@ export const SCRIPTURES: LibraryItem[] = BOOK_LIST.map((b) => ({
     : b.id === 'ramcharitmanas' ? 'Hindi · 7 Kand · 1074 Verses'
     : b.id === 'hanuman-chalisa' ? 'Hindi & English · 40 Chaupai · AI'
     : b.id === 'aarti-sangrah' ? 'Hindi · सभी देवी-देवता · पूर्ण आरती'
+    : b.id === 'mantra-sangrah' ? 'Hindi & English · 7 मुख्य मंत्र · AI'
     : b.id === 'rigveda' ? 'Sanskrit & English · 10 Mandala'
     : b.id === 'atharvaveda' ? 'Sanskrit & English · 20 Kanda'
     : b.id === 'yajurveda' ? 'Sanskrit & English · 40 Adhyaya'
