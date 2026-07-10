@@ -36,6 +36,7 @@ export interface CuratedOccasion {
   mistakes: Bi[];
   faqs: CFaq[];
   estTime?: Bi;
+  difficulty?: Bi;
   disclaimer: Bi;
 }
 
@@ -151,7 +152,8 @@ const VIVAH: CuratedOccasion = {
     { q: { hi: 'कन्यादान केवल माता-पिता ही कर सकते हैं?', en: 'Can only parents perform kanyadaan?' }, a: { hi: 'यदि माता-पिता न हों, तो परिवार के कोई भी बड़े (चाचा-चाची, भाई-भाभी) महासंकल्प ले सकते हैं।', en: 'If the parents are absent, any elder of the family (uncle/aunt, brother/sister-in-law) may take the sankalp.' } },
     { q: { hi: 'विवाह के बाद वधू किस ओर बैठती है?', en: 'On which side does the bride sit after marriage?' }, a: { hi: 'विवाह से पहले दाहिनी ओर; सप्तपदी व सुहाग रस्म के बाद वह वामांगी बनकर बाईं ओर बैठती है।', en: 'On the right before marriage; after Saptapadi she becomes vamangi and sits on the left.' } },
   ],
-  estTime: { hi: 'मुख्य वैदिक रस्में लगभग 3 से 4 घंटे।', en: 'The core Vedic rites take about 3 to 4 hours.' },
+  estTime: { hi: '3–4 घंटे', en: '3–4 hours' },
+  difficulty: { hi: 'उच्च · पुरोहित आवश्यक', en: 'Advanced · priest needed' },
   disclaimer: {
     hi: 'यह मार्गदर्शन सामान्य वैदिक/शास्त्रीय परंपरा पर आधारित है। हिंदू विवाह की एक ही सार्वभौमिक विधि नहीं होती — यह वेद, गृह्यसूत्र, धर्मशास्त्र, क्षेत्र व समुदाय अनुसार भिन्न होती है। अपने कुलाचार, परिवार की परंपरा एवं योग्य आचार्य/पुरोहित के निर्देशों का पालन सर्वोपरि है।',
     en: 'This guidance follows general Vedic/shastric tradition. There is no single universal Hindu wedding procedure — it varies by Veda, Grihyasutra, Dharmashastra, region and community. Following your kulachar (family custom) and a qualified purohit’s guidance is supreme.',
