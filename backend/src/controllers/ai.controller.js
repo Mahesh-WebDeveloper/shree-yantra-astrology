@@ -174,6 +174,15 @@ exports.occasionAsk = asyncHandler(async (req, res) => {
   res.json(await ai.answerOccasionQuestion({ occasion, question, lang }));
 });
 
+// POST /api/ai/explain-simple  { text, context, lang } — explain any ritual snippet simply with an example
+exports.explainSimple = asyncHandler(async (req, res) => {
+  const text = String(req.body.text || '').trim();
+  const context = String(req.body.context || '').slice(0, 120);
+  const lang = req.body.lang === 'en' ? 'en' : 'hi';
+  if (!text) return res.status(400).json({ error: 'Chahiye: text' });
+  res.json(await ai.generateSimpleExplain({ text, context, lang }));
+});
+
 // POST /api/ai/daily-shloka-explain  { id } — daily shlok ka complete jeevan-upyogi explanation
 exports.dailyShlokaExplain = asyncHandler(async (req, res) => {
   const id = String(req.body.id || '');

@@ -974,6 +974,9 @@ export const getOccasionGuide = (occasion: string, lang: 'en' | 'hi') =>
   post<OccasionGuide>('/api/ai/occasion-guide', { occasion, lang }, 'POST', 120000);
 export const askOccasion = (occasion: string, question: string, lang: 'en' | 'hi') =>
   post<{ answer: string }>('/api/ai/occasion-ask', { occasion, question, lang }, 'POST', 120000);
+// explain any ritual snippet in the simplest way, with an everyday example (cached by text)
+export const explainSimple = (text: string, context: string, lang: 'en' | 'hi') =>
+  post<{ explanation: string }>('/api/ai/explain-simple', { text, context, lang }, 'POST', 120000);
 
 // ── Daily Spiritual Boost (roz naya shlok + AI explanation) ──
 export interface DailyShloka {

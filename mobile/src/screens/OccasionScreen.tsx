@@ -7,6 +7,7 @@ import { fonts, radii } from '../theme/tokens';
 import { hTap, hSelect } from '../lib/haptics';
 import { useLang } from '../i18n/LanguageProvider';
 import { occasionById } from '../data/occasions';
+import { ExplainButton } from '../components/ExplainButton';
 import { curatedOccasion, Bi } from '../data/occasionContent';
 import { getOccasionGuide, askOccasion, OccasionGuide } from '../lib/api';
 
@@ -103,6 +104,7 @@ export function OccasionScreen({ route, navigation }: any) {
           {!!m.count && <View style={[styles.metaPill, { borderColor: theme.gold3 }]}><Text style={[styles.metaPillTxt, { color: theme.gold1 }]}>🔢 {m.count}</Text></View>}
         </View>
       )}
+      <ExplainButton text={`${L(m.title)} — ${m.sanskrit} — ${L(m.meaning)}`} context={hi ? o.hi : o.en} />
     </View>
   );
 
@@ -128,6 +130,7 @@ export function OccasionScreen({ route, navigation }: any) {
         <View style={{ gap: 14 }}>
           <Section icon="🌸" title={hi ? 'परिचय' : 'Introduction'}>
             <Text style={[styles.para, { color: theme.textSoft }]}>{L(curated.intro)}</Text>
+            <ExplainButton text={L(curated.intro)} context={hi ? o.hi : o.en} />
           </Section>
 
           <Section icon="✨" title={hi ? 'महत्व' : 'Significance'}>
@@ -138,6 +141,7 @@ export function OccasionScreen({ route, navigation }: any) {
           <Section icon="🕉️" title={hi ? 'शुभ मुहूर्त' : 'Auspicious Time'}>
             <Text style={[styles.para, { color: theme.textSoft }]}>{L(curated.muhurat)}</Text>
             {[curated.shubhMonths, curated.varjit, curated.nakshatra, curated.tithi].filter(Boolean).map((b, i) => <Bullet key={i} text={L(b)} />)}
+            <ExplainButton text={[L(curated.muhurat), L(curated.shubhMonths), L(curated.varjit)].filter(Boolean).join(' ')} context={hi ? o.hi : o.en} />
             <MuhuratCTA />
           </Section>
 
@@ -148,6 +152,7 @@ export function OccasionScreen({ route, navigation }: any) {
                   <View key={i} style={[styles.regional, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.5)' }]}>
                     <Text style={[styles.regionalName, { color: theme.gold2 }]}>{L(r.region)}</Text>
                     <Text style={[styles.regionalTxt, { color: theme.textSoft }]}>{L(r.text)}</Text>
+                    <ExplainButton text={`${L(r.region)}: ${L(r.text)}`} context={hi ? o.hi : o.en} />
                   </View>
                 ))}
               </View>
@@ -179,15 +184,25 @@ export function OccasionScreen({ route, navigation }: any) {
                     <Text style={[styles.stepTxt, { color: theme.textSoft }]}>{L(s.what)}</Text>
                     <Text style={[styles.stepWhy, { color: theme.textMuted }]}>✦ {L(s.why)}</Text>
                     {!!L(s.deity) && <View style={[styles.deityPill, { borderColor: theme.gold3 }]}><Text style={[styles.deityPillTxt, { color: theme.gold1 }]}>🙏 {L(s.deity)}</Text></View>}
+                    <ExplainButton text={`${L(s.title)}: ${L(s.what)} ${L(s.why)}`} context={hi ? o.hi : o.en} />
                   </View>
                 </View>
               ))}
             </View>
           </Section>
 
-          {!!curated.saptapadi?.length && (
-            <Section icon="👣" title={hi ? 'सप्तपदी — सात वचन' : 'Saptapadi — Seven Vows'}>
-              {curated.saptapadi.map((b, i) => <Bullet key={i} text={L(b)} color={theme.gold1} />)}
+          {!!curated.saptapadiMantras?.length && (
+            <Section icon="👣" title={hi ? 'सप्तपदी — सात फेरे, मंत्र व वचन' : 'Saptapadi — Seven Steps, Mantras & Vows'}>
+              <View style={{ gap: 12, marginTop: 2 }}>
+                {curated.saptapadiMantras.map((s, i) => (
+                  <View key={i} style={[styles.mantra, { borderColor: theme.gold3, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.05)' : 'rgba(255,247,224,0.6)' }]}>
+                    <Text style={[styles.mantraTitle, { color: theme.gold2 }]}>{L(s.pada)}</Text>
+                    <Text style={[styles.mantraSa, { color: theme.text }]}>{s.sanskrit}</Text>
+                    <Text style={[styles.mantraMeaning, { color: theme.textSoft }]}>{L(s.vachan)}</Text>
+                    <ExplainButton text={`${L(s.pada)} — ${s.sanskrit} — ${L(s.vachan)}`} context={hi ? o.hi : o.en} />
+                  </View>
+                ))}
+              </View>
             </Section>
           )}
 
@@ -199,6 +214,7 @@ export function OccasionScreen({ route, navigation }: any) {
             <Section icon="🔔" title={hi ? 'मंगलाष्टक' : 'Mangalashtak'}>
               <Text style={[styles.mantraSa, { color: theme.text }]}>{curated.mangalashtak.sanskrit}</Text>
               <Text style={[styles.para, { color: theme.textMuted, marginTop: 8, fontStyle: 'italic' }]}>{L(curated.mangalashtak.note)}</Text>
+              <ExplainButton text={`${curated.mangalashtak.sanskrit} — ${L(curated.mangalashtak.note)}`} context={hi ? o.hi : o.en} />
             </Section>
           )}
 
@@ -209,6 +225,7 @@ export function OccasionScreen({ route, navigation }: any) {
                   <View key={i}>
                     <Text style={[styles.aartiTitle, { color: theme.gold2 }]}>{L(a.title)}</Text>
                     {!!a.lines && <Text style={[styles.aartiLines, { color: theme.textSoft }]}>{a.lines}</Text>}
+                    <ExplainButton text={`${L(a.title)} — ${a.lines || ''}`} context={hi ? o.hi : o.en} />
                   </View>
                 ))}
               </View>

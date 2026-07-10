@@ -1773,6 +1773,26 @@ STRICT JSON लौटाओ इन keys के साथ (सारा पाठ
   });
 }
 
+// Explain ANY snippet of ritual text in the simplest possible way, with a tiny everyday example.
+// Cached by a hash of the text + language, so repeated taps are instant.
+async function generateSimpleExplain({ text, context, lang }) {
+  const crypto = require('crypto');
+  const en = lang === 'en';
+  const t = String(text || '').slice(0, 1400);
+  const key = crypto.createHash('md5').update(`${context || ''}||${t}`).digest('hex').slice(0, 18);
+  return cached(`explain|simple|v1|${en ? 'en' : 'hi'}|${key}`, 'simple-explain', async () => {
+    const prompt = en
+      ? `You are a kind, patient teacher explaining a Hindu ritual to someone using it for the very first time — perhaps elderly or not highly literate. In VERY simple English, explain the following${context ? ` (this is part of: ${context})` : ''}, then give ONE tiny everyday-life example so it becomes crystal clear. 2-4 short sentences. Do not add facts beyond the text; if it is a mantra, explain its feeling/meaning simply.
+Text: """${t}"""
+Return STRICT JSON: {"explanation":"..."}`
+      : `तुम एक स्नेही, धैर्यवान शिक्षक हो जो किसी पहली बार करने वाले — शायद बुज़ुर्ग या कम पढ़े-लिखे — व्यक्ति को हिंदू रीति समझा रहे हो। नीचे दी गई बात को${context ? ` (यह इसका हिस्सा है: ${context})` : ''} बहुत सरल हिंदी में समझाओ, फिर एक छोटा रोज़मर्रा का उदाहरण दो ताकि बात एकदम साफ हो जाए। 2-4 छोटे वाक्य। पाठ से बाहर कुछ मत जोड़ो; यदि यह मंत्र है तो उसका भाव सरलता से बताओ।
+पाठ: """${t}"""
+STRICT JSON लौटाओ: {"explanation":"..."}`;
+    const out = await callAI(prompt, { json: true });
+    return { explanation: out.explanation || '' };
+  });
+}
+
 async function answerOccasionQuestion({ occasion, question, lang }) {
   const meta = OCCASION_META[occasion] || { en: occasion, hi: occasion, deity: '' };
   const en = lang === 'en';
@@ -1793,6 +1813,6 @@ module.exports = {
   generateDailyPrediction, generatePeriodPrediction, generateTraditionalReading, generateDashaPhala, generateNames, generateNameSuggestions, generateBabyNames, answerNameQuestion, generateTransitForecast, askAstrologer, generateInsights, generateChoghadiyaMessage, generateMuhuratPick, generateSignRashifal, generateNumerologyReading,
   generateRcmExplanation, generateGitaExplanation, generateRamayanExplanation, generateRigvedaExplanation,
   generateVedaExplanation, generateDailyShlokaExplain, generateMatchExplanation, generateGocharExplanation,
-  generateRemediesExplanation, generateOccasionGuide, answerOccasionQuestion,
+  generateRemediesExplanation, generateOccasionGuide, answerOccasionQuestion, generateSimpleExplain,
   callAI,
 };
