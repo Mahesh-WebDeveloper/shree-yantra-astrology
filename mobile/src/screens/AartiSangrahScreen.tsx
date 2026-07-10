@@ -14,33 +14,22 @@ import { AARTIS, AARTI_CATEGORIES, AARTI_LIST, FullAarti } from '../data/aartis'
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) UIManager.setLayoutAnimationEnabledExperimental(true);
 const ease = () => LayoutAnimation.configureNext(LayoutAnimation.create(200, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
 
-const Chevron = ({ open, c }: { open: boolean; c: string }) => (
-  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" style={{ transform: [{ rotate: open ? '180deg' : '0deg' }] }}><Path d="M6 9l6 6 6-6" /></Svg>
+const RightChevron = ({ c }: { c: string }) => (
+  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><Path d="M9 18l6-6-6-6" /></Svg>
 );
 
-function AartiRow({ theme, hi, a }: { theme: any; hi: boolean; a: FullAarti }) {
-  const [open, setOpen] = useState(false);
-  const share = () => { hTap(); Share.share({ message: `${a.titleHi}\n\n${a.lines}\n\n— Shree Yantra Astrology 🙏` }).catch(() => {}); };
+function AartiRow({ theme, hi, a, onOpen }: { theme: any; hi: boolean; a: FullAarti; onOpen: () => void }) {
   return (
-    <View style={[styles.card, { borderColor: open ? theme.gold3 : theme.cardBorder, backgroundColor: theme.isDark ? '#000000' : 'rgba(255,253,247,0.92)' }]}>
-      <Pressable onPress={() => { hSelect(); ease(); setOpen((x) => !x); }} style={styles.head} hitSlop={4}>
-        <View style={[styles.dot, { borderColor: theme.gold3, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : '#fff' }]}><Text style={{ fontSize: 17 }}>🪔</Text></View>
+    <Pressable onPress={() => { hTap(); onOpen(); }} style={({ pressed }) => [styles.card, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? '#000000' : 'rgba(255,253,247,0.92)' }, pressed && { borderColor: theme.gold2, transform: [{ scale: 0.99 }] }]}>
+      <View style={styles.head}>
+        <View style={[styles.dot, { borderColor: theme.gold3, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : '#fff' }]}><Text style={{ fontSize: 18 }}>🪔</Text></View>
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={[styles.title, { color: theme.text }]} numberOfLines={open ? undefined : 1}>{hi ? a.titleHi : a.titleEn}</Text>
+          <Text style={[styles.title, { color: theme.text }]} numberOfLines={1}>{hi ? a.titleHi : a.titleEn}</Text>
           <Text style={[styles.deity, { color: theme.textMuted }]} numberOfLines={1}>{a.deity}</Text>
         </View>
-        <Chevron open={open} c={theme.gold2} />
-      </Pressable>
-      {open && (
-        <View style={{ marginTop: 10 }}>
-          <Text style={[styles.lines, { color: theme.text }]}>{a.lines}</Text>
-          <View style={styles.actions}>
-            <Pressable onPress={share} style={[styles.actBtn, { borderColor: theme.gold3 }]}><Text style={[styles.actTxt, { color: theme.gold1 }]}>📤 {hi ? 'शेयर' : 'Share'}</Text></Pressable>
-          </View>
-          <ExplainButton text={`${a.titleHi}\n${a.lines}`} context={hi ? 'आरती' : 'Aarti'} />
-        </View>
-      )}
-    </View>
+        <RightChevron c={theme.gold2} />
+      </View>
+    </Pressable>
   );
 }
 
@@ -77,7 +66,7 @@ export function AartiSangrahScreen({ navigation }: any) {
       {filtered ? (
         <View style={{ gap: 10, marginTop: 12 }}>
           {filtered.length === 0 ? <Text style={[styles.empty, { color: theme.textMuted }]}>{hi ? 'कोई आरती नहीं मिली' : 'No aarti found'}</Text>
-            : filtered.map((a) => <AartiRow key={a.id} theme={theme} hi={hi} a={a} />)}
+            : filtered.map((a) => <AartiRow key={a.id} theme={theme} hi={hi} a={a} onOpen={() => navigation.navigate('DevReader', { kind: 'aarti', id: a.id })} />)}
         </View>
       ) : (
         AARTI_CATEGORIES.map((cat) => {
@@ -91,7 +80,7 @@ export function AartiSangrahScreen({ navigation }: any) {
                 <View style={[styles.catLine, { backgroundColor: theme.gold3 }]} />
               </View>
               <View style={{ gap: 10, marginTop: 10 }}>
-                {items.map((a) => <AartiRow key={a.id} theme={theme} hi={hi} a={a} />)}
+                {items.map((a) => <AartiRow key={a.id} theme={theme} hi={hi} a={a} onOpen={() => navigation.navigate('DevReader', { kind: 'aarti', id: a.id })} />)}
               </View>
             </View>
           );

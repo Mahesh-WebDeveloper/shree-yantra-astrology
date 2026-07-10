@@ -1,39 +1,31 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, Share } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Page } from '../components/Page';
 import { GradientText } from '../components/GradientText';
-import { ExplainButton } from '../components/ExplainButton';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts } from '../theme/tokens';
 import { hTap } from '../lib/haptics';
 import { useLang } from '../i18n/LanguageProvider';
 import { MANTRAS_COLL, MANTRA_CATEGORIES, CollMantra } from '../data/mantraSangrah';
 
-function MantraRow({ theme, hi, m }: { theme: any; hi: boolean; m: CollMantra }) {
-  const share = () => { hTap(); Share.share({ message: `${m.titleHi}\n\n${m.sanskrit}\n\n${m.meaningHi}\n\n— Shree Yantra Astrology 🙏` }).catch(() => {}); };
+const RightChevron = ({ c }: { c: string }) => (
+  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><Path d="M9 18l6-6-6-6" /></Svg>
+);
+
+function MantraRow({ theme, hi, m, onOpen }: { theme: any; hi: boolean; m: CollMantra; onOpen: () => void }) {
   return (
-    <View style={[styles.card, { borderColor: theme.gold3, backgroundColor: theme.isDark ? '#000000' : 'rgba(255,253,247,0.92)' }]}>
+    <Pressable onPress={() => { hTap(); onOpen(); }} style={({ pressed }) => [styles.card, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? '#000000' : 'rgba(255,253,247,0.92)' }, pressed && { borderColor: theme.gold2, transform: [{ scale: 0.99 }] }]}>
       <View style={styles.head}>
-        <View style={[styles.dot, { borderColor: theme.gold3, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : '#fff' }]}><Text style={{ fontSize: 17 }}>📿</Text></View>
+        <View style={[styles.dot, { borderColor: theme.gold3, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : '#fff' }]}><Text style={{ fontSize: 18 }}>📿</Text></View>
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={[styles.title, { color: theme.text }]}>{hi ? m.titleHi : m.titleEn}</Text>
-          <Text style={[styles.deity, { color: theme.textMuted }]} numberOfLines={1}>{m.deity}</Text>
+          <Text style={[styles.title, { color: theme.text }]} numberOfLines={1}>{hi ? m.titleHi : m.titleEn}</Text>
+          <Text style={[styles.sanskritPreview, { color: theme.textMuted }]} numberOfLines={1}>{m.sanskrit.split('\n')[0]}</Text>
         </View>
+        <RightChevron c={theme.gold2} />
       </View>
-      <Text style={[styles.sanskrit, { color: theme.text }]}>{m.sanskrit}</Text>
-      <Text style={[styles.roman, { color: theme.textMuted }]}>{m.roman}</Text>
-      <Text style={[styles.meaning, { color: theme.textSoft }]}>{hi ? m.meaningHi : m.meaningEn}</Text>
-      <View style={styles.pills}>
-        <View style={[styles.pill, { borderColor: theme.gold3 }]}><Text style={[styles.pillTxt, { color: theme.gold1 }]}>🕐 {hi ? m.whenHi : m.whenEn}</Text></View>
-        <View style={[styles.pill, { borderColor: theme.gold3 }]}><Text style={[styles.pillTxt, { color: theme.gold1 }]}>🔢 {m.count}</Text></View>
-      </View>
-      <Text style={[styles.benefit, { color: theme.textMuted }]}>✦ {hi ? m.benefitHi : m.benefitEn}</Text>
-      <View style={styles.actions}>
-        <Pressable onPress={share} style={[styles.actBtn, { borderColor: theme.gold3 }]}><Text style={[styles.actTxt, { color: theme.gold1 }]}>📤 {hi ? 'शेयर' : 'Share'}</Text></Pressable>
-      </View>
-      <ExplainButton text={`${m.titleHi} — ${m.sanskrit} — ${m.meaningHi}`} context={hi ? 'मंत्र' : 'Mantra'} />
-    </View>
+    </Pressable>
   );
 }
 
@@ -64,7 +56,7 @@ export function MantraSangrahScreen({ navigation }: any) {
       {filtered ? (
         <View style={{ gap: 12, marginTop: 12 }}>
           {filtered.length === 0 ? <Text style={[styles.empty, { color: theme.textMuted }]}>{hi ? 'कोई मंत्र नहीं मिला' : 'No mantra found'}</Text>
-            : filtered.map((m) => <MantraRow key={m.id} theme={theme} hi={hi} m={m} />)}
+            : filtered.map((m) => <MantraRow key={m.id} theme={theme} hi={hi} m={m} onOpen={() => navigation.navigate('DevReader', { kind: 'mantra', id: m.id })} />)}
         </View>
       ) : (
         MANTRA_CATEGORIES.map((cat) => {
@@ -73,7 +65,7 @@ export function MantraSangrahScreen({ navigation }: any) {
           return (
             <View key={cat.key} style={{ marginTop: 18 }}>
               <View style={styles.catHead}><View style={[styles.catLine, { backgroundColor: theme.gold3 }]} /><Text style={[styles.catTitle, { color: theme.gold1 }]}>{hi ? cat.hi : cat.en}</Text><View style={[styles.catLine, { backgroundColor: theme.gold3 }]} /></View>
-              <View style={{ gap: 12, marginTop: 10 }}>{items.map((m) => <MantraRow key={m.id} theme={theme} hi={hi} m={m} />)}</View>
+              <View style={{ gap: 12, marginTop: 10 }}>{items.map((m) => <MantraRow key={m.id} theme={theme} hi={hi} m={m} onOpen={() => navigation.navigate('DevReader', { kind: 'mantra', id: m.id })} />)}</View>
             </View>
           );
         })
@@ -95,7 +87,8 @@ const styles = StyleSheet.create({
   catLine: { flex: 1, height: 1, opacity: 0.5 },
   catTitle: { fontFamily: fonts.cinzelSemi, fontSize: 12.5, letterSpacing: 1.5, textAlign: 'center' },
   card: { borderWidth: 1, borderRadius: 14, padding: 14 },
-  head: { flexDirection: 'row', alignItems: 'center', gap: 11, marginBottom: 10 },
+  head: { flexDirection: 'row', alignItems: 'center', gap: 11 },
+  sanskritPreview: { fontFamily: fonts.devanagari, fontSize: 12.5, marginTop: 3 },
   dot: { width: 40, height: 40, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   title: { fontFamily: fonts.playfair, fontSize: 16, lineHeight: 22 },
   deity: { fontFamily: fonts.inter, fontSize: 11.5, marginTop: 2 },

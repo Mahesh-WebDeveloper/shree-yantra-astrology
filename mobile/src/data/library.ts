@@ -157,6 +157,14 @@ export const BOOKS: Record<string, BookDoc> = {
       { title: 'मंत्र', verses: [{ ref: 'महामृत्युंजय', sa: 'ॐ त्र्यम्बकं यजामहे सुगन्धिं पुष्टिवर्धनम्।', en: '' }] },
     ],
   },
+  'stotra-sangrah': {
+    id: 'stotra-sangrah', eyebrow: 'भक्ति · Bhakti', title: 'Stotra Sangrah', hindi: 'स्तोत्र\nसंग्रह', cover: 'green',
+    language: ['Hindi'], trackId: 'temple-bells',
+    intro: 'Pramanik Sanskrit stotra — Sankatnashan Ganesh Stotra aadi (aur stotra source-verify karke jode ja rahe hain).',
+    chapters: [
+      { title: 'स्तोत्र', verses: [{ ref: 'गणेश', sa: 'प्रणम्य शिरसा देवं गौरीपुत्रं विनायकम्।', en: '' }] },
+    ],
+  },
   mahabharat: {
     id: 'mahabharat', eyebrow: 'Veda Vyasa · Gita Press', title: 'Mahabharata', hindi: 'महाभारत', cover: 'blue',
     language: ['Sanskrit', 'Hindi', 'English'], trackId: 'meditation',
@@ -236,7 +244,8 @@ export const SCRIPTURES: LibraryItem[] = BOOK_LIST.map((b) => ({
     : b.id === 'ramcharitmanas' ? 'Hindi · 7 Kand · 1074 Verses'
     : b.id === 'hanuman-chalisa' ? 'Hindi & English · 40 Chaupai · AI'
     : b.id === 'aarti-sangrah' ? 'Hindi · सभी देवी-देवता · पूर्ण आरती'
-    : b.id === 'mantra-sangrah' ? 'Hindi & English · 7 मुख्य मंत्र · AI'
+    : b.id === 'mantra-sangrah' ? 'Hindi & English · 7 मुख्य मंत्र · जाप · AI'
+    : b.id === 'stotra-sangrah' ? 'Sanskrit · प्रामाणिक स्तोत्र'
     : b.id === 'rigveda' ? 'Sanskrit & English · 10 Mandala'
     : b.id === 'atharvaveda' ? 'Sanskrit & English · 20 Kanda'
     : b.id === 'yajurveda' ? 'Sanskrit & English · 40 Adhyaya'

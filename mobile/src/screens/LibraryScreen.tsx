@@ -175,6 +175,7 @@ export function LibraryScreen({ navigation }: any) {
     if (bookId === 'hanuman-chalisa') return navigation.navigate('HanumanChalisa');
     if (bookId === 'aarti-sangrah') return navigation.navigate('AartiSangrah');
     if (bookId === 'mantra-sangrah') return navigation.navigate('MantraSangrah');
+    if (bookId === 'stotra-sangrah') return navigation.navigate('StotraSangrah');
     if (bookId === 'rigveda') return navigation.navigate('Rigveda');
     if (bookId === 'yajurveda' || bookId === 'samaveda' || bookId === 'atharvaveda' || bookId === 'upanishads')
       return navigation.navigate('Veda', { veda: bookId });
