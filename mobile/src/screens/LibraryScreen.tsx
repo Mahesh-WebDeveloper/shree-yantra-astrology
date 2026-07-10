@@ -239,8 +239,13 @@ export function LibraryScreen({ navigation }: any) {
   // falls back to the static placeholder until the media list arrives.
   const gitaCh2 = gitaAudio.find((m) => /chapter\s*0*2\b/i.test(m.title || ''));
   const contTrack: Track = gitaCh2 ? mediaToTrack(gitaCh2) : cont;
-  const contLive = isCurrent(contTrack.id);
   const playContinue = () => { hTap(); player.play(contTrack, gitaCh2 ? gitaQueue : undefined); };
+  // The Continue card is a LIVE mini-player: reflect whatever is currently loaded in the
+  // player (so next/prev update the title, seekbar, time + play/pause icon in real time);
+  // fall back to the Gita placeholder when nothing has been played yet.
+  const activeTrack = player.track ?? contTrack;
+  const liveActive = !!player.track;
+  const onContPlay = () => { hTap(); if (liveActive) player.toggle(); else playContinue(); };
 
   // Ramayan audio (Audioboom playlist) — apni dedicated screen me, Library sections me nahi
   const isRamayanAudio = (m: MediaItem) => m.subCategory === 'ramayan_audio';
@@ -479,28 +484,29 @@ export function LibraryScreen({ navigation }: any) {
       {filter === 'all' && (
         <LibCard theme={theme}>
           <SectionHead label="CONTINUE LISTENING" theme={theme} />
-          <View style={styles.contRow}>
+          <Pressable style={styles.contRow} onPress={() => { if (liveActive) { hTap(); player.openSheet(); } }} disabled={!liveActive}>
             <LinearGradient colors={['#243555', '#080f1e']} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} style={[styles.contCover, { borderColor: theme.cardBorder }]}>
               <Text style={{ color: theme.gold2, fontSize: 26, fontFamily: fonts.devanagari }}>ॐ</Text>
             </LinearGradient>
             <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={[styles.contTitle, { color: theme.isDark ? '#fff' : theme.text }]} numberOfLines={1}>{contTrack.title}</Text>
-              <Text style={[styles.itemSub, { color: theme.textMuted }]} numberOfLines={1}>{contTrack.sub}</Text>
+              <Text style={[styles.contTitle, { color: theme.isDark ? '#fff' : theme.text }]} numberOfLines={1}>{activeTrack.title}</Text>
+              <Text style={[styles.itemSub, { color: theme.textMuted }]} numberOfLines={1}>{activeTrack.sub}</Text>
             </View>
-          </View>
-          <ContinueSeek live={contLive} onSeek={player.seekFraction} />
+            {liveActive && <Chevron color={theme.gold2} size={18} />}
+          </Pressable>
+          <ContinueSeek live={liveActive} onSeek={player.seekFraction} />
           <View style={styles.contFooter}>
-            <ContTime live={contLive} kind="pos" color={theme.textMuted} />
+            <ContTime live={liveActive} kind="pos" color={theme.textMuted} />
             <View style={styles.transport}>
-              <Pressable onPress={player.prev} hitSlop={8} style={[styles.tBtn, { borderColor: 'rgba(233,184,80,0.2)', backgroundColor: 'rgba(233,184,80,0.05)' }]}><PrevIcon color={theme.goldText} /></Pressable>
-              <Pressable onPress={playContinue} hitSlop={8}>
+              <Pressable onPress={() => { hTap(); player.prev(); }} hitSlop={8} style={[styles.tBtn, { borderColor: 'rgba(233,184,80,0.2)', backgroundColor: 'rgba(233,184,80,0.05)' }]}><PrevIcon color={theme.goldText} /></Pressable>
+              <Pressable onPress={onContPlay} hitSlop={8}>
                 <LinearGradient colors={['#fce8a8', '#b87f1a']} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={styles.tPlay}>
-                  {playing(contTrack.id) ? <PauseIcon color="#1a0e00" size={18} /> : <PlayIcon color="#1a0e00" size={18} />}
+                  {player.loading ? <ActivityIndicator color="#1a0e00" size="small" /> : (liveActive && player.isPlaying) ? <PauseIcon color="#1a0e00" size={18} /> : <PlayIcon color="#1a0e00" size={18} />}
                 </LinearGradient>
               </Pressable>
-              <Pressable onPress={player.next} hitSlop={8} style={[styles.tBtn, { borderColor: 'rgba(233,184,80,0.2)', backgroundColor: 'rgba(233,184,80,0.05)' }]}><NextIcon color={theme.goldText} /></Pressable>
+              <Pressable onPress={() => { hTap(); player.next(); }} hitSlop={8} style={[styles.tBtn, { borderColor: 'rgba(233,184,80,0.2)', backgroundColor: 'rgba(233,184,80,0.05)' }]}><NextIcon color={theme.goldText} /></Pressable>
             </View>
-            <ContTime live={contLive} kind="dur" color={theme.textMuted} right />
+            <ContTime live={liveActive} kind="dur" color={theme.textMuted} right />
           </View>
         </LibCard>
       )}
