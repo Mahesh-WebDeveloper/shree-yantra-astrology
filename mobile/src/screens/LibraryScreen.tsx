@@ -173,6 +173,7 @@ export function LibraryScreen({ navigation }: any) {
     if (bookId === 'ramayan') return navigation.navigate('Ramayan');
     if (bookId === 'ramcharitmanas') return navigation.navigate('Ramcharitmanas');
     if (bookId === 'hanuman-chalisa') return navigation.navigate('HanumanChalisa');
+    if (bookId === 'aarti-sangrah') return navigation.navigate('AartiSangrah');
     if (bookId === 'rigveda') return navigation.navigate('Rigveda');
     if (bookId === 'yajurveda' || bookId === 'samaveda' || bookId === 'atharvaveda' || bookId === 'upanishads')
       return navigation.navigate('Veda', { veda: bookId });

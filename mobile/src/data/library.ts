@@ -141,6 +141,14 @@ export const BOOKS: Record<string, BookDoc> = {
       ] },
     ],
   },
+  'aarti-sangrah': {
+    id: 'aarti-sangrah', eyebrow: 'भक्ति · Bhakti', title: 'Aarti Sangrah', hindi: 'आरती\nसंग्रह', cover: 'gold',
+    language: ['Hindi'], trackId: 'temple-bells',
+    intro: 'Sabhi pramukh Hindu devi-devताओं ki sampoorna (poori) aartiyan — Ganesh, Shiv, Vishnu, Krishna, Ram, Hanuman, Durga, Kali, Laxmi, Saraswati, Surya, Shani, Ganga, Khatu Shyam, Sai aur bahut — categories me.',
+    chapters: [
+      { title: 'आरतियाँ', verses: [{ ref: 'गणेश', sa: 'जय गणेश जय गणेश जय गणेश देवा।', en: '' }] },
+    ],
+  },
   mahabharat: {
     id: 'mahabharat', eyebrow: 'Veda Vyasa · Gita Press', title: 'Mahabharata', hindi: 'महाभारत', cover: 'blue',
     language: ['Sanskrit', 'Hindi', 'English'], trackId: 'meditation',
@@ -219,6 +227,7 @@ export const SCRIPTURES: LibraryItem[] = BOOK_LIST.map((b) => ({
     : b.id === 'ramayan' ? 'Sanskrit & English · 7 Kanda'
     : b.id === 'ramcharitmanas' ? 'Hindi · 7 Kand · 1074 Verses'
     : b.id === 'hanuman-chalisa' ? 'Hindi & English · 40 Chaupai · AI'
+    : b.id === 'aarti-sangrah' ? 'Hindi · सभी देवी-देवता · पूर्ण आरती'
     : b.id === 'rigveda' ? 'Sanskrit & English · 10 Mandala'
     : b.id === 'atharvaveda' ? 'Sanskrit & English · 20 Kanda'
     : b.id === 'yajurveda' ? 'Sanskrit & English · 40 Adhyaya'
