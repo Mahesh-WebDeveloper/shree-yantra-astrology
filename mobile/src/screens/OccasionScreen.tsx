@@ -1,17 +1,18 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, ActivityIndicator, TextInput, Share, LayoutAnimation, Platform, UIManager } from 'react-native';
-import Svg, { Circle, Path, G } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Page } from '../components/Page';
 import { useTheme } from '../theme/ThemeProvider';
-import { fonts, radii } from '../theme/tokens';
-import { hTap, hSelect, hSuccess } from '../lib/haptics';
+import { fonts } from '../theme/tokens';
+import { hTap, hSelect } from '../lib/haptics';
 import { useLang } from '../i18n/LanguageProvider';
 import { occasionById } from '../data/occasions';
 import { ExplainButton } from '../components/ExplainButton';
 import { curatedOccasion, Bi } from '../data/occasionContent';
+import { aartisFor } from '../data/aartis';
 import { getOccasionGuide, askOccasion, OccasionGuide } from '../lib/api';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -20,23 +21,6 @@ const GREEN = '#3ec77a';
 const RED = '#e06a5a';
 const MUHURAT_KEY: Record<string, string> = { vivah: 'vivah', 'grah-pravesh': 'griha-pravesh', vehicle: 'vehicle', business: 'new-business' };
 const ease = () => LayoutAnimation.configureNext(LayoutAnimation.create(200, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
-
-// subtle gold mandala behind the hero crest
-function Mandala({ color }: { color: string }) {
-  const petals = Array.from({ length: 12 });
-  return (
-    <Svg width={220} height={220} viewBox="0 0 100 100" style={StyleSheet.absoluteFill} pointerEvents="none">
-      <G opacity={0.5}>
-        <Circle cx={50} cy={50} r={46} stroke={color} strokeWidth={0.5} fill="none" />
-        <Circle cx={50} cy={50} r={36} stroke={color} strokeWidth={0.4} fill="none" />
-        <Circle cx={50} cy={50} r={24} stroke={color} strokeWidth={0.4} fill="none" />
-        {petals.map((_, i) => (
-          <Path key={i} d="M50 8 C56 24, 56 30, 50 40 C44 30, 44 24, 50 8 Z" fill={color} opacity={0.14} transform={`rotate(${i * 30} 50 50)`} />
-        ))}
-      </G>
-    </Svg>
-  );
-}
 
 const Chevron = ({ open, c }: { open: boolean; c: string }) => (
   <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" style={{ transform: [{ rotate: open ? '180deg' : '0deg' }] }}><Path d="M6 9l6 6 6-6" /></Svg>
@@ -76,6 +60,20 @@ function MantraCard({ theme, hi, occasionName, m }: { theme: any; hi: boolean; o
         <Pressable onPress={() => shareMantra(L(m.title), m.sanskrit, L(m.meaning))} style={[styles.metaPill, { borderColor: theme.gold3 }]}><Text style={[styles.metaPillTxt, { color: theme.gold1 }]}>📤 {hi ? 'शेयर' : 'Share'}</Text></Pressable>
       </View>
       <ExplainButton text={`${L(m.title)} — ${m.sanskrit} — ${L(m.meaning)}`} context={occasionName} />
+    </View>
+  );
+}
+
+// one complete aarti as its own mini-accordion (title → full lyrics), for readability
+function AartiCard({ theme, hi, a, occasionName }: { theme: any; hi: boolean; a: { titleHi: string; titleEn: string; lines: string }; occasionName: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <View style={[styles.aartiCard, { borderColor: theme.gold3, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.05)' : 'rgba(255,247,224,0.55)' }]}>
+      <Pressable onPress={() => { hSelect(); ease(); setOpen((x) => !x); }} style={styles.accHead} hitSlop={4}>
+        <Text style={[styles.aartiTitle, { color: theme.gold1, flex: 1 }]}>🪔  {hi ? a.titleHi : a.titleEn}</Text>
+        <Chevron open={open} c={theme.gold2} />
+      </Pressable>
+      {open && (<><Text style={[styles.aartiLines, { color: theme.text }]}>{a.lines}</Text><ExplainButton text={`${hi ? a.titleHi : a.titleEn}\n${a.lines}`} context={occasionName} /></>)}
     </View>
   );
 }
@@ -152,7 +150,7 @@ export function OccasionScreen({ route, navigation }: any) {
     { k: 'mantra', icon: '📿', label: hi ? 'मंत्र' : 'Mantra' },
     ...(curated?.saptapadiMantras?.length ? [{ k: 'saptapadi', icon: '👣', label: hi ? 'सप्तपदी' : 'Saptapadi' }] : []),
     { k: 'samagri', icon: '🛒', label: hi ? 'सामग्री' : 'Samagri' },
-    ...(curated?.aartis?.length ? [{ k: 'aarti', icon: '🪔', label: hi ? 'आरती' : 'Aarti' }] : []),
+    { k: 'aarti', icon: '🪔', label: hi ? 'आरती' : 'Aarti' },
     { k: 'ai', icon: '🤖', label: hi ? 'AI गाइड' : 'AI Guide' },
   ];
 
@@ -163,10 +161,7 @@ export function OccasionScreen({ route, navigation }: any) {
       <Page title={hi ? o.hi : o.en} scrollRef={scrollRef} onBack={() => { hTap(); navigation.goBack(); }} right={<Pressable onPress={onShare} hitSlop={10}><Text style={{ fontSize: 18 }}>📤</Text></Pressable>} contentStyle={{ paddingBottom: 96 }}>
         {/* ── HERO with mandala ── */}
         <LinearGradient colors={theme.isDark ? [o.accent + '33', o.accent + '06'] : ['rgba(255,247,224,0.96)', 'rgba(255,253,247,0.9)']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={[styles.hero, { borderColor: o.accent + (theme.isDark ? '66' : '40') }]}>
-          <View style={styles.crestWrap}>
-            <Mandala color={o.accent} />
-            <View style={[styles.crest, { borderColor: o.accent + '90', backgroundColor: o.accent + '22', shadowColor: o.accent }]}><Text style={{ fontSize: 38 }}>{o.emoji}</Text></View>
-          </View>
+          <View style={[styles.crest, { borderColor: o.accent + '90', backgroundColor: o.accent + '22', shadowColor: o.accent }]}><Text style={{ fontSize: 40 }}>{o.emoji}</Text></View>
           <Text style={[styles.heroHi, { color: theme.text }]}>{hi ? o.hi : o.en}</Text>
           <Text style={[styles.heroSub, { color: theme.gold2 }]}>{hi ? o.subHi : o.subEn}</Text>
           <View style={styles.heroChips}>
@@ -285,16 +280,6 @@ export function OccasionScreen({ route, navigation }: any) {
               </Acc>
             )}
 
-            {!!curated.aartis.length && (
-              <Acc theme={theme} onLayout={onY('aarti')} icon="🪔" title={hi ? 'आरती' : 'Aarti'}>
-                <View style={{ gap: 10 }}>
-                  {curated.aartis.map((a, i) => (
-                    <View key={i}><Text style={[styles.aartiTitle, { color: theme.gold2 }]}>{L(a.title)}</Text>{!!a.lines && <Text style={[styles.aartiLines, { color: theme.textSoft }]}>{a.lines}</Text>}<ExplainButton text={`${L(a.title)} — ${a.lines || ''}`} context={hi ? o.hi : o.en} /></View>
-                  ))}
-                </View>
-              </Acc>
-            )}
-
             <Acc theme={theme} icon="📍" title={hi ? 'क्षेत्रीय परंपराएँ' : 'Regional Traditions'} open={false}>
               <View style={{ gap: 9 }}>
                 {curated.regional.map((r, i) => (
@@ -348,6 +333,15 @@ export function OccasionScreen({ route, navigation }: any) {
           </>
         )}
 
+        {/* Complete aartis (shared library — full lyrics for every occasion) */}
+        {(curated || guide) && (
+          <Acc theme={theme} onLayout={onY('aarti')} icon="🪔" title={hi ? 'आरती (पूर्ण)' : 'Aarti (complete)'} sub={hi ? 'शीर्षक पर टैप करें — पूरी आरती खुलेगी' : 'Tap a title to open the full aarti'} open={false}>
+            <View style={{ gap: 10 }}>
+              {aartisFor(id).map((a) => <AartiCard key={a.id} theme={theme} hi={hi} a={a} occasionName={occName} />)}
+            </View>
+          </Acc>
+        )}
+
         {/* AI assistant */}
         {(curated || guide) && (
           <View onLayout={onY('ai')} style={[styles.card, { marginTop: 2, borderColor: theme.gold2 + '66', backgroundColor: theme.isDark ? 'rgba(233,184,80,0.06)' : 'rgba(255,247,224,0.7)' }]}>
@@ -396,7 +390,7 @@ const styles = StyleSheet.create({
   cardTitle: { fontFamily: fonts.cinzelSemi, fontSize: 13.5, letterSpacing: 0.5, marginBottom: 10 },
   cardSub: { fontFamily: fonts.inter, fontSize: 11, marginTop: 6, fontStyle: 'italic' },
   subHead: { fontFamily: fonts.interBold, fontSize: 12, marginTop: 12, marginBottom: 2 },
-  para: { fontFamily: fonts.inter, fontSize: 13.5, lineHeight: 21 },
+  para: { fontFamily: fonts.inter, fontSize: 14, lineHeight: 23 },
 
   cta: { paddingVertical: 12, alignItems: 'center', justifyContent: 'center', borderRadius: 12 },
   ctaTxt: { fontFamily: fonts.interBold, fontSize: 13.5 },
@@ -405,7 +399,7 @@ const styles = StyleSheet.create({
   progBar: { height: 7, borderRadius: 4, marginTop: 10, overflow: 'hidden' },
   ckRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 11 },
   ckBox: { width: 24, height: 24, borderRadius: 7, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
-  ckLabel: { fontFamily: fonts.interSemi, fontSize: 13.5 },
+  ckLabel: { fontFamily: fonts.interSemi, fontSize: 14, lineHeight: 20 },
   ckReason: { fontFamily: fonts.inter, fontSize: 11, lineHeight: 16, marginTop: 1 },
 
   tlRow: { flexDirection: 'row', gap: 12 },
@@ -414,7 +408,7 @@ const styles = StyleSheet.create({
   tlNumTxt: { fontFamily: fonts.interBold, fontSize: 12.5 },
   tlLine: { width: 2, flex: 1, marginTop: 3, borderRadius: 1 },
   stepTitle: { fontFamily: fonts.interBold, fontSize: 13.5, marginBottom: 3 },
-  stepTxt: { fontFamily: fonts.inter, fontSize: 13, lineHeight: 20 },
+  stepTxt: { fontFamily: fonts.inter, fontSize: 13.5, lineHeight: 22 },
   stepWhy: { fontFamily: fonts.inter, fontSize: 11.5, lineHeight: 17, marginTop: 4, fontStyle: 'italic' },
   deityPill: { alignSelf: 'flex-start', borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3, marginTop: 7 },
   deityPillTxt: { fontFamily: fonts.interSemi, fontSize: 10, includeFontPadding: false },
@@ -427,29 +421,30 @@ const styles = StyleSheet.create({
 
   mantra: { borderWidth: 1, borderRadius: 14, padding: 13 },
   mantraTitle: { fontFamily: fonts.interSemi, fontSize: 11, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 6 },
-  mantraSa: { fontFamily: fonts.devanagari, fontSize: 16, lineHeight: 28 },
+  mantraSa: { fontFamily: fonts.devanagari, fontSize: 16.5, lineHeight: 30 },
   mantraRoman: { fontFamily: fonts.inter, fontSize: 12, fontStyle: 'italic', marginTop: 6, lineHeight: 18 },
-  mantraMeaning: { fontFamily: fonts.inter, fontSize: 13, lineHeight: 20, marginTop: 8 },
+  mantraMeaning: { fontFamily: fonts.inter, fontSize: 13.5, lineHeight: 22, marginTop: 8 },
   mantraMeta: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 10 },
   metaPill: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5, alignItems: 'center', justifyContent: 'center' },
   metaPillTxt: { fontFamily: fonts.interSemi, fontSize: 10.5, textAlign: 'center', textAlignVertical: 'center', includeFontPadding: false },
 
-  aartiTitle: { fontFamily: fonts.interSemi, fontSize: 13 },
-  aartiLines: { fontFamily: fonts.devanagari, fontSize: 14, lineHeight: 24, marginTop: 3 },
+  aartiCard: { borderWidth: 1, borderRadius: 12, padding: 12 },
+  aartiTitle: { fontFamily: fonts.interSemi, fontSize: 13.5, lineHeight: 20 },
+  aartiLines: { fontFamily: fonts.devanagari, fontSize: 15.5, lineHeight: 31, marginTop: 9 },
 
   regional: { borderWidth: 1, borderRadius: 12, padding: 11 },
   regionalName: { fontFamily: fonts.interBold, fontSize: 12.5, marginBottom: 4 },
-  regionalTxt: { fontFamily: fonts.inter, fontSize: 12.5, lineHeight: 19 },
+  regionalTxt: { fontFamily: fonts.inter, fontSize: 13, lineHeight: 21 },
 
   dodont: { flexDirection: 'row', gap: 10 },
   ddCol: { flex: 1, borderWidth: 1, borderRadius: 14, padding: 12 },
   ddTitle: { fontFamily: fonts.interBold, fontSize: 12.5, marginBottom: 4 },
   bulletRow: { flexDirection: 'row', gap: 7, marginTop: 6 },
   bulletDot: { fontFamily: fonts.interBold, fontSize: 13, lineHeight: 19 },
-  bulletTxt: { flex: 1, fontFamily: fonts.inter, fontSize: 12.5, lineHeight: 19 },
+  bulletTxt: { flex: 1, fontFamily: fonts.inter, fontSize: 13, lineHeight: 21 },
 
   faqQ: { fontFamily: fonts.interSemi, fontSize: 13 },
-  faqA: { fontFamily: fonts.inter, fontSize: 12.5, lineHeight: 19, marginTop: 3 },
+  faqA: { fontFamily: fonts.inter, fontSize: 13, lineHeight: 21, marginTop: 3 },
 
   note: { borderWidth: 1, borderRadius: 12, padding: 12, marginBottom: 4 },
   noteTxt: { fontFamily: fonts.inter, fontSize: 12, lineHeight: 18 },
