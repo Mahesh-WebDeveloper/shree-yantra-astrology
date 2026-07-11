@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
 import { endpoints } from './endpoints'
 
@@ -15,6 +15,9 @@ export const queryKeys = {
   aiCache: (params: Record<string, unknown>) => ['ai-cache', params] as const,
   analytics: ['analytics'] as const,
   screens: ['screens'] as const,
+  activityUsers: (q: string, page: number) => ['activity-users', q, page] as const,
+  activityUser: (id: string) => ['activity-user', id] as const,
+  activityLive: ['activity-live'] as const,
 }
 
 export function useStats() {
@@ -63,4 +66,30 @@ export function useAnalytics() {
 
 export function useScreens() {
   return useQuery({ queryKey: queryKeys.screens, queryFn: endpoints.screens })
+}
+
+export function useActivityUsers(q: string, page: number) {
+  return useQuery({
+    queryKey: queryKeys.activityUsers(q, page),
+    queryFn: () => endpoints.activityUsers({ q: q || undefined, page, limit: 12 }),
+    refetchInterval: 10_000,
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useActivityUser(id: string) {
+  return useQuery({
+    queryKey: queryKeys.activityUser(id),
+    queryFn: () => endpoints.activityUser(id),
+    enabled: !!id,
+  })
+}
+
+export function useActivityLive() {
+  return useQuery({
+    queryKey: queryKeys.activityLive,
+    queryFn: () => endpoints.activityLive(),
+    refetchInterval: 5_000,
+    staleTime: 0,
+  })
 }

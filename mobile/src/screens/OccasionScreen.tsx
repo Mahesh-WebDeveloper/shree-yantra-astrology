@@ -8,6 +8,7 @@ import { Page } from '../components/Page';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts } from '../theme/tokens';
 import { hTap, hSelect } from '../lib/haptics';
+import { track } from '../lib/analytics';
 import { useLang } from '../i18n/LanguageProvider';
 import { occasionById } from '../data/occasions';
 import { ExplainButton } from '../components/ExplainButton';
@@ -94,6 +95,9 @@ export function OccasionScreen({ route, navigation }: any) {
   const [answer, setAnswer] = useState('');
   const [asking, setAsking] = useState(false);
   const [checked, setChecked] = useState<Set<number>>(new Set());
+
+  // analytics: occasion opened (only when it resolves to a real occasion)
+  useEffect(() => { if (o) track('occasion_view', undefined, { id }); }, [id]);
 
   const scrollRef = useRef<any>(null);
   const yRef = useRef<Record<string, number>>({});

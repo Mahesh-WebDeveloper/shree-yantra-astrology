@@ -202,6 +202,10 @@ router.get('/admin/ai-cache', adminOnly, adminCtrl.listAiCache);
 router.delete('/admin/ai-cache/:id', adminOnly, adminCtrl.deleteAiCache);
 
 router.get('/admin/analytics', adminOnly, analyticsCtrl.stats);
+// per-user activity tracking (User Activity dashboard — real-time)
+router.get('/admin/activity/users', adminOnly, analyticsCtrl.activityUsers);
+router.get('/admin/activity/user/:id', adminOnly, analyticsCtrl.activityUser);
+router.get('/admin/activity/live', adminOnly, analyticsCtrl.activityLive);
 
 router.get('/admin/screens', adminOnly, screensCtrl.adminList);
 router.get('/admin/screens/:page', adminOnly, screensCtrl.adminGet);

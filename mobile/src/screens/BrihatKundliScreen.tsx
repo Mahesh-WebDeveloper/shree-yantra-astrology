@@ -14,6 +14,7 @@ import { CalendarIcon, ClockIcon, UserLine } from '../components/icons/ProfileIc
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts, radii } from '../theme/tokens';
 import { hError, hSelect, hSuccess, hTap } from '../lib/haptics';
+import { track } from '../lib/analytics';
 import { birthFromProfile } from '../lib/birth';
 import { ApiDosha, ApiPlanet, BrihatAshtakavarga, BrihatAvakhada, BrihatDomain, BrihatJaimini, BrihatKp, BrihatKundliResponse, BrihatLalKitab, BrihatNumerology, BrihatSection, BrihatShadbala, BrihatVarshphal, DashaResponse, getBrihatKundli, LifeTimelineResponse, LocationSuggestion, NumberCard, RemediesResponse, resolveLocation, YogaItem } from '../lib/api';
 import { useAutoScroll } from '../lib/useAutoScroll';
@@ -607,6 +608,7 @@ export function BrihatKundliScreen({ navigation }: any) {
       if (resolved?.description && resolved.description !== place) setPlace(resolved.description);
       const result = await getBrihatKundli({ dob: dob.trim(), tob: tob.trim(), tz: '+05:30', place: finalPlace, ...coords });
       setReport(result);
+      track('brihat_generate');
       hSuccess();
       scrollToResults();
     } catch (e: any) {

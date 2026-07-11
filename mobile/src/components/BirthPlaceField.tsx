@@ -7,6 +7,7 @@ import { MapPinIcon } from './icons/ProfileIcons';
 import { useLang } from '../i18n/LanguageProvider';
 import { hSelect } from '../lib/haptics';
 import { LocationSuggestion, resolveLocation, searchLocations } from '../lib/api';
+import { trackSearch } from '../lib/analytics';
 
 interface Props {
   label: string;
@@ -51,6 +52,7 @@ export function BirthPlaceField({ label, value, onChangeText, onSelect, placehol
   const [loading, setLoading] = useState(false);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [message, setMessage] = useState('');
+  const lastTrackedQ = useRef('');
 
   useEffect(() => {
     if (timer.current) clearTimeout(timer.current);
@@ -65,6 +67,7 @@ export function BirthPlaceField({ label, value, onChangeText, onSelect, placehol
     const requestId = ++seq.current;
     setLoading(true);
     timer.current = setTimeout(() => {
+      if (q !== lastTrackedQ.current) { lastTrackedQ.current = q; trackSearch('location', q); }
       searchLocations({ query: q, lang, country, limit: 6 })
         .then((res) => {
           if (requestId !== seq.current) return;

@@ -3,6 +3,7 @@ import { useWindowDimensions } from 'react-native';
 import { useSharedValue, withSpring, withTiming, runOnJS, SharedValue } from 'react-native-reanimated';
 import { createAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from 'expo-audio';
 import { TRACKS, Track } from '../data/library';
+import { track as trackEvent } from '../lib/analytics';
 
 // shared spring for the player sheet open/close + interactive drag
 export const SHEET_SPRING = { damping: 26, stiffness: 240, mass: 0.8 } as const;
@@ -81,6 +82,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       setQueue(q ?? []); // q diya to uss playlist par next/prev/auto-advance; warna static TRACKS
+      trackEvent('media_play', undefined, { id: t.id, title: t.title });
       finishedRef.current = null;
       setTrack(t);
       player.replace(t.source);

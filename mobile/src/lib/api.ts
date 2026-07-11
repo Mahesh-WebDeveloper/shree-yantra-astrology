@@ -1007,7 +1007,8 @@ export const getDailyShlokaExplain = (id: string) =>
 export interface AnalyticsEventIn { name: string; screen?: string; props?: any }
 export const trackAnalytics = (body: {
   deviceId: string; sessionId: string; userId?: string | null;
-  platform?: string; osVersion?: string | number; appVersion?: string; events: AnalyticsEventIn[];
+  platform?: string; osVersion?: string | number; appVersion?: string;
+  deviceBrand?: string; deviceModel?: string; events: AnalyticsEventIn[];
 }) => post<{ ok: boolean; tracked: number }>('/api/analytics/track', body);
 
 // ── Kundli Milan (Gun Milan / Ashtakoot) ──

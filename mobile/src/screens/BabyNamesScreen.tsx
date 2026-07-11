@@ -10,6 +10,7 @@ import { UserLine } from '../components/icons/ProfileIcons';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts, radii } from '../theme/tokens';
 import { hTap, hSelect, hError } from '../lib/haptics';
+import { trackSearch } from '../lib/analytics';
 import { useLang } from '../i18n/LanguageProvider';
 import { useDialog } from '../components/DialogProvider';
 import { getBabyNames, askNameQuestion, NameEngineResponse, NameItem } from '../lib/api';
@@ -124,6 +125,7 @@ export function BabyNamesScreen({ navigation }: any) {
     setTimeout(() => chatRef.current?.scrollToEnd({ animated: true }), 60);
     try {
       const r = await askNameQuestion({ question: q, names: ctx, gender: gender.toLowerCase() });
+      trackSearch('baby_names', q);
       setMessages((m) => [...m, { role: 'bot', text: r.answer || '…', suggestions: r.suggestions, source: r.source }]);
     } catch {
       setMessages((m) => [...m, { role: 'bot', text: hi ? 'क्षमा करें, अभी उत्तर नहीं मिल पाया — दोबारा पूछें।' : 'Sorry, could not get an answer — please try again.' }]);
@@ -157,6 +159,7 @@ export function BabyNamesScreen({ navigation }: any) {
         count: 18,
       });
       setData(r);
+      trackSearch('baby_names', `${gender.toLowerCase()} ${mode}:${q.trim()}`);
       scrollToResults();
     } catch (e: any) { hError(); dialog(hi ? 'त्रुटि' : 'Error', e?.message || 'Try again'); }
     finally { setBusy(false); }

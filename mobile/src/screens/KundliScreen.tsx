@@ -14,6 +14,7 @@ import { GradientText } from '../components/GradientText';
 import { GoldButton } from '../components/GoldButton';
 import { openAppDrawer } from '../navigation/AppDrawerHost';
 import { hTap } from '../lib/haptics';
+import { track } from '../lib/analytics';
 import {
   PROFILE, TABS, HOUSES, CHART_PLANETS, KEY_INSIGHT, PLANETS, CURRENT_DASHA,
   DASHA_TIMELINE, YOGAS, DOSHAS, PlanetRow, ChartPlanet,
@@ -814,6 +815,7 @@ export function KundliScreen({ navigation }: any) {
       }
       try {
         const r = await getKundli(birth);
+        track('kundli_view');
         if (on) {
           setLive(r.data.planets);
           setAscendant(r.data.ascendant || null);

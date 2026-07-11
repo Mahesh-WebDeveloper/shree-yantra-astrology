@@ -172,6 +172,22 @@ export const endpoints = {
     const { data } = await apiClient.get<{ screens: ScreenContent[] }>('/admin/screens')
     return data.screens
   },
+  async activityUsers(params: { q?: string; page?: number; limit?: number }) {
+    const { data } = await apiClient.get<ActivityUsersResponse>('/admin/activity/users', { params })
+    return data
+  },
+  async activityUser(id: string, before?: string) {
+    const { data } = await apiClient.get<ActivityUserDetail>(`/admin/activity/user/${id}`, {
+      params: before ? { before } : undefined,
+    })
+    return data
+  },
+  async activityLive(since?: string) {
+    const { data } = await apiClient.get<ActivityLiveResponse>('/admin/activity/live', {
+      params: since ? { since } : undefined,
+    })
+    return data
+  },
   async updateScreen(page: string, payload: { label?: string; fields?: ScreenContent['fields'] }) {
     const { data } = await apiClient.put<{ screen: ScreenContent }>(`/admin/screens/${page}`, payload)
     return data.screen
@@ -184,6 +200,95 @@ export interface ScreenContent {
   group: string
   order: number
   fields: Record<string, string | { en?: string; hi?: string }>
+}
+
+export interface ActivityUser {
+  id: string
+  name?: string
+  phone?: string
+  email?: string
+  plan: 'free' | 'premium'
+  blocked?: boolean
+  avatar?: string
+  joinedAt?: string
+  online: boolean
+  lastSeen?: string
+  lastScreen?: string
+  lastEvent?: string
+  device?: string
+  platform?: string
+  osVersion?: string
+  appVersion?: string
+  city?: string
+  country?: string
+  events: number
+  sessions: number
+  devices: number
+}
+
+export interface ActivityUsersResponse {
+  users: ActivityUser[]
+  total: number
+  page: number
+  onlineNow: number
+}
+
+export interface ActivityTimelineEvent {
+  _id: string
+  name: string
+  screen?: string
+  props?: Record<string, unknown>
+  platform?: string
+  city?: string
+  country?: string
+  deviceBrand?: string
+  deviceModel?: string
+  sessionId?: string
+  createdAt: string
+}
+
+export interface ActivityUserDetail {
+  user: {
+    id: string
+    name?: string
+    phone?: string
+    email?: string
+    plan: 'free' | 'premium'
+    blocked?: boolean
+    joinedAt?: string
+    lastLoginAt?: string
+    interests?: string[]
+    avatar?: string
+    place?: string
+  }
+  summary: { events: number; sessions: number; firstSeen?: string; lastSeen?: string; online: boolean }
+  devices: { deviceId: string; device?: string; platform?: string; osVersion?: string; appVersion?: string; lastSeen?: string; events: number }[]
+  locations: { city?: string; region?: string; country?: string; count: number; lastSeen?: string }[]
+  topScreens: { screen: string; count: number }[]
+  perDay: { date: string; count: number }[]
+  timeline: ActivityTimelineEvent[]
+}
+
+export interface ActivityLiveEvent {
+  _id: string
+  name: string
+  screen?: string
+  props?: Record<string, unknown>
+  user?: string
+  userName?: string
+  userPlan?: 'free' | 'premium'
+  deviceId?: string
+  platform?: string
+  city?: string
+  country?: string
+  createdAt: string
+}
+
+export interface ActivityLiveResponse {
+  now: string
+  onlineUsers: number
+  onlineDevices: number
+  events: ActivityLiveEvent[]
 }
 
 export interface AnalyticsStats {

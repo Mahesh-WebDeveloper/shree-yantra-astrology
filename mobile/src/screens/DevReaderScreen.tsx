@@ -10,6 +10,7 @@ import { ExplainButton } from '../components/ExplainButton';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts } from '../theme/tokens';
 import { hSelect, hTap } from '../lib/haptics';
+import { track } from '../lib/analytics';
 import { useLang } from '../i18n/LanguageProvider';
 import { AARTIS } from '../data/aartis';
 import { MANTRAS_COLL } from '../data/mantraSangrah';
@@ -62,6 +63,7 @@ export function DevReaderScreen({ route, navigation }: any) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       Vibration.vibrate([0, 350, 130, 350, 130, 550]);
       speakDone();
+      track('jaap_complete', undefined, { id, malas, target });
     } else if (nj % 108 === 0) { // one mala complete (not the last)
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       Vibration.vibrate(140);

@@ -10,6 +10,7 @@ import { fonts, radii } from '../theme/tokens';
 import { askAiAstrologer, AiAstrologerResponse } from '../lib/api';
 import { birthFromProfile } from '../lib/birth';
 import { hTap } from '../lib/haptics';
+import { track } from '../lib/analytics';
 import { useT, useLang } from '../i18n/LanguageProvider';
 import { aAstroText } from '../i18n/astro';
 
@@ -89,6 +90,7 @@ export function AiAstrologerScreen({ navigation, route }: any) {
       const profileBirth = await birthFromProfile().catch(() => null);
       const birth = profileBirth || DEFAULT_BIRTH;
       const response = await askAiAstrologer({ ...birth, name: (profileBirth as any)?.name, question: q });
+      track('ai_ask', undefined, { q: q.slice(0, 80) });
       setHistory((h) => h.map((turn) => (turn.id === id ? { id, question: q, response } : turn)));
       scrollToAnswer();
     } catch (e: any) {

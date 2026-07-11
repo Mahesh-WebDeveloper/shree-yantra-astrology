@@ -14,6 +14,8 @@ const analyticsEventSchema = new mongoose.Schema(
     platform: String,   // ios | android | web
     osVersion: String,
     appVersion: String,
+    deviceBrand: String,  // e.g. 'Samsung' (Platform.constants — no extra permission)
+    deviceModel: String,  // e.g. 'SM-G991B'
     // location (IP se)
     ip: String,
     country: String,

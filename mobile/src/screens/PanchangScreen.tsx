@@ -7,6 +7,7 @@ import { GradientText } from '../components/GradientText';
 import { useTheme } from '../theme/ThemeProvider';
 import { Theme, fonts, radii } from '../theme/tokens';
 import { hTap } from '../lib/haptics';
+import { track } from '../lib/analytics';
 import { useT, useLang } from '../i18n/LanguageProvider';
 import { aSign } from '../i18n/astro';
 import { birthFromProfile } from '../lib/birth';
@@ -285,7 +286,7 @@ export function PanchangScreen({ navigation }: any) {
     setDetailError(null);
     setDetailMode('details');
     getPanchang({ place: pl, date: toDMY(d), tz: '+05:30' })
-      .then((r) => { if (on) { setData(r); setLoading(false); } })
+      .then((r) => { if (on) { setData(r); setLoading(false); track('panchang_view', undefined, { city: pl }); } })
       .catch(() => { if (on) { setErr(true); setLoading(false); } });
     getPanchangFestivals({ place: pl, date: toDMY(d), tz: '+05:30', days: 8 })
       .then((r) => { if (on) setFestivals(r.items || []); })

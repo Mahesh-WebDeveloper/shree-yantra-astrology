@@ -15,6 +15,7 @@ import {
   Menu,
   Music,
   Moon,
+  Radar,
   Settings,
   SlidersHorizontal,
   Sun,
@@ -29,6 +30,7 @@ import { cn } from '@/lib/utils'
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/analytics', label: 'Analytics', icon: LineChart },
+  { to: '/activity', label: 'User Activity', icon: Radar },
   { to: '/users', label: 'Users', icon: Users },
   { to: '/library', label: 'Library', icon: BookOpen },
   { to: '/media', label: 'Media', icon: Music },

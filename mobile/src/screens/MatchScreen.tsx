@@ -14,6 +14,7 @@ import { UserLine, CalendarIcon, ClockIcon } from '../components/icons/ProfileIc
 import { useTheme } from '../theme/ThemeProvider';
 import { Theme, fonts, radii } from '../theme/tokens';
 import { hTap, hSelect, hSuccess, hError } from '../lib/haptics';
+import { track } from '../lib/analytics';
 import { useT, useLang } from '../i18n/LanguageProvider';
 import { useDialog } from '../components/DialogProvider';
 import { getKundliMatch, LocationSuggestion, MatchResponse, MatchKoota, resolveLocation } from '../lib/api';
@@ -184,6 +185,7 @@ export function MatchScreen({ navigation }: any) {
       };
       const [boyBirth, girlBirth] = await Promise.all([mk(boy), mk(girl)]);
       const res = await getKundliMatch(boyBirth, girlBirth);
+      track('kundli_match');
       hSuccess();
       setResult(res);
       scrollToResults();
