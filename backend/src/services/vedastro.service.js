@@ -1010,20 +1010,19 @@ async function getPanchang(input) {
   const samvat = { vikram: gy + (gm >= 3 ? 57 : 56), shaka: gy - (gm >= 3 ? 78 : 79) };
   const samvatsara = SAMVATSARA[((samvat.shaka + 11) % 60 + 60) % 60];
 
-  // Lunar month (Masa). The amanta month is named one ahead of the Sun's sidereal sign
-  // (Sun in Mesha → Vaishakha, Vrishabha → Jyeshtha, Mithuna → Ashadha, …). Purnimanta is the
-  // same in Shukla paksha and one further ahead in Krishna paksha.
+  // Lunar month (Masa), Drik-compatible:
+  //  • Amanta (South/West India): month = the Sun's sidereal sign (Sun in Mithuna → Jyeshtha).
+  //  • Purnimanta (North India, incl. Rajasthan): same as amanta in Shukla paksha, one AHEAD in
+  //    Krishna paksha (so 11 Jul 2026 Krishna → amanta Jyeshtha, purnimanta Ashadha).
   const isKrishna = elements && elements.tithi && elements.tithi.paksha === 'Krishna';
   const sunriseIsKrishna = sunriseElements && sunriseElements.tithi && sunriseElements.tithi.paksha === 'Krishna';
-  const amantaIdx = sIdx == null ? null : (sIdx + 1) % 12;
-  const masa = amantaIdx == null ? null : {
-    amanta: MASA[amantaIdx],
-    purnimanta: MASA[(amantaIdx + (isKrishna ? 1 : 0)) % 12],
+  const masa = sIdx == null ? null : {
+    amanta: MASA[sIdx],
+    purnimanta: MASA[(sIdx + (isKrishna ? 1 : 0)) % 12],
   };
-  const sunriseAmantaIdx = sunriseSIdx == null ? null : (sunriseSIdx + 1) % 12;
-  const sunriseMasa = sunriseAmantaIdx == null ? masa : {
-    amanta: MASA[sunriseAmantaIdx],
-    purnimanta: MASA[(sunriseAmantaIdx + (sunriseIsKrishna ? 1 : 0)) % 12],
+  const sunriseMasa = sunriseSIdx == null ? masa : {
+    amanta: MASA[sunriseSIdx],
+    purnimanta: MASA[(sunriseSIdx + (sunriseIsKrishna ? 1 : 0)) % 12],
   };
   const observances = buildPanchangObservances(sunriseElements, sunriseMasa);
   if (elements && elements.karana && elements.karana.isBhadra && !observances.some((o) => o.key === 'bhadra')) {

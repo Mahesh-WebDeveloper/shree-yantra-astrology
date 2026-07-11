@@ -43,11 +43,10 @@ function computeBirthPanchang(sunLon, moonLon, sunSignIdx, birthDate) {
   const samvat = { vikram: gy + (gm >= 3 ? 57 : 56), shaka: gy - (gm >= 3 ? 78 : 79) };
   const samvatsara = SAMVATSARA[(((samvat.shaka + 11) % 60) + 60) % 60];
   const isKrishna = paksha === 'Krishna';
-  // Amanta month is one ahead of the Sun's sidereal sign (Sun in Mesha → Vaishakha, …).
-  const amantaIdx = sunSignIdx == null ? null : (sunSignIdx + 1) % 12;
-  const masa = amantaIdx == null ? null : {
-    amanta: MASA[amantaIdx],
-    purnimanta: MASA[(amantaIdx + (isKrishna ? 1 : 0)) % 12],
+  // Amanta = Sun's sidereal sign; Purnimanta = same in Shukla, one ahead in Krishna paksha.
+  const masa = sunSignIdx == null ? null : {
+    amanta: MASA[sunSignIdx],
+    purnimanta: MASA[(sunSignIdx + (isKrishna ? 1 : 0)) % 12],
   };
 
   return {

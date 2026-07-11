@@ -434,13 +434,38 @@ export function PanchangScreen({ navigation }: any) {
 
       {data && !loading && (
         <View style={{ gap: 14 }}>
-          {/* calendar ribbon — Vikram Samvat · Masa · Ritu · Ayana, all on ONE line */}
+          {/* calendar ribbon — Vikram Samvat · Ritu · Ayana */}
           <Text style={[styles.ribbonLine, { color: theme.textMuted }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
             {!!data.samvat && <>{lang === 'hi' ? 'विक्रम सं. ' : 'Vikram '}<Text style={{ color: theme.gold1 }}>{data.samvat.vikram}{data.samvatsara ? ` ${data.samvatsara}` : ''}</Text></>}
-            {!!data.masa && <>{'   ·   '}{lang === 'hi' ? 'मास ' : 'Masa '}<Text style={{ color: theme.gold1 }}>{L(data.masa.amanta)}</Text></>}
             {!!data.ritu && <>{'   ·   '}{lang === 'hi' ? 'ऋतु ' : 'Ritu '}<Text style={{ color: theme.gold1 }}>{L(data.ritu)}</Text></>}
             {!!data.ayana && <>{'   ·   '}<Text style={{ color: theme.gold1 }}>{L(data.ayana)}</Text></>}
           </Text>
+
+          {/* Hindu month — BOTH Amanta (South/West) & Purnimanta (North), like Drik Panchang */}
+          {!!data.masa && (() => {
+            const amanta = L(data.masa.amanta); const purnimanta = L(data.masa.purnimanta);
+            const same = amanta === purnimanta;
+            return (
+              <View style={[styles.masaCard, { borderColor: theme.gold2 + '55', backgroundColor: theme.isDark ? 'rgba(214,160,59,0.08)' : 'rgba(214,160,59,0.10)' }]}>
+                <Text style={[styles.masaHead, { color: theme.gold2 }]}>{lang === 'hi' ? 'हिन्दू मास' : 'Hindu Month'}</Text>
+                {same ? (
+                  <Text style={[styles.masaOne, { color: theme.text }]}>{amanta}</Text>
+                ) : (
+                  <View style={styles.masaRow}>
+                    <View style={styles.masaCol}>
+                      <Text style={[styles.masaLabel, { color: theme.textMuted }]}>🌙 {lang === 'hi' ? 'अमांत' : 'Amanta'}</Text>
+                      <Text style={[styles.masaVal, { color: theme.text }]}>{amanta}</Text>
+                    </View>
+                    <View style={[styles.masaDiv, { backgroundColor: theme.cardBorder }]} />
+                    <View style={styles.masaCol}>
+                      <Text style={[styles.masaLabel, { color: theme.textMuted }]}>🌕 {lang === 'hi' ? 'पूर्णिमांत' : 'Purnimanta'}</Text>
+                      <Text style={[styles.masaVal, { color: theme.text }]}>{purnimanta}</Text>
+                    </View>
+                  </View>
+                )}
+              </View>
+            );
+          })()}
           {/* location — responsive gold pill; wraps cleanly on small screens / long names */}
           <View style={styles.locWrap}>
             <View style={[styles.locPill, { borderColor: theme.gold2 + '55', backgroundColor: theme.isDark ? 'rgba(214,160,59,0.10)' : 'rgba(214,160,59,0.12)' }]}>
@@ -636,6 +661,14 @@ const styles = StyleSheet.create({
   err: { fontFamily: fonts.inter, fontSize: 13, textAlign: 'center', paddingVertical: 30 },
 
   ribbonLine: { fontFamily: fonts.inter, fontSize: 12.5, textAlign: 'center', letterSpacing: 0.2 },
+  masaCard: { borderWidth: 1, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12, alignItems: 'center' },
+  masaHead: { fontFamily: fonts.cinzelSemi, fontSize: 10.5, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 7 },
+  masaOne: { fontFamily: fonts.cinzelSemi, fontSize: 16 },
+  masaRow: { flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', justifyContent: 'center' },
+  masaCol: { flex: 1, alignItems: 'center' },
+  masaDiv: { width: 1, height: 30, marginHorizontal: 8 },
+  masaLabel: { fontFamily: fonts.interSemi, fontSize: 10.5, letterSpacing: 0.3 },
+  masaVal: { fontFamily: fonts.cinzelSemi, fontSize: 15.5, marginTop: 3 },
   locWrap: { alignItems: 'center', paddingHorizontal: 4 },
   locPill: { flexDirection: 'row', alignItems: 'center', gap: 7, borderWidth: 1, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7, maxWidth: '100%' },
   locPin: { fontSize: 13 },

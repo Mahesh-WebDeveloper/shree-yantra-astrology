@@ -294,10 +294,13 @@ function catalogToObservance(festival) {
 
 function matchFestivalRule(festival, panchang) {
   const rule = festival.rule || {};
-  const masa = panchang && panchang.masa && panchang.masa.amanta && panchang.masa.amanta.en;
+  // Festival month names may follow either tradition (e.g. Janmashtami is "Bhadrapada" in
+  // Purnimanta / "Shravana" in Amanta), so match against BOTH so it's detected regardless.
+  const amanta = panchang && panchang.masa && panchang.masa.amanta && panchang.masa.amanta.en;
+  const purnimanta = panchang && panchang.masa && panchang.masa.purnimanta && panchang.masa.purnimanta.en;
   const tithi = panchang && panchang.tithi && panchang.tithi.name;
   const paksha = panchang && panchang.tithi && panchang.tithi.paksha;
-  return (!rule.masa || rule.masa === masa)
+  return (!rule.masa || rule.masa === amanta || rule.masa === purnimanta)
     && (!rule.tithi || rule.tithi === tithi)
     && (!rule.paksha || rule.paksha === paksha);
 }
