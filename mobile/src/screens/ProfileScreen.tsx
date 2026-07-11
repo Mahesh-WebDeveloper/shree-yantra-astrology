@@ -12,7 +12,7 @@ import { GradientText } from '../components/GradientText';
 import {
   UserGlyph, UserLine, CalendarIcon, ClockIcon, MapPinIcon, MailIcon,
   EditIcon, BellLine, CrownIcon, BookmarkIcon, GlobeIcon, LockIcon, HelpIcon,
-  LogoutIcon, CameraIcon, ChevronIcon,
+  CameraIcon, ChevronIcon,
 } from '../components/icons/ProfileIcons';
 import {
   PROFILE, STATS, INFO, ACCOUNT, PREFERENCES, VERSION, InfoItem, MenuItem, RowIcon,
@@ -20,9 +20,9 @@ import {
 import { openAppDrawer } from '../navigation/AppDrawerHost';
 import { useDialog } from '../components/DialogProvider';
 import { hTap, hSelect, hSuccess } from '../lib/haptics';
-import { clearAuth, useCurrentUser, updateStoredUser } from '../lib/auth';
+import { useCurrentUser, updateStoredUser } from '../lib/auth';
 import { usePremium } from '../lib/premiumStore';
-import { uploadAvatar, removeAvatarApi, avatarUrl, logoutServer } from '../lib/api';
+import { uploadAvatar, removeAvatarApi, avatarUrl } from '../lib/api';
 import { useScreen } from '../context/AppConfigProvider';
 import { useLang } from '../i18n/LanguageProvider';
 
@@ -179,13 +179,6 @@ export function ProfileScreen({ navigation }: any) {
     ]);
   };
 
-  const logout = () => {
-    hTap();
-    dialog(hi ? 'लॉग आउट करें?' : 'Log out?', hi ? 'अपनी प्रोफ़ाइल तक पहुँचने के लिए आपको दोबारा साइन इन करना होगा।' : 'You will need to sign in again to access your profile.', [
-      { text: hi ? 'रद्द करें' : 'Cancel', style: 'cancel' },
-      { text: hi ? 'लॉग आउट' : 'Log Out', style: 'destructive', onPress: () => { logoutServer().catch(() => {}); clearAuth(); navigation.reset({ index: 0, routes: [{ name: 'PhoneAuth' }] }); } },
-    ]);
-  };
 
   const onMenuItem = (label: string) => {
     hTap();
@@ -319,16 +312,6 @@ export function ProfileScreen({ navigation }: any) {
         ))}
       </Card>
 
-      {/* LOGOUT */}
-      <Pressable
-        onPress={logout}
-        style={({ pressed }) => [styles.logout, { borderColor: 'rgba(192,57,43,0.45)', backgroundColor: theme.isDark ? 'rgba(255,80,80,0.06)' : 'rgba(192,57,43,0.06)' }, pressed && { transform: [{ scale: 0.99 }], backgroundColor: theme.isDark ? 'rgba(255,80,80,0.12)' : 'rgba(192,57,43,0.1)' }]}
-        android_ripple={{ color: 'rgba(192,57,43,0.15)' }}
-      >
-        <LogoutIcon color={theme.isDark ? '#ff8585' : '#c0392b'} size={18} />
-        <Text style={[styles.logoutText, { color: theme.isDark ? '#ff8585' : '#c0392b' }]}>{hi ? 'लॉग आउट' : 'LOGOUT'}</Text>
-      </Pressable>
-
       <Text style={[styles.version, { color: theme.textMuted }]}>{VERSION}</Text>
     </Screen>
   );
@@ -399,8 +382,6 @@ const styles = StyleSheet.create({
   mLbl: { fontFamily: fonts.interMed, fontSize: 14.5 },
   mSub: { fontFamily: fonts.inter, fontSize: 11.5, marginTop: 2 },
 
-  logout: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 18, paddingVertical: 14, borderRadius: 14, borderWidth: 1 },
-  logoutText: { fontFamily: fonts.cinzel, fontSize: 12.5, letterSpacing: 1.8 },
 
   version: { fontFamily: fonts.inter, fontSize: 10.5, letterSpacing: 1.4, textAlign: 'center', marginTop: 18 },
 });
