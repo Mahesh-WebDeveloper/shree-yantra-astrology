@@ -84,6 +84,7 @@ router.post('/auth/request-otp', authCtrl.requestOtp);
 router.post('/auth/verify-otp', authCtrl.verifyOtp);
 router.post('/auth/google', authCtrl.google);
 router.get('/auth/me', requireAuth, authCtrl.me);
+router.post('/auth/logout', requireAuth, authCtrl.logout);
 router.post('/auth/set-password', requireAuth, authCtrl.setPassword);
 
 // profile (protected)

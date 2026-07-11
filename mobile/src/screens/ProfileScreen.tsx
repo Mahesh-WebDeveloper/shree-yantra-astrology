@@ -22,7 +22,7 @@ import { useDialog } from '../components/DialogProvider';
 import { hTap, hSelect, hSuccess } from '../lib/haptics';
 import { clearAuth, useCurrentUser, updateStoredUser } from '../lib/auth';
 import { usePremium } from '../lib/premiumStore';
-import { uploadAvatar, removeAvatarApi, avatarUrl } from '../lib/api';
+import { uploadAvatar, removeAvatarApi, avatarUrl, logoutServer } from '../lib/api';
 import { useScreen } from '../context/AppConfigProvider';
 import { useLang } from '../i18n/LanguageProvider';
 
@@ -183,7 +183,7 @@ export function ProfileScreen({ navigation }: any) {
     hTap();
     dialog(hi ? 'लॉग आउट करें?' : 'Log out?', hi ? 'अपनी प्रोफ़ाइल तक पहुँचने के लिए आपको दोबारा साइन इन करना होगा।' : 'You will need to sign in again to access your profile.', [
       { text: hi ? 'रद्द करें' : 'Cancel', style: 'cancel' },
-      { text: hi ? 'लॉग आउट' : 'Log Out', style: 'destructive', onPress: () => { clearAuth(); navigation.reset({ index: 0, routes: [{ name: 'PhoneAuth' }] }); } },
+      { text: hi ? 'लॉग आउट' : 'Log Out', style: 'destructive', onPress: () => { logoutServer().catch(() => {}); clearAuth(); navigation.reset({ index: 0, routes: [{ name: 'PhoneAuth' }] }); } },
     ]);
   };
 

@@ -8,14 +8,20 @@
 //
 // Dashboard se control: Settings.authMethods batata hai kaun se methods ON hain.
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const env = require('../config/env');
 
 const TOKEN_TTL = '30d'; // mobile app — lamba session theek hai
 
-function signToken(user) {
-  return jwt.sign({ sub: String(user._id) }, env.jwtSecret, { expiresIn: TOKEN_TTL });
+// SINGLE-DEVICE SESSION: each login mints a fresh random session id which is stored
+// on the user (activeSessionId) AND embedded in the JWT (sid). The middleware only
+// accepts a token whose sid == the user's current activeSessionId → one live device.
+const newSessionId = () => crypto.randomBytes(24).toString('hex');
+
+function signToken(user, sid) {
+  return jwt.sign({ sub: String(user._id), sid: sid || user.activeSessionId }, env.jwtSecret, { expiresIn: TOKEN_TTL });
 }
 
 function verifyToken(token) {
@@ -64,6 +70,7 @@ async function registerWithPassword({ name, email, phone, password, interests })
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
+  const sid = newSessionId();
   const user = await User.create({
     name: name.trim(),
     email,
@@ -71,9 +78,10 @@ async function registerWithPassword({ name, email, phone, password, interests })
     passwordHash,
     providers: ['password'],
     interests: Array.isArray(interests) ? interests : [],
+    activeSessionId: sid,
     lastLoginAt: new Date(),
   });
-  return { user, token: signToken(user) };
+  return { user, token: signToken(user, sid) };
 }
 
 // ── LOGIN (password) ────────────────────────────────────────────────
@@ -90,13 +98,24 @@ async function loginWithPassword({ identifier, password }) {
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) throw new AuthError('Galat email/mobile ya password', 401);
 
+  user.activeSessionId = newSessionId(); // rotate → logs out any other device
   user.lastLoginAt = new Date();
   await user.save();
-  return { user, token: signToken(user) };
+  return { user, token: signToken(user, user.activeSessionId) };
 }
 
 async function getUserById(id) {
-  return User.findById(id);
+  // +activeSessionId so the auth middleware can enforce single-device sessions
+  return User.findById(id).select('+activeSessionId');
+}
+
+// User-initiated logout — rotate to a fresh (never-issued) session id so the current
+// token is dead even if it leaks. We rotate rather than clear, because a cleared
+// (empty) activeSessionId would re-enable the legacy "allow" path for a replayed token.
+async function logout(user) {
+  if (!user) return;
+  user.activeSessionId = newSessionId();
+  await user.save();
 }
 
 // ── ACCOUNT LINKING: logged-in user (OTP wala) ko email+password add karna ──
@@ -175,6 +194,7 @@ async function verifyOtp({ phone, code, name }) {
   // find-or-create — ek hi flow login + register dono ke liye
   let user = await User.findOne({ phone });
   let isNew = false;
+  const sid = newSessionId(); // fresh session → any other device gets logged out
   if (!user) {
     isNew = true;
     user = await User.create({
@@ -182,17 +202,19 @@ async function verifyOtp({ phone, code, name }) {
       phone,
       providers: ['otp'],
       phoneVerified: true,
+      activeSessionId: sid,
       lastLoginAt: new Date(),
     });
   } else {
     if (!user.providers.includes('otp')) user.providers.push('otp');
     user.phoneVerified = true;
+    user.activeSessionId = sid;
     user.lastLoginAt = new Date();
     await user.save();
   }
   // profile adhura (dob nahi) → frontend birth-details wizard dikhayega
   const profileComplete = !!(user.profile && user.profile.dob);
-  return { user, token: signToken(user), isNew, profileComplete };
+  return { user, token: signToken(user, sid), isNew, profileComplete };
 }
 
 // ── GOOGLE SIGN-IN ──────────────────────────────────────────────────
@@ -221,6 +243,7 @@ async function loginWithGoogle({ idToken }) {
 
   let user = await User.findOne({ $or: [{ googleId }, ...(email ? [{ email }] : [])] });
   let isNew = false;
+  const sid = newSessionId(); // fresh session → any other device gets logged out
   if (!user) {
     isNew = true;
     user = await User.create({
@@ -230,6 +253,7 @@ async function loginWithGoogle({ idToken }) {
       emailVerified: true,
       providers: ['google'],
       profile: payload.picture ? { avatar: payload.picture } : {},
+      activeSessionId: sid,
       lastLoginAt: new Date(),
     });
   } else {
@@ -237,11 +261,12 @@ async function loginWithGoogle({ idToken }) {
     if (!user.email && email) user.email = email;
     user.emailVerified = true;
     if (!user.providers.includes('google')) user.providers.push('google');
+    user.activeSessionId = sid;
     user.lastLoginAt = new Date();
     await user.save();
   }
   const profileComplete = !!(user.profile && user.profile.dob);
-  return { user, token: signToken(user), isNew, profileComplete };
+  return { user, token: signToken(user, sid), isNew, profileComplete };
 }
 
 module.exports = {
@@ -253,6 +278,7 @@ module.exports = {
   verifyOtp,
   loginWithGoogle,
   setPassword,
+  logout,
   getUserById,
   AuthError,
 };

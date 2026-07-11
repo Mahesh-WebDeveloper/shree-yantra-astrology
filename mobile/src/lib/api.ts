@@ -123,7 +123,9 @@ async function requestJson<T>(path: string, makeRequest: () => Promise<Response>
           await delay(retryDelayMs(attempt));
           continue;
         }
-        throw createApiError(await parseError(res), retryable, res.status);
+        const { message, code } = await parseErrorBody(res);
+        if (res.status === 401 && code === 'SESSION_REVOKED') onSessionRevoked?.();
+        throw createApiError(message, retryable, res.status);
       }
       return await res.json();
     } catch (e: any) {
@@ -230,11 +232,17 @@ export interface VargaResponse {
 }
 
 // backend error body { error: "..." } ko readable message me badalta hai
-async function parseError(res: Response): Promise<string> {
+async function parseErrorBody(res: Response): Promise<{ message: string; code?: string }> {
   const txt = await res.text().catch(() => '');
-  try { const j = JSON.parse(txt); if (j && j.error) return j.error; } catch {}
-  return `Backend ${res.status}: ${txt.slice(0, 120)}`;
+  try { const j = JSON.parse(txt); if (j && (j.error || j.message)) return { message: j.error || j.message, code: j.code }; } catch {}
+  return { message: `Backend ${res.status}: ${txt.slice(0, 120)}` };
 }
+
+// SINGLE-DEVICE SESSION: when the backend reports our session was revoked (i.e. the
+// account was logged in on another device), this global handler force-logs-out this
+// device. Registered once in App.tsx (kept here to avoid an api→auth import cycle).
+let onSessionRevoked: (() => void) | null = null;
+export function setSessionRevokedHandler(fn: (() => void) | null) { onSessionRevoked = fn; }
 
 async function post<T>(path: string, body: any, method: 'POST' | 'PUT' | 'PATCH' = 'POST', timeoutMs?: number): Promise<T> {
   const endActivity = beginNetworkActivity(activityForPath(path));
@@ -309,6 +317,8 @@ export const registerUser = (input: { name: string; email?: string; phone?: stri
 export const loginUser = (input: { identifier: string; password: string }) =>
   post<AuthResponse>('/api/auth/login', input);
 export const getMe = () => get<{ user: AuthUser }>('/api/auth/me');
+// user-initiated logout — clears the server-side session too (single-device)
+export const logoutServer = () => post<{ ok: boolean }>('/api/auth/logout', {});
 
 // ── mobile + OTP (sabse simple login/register) ──
 export interface OtpRequestResponse { sent: boolean; phone: string; devCode?: string }
@@ -367,7 +377,11 @@ export async function uploadAvatar(uri: string): Promise<{ user: AuthUser; avata
       headers: { ...authHeaders() }, // Content-Type NAHI - fetch khud multipart boundary set karega
       body: form,
     });
-    if (!res.ok) throw new Error(await parseError(res));
+    if (!res.ok) {
+      const eb = await parseErrorBody(res);
+      if (res.status === 401 && eb.code === 'SESSION_REVOKED') onSessionRevoked?.();
+      throw new Error(eb.message);
+    }
     return await res.json();
   } catch (e: any) {
     throw normalizeFetchError(e);

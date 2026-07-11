@@ -13,6 +13,20 @@ module.exports = async function requireAuth(req, res, next) {
     if (!user) return res.status(401).json({ error: 'User nahi mila' });
     if (user.blocked) return res.status(401).json({ error: 'Account blocked hai' });
 
+    // SINGLE-DEVICE ENFORCEMENT (server-side, non-bypassable): the token is only
+    // valid if its session id matches the user's current activeSessionId. A newer
+    // login on another device rotates activeSessionId, so this token stops working.
+    // (Legacy tokens issued before this feature have no sid and the user has no
+    // activeSessionId yet → allowed until their next login sets one, at which point
+    // every other device is instantly logged out.)
+    // Admins are exempt (web dashboard + app can coexist); enforce only for app users.
+    if (user.role !== 'admin' && user.activeSessionId && payload.sid !== user.activeSessionId) {
+      return res.status(401).json({
+        error: 'Aapka account kisi doosre device par login hua hai — is device se logout kar diya gaya.',
+        code: 'SESSION_REVOKED',
+      });
+    }
+
     req.user = user;
     next();
   } catch (err) {

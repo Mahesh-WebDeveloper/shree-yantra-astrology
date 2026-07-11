@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View } from 'react-native';
+import { View, Alert } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
@@ -9,7 +9,7 @@ import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
 import { useAppFonts } from './src/theme/fonts';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { AppDrawerHost } from './src/navigation/AppDrawerHost';
-import { navigationRef } from './src/navigation/navigationRef';
+import { navigationRef, resetTo } from './src/navigation/navigationRef';
 import { PlayerProvider } from './src/audio/PlayerProvider';
 import { NowPlayingBar } from './src/audio/NowPlayingBar';
 import { FullPlayer } from './src/audio/FullPlayer';
@@ -21,7 +21,8 @@ import { AppConfigProvider } from './src/context/AppConfigProvider';
 import { LanguageProvider } from './src/i18n/LanguageProvider';
 import { initAnalytics, trackScreen } from './src/lib/analytics';
 import { addTapListener, addReceivedListener, registerForPush } from './src/lib/notifications';
-import { getAuthToken } from './src/lib/api';
+import { getAuthToken, setSessionRevokedHandler } from './src/lib/api';
+import { clearAuth } from './src/lib/auth';
 import { refreshUnread, bumpUnread } from './src/lib/notificationStore';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -50,6 +51,26 @@ function Root() {
   useEffect(() => {
     if (showApp) SplashScreen.hideAsync().catch(() => {});
   }, [showApp]);
+
+  // SINGLE-DEVICE SESSION: if the backend revokes this session (account signed in on
+  // another device), force-logout to the login screen with a clear message. Debounced
+  // so a burst of concurrent 401s only triggers one logout.
+  useEffect(() => {
+    let firing = false;
+    setSessionRevokedHandler(() => {
+      if (firing) return;
+      firing = true;
+      clearAuth().catch(() => {}).finally(() => {
+        resetTo('PhoneAuth');
+        Alert.alert(
+          'सत्र समाप्त · Session ended',
+          'आपका अकाउंट किसी दूसरे डिवाइस पर लॉगिन हुआ है। सुरक्षा के लिए इस डिवाइस से लॉगआउट कर दिया गया है।\n\nYour account was signed in on another device, so you have been logged out here for security.',
+        );
+        setTimeout(() => { firing = false; }, 3000);
+      });
+    });
+    return () => setSessionRevokedHandler(null);
+  }, []);
 
   // Notifications: deep-link when the user taps one, and (if already logged in) register the
   // push token with the backend. Fresh logins register from PhoneAuth after saveAuth.

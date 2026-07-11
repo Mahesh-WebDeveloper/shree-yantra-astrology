@@ -10,6 +10,7 @@ import { fonts } from '../theme/tokens';
 import { GradientText } from '../components/GradientText';
 import { hTap, hSelect } from '../lib/haptics';
 import { clearAuth, getStoredUser } from '../lib/auth';
+import { logoutServer } from '../lib/api';
 import { usePremium } from '../lib/premiumStore';
 import { useLang } from '../i18n/LanguageProvider';
 
@@ -200,6 +201,7 @@ export function DrawerContent({ close, progress }: { close: () => void; progress
             text: 'Log Out',
             style: 'destructive',
             onPress: () => {
+              logoutServer().catch(() => {}); // kill the server session (best-effort, uses current token)
               clearAuth();
               close();
               // logout → Phone+OTP entry (NOT the old email/password SignIn page)

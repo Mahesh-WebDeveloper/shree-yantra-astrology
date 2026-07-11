@@ -60,6 +60,13 @@ const userSchema = new mongoose.Schema(
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     blocked: { type: Boolean, default: false },
 
+    // SINGLE-DEVICE SESSION: the id of the ONE currently-valid login session.
+    // Every login rotates this; the JWT carries the same `sid`. The auth
+    // middleware rejects any token whose sid != this, so logging in on a new
+    // device instantly invalidates all other devices (server-enforced, cannot
+    // be bypassed client-side). select:false → never leaks in queries/toPublic.
+    activeSessionId: { type: String, select: false },
+
     lastLoginAt: Date,
   },
   { timestamps: true }

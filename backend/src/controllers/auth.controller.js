@@ -30,6 +30,13 @@ exports.me = asyncHandler(async (req, res) => {
   res.json({ user: req.user.toPublic() });
 });
 
+// POST /api/auth/logout  (protected) — clear the server-side session so the
+// current token is dead everywhere (single-device: user-initiated logout).
+exports.logout = asyncHandler(async (req, res) => {
+  await auth.logout(req.user);
+  res.json({ ok: true });
+});
+
 // POST /api/auth/request-otp  { phone }
 exports.requestOtp = asyncHandler(async (req, res) => {
   const { phone } = req.body;
