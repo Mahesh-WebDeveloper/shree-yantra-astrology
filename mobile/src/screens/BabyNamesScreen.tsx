@@ -198,7 +198,7 @@ export function BabyNamesScreen({ navigation }: any) {
               return (
                 <Pressable key={m} onPress={() => { hSelect(); setMode(m); }} style={{ flex: 1 }}>
                   <View style={[styles.segBtn, on ? { backgroundColor: theme.gold1 } : { borderWidth: 1, borderColor: theme.cardBorder }]}>
-                    <Text style={[styles.segTxt, { color: on ? theme.buttonInk : theme.gold1 }]}>{lbl}</Text>
+                    <Text style={[styles.segTxt, { color: on ? theme.goldInk : theme.gold1 }]}>{lbl}</Text>
                   </View>
                 </Pressable>
               );
@@ -219,7 +219,7 @@ export function BabyNamesScreen({ navigation }: any) {
               return (
                 <Pressable key={g} onPress={() => { hSelect(); setGender(g); }} style={{ flex: 1 }}>
                   <View style={[styles.gChip, on ? { backgroundColor: theme.gold1, borderColor: theme.gold1 } : { borderWidth: 1, borderColor: theme.cardBorder }]}>
-                    <Text style={[styles.gTxt, { color: on ? theme.buttonInk : theme.gold1 }]}>{gLabel(g)}</Text>
+                    <Text style={[styles.gTxt, { color: on ? theme.goldInk : theme.gold1 }]}>{gLabel(g)}</Text>
                   </View>
                 </Pressable>
               );
@@ -234,7 +234,7 @@ export function BabyNamesScreen({ navigation }: any) {
               return (
                 <Pressable key={o.v || 'any'} onPress={() => { hSelect(); setOrigin(o.v); }}>
                   <View style={[styles.pill, on ? { backgroundColor: theme.gold1, borderColor: theme.gold1 } : { borderColor: theme.cardBorder }]}>
-                    <Text style={[styles.pillTxt, { color: on ? theme.buttonInk : theme.gold1 }]}>{hi ? o.hi : o.en}</Text>
+                    <Text style={[styles.pillTxt, { color: on ? theme.goldInk : theme.gold1 }]}>{hi ? o.hi : o.en}</Text>
                   </View>
                 </Pressable>
               );
@@ -247,7 +247,7 @@ export function BabyNamesScreen({ navigation }: any) {
               return (
                 <Pressable key={o.v || 'any'} onPress={() => { hSelect(); setLengthPref(o.v); }}>
                   <View style={[styles.pill, on ? { backgroundColor: theme.gold1, borderColor: theme.gold1 } : { borderColor: theme.cardBorder }]}>
-                    <Text style={[styles.pillTxt, { color: on ? theme.buttonInk : theme.gold1 }]}>{hi ? o.hi : o.en}</Text>
+                    <Text style={[styles.pillTxt, { color: on ? theme.goldInk : theme.gold1 }]}>{hi ? o.hi : o.en}</Text>
                   </View>
                 </Pressable>
               );
@@ -292,7 +292,7 @@ export function BabyNamesScreen({ navigation }: any) {
                   return (
                     <Pressable key={g} onPress={() => { hSelect(); setSGender(g); }} style={{ flex: 1 }}>
                       <View style={[styles.miniChip, on ? { backgroundColor: theme.gold1, borderColor: theme.gold1 } : { borderColor: theme.cardBorder }]}>
-                        <Text style={[styles.miniTxt, { color: on ? theme.buttonInk : theme.gold1 }]}>{gLabel(g)}</Text>
+                        <Text style={[styles.miniTxt, { color: on ? theme.goldInk : theme.gold1 }]}>{gLabel(g)}</Text>
                       </View>
                     </Pressable>
                   );
@@ -430,7 +430,7 @@ export function BabyNamesScreen({ navigation }: any) {
                 returnKeyType="send"
               />
               <Pressable onPress={() => sendAsk()} disabled={asking || !askInput.trim()} style={[styles.sendBtn, { backgroundColor: askInput.trim() ? theme.gold1 : theme.cardBorder }]}>
-                <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={askInput.trim() ? theme.buttonInk : theme.textMuted} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" /></Svg>
+                <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={askInput.trim() ? theme.goldInk : theme.textMuted} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" /></Svg>
               </Pressable>
             </View>
           </Pressable>
@@ -568,7 +568,7 @@ function Bubble({ m, theme, hi, saved, onOpen, onSave }: any) {
   if (m.role === 'user') {
     return (
       <View style={[styles.userBubble, { backgroundColor: theme.gold1 }]}>
-        <Text style={[styles.userTxt, { color: theme.buttonInk }]}>{m.text}</Text>
+        <Text style={[styles.userTxt, { color: theme.goldInk }]}>{m.text}</Text>
       </View>
     );
   }

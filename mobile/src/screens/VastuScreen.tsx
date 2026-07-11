@@ -115,7 +115,7 @@ function DirectionPicker({
                 backgroundColor: on ? theme.gold1 : (theme.isDark ? 'rgba(255,255,255,0.03)' : '#fff'),
               },
             ]}>
-              <Text style={[styles.dirTxt, { color: on ? theme.buttonInk : theme.gold1 }]}>{hi ? d.hi : d.en}</Text>
+              <Text style={[styles.dirTxt, { color: on ? theme.goldInk : theme.gold1 }]}>{hi ? d.hi : d.en}</Text>
             </View>
           </Pressable>
         );
@@ -401,7 +401,7 @@ export function VastuScreen({ navigation }: any) {
             return (
               <Pressable key={p.key} onPress={() => { hSelect(); setPropertyType(p.key); }} style={{ flex: 1 }}>
                 <View style={[styles.typeChip, { backgroundColor: on ? theme.gold1 : 'transparent', borderColor: on ? theme.gold1 : theme.cardBorder }]}>
-                  <Text style={[styles.typeTxt, { color: on ? theme.buttonInk : theme.gold1 }]}>{hi ? p.hi : p.en}</Text>
+                  <Text style={[styles.typeTxt, { color: on ? theme.goldInk : theme.gold1 }]}>{hi ? p.hi : p.en}</Text>
                 </View>
               </Pressable>
             );
@@ -427,7 +427,7 @@ export function VastuScreen({ navigation }: any) {
           {[1, 2, 3, 4, 5].map((n) => (
             <Pressable key={n} onPress={() => { hSelect(); setBedrooms(n); }}>
               <View style={[styles.dirChip, { borderColor: bedrooms === n ? theme.gold2 : theme.cardBorder, backgroundColor: bedrooms === n ? theme.gold1 : 'transparent' }]}>
-                <Text style={[styles.dirTxt, { color: bedrooms === n ? theme.buttonInk : theme.gold1 }]}>{n}</Text>
+                <Text style={[styles.dirTxt, { color: bedrooms === n ? theme.goldInk : theme.gold1 }]}>{n}</Text>
               </View>
             </Pressable>
           ))}

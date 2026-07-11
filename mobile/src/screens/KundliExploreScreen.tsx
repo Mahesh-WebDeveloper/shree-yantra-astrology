@@ -41,7 +41,7 @@ export function KundliExploreScreen({ navigation }: any) {
           const on = mode === m;
           return (
             <Pressable key={m} onPress={() => { hSelect(); setMode(m); }} style={[styles.toggle, { borderColor: on ? theme.gold1 : theme.cardBorder, backgroundColor: on ? theme.gold1 : 'transparent' }]}>
-              <Text style={[styles.toggleTxt, { color: on ? theme.buttonInk : theme.gold1 }]}>{m === 'bhava' ? (hi ? '12 भाव (घर)' : '12 Houses') : (hi ? '16 चार्ट' : '16 Charts')}</Text>
+              <Text style={[styles.toggleTxt, { color: on ? theme.goldInk : theme.gold1 }]}>{m === 'bhava' ? (hi ? '12 भाव (घर)' : '12 Houses') : (hi ? '16 चार्ट' : '16 Charts')}</Text>
             </Pressable>
           );
         })}
@@ -60,7 +60,7 @@ export function KundliExploreScreen({ navigation }: any) {
               const on = b.house === house;
               return (
                 <Pressable key={b.house} onPress={() => { hSelect(); setHouse(b.house); }} style={[styles.tab, { borderColor: on ? theme.gold1 : theme.cardBorder, backgroundColor: on ? theme.gold1 : (theme.isDark ? 'rgba(233,184,80,0.07)' : '#fff') }]}>
-                  <Text style={[styles.tabTxt, { color: on ? theme.buttonInk : theme.gold1 }]}>{b.house}</Text>
+                  <Text style={[styles.tabTxt, { color: on ? theme.goldInk : theme.gold1 }]}>{b.house}</Text>
                 </Pressable>
               );
             })}

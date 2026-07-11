@@ -78,7 +78,7 @@ export function GitaChapterScreen({ navigation, route }: any) {
                 {audioCurrent && player.loading
                   ? <ActivityIndicator color={theme.goldText} size="small" />
                   : audioCurrent && player.isPlaying
-                    ? <PauseIcon color={theme.buttonInk} size={15} />
+                    ? <PauseIcon color={theme.goldInk} size={15} />
                     : <PlayIcon color={theme.goldText} size={14} />}
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>

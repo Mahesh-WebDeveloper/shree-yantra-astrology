@@ -75,7 +75,8 @@ export interface Theme {
   headingGradient: [string, string, string];
   // Gold CTA button gradient
   buttonGradient: [string, string, string];
-  buttonInk: string;
+  buttonInk: string;   // ink on the amber buttonGradient (dark in both themes)
+  goldInk: string;     // ink to place ON a gold1-coloured surface (active chips/pills/checks) — contrasts in BOTH themes
   // Misc
   line: string;
   ripple: string;
@@ -109,6 +110,7 @@ export const darkTheme: Theme = {
   headingGradient: ['#fce8a8', '#e9b850', '#b87f1a'],
   buttonGradient: ['#fce8a8', '#e9b850', '#b87f1a'],
   buttonInk: '#2a1c00',
+  goldInk: '#2a1c00', // gold1 is light-gold in dark mode → dark ink reads on it
   line: 'rgba(201,150,46,0.22)',
   ripple: 'rgba(252,232,168,0.20)',
   navInactive: '#8a7a55',
@@ -141,6 +143,7 @@ export const lightTheme: Theme = {
   headingGradient: ['#0f172a', '#1f2937', '#7c2d12'],
   buttonGradient: ['#fbbf24', '#f59e0b', '#d97706'],
   buttonInk: '#111827',
+  goldInk: '#ffffff', // gold1 is near-black (#111827) in light mode → white ink reads on it
   line: 'rgba(15,23,42,0.12)',
   ripple: 'rgba(15,23,42,0.10)',
   navInactive: '#64748b',

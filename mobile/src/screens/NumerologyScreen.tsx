@@ -282,7 +282,7 @@ export function NumerologyScreen({ navigation }: any) {
                 style={[styles.numInput, { borderColor: theme.cardBorder, color: theme.text, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.2)' : '#fff' }]}
               />
               <Pressable onPress={runCheck} style={[styles.checkBtn, { backgroundColor: theme.gold1 }]}>
-                <Text style={[styles.checkBtnTxt, { color: theme.buttonInk }]}>{checkBusy ? '…' : (hi ? 'जाँचें' : 'Check')}</Text>
+                <Text style={[styles.checkBtnTxt, { color: theme.goldInk }]}>{checkBusy ? '…' : (hi ? 'जाँचें' : 'Check')}</Text>
               </Pressable>
             </View>
             {check && (

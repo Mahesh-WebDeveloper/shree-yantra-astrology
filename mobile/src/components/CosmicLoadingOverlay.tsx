@@ -170,7 +170,7 @@ function StepList({ steps, current, theme }: { steps: string[]; current: number;
               }]}
             >
               {done
-                ? <Text style={[styles.stepCheck, { color: theme.buttonInk }]}>✓</Text>
+                ? <Text style={[styles.stepCheck, { color: theme.goldInk }]}>✓</Text>
                 : <View style={[styles.stepInner, { backgroundColor: active ? theme.gold1 : (theme.isDark ? 'rgba(233,184,80,0.32)' : 'rgba(143,94,15,0.32)') }]} />}
             </View>
             <Text

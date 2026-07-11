@@ -62,7 +62,7 @@ function ChartStyleSelector({ value, onChange, theme, lang }: { value: ChartStyl
           return (
             <Pressable key={style} onPress={() => { hSelect(); onChange(style); }} style={{ flex: 1 }}>
               <View style={[styles.stylePill, on ? { backgroundColor: theme.gold1 } : { borderWidth: 1, borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : '#fffdf7' }]}>
-                <Text style={[styles.styleTxt, { color: on ? theme.buttonInk : theme.gold2 }]} numberOfLines={1}>{label}</Text>
+                <Text style={[styles.styleTxt, { color: on ? theme.goldInk : theme.gold2 }]} numberOfLines={1}>{label}</Text>
               </View>
             </Pressable>
           );
@@ -200,7 +200,7 @@ export function JanamPatriScreen({ navigation }: any) {
                 const on = g === gender;
                 return (<Pressable key={g} onPress={() => { hSelect(); setGender(g); }} style={{ flex: 1 }}>
                   <View style={[styles.gChip, on ? { backgroundColor: theme.gold1, borderColor: theme.gold1 } : { borderWidth: 1, borderColor: theme.cardBorder }]}>
-                    <Text style={[styles.gTxt, { color: on ? theme.buttonInk : theme.gold1 }]}>{lang === 'hi' ? (g === 'Male' ? 'लड़का' : 'लड़की') : (g === 'Male' ? 'Boy' : 'Girl')}</Text>
+                    <Text style={[styles.gTxt, { color: on ? theme.goldInk : theme.gold1 }]}>{lang === 'hi' ? (g === 'Male' ? 'लड़का' : 'लड़की') : (g === 'Male' ? 'Boy' : 'Girl')}</Text>
                   </View></Pressable>);
               })}
             </View>

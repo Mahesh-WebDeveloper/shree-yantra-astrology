@@ -137,7 +137,7 @@ export function DevReaderScreen({ route, navigation }: any) {
                 const on = malas === m;
                 return (
                   <Pressable key={m} onPress={() => setMalaTarget(m)} style={[styles.malaChip, { borderColor: on ? theme.gold1 : theme.cardBorder, backgroundColor: on ? theme.gold1 : 'transparent' }]}>
-                    <Text style={[styles.malaChipTxt, { color: on ? theme.buttonInk : theme.gold2 }]}>{m}</Text>
+                    <Text style={[styles.malaChipTxt, { color: on ? theme.goldInk : theme.gold2 }]}>{m}</Text>
                   </Pressable>
                 );
               })}

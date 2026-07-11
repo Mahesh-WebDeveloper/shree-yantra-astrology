@@ -341,7 +341,7 @@ export function LibraryScreen({ navigation }: any) {
                   : isCurrent(item._id) && player.loading
                     ? <ActivityIndicator color={theme.goldText} size="small" />
                     : playing(item._id)
-                      ? <PauseIcon color={theme.buttonInk} size={14} />
+                      ? <PauseIcon color={theme.goldInk} size={14} />
                       : <PlayIcon color={theme.goldText} size={13} />}
               </View>
             </Pressable>
@@ -439,7 +439,7 @@ export function LibraryScreen({ navigation }: any) {
                   <BookmarkBtn active onPress={() => { hSelect(); toggleSaved(it.id); }} theme={theme} />
                   {it.scripture
                     ? <Chevron color={theme.gold2} size={18} />
-                    : <View style={[styles.playDot, { borderColor: 'rgba(220,180,80,0.4)', backgroundColor: it.playable && playing(it.trackId) ? theme.gold1 : (theme.isDark ? 'rgba(0,0,0,0.3)' : 'rgba(176,115,22,0.06)') }]}>{it.playable && playing(it.trackId) ? <PauseIcon color={theme.buttonInk} size={14} /> : <PlayIcon color={theme.goldText} size={13} />}</View>}
+                    : <View style={[styles.playDot, { borderColor: 'rgba(220,180,80,0.4)', backgroundColor: it.playable && playing(it.trackId) ? theme.gold1 : (theme.isDark ? 'rgba(0,0,0,0.3)' : 'rgba(176,115,22,0.06)') }]}>{it.playable && playing(it.trackId) ? <PauseIcon color={theme.goldInk} size={14} /> : <PlayIcon color={theme.goldText} size={13} />}</View>}
                 </Pressable>
               ))}
             </View>
@@ -540,7 +540,7 @@ export function LibraryScreen({ navigation }: any) {
                 </View>
                 <BookmarkBtn active={saved.includes(m.id)} onPress={() => { hSelect(); toggleSaved(m.id); }} theme={theme} />
                 <View style={[styles.playDot, { borderColor: 'rgba(220,180,80,0.4)', backgroundColor: playing(m.trackId) ? theme.gold1 : (theme.isDark ? 'rgba(0,0,0,0.3)' : 'rgba(176,115,22,0.06)') }]}>
-                  {playing(m.trackId) ? <PauseIcon color={theme.buttonInk} size={14} /> : <PlayIcon color={theme.goldText} size={13} />}
+                  {playing(m.trackId) ? <PauseIcon color={theme.goldInk} size={14} /> : <PlayIcon color={theme.goldText} size={13} />}
                 </View>
               </Pressable>
             ))}
@@ -626,7 +626,7 @@ export function LibraryScreen({ navigation }: any) {
                   {isCurrent(m._id) && player.loading
                     ? <ActivityIndicator color={theme.goldText} size="small" />
                     : playing(m._id)
-                      ? <PauseIcon color={theme.buttonInk} size={14} />
+                      ? <PauseIcon color={theme.goldInk} size={14} />
                       : <PlayIcon color={theme.goldText} size={13} />}
                 </View>
               </Pressable>

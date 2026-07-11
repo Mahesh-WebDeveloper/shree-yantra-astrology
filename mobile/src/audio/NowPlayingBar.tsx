@@ -89,7 +89,7 @@ export function NowPlayingBar({ hasBottomNav = true }: { hasBottomNav?: boolean 
           {!compact ? <Pressable onPress={prev} hitSlop={8} style={styles.btn}><PrevIcon color={theme.goldText} /></Pressable> : null}
           <Pressable onPress={toggle} hitSlop={8} style={styles.playBtn}>
             <View style={[styles.playInner, { backgroundColor: theme.gold1 }]}>
-              {isPlaying ? <PauseIcon color={theme.buttonInk} size={16} /> : <PlayIcon color={theme.buttonInk} size={16} />}
+              {isPlaying ? <PauseIcon color={theme.goldInk} size={16} /> : <PlayIcon color={theme.goldInk} size={16} />}
             </View>
           </Pressable>
           {!compact ? <Pressable onPress={next} hitSlop={8} style={styles.btn}><NextIcon color={theme.goldText} /></Pressable> : null}

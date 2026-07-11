@@ -38,7 +38,7 @@ export function SpeakButton({ text, label }: { text: string | string[]; label?: 
 
   if (!full) return null;
   const txt = label || (lang === 'hi' ? (speaking ? 'रोकें' : 'सुनें') : (speaking ? 'Stop' : 'Listen'));
-  const col = speaking ? theme.buttonInk : theme.gold1;
+  const col = speaking ? theme.goldInk : theme.gold1;
 
   return (
     <Pressable

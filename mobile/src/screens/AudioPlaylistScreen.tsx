@@ -74,7 +74,7 @@ export function AudioPlaylistScreen({ navigation, route }: any) {
               {isCurrent(m._id) && player.loading
                 ? <ActivityIndicator color={theme.goldText} size="small" />
                 : playing(m._id)
-                  ? <PauseIcon color={theme.buttonInk} size={14} />
+                  ? <PauseIcon color={theme.goldInk} size={14} />
                   : <PlayIcon color={theme.goldText} size={13} />}
             </View>
           </Pressable>
