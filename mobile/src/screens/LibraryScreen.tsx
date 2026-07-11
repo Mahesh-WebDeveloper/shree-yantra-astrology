@@ -164,6 +164,7 @@ export function LibraryScreen({ navigation }: any) {
   const lib = useScreen('library'); // admin-managed content
   const tr = useT();
   const { lang } = useLang();
+  const hi = lang === 'hi';
 
   const openMenu = () => openAppDrawer();
   const openReader = (bookId: string) => {
@@ -421,8 +422,8 @@ export function LibraryScreen({ navigation }: any) {
               <View style={[styles.emptyIc, { borderColor: theme.cardBorder }]}>
                 <Svg width={26} height={26} viewBox="0 0 24 24" fill="none" stroke={theme.gold2} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><Path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></Svg>
               </View>
-              <Text style={[styles.emptyTitle, { color: theme.text }]}>Nothing saved yet</Text>
-              <Text style={[styles.emptySub, { color: theme.textMuted }]}>Tap the bookmark on any scripture, mantra, bhajan or track to keep it here.</Text>
+              <Text style={[styles.emptyTitle, { color: theme.text }]}>{hi ? 'अभी कुछ सहेजा नहीं गया' : 'Nothing saved yet'}</Text>
+              <Text style={[styles.emptySub, { color: theme.textMuted }]}>{hi ? 'किसी भी शास्त्र, मंत्र, भजन या ट्रैक पर बुकमार्क दबाएँ ताकि वह यहाँ सुरक्षित रहे।' : 'Tap the bookmark on any scripture, mantra, bhajan or track to keep it here.'}</Text>
             </View>
           ) : (
             <View style={{ gap: 12 }}>
@@ -551,7 +552,7 @@ export function LibraryScreen({ navigation }: any) {
       {(filter === 'all' || filter === 'scriptures') && (
         <LibCard theme={theme}>
           <SectionHead label="SACRED SCRIPTURES" theme={theme} />
-          <Text style={[styles.scriptHint, { color: theme.textMuted }]}>Tap any book to read it chapter-by-chapter.</Text>
+          <Text style={[styles.scriptHint, { color: theme.textMuted }]}>{hi ? 'किसी भी ग्रंथ पर टैप करें और अध्याय-दर-अध्याय पढ़ें।' : 'Tap any book to read it chapter-by-chapter.'}</Text>
           <View style={styles.vedaGrid}>
             {SCRIPTURES.map((b) => {
               const ac = colorFor(theme, b.color);
@@ -578,7 +579,7 @@ export function LibraryScreen({ navigation }: any) {
                   </Text>
                   {/* explicit READ affordance so it's never mistaken for an audio tile */}
                   <View style={[styles.readPill, { borderColor: theme.isDark ? 'rgba(220,180,80,0.4)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : '#ffffff' }]}>
-                    <Text style={[styles.readPillText, { color: theme.goldText }]}>READ</Text>
+                    <Text style={[styles.readPillText, { color: theme.goldText }]}>{hi ? 'पढ़ें' : 'READ'}</Text>
                     <Chevron color={theme.goldText} size={13} />
                   </View>
                   {/* save / bookmark toggle */}
@@ -675,8 +676,8 @@ export function LibraryScreen({ navigation }: any) {
       {(filter === 'all' || filter === 'music') && mediaMusic.length === 0 && (
         <LibCard theme={theme}>
           <View style={{ marginBottom: 12 }}>
-            <Text style={[styles.secLabel, { color: dim }]}>SPIRITUAL MUSIC MODE</Text>
-            <Text style={[styles.musicHint, { color: theme.textMuted }]}>Set the perfect atmosphere for your spiritual practice</Text>
+            <Text style={[styles.secLabel, { color: dim }]}>{hi ? 'आध्यात्मिक संगीत मोड' : 'SPIRITUAL MUSIC MODE'}</Text>
+            <Text style={[styles.musicHint, { color: theme.textMuted }]}>{hi ? 'अपनी साधना के लिए उत्तम वातावरण तैयार करें' : 'Set the perfect atmosphere for your spiritual practice'}</Text>
           </View>
           <View style={{ gap: 10 }}>
             {MUSIC.map((m) => {

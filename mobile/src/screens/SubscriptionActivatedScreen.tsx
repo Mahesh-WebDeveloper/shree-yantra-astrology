@@ -7,6 +7,7 @@ import Svg, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme/ThemeProvider';
+import { useLang } from '../i18n/LanguageProvider';
 import { Theme, fonts, radii } from '../theme/tokens';
 import { Card } from '../components/Card';
 import { GradientText } from '../components/GradientText';
@@ -181,20 +182,22 @@ function RowIcon({ kind, color }: { kind: string; color: string }) {
 
 const sw = (c: string) => ({ width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none' as const, stroke: c, strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const });
 const PERKS = [
-  { label: 'Unlimited\npredictions', icon: (c: string) => <Svg {...sw(c)}><Polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></Svg> },
-  { label: 'Full kundli\nanalysis', icon: (c: string) => <Svg {...sw(c)}><Rect x={3} y={3} width={18} height={18} /><Line x1={3} y1={3} x2={21} y2={21} /><Line x1={21} y1={3} x2={3} y2={21} /></Svg> },
-  { label: 'Divine library\naudio & books', icon: (c: string) => <Svg {...sw(c)}><Path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></Svg> },
+  { label: 'Unlimited\npredictions', labelHi: 'असीमित\nभविष्यवाणी', icon: (c: string) => <Svg {...sw(c)}><Polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></Svg> },
+  { label: 'Full kundli\nanalysis', labelHi: 'पूर्ण कुंडली\nविश्लेषण', icon: (c: string) => <Svg {...sw(c)}><Rect x={3} y={3} width={18} height={18} /><Line x1={3} y1={3} x2={21} y2={21} /><Line x1={21} y1={3} x2={3} y2={21} /></Svg> },
+  { label: 'Divine library\naudio & books', labelHi: 'दिव्य पुस्तकालय\nऑडियो और पुस्तकें', icon: (c: string) => <Svg {...sw(c)}><Path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></Svg> },
 ];
 
 const TRIAL_MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const TRIAL_BASE: { k: string; v: string; icon: string; green?: boolean }[] = [
-  { k: 'Plan', v: 'Premium Astrology', icon: 'plan' },
-  { k: 'Trial Amount', v: '₹1 (Today)', icon: 'amount', green: true },
-  { k: 'Trial Duration', v: '7 Days', icon: 'duration' },
+const TRIAL_BASE: { k: string; kHi: string; v: string; vHi: string; icon: string; green?: boolean }[] = [
+  { k: 'Plan', kHi: 'प्लान', v: 'Premium Astrology', vHi: 'Premium ज्योतिष', icon: 'plan' },
+  { k: 'Trial Amount', kHi: 'ट्रायल राशि', v: '₹1 (Today)', vHi: '₹1 (आज)', icon: 'amount', green: true },
+  { k: 'Trial Duration', kHi: 'ट्रायल अवधि', v: '7 Days', vHi: '7 दिन', icon: 'duration' },
 ];
 
 export function SubscriptionActivatedScreen({ navigation }: any) {
   const { theme } = useTheme();
+  const { lang } = useLang();
+  const hi = lang === 'hi';
   const user = useCurrentUser();
   // real name only — a fresh OTP registrant is seeded as "Friend" and hasn't set their name
   // yet (that happens on the next screen), so don't greet them by the placeholder.
@@ -202,7 +205,7 @@ export function SubscriptionActivatedScreen({ navigation }: any) {
   const firstName = rawName && rawName !== 'Friend' ? rawName.split(/\s+/)[0] : '';
   // Trial-ends date computed live (today + 7 days) — never a stale hardcoded date
   const endD = new Date(Date.now() + 7 * 86400000);
-  const TRIAL = [...TRIAL_BASE, { k: 'Trial Ends', v: `${endD.getDate()} ${TRIAL_MON[endD.getMonth()]} ${endD.getFullYear()}`, icon: 'ends' }];
+  const TRIAL = [...TRIAL_BASE, { k: 'Trial Ends', kHi: 'ट्रायल समाप्ति', v: `${endD.getDate()} ${TRIAL_MON[endD.getMonth()]} ${endD.getFullYear()}`, vHi: `${endD.getDate()} ${TRIAL_MON[endD.getMonth()]} ${endD.getFullYear()}`, icon: 'ends' }];
   const insets = useSafeAreaInsets();
 
   // After activation: collect personal details (name/DOB/birth time/location) unless they are
@@ -252,7 +255,7 @@ export function SubscriptionActivatedScreen({ navigation }: any) {
           <View style={styles.divider}>
             <View style={[styles.line, { backgroundColor: theme.line }]} />
             <Text style={[styles.diamond, { color: theme.gold2 }]}>◆</Text>
-            <Text style={[styles.brandSub, { color: theme.text }]}>ASTROLOGY</Text>
+            <Text style={[styles.brandSub, { color: theme.text }]}>{hi ? 'ज्योतिष' : 'ASTROLOGY'}</Text>
             <Text style={[styles.diamond, { color: theme.gold2 }]}>◆</Text>
             <View style={[styles.line, { backgroundColor: theme.line }]} />
           </View>
@@ -263,11 +266,11 @@ export function SubscriptionActivatedScreen({ navigation }: any) {
 
         {/* Headline */}
         <View style={[styles.pill, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : '#ffffff' }]}>
-          <Text style={[styles.pillText, { color: theme.goldText }]}>PREMIUM · ACTIVE</Text>
+          <Text style={[styles.pillText, { color: theme.goldText }]}>{hi ? 'PREMIUM · सक्रिय' : 'PREMIUM · ACTIVE'}</Text>
         </View>
         <View style={styles.titleRow}>
           <Text style={[styles.spark, { color: theme.gold2 }]}>✦</Text>
-          <GradientText style={styles.title}>Subscription Activated</GradientText>
+          <GradientText style={styles.title}>{hi ? 'सदस्यता सक्रिय' : 'Subscription Activated'}</GradientText>
           <Text style={[styles.spark, { color: theme.gold2 }]}>✦</Text>
         </View>
         {/* ornament */}
@@ -277,10 +280,10 @@ export function SubscriptionActivatedScreen({ navigation }: any) {
           <View style={[styles.ornLine, { backgroundColor: theme.line }]} />
         </View>
         <Text style={[styles.lead, { color: theme.text }]}>
-          Congratulations{firstName ? <Text style={{ fontFamily: fonts.interSemi, color: theme.goldText }}> {firstName}</Text> : ''} — your divine guidance journey begins today.
+          {hi ? 'बधाई हो' : 'Congratulations'}{firstName ? <Text style={{ fontFamily: fonts.interSemi, color: theme.goldText }}> {firstName}</Text> : ''}{hi ? ' — आपकी दिव्य मार्गदर्शन यात्रा आज से आरंभ होती है।' : ' — your divine guidance journey begins today.'}
         </Text>
         <Text style={[styles.leadAccent, { color: theme.green }]}>
-          Enjoy your <Text style={{ fontFamily: fonts.interBold }}>₹1 for 7 Days</Text> trial access.
+          {hi ? 'अपनी ' : 'Enjoy your '}<Text style={{ fontFamily: fonts.interBold }}>{hi ? '₹1 में 7 दिन' : '₹1 for 7 Days'}</Text>{hi ? ' की ट्रायल पहुँच का आनंद लें।' : ' trial access.'}
         </Text>
 
         {/* Trial details */}
@@ -288,7 +291,7 @@ export function SubscriptionActivatedScreen({ navigation }: any) {
           <View style={styles.cardTitleRow}>
             <View style={[styles.ornLineShort, { backgroundColor: theme.line }]} />
             <Text style={[styles.diamondSm, { color: theme.gold2 }]}>◆</Text>
-            <Text style={[styles.cardTitle, { color: dim }]}>TRIAL DETAILS</Text>
+            <Text style={[styles.cardTitle, { color: dim }]}>{hi ? 'ट्रायल विवरण' : 'TRIAL DETAILS'}</Text>
             <Text style={[styles.diamondSm, { color: theme.gold2 }]}>◆</Text>
             <View style={[styles.ornLineShort, { backgroundColor: theme.line }]} />
           </View>
@@ -297,8 +300,8 @@ export function SubscriptionActivatedScreen({ navigation }: any) {
               <View style={[styles.rowIc, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.4)' : '#ffffff' }]}>
                 <RowIcon kind={it.icon} color={theme.gold1} />
               </View>
-              <Text style={[styles.rowK, { color: theme.text }]} numberOfLines={1}>{it.k}</Text>
-              <Text style={[styles.rowV, { color: it.green ? theme.green : theme.goldText }]} numberOfLines={1}>{it.v}</Text>
+              <Text style={[styles.rowK, { color: theme.text }]} numberOfLines={1}>{hi ? it.kHi : it.k}</Text>
+              <Text style={[styles.rowV, { color: it.green ? theme.green : theme.goldText }]} numberOfLines={1}>{hi ? it.vHi : it.v}</Text>
             </View>
           ))}
         </Card>
@@ -310,14 +313,14 @@ export function SubscriptionActivatedScreen({ navigation }: any) {
               <View style={[styles.perkIc, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : '#ffffff' }]}>
                 {p.icon(theme.gold1)}
               </View>
-              <Text style={[styles.perkText, { color: theme.textSoft }]}>{p.label}</Text>
+              <Text style={[styles.perkText, { color: theme.textSoft }]}>{hi ? p.labelHi : p.label}</Text>
             </View>
           ))}
         </View>
 
         {/* explicit CTA — user proceeds when ready (no auto-redirect) */}
         <View style={styles.ctaRow}>
-          <GoldButton label="Continue" onPress={() => { hTap(); goHome(); }} />
+          <GoldButton label={hi ? 'जारी रखें' : 'Continue'} onPress={() => { hTap(); goHome(); }} />
         </View>
         </Animated.View>
       </ScrollView>

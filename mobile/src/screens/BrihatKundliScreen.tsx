@@ -553,6 +553,7 @@ function LalKitabCard({ lk }: { lk: BrihatLalKitab }) {
 export function BrihatKundliScreen({ navigation }: any) {
   const { theme } = useTheme();
   const { lang } = useLang();
+  const hi = lang === 'hi';
   const t = useT();
   const dialog = useDialog();
   const { scrollRef, onResultsLayout, scrollToResults } = useAutoScroll();
@@ -610,7 +611,7 @@ export function BrihatKundliScreen({ navigation }: any) {
       scrollToResults();
     } catch (e: any) {
       hError();
-      dialog('Brihat Kundli', e?.message || (lang === 'hi' ? 'रिपोर्ट नहीं बन पाई — कृपया पुनः प्रयास करें।' : 'Could not generate the report — please try again.'));
+      dialog(hi ? 'बृहत कुंडली' : 'Brihat Kundli', e?.message || (lang === 'hi' ? 'रिपोर्ट नहीं बन पाई — कृपया पुनः प्रयास करें।' : 'Could not generate the report — please try again.'));
     } finally {
       setBusy(false);
     }
@@ -657,7 +658,7 @@ export function BrihatKundliScreen({ navigation }: any) {
           <GradientText style={styles.heroTitle}>BRIHAT KUNDLI</GradientText>
           <Text style={[styles.heroText, { color: theme.textSoft }]}>
             {lang === 'hi'
-              ? 'Advanced report: chart, varga, dasha, dosha, gochar, remedies aur domain-wise reading.'
+              ? 'चार्ट, वर्ग, दशा, दोष, गोचर, उपाय और क्षेत्र-वार विश्लेषण के साथ विस्तृत रिपोर्ट।'
               : 'Advanced report with charts, varga, dasha, dosha, transits, remedies and domain-wise reading.'}
           </Text>
         </View>
@@ -672,11 +673,11 @@ export function BrihatKundliScreen({ navigation }: any) {
           </View>
         </View>
         <View style={styles.form}>
-          <TextField icon={<CalendarIcon color={theme.gold2} size={19} />} label="Date of birth" value={dob} onChangeText={setDob} placeholder="DD-MM-YYYY" />
-          <TextField icon={<ClockIcon color={theme.gold2} size={19} />} label="Time of birth" value={tob} onChangeText={setTob} placeholder="HH:MM" />
-          <BirthPlaceField label="Place of birth" value={place} onChangeText={setPlace} onSelect={setBirthLocation} placeholder="Eg. Agolai, Jodhpur, Rajasthan" />
+          <TextField icon={<CalendarIcon color={theme.gold2} size={19} />} label={hi ? 'जन्म तिथि' : 'Date of birth'} value={dob} onChangeText={setDob} placeholder="DD-MM-YYYY" />
+          <TextField icon={<ClockIcon color={theme.gold2} size={19} />} label={hi ? 'जन्म समय' : 'Time of birth'} value={tob} onChangeText={setTob} placeholder="HH:MM" />
+          <BirthPlaceField label={hi ? 'जन्म स्थान' : 'Place of birth'} value={place} onChangeText={setPlace} onSelect={setBirthLocation} placeholder="Eg. Agolai, Jodhpur, Rajasthan" />
         </View>
-        <GoldButton label={busy ? 'Generating...' : 'Generate Brihat Kundli'} onPress={generate} />
+        <GoldButton label={busy ? (hi ? 'बन रही है…' : 'Generating...') : (hi ? 'बृहत कुंडली बनाएँ' : 'Generate Brihat Kundli')} onPress={generate} />
         {busy && <ActivityIndicator color={theme.gold1} style={{ marginTop: 14 }} />}
       </ShellCard>
 
@@ -684,30 +685,33 @@ export function BrihatKundliScreen({ navigation }: any) {
         <View style={styles.accuracyHead}>
           <ShieldIcon color={theme.gold1} />
           <View style={{ flex: 1 }}>
-            <Text style={[styles.formTitle, { color: theme.text }]}>{lang === 'hi' ? 'Trust & accuracy layer' : 'Trust & accuracy layer'}</Text>
+            <Text style={[styles.formTitle, { color: theme.text }]}>{hi ? 'विश्वसनीयता व सटीकता स्तर' : 'Trust & accuracy layer'}</Text>
             <Text style={[styles.formHint, { color: theme.textMuted }]}>
-              {report?.accuracy.engine || 'Real planetary positions + Lahiri ayanamsa + exact coordinates. AI only explains calculated data.'}
+              {report?.accuracy.engine || (hi ? 'वास्तविक ग्रह स्थितियाँ + Lahiri अयनांश + सटीक निर्देशांक। AI केवल गणना किए गए डेटा की व्याख्या करता है।' : 'Real planetary positions + Lahiri ayanamsa + exact coordinates. AI only explains calculated data.')}
             </Text>
           </View>
         </View>
         <View style={styles.checks}>
-          {['Exact birth time', 'Precise lat/lng', 'Lahiri ayanamsa', 'Section-wise source'].map((item) => <SmallChip key={item} label={item} />)}
+          {(hi
+            ? ['सटीक जन्म समय', 'सटीक lat/lng', 'Lahiri अयनांश', 'सेक्शन-वार स्रोत']
+            : ['Exact birth time', 'Precise lat/lng', 'Lahiri ayanamsa', 'Section-wise source']
+          ).map((item) => <SmallChip key={item} label={item} />)}
         </View>
       </ShellCard>
 
       {!!report && (
         <View style={styles.report} onLayout={onResultsLayout}>
           <ShellCard glow>
-            <Text style={[styles.kicker, { color: theme.goldText }]}>REPORT SUMMARY</Text>
+            <Text style={[styles.kicker, { color: theme.goldText }]}>{hi ? 'रिपोर्ट सारांश' : 'REPORT SUMMARY'}</Text>
             <GradientText style={styles.reportTitle}>{tx(report.title, lang)}</GradientText>
             <View style={styles.metrics}>
               <Metric label="Lagna" value={safeSign(s?.ascendant, lang)} />
-              <Metric label="Moon" value={safeSign(s?.moonSign, lang)} />
-              <Metric label="Sun" value={safeSign(s?.sunSign, lang)} />
+              <Metric label={hi ? 'चंद्र' : 'Moon'} value={safeSign(s?.moonSign, lang)} />
+              <Metric label={hi ? 'सूर्य' : 'Sun'} value={safeSign(s?.sunSign, lang)} />
               <Metric label="Dasha" value={s?.activeDasha?.lord || '-'} />
             </View>
             <Text style={[styles.sourceNote, { color: theme.textMuted }]}>
-              {readyCount}/{report.sections.length} sections ready - {report.accuracy.note}
+              {readyCount}/{report.sections.length} {hi ? 'सेक्शन तैयार' : 'sections ready'} - {report.accuracy.note}
             </Text>
           </ShellCard>
 

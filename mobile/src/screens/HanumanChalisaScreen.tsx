@@ -94,7 +94,7 @@ export function HanumanChalisaScreen({ navigation }: any) {
                 {!!v.transliteration && <Text style={[styles.roman, { color: theme.textMuted }]}>{v.transliteration}</Text>}
                 {!!v.english && (
                   <View style={[styles.enBox, { borderTopColor: theme.cardBorder }]}>
-                    <Text style={[styles.enLabel, { color: theme.gold2 }]}>ENGLISH</Text>
+                    <Text style={[styles.enLabel, { color: theme.gold2 }]}>{hi ? 'अंग्रेज़ी अर्थ' : 'ENGLISH'}</Text>
                     <Text style={[styles.enText, { color: theme.textSoft }]}>{v.english}</Text>
                   </View>
                 )}

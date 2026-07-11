@@ -133,6 +133,8 @@ function DailyReminderCard() {
 export function NotificationsScreen({ navigation }: any) {
   const { theme } = useTheme();
   const t = useT();
+  const { lang } = useLang();
+  const hi = lang === 'hi';
   const [tab, setTab] = useState<'all' | Cat>('all');
   const [live, setLive] = useState<AppNotification[] | null>(null);
   const [read, setRead] = useState<Set<string>>(new Set());     // local optimistic read
@@ -229,7 +231,7 @@ export function NotificationsScreen({ navigation }: any) {
 
   return (
     <Page
-      title="Notifications"
+      title={hi ? 'सूचनाएँ' : 'Notifications'}
       onBack={() => { hTap(); navigation.goBack(); }}
       right={anyItems ? (
         <Pressable onPress={clearAll} hitSlop={10}>

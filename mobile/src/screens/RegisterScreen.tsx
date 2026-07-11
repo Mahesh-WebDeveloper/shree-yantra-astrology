@@ -13,7 +13,7 @@ import { CosmicBackground } from '../components/CosmicBackground';
 import { OmGlyph } from '../components/icons/OmGlyph';
 import { UserLine, MailIcon, LockIcon } from '../components/icons/ProfileIcons';
 import { hSelect, hError, hSuccess, hTap } from '../lib/haptics';
-import { useT } from '../i18n/LanguageProvider';
+import { useT, useLang } from '../i18n/LanguageProvider';
 import { registerUser } from '../lib/api';
 import { saveAuth } from '../lib/auth';
 import { useDialog } from '../components/DialogProvider';
@@ -30,17 +30,17 @@ const PhoneIcon = ({ color }: { color: string }) => (
 );
 
 const INTERESTS = [
-  { key: 'love', title: 'Love & Relationships', sub: 'Compatibility, marriage timing, conflicts',
+  { key: 'love', title: 'Love & Relationships', titleHi: 'प्रेम व रिश्ते', sub: 'Compatibility, marriage timing, conflicts', subHi: 'अनुकूलता, विवाह का समय, मतभेद',
     icon: (c: string) => <Svg {...sw(c)}><Path d="M12 21s-7-4.4-7-11a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6.6-7 11-7 11z" /></Svg> },
-  { key: 'career', title: 'Career & Business', sub: 'Job changes, promotions, business luck',
+  { key: 'career', title: 'Career & Business', titleHi: 'करियर व व्यापार', sub: 'Job changes, promotions, business luck', subHi: 'नौकरी बदलाव, पदोन्नति, व्यापार में भाग्य',
     icon: (c: string) => <Svg {...sw(c)}><Path d="M3 7h18v13H3z" /><Path d="M8 7V5a4 4 0 0 1 8 0v2" /></Svg> },
-  { key: 'wealth', title: 'Wealth & Finance', sub: 'Money, investments, prosperity yogas',
+  { key: 'wealth', title: 'Wealth & Finance', titleHi: 'धन व वित्त', sub: 'Money, investments, prosperity yogas', subHi: 'धन, निवेश, समृद्धि योग',
     icon: (c: string) => <Svg {...sw(c)}><Circle cx={12} cy={12} r={9} /><Path d="M3 12h18" /><Path d="M12 3a14.5 14.5 0 0 1 0 18M12 3a14.5 14.5 0 0 0 0 18" /></Svg> },
-  { key: 'health', title: 'Health & Wellness', sub: 'Daily energy, mental peace, ayurveda',
+  { key: 'health', title: 'Health & Wellness', titleHi: 'स्वास्थ्य व कल्याण', sub: 'Daily energy, mental peace, ayurveda', subHi: 'दैनिक ऊर्जा, मानसिक शांति, आयुर्वेद',
     icon: (c: string) => <Svg {...sw(c)}><Path d="M12 2C9 6 7 8 7 12a5 5 0 0 0 10 0c0-2-1-4-3-6-1 2-2 2-2 0z" /></Svg> },
 ];
 
-const STEP_LABELS = ['Your Details', 'Interests'];
+const STEP_LABELS = [{ en: 'Your Details', hi: 'आपका विवरण' }, { en: 'Interests', hi: 'रुचियाँ' }];
 
 /* gold OM medallion (brand mark) */
 function Medallion({ theme }: { theme: Theme }) {
@@ -57,7 +57,7 @@ function Medallion({ theme }: { theme: Theme }) {
 }
 
 /* connected two-step indicator (dot — animated line — dot) */
-function Stepper({ step, theme, fill }: { step: number; theme: Theme; fill: Animated.AnimatedInterpolation<string> }) {
+function Stepper({ step, theme, fill, hi }: { step: number; theme: Theme; fill: Animated.AnimatedInterpolation<string>; hi: boolean }) {
   const Dot = ({ n }: { n: number }) => {
     const on = n <= step;
     return on ? (
@@ -85,7 +85,7 @@ function Stepper({ step, theme, fill }: { step: number; theme: Theme; fill: Anim
       </View>
       <View style={styles.labelsRow}>
         {STEP_LABELS.map((l, i) => (
-          <Text key={l} style={[styles.stepLabel, { color: i + 1 <= step ? theme.gold1 : theme.textMuted }]}>{l}</Text>
+          <Text key={l.en} style={[styles.stepLabel, { color: i + 1 <= step ? theme.gold1 : theme.textMuted }]}>{hi ? l.hi : l.en}</Text>
         ))}
       </View>
     </View>
@@ -109,6 +109,8 @@ function Panel({ theme, children }: { theme: Theme; children: React.ReactNode })
 export function RegisterScreen({ navigation }: any) {
   const { theme } = useTheme();
   const t = useT();
+  const { lang } = useLang();
+  const hi = lang === 'hi';
   const insets = useSafeAreaInsets();
   const dialog = useDialog();
   const [submitting, setSubmitting] = useState(false);
@@ -144,10 +146,10 @@ export function RegisterScreen({ navigation }: any) {
 
   const validateStep1 = () => {
     const e: Record<string, string> = {};
-    if (!name.trim()) e.name = 'Please tell us your name';
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) e.email = 'Enter a valid email';
-    if (mobile.replace(/\D/g, '').length < 10) e.mobile = 'Enter a valid mobile number';
-    if (password.length < 8) e.password = 'Password must be at least 8 characters';
+    if (!name.trim()) e.name = hi ? 'कृपया अपना नाम बताएँ' : 'Please tell us your name';
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) e.email = hi ? 'वैध ईमेल दर्ज करें' : 'Enter a valid email';
+    if (mobile.replace(/\D/g, '').length < 10) e.mobile = hi ? 'वैध मोबाइल नंबर दर्ज करें' : 'Enter a valid mobile number';
+    if (password.length < 8) e.password = hi ? 'पासवर्ड कम से कम 8 वर्णों का होना चाहिए' : 'Password must be at least 8 characters';
     setErrors(e);
     const ok = Object.keys(e).length === 0;
     if (!ok) hError();
@@ -172,7 +174,7 @@ export function RegisterScreen({ navigation }: any) {
       navigation.navigate('BirthDetails');
     } catch (e: any) {
       hError();
-      dialog('Registration failed', e?.message || 'Something went wrong — please try again.', [{ text: 'OK' }]);
+      dialog(hi ? 'पंजीकरण विफल' : 'Registration failed', e?.message || (hi ? 'कुछ गड़बड़ हो गई — कृपया पुनः प्रयास करें।' : 'Something went wrong — please try again.'), [{ text: hi ? 'ठीक है' : 'OK' }]);
     } finally {
       setSubmitting(false);
     }
@@ -216,7 +218,7 @@ export function RegisterScreen({ navigation }: any) {
           <View style={[styles.ornLine, { backgroundColor: theme.isDark ? 'rgba(201,150,46,0.4)' : 'rgba(176,115,22,0.35)' }]} />
         </View>
 
-        <Stepper step={step} theme={theme} fill={fillWidth} />
+        <Stepper step={step} theme={theme} fill={fillWidth} hi={hi} />
 
         <KeyboardAwareScroll style={styles.flex} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <Animated.View style={stepStyle}>
@@ -229,7 +231,7 @@ export function RegisterScreen({ navigation }: any) {
                     <TextField icon={<UserLine color={theme.gold2} size={20} />} label={t('profile.fullName', 'Full Name')} value={name} onChangeText={setName} placeholder="Eg. Raj Kumar Sharma" autoCapitalize="words" error={errors.name} />
                     <TextField icon={<MailIcon color={theme.gold2} size={20} />} label={t('profile.email', 'Email')} value={email} onChangeText={setEmail} placeholder="you@cosmos.com" keyboardType="email-address" error={errors.email} />
                     <TextField icon={<PhoneIcon color={theme.gold2} />} label={t('auth.mobileNumber', 'Mobile Number')} value={mobile} onChangeText={setMobile} placeholder="+91 98XXXXXXXX" keyboardType="phone-pad" error={errors.mobile} />
-                    <TextField icon={<LockIcon color={theme.gold2} size={20} />} label={t('reg.createPassword', 'Create Password')} value={password} onChangeText={setPassword} placeholder="Min 8 characters" secureTextEntry error={errors.password} />
+                    <TextField icon={<LockIcon color={theme.gold2} size={20} />} label={t('reg.createPassword', 'Create Password')} value={password} onChangeText={setPassword} placeholder={hi ? 'कम से कम 8 वर्ण' : 'Min 8 characters'} secureTextEntry error={errors.password} />
                   </View>
                 </Panel>
                 <Pressable onPress={() => { hTap(); navigation.navigate('SignIn'); }} style={styles.footerLink} hitSlop={8}>
@@ -239,8 +241,8 @@ export function RegisterScreen({ navigation }: any) {
               </View>
             ) : (
               <View>
-                <Text style={[styles.h2, { color: theme.text }]}>What guides you?</Text>
-                <Text style={[styles.lead, { color: theme.textSoft }]}>Pick what you’re most curious about — we’ll personalise your home.</Text>
+                <Text style={[styles.h2, { color: theme.text }]}>{hi ? 'आपको क्या मार्गदर्शन देता है?' : 'What guides you?'}</Text>
+                <Text style={[styles.lead, { color: theme.textSoft }]}>{hi ? 'चुनें कि आप किस बारे में सबसे अधिक जानना चाहते हैं — हम आपका होम पेज वैयक्तिकृत करेंगे।' : 'Pick what you’re most curious about — we’ll personalise your home.'}</Text>
                 <Panel theme={theme}>
                   <View style={{ gap: 10 }}>
                     {INTERESTS.map((it) => {
@@ -266,8 +268,8 @@ export function RegisterScreen({ navigation }: any) {
                             {it.icon(theme.gold1)}
                           </View>
                           <View style={{ flex: 1, minWidth: 0 }}>
-                            <Text style={[styles.tileTitle, { color: theme.text }]}>{it.title}</Text>
-                            <Text style={[styles.tileSub, { color: theme.textMuted }]}>{it.sub}</Text>
+                            <Text style={[styles.tileTitle, { color: theme.text }]}>{hi ? it.titleHi : it.title}</Text>
+                            <Text style={[styles.tileSub, { color: theme.textMuted }]}>{hi ? it.subHi : it.sub}</Text>
                           </View>
                           {on ? (
                             <LinearGradient colors={theme.buttonGradient} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.tileCheckOn}>
@@ -282,7 +284,7 @@ export function RegisterScreen({ navigation }: any) {
                   </View>
                 </Panel>
                 <Text style={[styles.selCount, { color: theme.textMuted }]}>
-                  {prefs.length > 0 ? `${prefs.length} selected — you can change these anytime` : 'Select at least one to personalise your experience'}
+                  {prefs.length > 0 ? (hi ? `${prefs.length} चयनित — आप इन्हें कभी भी बदल सकते हैं` : `${prefs.length} selected — you can change these anytime`) : (hi ? 'अपने अनुभव को वैयक्तिकृत करने के लिए कम से कम एक चुनें' : 'Select at least one to personalise your experience')}
                 </Text>
               </View>
             )}

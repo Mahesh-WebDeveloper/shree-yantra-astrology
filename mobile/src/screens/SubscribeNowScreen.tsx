@@ -9,7 +9,7 @@ import { GradientText } from '../components/GradientText';
 import { IMAGES } from '../assets/images';
 import { hPress, hSuccess } from '../lib/haptics';
 import { useScreen, useBranding } from '../context/AppConfigProvider';
-import { useT } from '../i18n/LanguageProvider';
+import { useT, useLang } from '../i18n/LanguageProvider';
 
 /* exact palette from pages/subscribenow-page/styles.css */
 const C = {
@@ -121,6 +121,8 @@ export function SubscribeNowScreen({ navigation, route }: any) {
   const sub = useScreen('subscribe'); // admin-managed content
   const brand = useBranding();
   const t = useT();
+  const { lang } = useLang();
+  const hi = lang === 'hi';
 
   // Birth details (name / DOB / place) are collected AFTER payment (SubscriptionActivated →
   // BirthDetails), so this screen no longer asks for them — it is purely the subscribe CTA.
@@ -157,7 +159,7 @@ export function SubscribeNowScreen({ navigation, route }: any) {
           <Image source={IMAGES.swastik} style={styles.swastik} resizeMode="contain" />
         </View>
 
-        <Text style={styles.tagline}>Discover the path of Divine Guidance{'\n'}with Ancient Vedic Wisdom</Text>
+        <Text style={styles.tagline}>{hi ? 'प्राचीन वैदिक ज्ञान के साथ' : 'Discover the path of Divine Guidance'}{'\n'}{hi ? 'दिव्य मार्गदर्शन का मार्ग खोजें' : 'with Ancient Vedic Wisdom'}</Text>
 
         <View style={styles.ornament}>
           <View style={styles.ornLine} />

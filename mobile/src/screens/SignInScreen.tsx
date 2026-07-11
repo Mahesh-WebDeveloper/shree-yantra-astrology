@@ -15,7 +15,7 @@ import { hPress, hError, hSuccess, hTap, hSelect } from '../lib/haptics';
 import { useDialog } from '../components/DialogProvider';
 import { loginUser } from '../lib/api';
 import { saveAuth } from '../lib/auth';
-import { useT } from '../i18n/LanguageProvider';
+import { useT, useLang } from '../i18n/LanguageProvider';
 
 
 const GoogleIcon = () => (
@@ -36,6 +36,8 @@ export function SignInScreen({ navigation }: any) {
   const { theme } = useTheme();
   const dialog = useDialog();
   const t = useT();
+  const { lang } = useLang();
+  const hi = lang === 'hi';
   const insets = useSafeAreaInsets();
   const [id, setId] = useState('');
   const [pw, setPw] = useState('');
@@ -46,8 +48,8 @@ export function SignInScreen({ navigation }: any) {
   const submit = async () => {
     hPress();
     const e: typeof errors = {};
-    if (!id.trim()) e.id = 'Required';
-    if (pw.length < 6) e.pw = 'Password must be at least 6 characters';
+    if (!id.trim()) e.id = hi ? 'आवश्यक' : 'Required';
+    if (pw.length < 6) e.pw = hi ? 'पासवर्ड कम से कम 6 वर्णों का होना चाहिए' : 'Password must be at least 6 characters';
     setErrors(e);
     if (Object.keys(e).length) { hError(); return; }
     if (submitting) return;
@@ -59,14 +61,14 @@ export function SignInScreen({ navigation }: any) {
       navigation.navigate('Main');
     } catch (err: any) {
       hError();
-      dialog('Sign in failed', err?.message || 'Galat email/mobile ya password.', [{ text: 'OK' }]);
+      dialog(hi ? 'साइन इन विफल' : 'Sign in failed', err?.message || 'Galat email/mobile ya password.', [{ text: hi ? 'ठीक है' : 'OK' }]);
     } finally {
       setSubmitting(false);
     }
   };
   const forgot = () =>
-    dialog('Reset password?', 'We will send a reset link to your registered email.', [
-      { text: 'CANCEL', style: 'cancel' }, { text: 'SEND LINK', onPress: () => {} },
+    dialog(hi ? 'पासवर्ड रीसेट करें?' : 'Reset password?', hi ? 'हम आपके पंजीकृत ईमेल पर एक रीसेट लिंक भेजेंगे।' : 'We will send a reset link to your registered email.', [
+      { text: hi ? 'रद्द करें' : 'CANCEL', style: 'cancel' }, { text: hi ? 'लिंक भेजें' : 'SEND LINK', onPress: () => {} },
     ]);
 
   return (
@@ -101,7 +103,7 @@ export function SignInScreen({ navigation }: any) {
         {/* form */}
         <View style={{ gap: 14, marginTop: 4 }}>
           <TextField icon={<MailIcon color={theme.gold2} size={20} />} label={t('signin.emailOrMobile', 'Email or Mobile')} value={id} onChangeText={setId} placeholder="you@cosmos.com or +91 ..." keyboardType="email-address" error={errors.id} />
-          <TextField icon={<LockIcon color={theme.gold2} size={20} />} label={t('signin.password', 'Password')} value={pw} onChangeText={setPw} placeholder="Enter your password" secureTextEntry error={errors.pw} />
+          <TextField icon={<LockIcon color={theme.gold2} size={20} />} label={t('signin.password', 'Password')} value={pw} onChangeText={setPw} placeholder={hi ? 'अपना पासवर्ड दर्ज करें' : 'Enter your password'} secureTextEntry error={errors.pw} />
 
           <View style={styles.rowBetween}>
             <Pressable style={styles.remember} onPress={() => { hSelect(); setRemember((r) => !r); }} hitSlop={6}>

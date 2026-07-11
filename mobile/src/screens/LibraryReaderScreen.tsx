@@ -8,6 +8,7 @@ import { fonts } from '../theme/tokens';
 import { CosmicBackground } from '../components/CosmicBackground';
 import { GradientText } from '../components/GradientText';
 import { hTap, hSuccess } from '../lib/haptics';
+import { useLang } from '../i18n/LanguageProvider';
 import { BOOKS, TrackColor } from '../data/library';
 import { useSaved, toggleSaved, useLibraryStore } from '../lib/libraryStore';
 
@@ -37,6 +38,8 @@ function CoverPlate({ tint, name }: { tint: string; name: string }) {
     reading page (LibraryChapter). */
 export function LibraryReaderScreen({ navigation, route }: any) {
   const { theme } = useTheme();
+  const { lang } = useLang();
+  const hi = lang === 'hi';
   const insets = useSafeAreaInsets();
   const doc = BOOKS[route?.params?.id as string] ?? BOOKS.gita;
   const tint = coverColor(doc.cover);
@@ -93,7 +96,7 @@ export function LibraryReaderScreen({ navigation, route }: any) {
         {percent > 0 && (
           <Animated.View style={[styles.block, rise(18)]}>
             <View style={styles.progressTop}>
-              <Text style={[styles.progressLabel, { color: dim }]}>Your progress</Text>
+              <Text style={[styles.progressLabel, { color: dim }]}>{hi ? 'आपकी प्रगति' : 'Your progress'}</Text>
               <Text style={[styles.progressLabel, { color: theme.goldText }]}>{percent}%</Text>
             </View>
             <View style={[styles.track, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.10)' : 'rgba(176,115,22,0.14)' }]}>
@@ -109,7 +112,7 @@ export function LibraryReaderScreen({ navigation, route }: any) {
 
         {/* table of contents */}
         <Animated.View style={rise(24)}>
-          <Text style={[styles.tocLbl, { color: dim }]}>CONTENTS</Text>
+          <Text style={[styles.tocLbl, { color: dim }]}>{hi ? 'विषय-सूची' : 'CONTENTS'}</Text>
           {doc.chapters.map((c, i) => {
             const current = i === lastChapter;
             return (

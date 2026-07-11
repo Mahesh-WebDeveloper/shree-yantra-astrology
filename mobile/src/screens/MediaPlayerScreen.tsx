@@ -8,6 +8,7 @@ import { Card } from '../components/Card';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts, radii } from '../theme/tokens';
 import { hTap } from '../lib/haptics';
+import { useLang } from '../i18n/LanguageProvider';
 
 function PlayExternalIcon({ color }: { color: string }) {
   return (
@@ -26,12 +27,14 @@ function embedUrl(videoId?: string, youtubeUrl?: string) {
 
 export function MediaPlayerScreen({ navigation, route }: any) {
   const { theme } = useTheme();
+  const { lang } = useLang();
+  const hi = lang === 'hi';
   const media = route.params?.media || {};
   const url = embedUrl(media.youtubeVideoId, media.youtubeUrl);
   const externalUrl = media.sourceUrl || media.youtubeUrl || media.audioUrl || '';
 
   return (
-    <Page title={media.title || 'Media'} onBack={() => { hTap(); navigation.goBack(); }}>
+    <Page title={media.title || (hi ? 'मीडिया' : 'Media')} onBack={() => { hTap(); navigation.goBack(); }}>
       <Card padded={false} style={styles.playerCard}>
         {url ? (
           <WebView
@@ -44,14 +47,14 @@ export function MediaPlayerScreen({ navigation, route }: any) {
           />
         ) : (
           <View style={[styles.empty, { backgroundColor: theme.cardBg }]}>
-            <Text style={[styles.emptyTitle, { color: theme.text }]}>No playable source</Text>
-            <Text style={[styles.emptySub, { color: theme.textMuted }]}>Add a YouTube URL or audio URL from admin.</Text>
+            <Text style={[styles.emptyTitle, { color: theme.text }]}>{hi ? 'कोई चलाने योग्य स्रोत नहीं' : 'No playable source'}</Text>
+            <Text style={[styles.emptySub, { color: theme.textMuted }]}>{hi ? 'एडमिन से YouTube URL या ऑडियो URL जोड़ें।' : 'Add a YouTube URL or audio URL from admin.'}</Text>
           </View>
         )}
       </Card>
 
       <Card style={{ marginTop: 14 }}>
-        <Text style={[styles.title, { color: theme.goldText }]}>{media.title || 'Untitled media'}</Text>
+        <Text style={[styles.title, { color: theme.goldText }]}>{media.title || (hi ? 'बिना शीर्षक मीडिया' : 'Untitled media')}</Text>
         {media.subtitle ? <Text style={[styles.sub, { color: theme.textSoft }]}>{media.subtitle}</Text> : null}
         <View style={styles.metaRow}>
           {media.category ? <Text style={[styles.pill, { color: theme.goldText, borderColor: theme.cardBorder }]}>{String(media.category).replace('_', ' ')}</Text> : null}
@@ -67,7 +70,7 @@ export function MediaPlayerScreen({ navigation, route }: any) {
             style={({ pressed }) => [styles.openBtn, { borderColor: theme.cardBorder }, pressed && { opacity: 0.8 }]}
           >
             <PlayExternalIcon color={theme.goldText} />
-            <Text style={[styles.openText, { color: theme.goldText }]}>Open source</Text>
+            <Text style={[styles.openText, { color: theme.goldText }]}>{hi ? 'स्रोत खोलें' : 'Open source'}</Text>
           </Pressable>
         ) : null}
       </Card>

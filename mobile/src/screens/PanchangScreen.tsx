@@ -601,7 +601,7 @@ export function PanchangScreen({ navigation }: any) {
                         <View style={styles.festivalActions}>
                           <Text style={[styles.obsType, { color: theme.gold2 }]}>{f.obs.importance}</Text>
                           <Pressable onPress={() => openFestival(f, true)} style={[styles.aiChip, { borderColor: theme.gold2 + '88', backgroundColor: active && detailMode === 'ai' ? 'rgba(214,160,59,0.18)' : 'transparent' }]}>
-                            <Text style={[styles.aiChipText, { color: theme.gold1 }]}>AI Guide</Text>
+                            <Text style={[styles.aiChipText, { color: theme.gold1 }]}>{lang === 'hi' ? 'AI मार्गदर्शन' : 'AI Guide'}</Text>
                           </Pressable>
                         </View>
                       </View>

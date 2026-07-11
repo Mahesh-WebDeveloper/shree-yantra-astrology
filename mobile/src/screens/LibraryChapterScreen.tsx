@@ -10,6 +10,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { fonts } from '../theme/tokens';
 import { usePlayer } from '../audio/PlayerProvider';
 import { hTap, hPress, hSelect } from '../lib/haptics';
+import { useLang } from '../i18n/LanguageProvider';
 import { BOOKS, byId, ReaderVerse } from '../data/library';
 import { setProgress } from '../lib/libraryStore';
 
@@ -74,6 +75,8 @@ function PaperSheet({
 
 export function LibraryChapterScreen({ navigation, route }: any) {
   const { theme } = useTheme();
+  const { lang } = useLang();
+  const hi = lang === 'hi';
   const insets = useSafeAreaInsets();
   const player = usePlayer();
   const pal = paperTheme(theme.isDark);
@@ -146,7 +149,7 @@ export function LibraryChapterScreen({ navigation, route }: any) {
                 <View style={[styles.coverRule, { backgroundColor: pal.frame }]} />
                 <Text style={[styles.coverMeta, { color: pal.inkSoft }]}>{ch.verses.length} verse{ch.verses.length === 1 ? '' : 's'}</Text>
                 <Pressable onPress={() => flipTo(1)} style={({ pressed }) => [styles.beginBtn, { borderColor: pal.frame }, pressed && { opacity: 0.7 }]}>
-                  <Text style={[styles.beginText, { color: pal.ink }]}>Begin reading</Text>
+                  <Text style={[styles.beginText, { color: pal.ink }]}>{hi ? 'पढ़ना आरंभ करें' : 'Begin reading'}</Text>
                   <Svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke={pal.ink} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Polyline points="9 18 15 12 9 6" /></Svg>
                 </Pressable>
               </View>

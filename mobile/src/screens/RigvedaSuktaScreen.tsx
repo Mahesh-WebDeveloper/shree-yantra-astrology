@@ -7,12 +7,13 @@ import { Page } from '../components/Page';
 import { GradientText } from '../components/GradientText';
 import { VerseMeaning } from '../components/VerseMeaning';
 import { hTap } from '../lib/haptics';
-import { useT } from '../i18n/LanguageProvider';
+import { useT, useLang } from '../i18n/LanguageProvider';
 import { getRigSukta, getRigvedaExplanation, RigSuktaFull } from '../lib/api';
 
 export function RigvedaSuktaScreen({ navigation, route }: any) {
   const { theme } = useTheme();
   const t = useT();
+  const { lang } = useLang();
   const mandala: number = route?.params?.mandala || 1;
   const suktaNo: number = route?.params?.sukta || 1;
   const [data, setData] = useState<RigSuktaFull | null>(null);
@@ -57,7 +58,7 @@ export function RigvedaSuktaScreen({ navigation, route }: any) {
                 )}
                 {!!v.english && (
                   <View style={[styles.transBox, { borderTopColor: theme.isDark ? 'rgba(201,150,46,0.2)' : 'rgba(176,115,22,0.15)' }]}>
-                    <Text style={[styles.transLabel, { color: theme.gold2 }]}>English</Text>
+                    <Text style={[styles.transLabel, { color: theme.gold2 }]}>{lang === 'hi' ? 'अंग्रेज़ी अनुवाद' : 'English'}</Text>
                     <Text style={[styles.transText, { color: theme.text }]}>{v.english}</Text>
                   </View>
                 )}

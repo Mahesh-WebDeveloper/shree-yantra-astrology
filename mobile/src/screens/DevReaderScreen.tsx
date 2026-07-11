@@ -74,7 +74,7 @@ export function DevReaderScreen({ route, navigation }: any) {
   const setMalaTarget = (m: number) => { hSelect(); Speech.stop(); const cap = Math.min(jaap, m * 108); setMalas(m); setJaap(cap); persist(cap, m); };
   const resetJaap = () => { hSelect(); Speech.stop(); Vibration.cancel(); setJaap(0); persist(0, malas); };
 
-  if (!item) return <Page title="—" onBack={() => navigation.goBack()}><Text style={{ color: theme.textMuted, textAlign: 'center', marginTop: 40, fontFamily: fonts.inter }}>Not found</Text></Page>;
+  if (!item) return <Page title="—" onBack={() => navigation.goBack()}><Text style={{ color: theme.textMuted, textAlign: 'center', marginTop: 40, fontFamily: fonts.inter }}>{hi ? 'नहीं मिला' : 'Not found'}</Text></Page>;
 
   const titleHi = item.titleHi; const titleEn = item.titleEn; const deity = item.deity;
   const mainText = isMantra ? item.sanskrit : item.lines;

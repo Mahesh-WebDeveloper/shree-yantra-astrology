@@ -9,9 +9,12 @@ import { Card } from '../components/Card';
 import { GradientText } from '../components/GradientText';
 import { ContentBook, getBook } from '../lib/api';
 import { hTap } from '../lib/haptics';
+import { useLang } from '../i18n/LanguageProvider';
 
 export function ContentBookScreen({ navigation, route }: any) {
   const { theme } = useTheme();
+  const { lang } = useLang();
+  const hi = lang === 'hi';
   const [book, setBook] = useState<ContentBook | null>(null);
   const [open, setOpen] = useState(0);
 
@@ -22,9 +25,9 @@ export function ContentBookScreen({ navigation, route }: any) {
   }, [route.params.id]);
 
   return (
-    <Page title={book?.title || 'Library'} onBack={() => { hTap(); navigation.goBack(); }}>
+    <Page title={book?.title || (hi ? 'पुस्तकालय' : 'Library')} onBack={() => { hTap(); navigation.goBack(); }}>
       {!book ? (
-        <Card><Text style={[styles.loading, { color: theme.textSoft }]}>Loading...</Text></Card>
+        <Card><Text style={[styles.loading, { color: theme.textSoft }]}>{hi ? 'लोड हो रहा है…' : 'Loading...'}</Text></Card>
       ) : (
         <ScrollView showsVerticalScrollIndicator={false}>
           <LinearGradient colors={theme.isDark ? ['#000000', '#15110a'] : ['#ffffff', '#fff7e6']} style={[styles.hero, { borderColor: theme.cardBorder }]}>

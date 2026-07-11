@@ -108,6 +108,7 @@ export function ProfileScreen({ navigation }: any) {
   const [avatar, setAvatar] = useState<string | null>(null);
   const [notify, setNotify] = useState(true);
   const { lang, setLang, t } = useLang();
+  const hi = lang === 'hi';
   const langLabel = lang === 'hi' ? 'हिंदी' : 'English';
 
   useEffect(() => {
@@ -126,13 +127,13 @@ export function ProfileScreen({ navigation }: any) {
     // background me server par upload → kisi bhi device par sync
     uploadAvatar(uri)
       .then((r) => updateStoredUser({ profile: { avatar: r.avatar } }))
-      .catch((e) => dialog('Upload failed', e?.message || 'Photo could not be saved — please check your internet.'));
+      .catch((e) => dialog(hi ? 'अपलोड विफल' : 'Upload failed', e?.message || (hi ? 'फ़ोटो सहेजी नहीं जा सकी — कृपया अपना इंटरनेट जाँचें।' : 'Photo could not be saved — please check your internet.')));
   };
 
   const openCamera = async () => {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) {
-      dialog('Camera permission needed', 'Allow camera access to take a profile photo from Settings.');
+      dialog(hi ? 'कैमरा अनुमति आवश्यक' : 'Camera permission needed', hi ? 'प्रोफ़ाइल फ़ोटो लेने के लिए सेटिंग्स में कैमरा एक्सेस की अनुमति दें।' : 'Allow camera access to take a profile photo from Settings.');
       return;
     }
     const res = await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [1, 1], quality: 0.85 });
@@ -142,7 +143,7 @@ export function ProfileScreen({ navigation }: any) {
   const openGallery = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      dialog('Permission needed', 'Allow photo access to set a profile picture.');
+      dialog(hi ? 'अनुमति आवश्यक' : 'Permission needed', hi ? 'प्रोफ़ाइल चित्र सेट करने के लिए फ़ोटो एक्सेस की अनुमति दें।' : 'Allow photo access to set a profile picture.');
       return;
     }
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.85 });
@@ -152,20 +153,20 @@ export function ProfileScreen({ navigation }: any) {
   // tap the camera badge → choose Camera or Gallery (themed dialog)
   const pickAvatar = () => {
     hTap();
-    dialog('Profile Photo', 'How would you like to set your photo?', [
-      { text: 'Take Photo', onPress: openCamera },
-      { text: 'Choose from Gallery', onPress: openGallery },
-      { text: 'Cancel', style: 'cancel' },
+    dialog(hi ? 'प्रोफ़ाइल फ़ोटो' : 'Profile Photo', hi ? 'आप अपनी फ़ोटो कैसे सेट करना चाहेंगे?' : 'How would you like to set your photo?', [
+      { text: hi ? 'फ़ोटो लें' : 'Take Photo', onPress: openCamera },
+      { text: hi ? 'गैलरी से चुनें' : 'Choose from Gallery', onPress: openGallery },
+      { text: hi ? 'रद्द करें' : 'Cancel', style: 'cancel' },
     ]);
   };
 
   const removeAvatar = () => {
     if (!avatar) return;
     hSelect();
-    dialog('Remove profile photo?', 'Your default avatar will be shown instead.', [
-      { text: 'KEEP', style: 'cancel' },
+    dialog(hi ? 'प्रोफ़ाइल फ़ोटो हटाएँ?' : 'Remove profile photo?', hi ? 'इसके बजाय आपका डिफ़ॉल्ट अवतार दिखाया जाएगा।' : 'Your default avatar will be shown instead.', [
+      { text: hi ? 'रखें' : 'KEEP', style: 'cancel' },
       {
-        text: 'REMOVE',
+        text: hi ? 'हटाएँ' : 'REMOVE',
         style: 'destructive',
         onPress: () => {
           setAvatar(null);
@@ -180,9 +181,9 @@ export function ProfileScreen({ navigation }: any) {
 
   const logout = () => {
     hTap();
-    dialog('Log out?', 'You will need to sign in again to access your profile.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Log Out', style: 'destructive', onPress: () => { clearAuth(); navigation.reset({ index: 0, routes: [{ name: 'PhoneAuth' }] }); } },
+    dialog(hi ? 'लॉग आउट करें?' : 'Log out?', hi ? 'अपनी प्रोफ़ाइल तक पहुँचने के लिए आपको दोबारा साइन इन करना होगा।' : 'You will need to sign in again to access your profile.', [
+      { text: hi ? 'रद्द करें' : 'Cancel', style: 'cancel' },
+      { text: hi ? 'लॉग आउट' : 'Log Out', style: 'destructive', onPress: () => { clearAuth(); navigation.reset({ index: 0, routes: [{ name: 'PhoneAuth' }] }); } },
     ]);
   };
 
@@ -194,10 +195,10 @@ export function ProfileScreen({ navigation }: any) {
     else if (label === 'Saved Library') navigation.navigate('Library');
     else if (label === 'Help & Support') navigation.navigate('Help');
     else if (label === 'Language') {
-      dialog('Language', 'Choose your preferred language', [
+      dialog(hi ? 'भाषा' : 'Language', hi ? 'अपनी पसंदीदा भाषा चुनें' : 'Choose your preferred language', [
         { text: 'English', onPress: () => { setLang('en'); hSuccess(); } },
         { text: 'हिंदी', onPress: () => { setLang('hi'); hSuccess(); } },
-        { text: 'Cancel', style: 'cancel' },
+        { text: hi ? 'रद्द करें' : 'Cancel', style: 'cancel' },
       ]);
     } else if (label === 'Privacy & Security') {
       navigation.navigate('PrivacySecurity');
@@ -248,7 +249,7 @@ export function ProfileScreen({ navigation }: any) {
         ) : (
           <Pressable onPress={() => { hTap(); navigation.navigate('Subscribe'); }} style={({ pressed }) => [styles.premium, { backgroundColor: 'transparent', borderWidth: 1, borderColor: theme.gold1, opacity: pressed ? 0.9 : 1 }]}>
             <CrownIcon color={theme.gold1} size={13} />
-            <Text style={[styles.premiumText, { color: theme.gold1 }]}>GO PREMIUM →</Text>
+            <Text style={[styles.premiumText, { color: theme.gold1 }]}>{hi ? 'प्रीमियम लें →' : 'GO PREMIUM →'}</Text>
           </Pressable>
         )}
 
@@ -325,7 +326,7 @@ export function ProfileScreen({ navigation }: any) {
         android_ripple={{ color: 'rgba(192,57,43,0.15)' }}
       >
         <LogoutIcon color={theme.isDark ? '#ff8585' : '#c0392b'} size={18} />
-        <Text style={[styles.logoutText, { color: theme.isDark ? '#ff8585' : '#c0392b' }]}>LOGOUT</Text>
+        <Text style={[styles.logoutText, { color: theme.isDark ? '#ff8585' : '#c0392b' }]}>{hi ? 'लॉग आउट' : 'LOGOUT'}</Text>
       </Pressable>
 
       <Text style={[styles.version, { color: theme.textMuted }]}>{VERSION}</Text>

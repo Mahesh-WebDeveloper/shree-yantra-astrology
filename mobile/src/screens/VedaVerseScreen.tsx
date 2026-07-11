@@ -65,7 +65,7 @@ export function VedaVerseScreen({ navigation, route }: any) {
                 )}
                 {!!v.english && (
                   <View style={[styles.transBox, { borderTopColor: theme.isDark ? 'rgba(201,150,46,0.2)' : 'rgba(176,115,22,0.15)' }]}>
-                    <Text style={[styles.transLabel, { color: theme.gold2 }]}>English</Text>
+                    <Text style={[styles.transLabel, { color: theme.gold2 }]}>{lang === 'hi' ? 'अंग्रेज़ी अनुवाद' : 'English'}</Text>
                     <Text style={[styles.transText, { color: theme.text }]}>{v.english}</Text>
                   </View>
                 )}

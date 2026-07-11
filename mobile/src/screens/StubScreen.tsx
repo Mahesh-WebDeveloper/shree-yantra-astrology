@@ -7,6 +7,7 @@ import { Card } from '../components/Card';
 import { BrandHeader } from '../components/BrandHeader';
 import { SectionTitle } from '../components/SectionTitle';
 import { openAppDrawer } from '../navigation/AppDrawerHost';
+import { useLang } from '../i18n/LanguageProvider';
 
 /**
  * On-brand placeholder for screens being ported next (Choghadiya, Kundli,
@@ -14,12 +15,14 @@ import { openAppDrawer } from '../navigation/AppDrawerHost';
  */
 export function StubScreen({ navigation, title, note }: any) {
   const { theme } = useTheme();
+  const { lang } = useLang();
+  const hi = lang === 'hi';
   const openMenu = () => openAppDrawer();
   return (
     <Screen header={<BrandHeader onMenu={openMenu} />}>
       <SectionTitle>{title}</SectionTitle>
       <Card padded style={{ marginTop: 10 }}>
-        <Text style={[styles.h, { color: theme.gold1 }]}>Native port in progress</Text>
+        <Text style={[styles.h, { color: theme.gold1 }]}>{hi ? 'यह सुविधा जल्द आ रही है' : 'Native port in progress'}</Text>
         <Text style={[styles.p, { color: theme.textSoft }]}>{note}</Text>
         <Text style={[styles.p, { color: theme.textMuted, marginTop: 10 }]}>
           The shared theme, fonts, gold gradients, navigation and bottom-nav are already live — this

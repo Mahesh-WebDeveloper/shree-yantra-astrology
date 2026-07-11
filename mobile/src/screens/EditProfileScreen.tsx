@@ -85,7 +85,7 @@ function PickerField({ icon, label, value, onPress, theme }: { icon: React.React
 }
 
 /** Time field — manual typing AND a clock button that opens the time picker. */
-function TimeField({ value, onChangeText, onClock, theme }: { value: string; onChangeText: (t: string) => void; onClock: () => void; theme: Theme }) {
+function TimeField({ value, onChangeText, onClock, theme, hi }: { value: string; onChangeText: (t: string) => void; onClock: () => void; theme: Theme; hi: boolean }) {
   const [focused, setFocused] = useState(false);
   const lift = useKeyboardAwareFocus();
   const borderColor = focused ? theme.gold1 : (theme.isDark ? 'rgba(201,150,46,0.35)' : 'rgba(176,115,22,0.30)');
@@ -93,7 +93,7 @@ function TimeField({ value, onChangeText, onClock, theme }: { value: string; onC
     <View style={[styles.pf, { backgroundColor: theme.isDark ? 'rgba(0,0,0,0.70)' : '#fffdf7', borderColor, shadowColor: theme.isDark ? '#000000' : '#5c3f12' }]}>
       <View style={styles.pfIcon}><ClockIcon color={theme.gold2} size={20} /></View>
       <View style={{ flex: 1 }}>
-        <Text style={[styles.pfLabel, { color: focused ? theme.gold1 : theme.goldText }]}>TIME OF BIRTH</Text>
+        <Text style={[styles.pfLabel, { color: focused ? theme.gold1 : theme.goldText }]}>{hi ? 'जन्म समय' : 'TIME OF BIRTH'}</Text>
         <TextInput
           value={value}
           onChangeText={onChangeText}
@@ -117,6 +117,7 @@ export function EditProfileScreen({ navigation }: any) {
   const dialog = useDialog();
   const t = useT();
   const { lang } = useLang();
+  const hi = lang === 'hi';
   const [avatar, setAvatar] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -173,22 +174,22 @@ export function EditProfileScreen({ navigation }: any) {
   };
   const openCamera = async () => {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
-    if (!perm.granted) { dialog('Camera permission needed', 'Allow camera access to take a profile photo from Settings.'); return; }
+    if (!perm.granted) { dialog(hi ? 'कैमरा अनुमति आवश्यक' : 'Camera permission needed', hi ? 'प्रोफ़ाइल फ़ोटो लेने के लिए सेटिंग्स में कैमरा एक्सेस की अनुमति दें।' : 'Allow camera access to take a profile photo from Settings.'); return; }
     const res = await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [1, 1], quality: 0.85 });
     if (!res.canceled && res.assets?.[0]?.uri) applyAvatar(res.assets[0].uri);
   };
   const openGallery = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) { dialog('Permission needed', 'Allow photo access to set a profile picture.'); return; }
+    if (!perm.granted) { dialog(hi ? 'अनुमति आवश्यक' : 'Permission needed', hi ? 'प्रोफ़ाइल चित्र सेट करने के लिए फ़ोटो एक्सेस की अनुमति दें।' : 'Allow photo access to set a profile picture.'); return; }
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.85 });
     if (!res.canceled && res.assets?.[0]?.uri) applyAvatar(res.assets[0].uri);
   };
   const pickAvatar = () => {
     hTap();
-    dialog('Profile Photo', 'How would you like to set your photo?', [
-      { text: 'Take Photo', onPress: openCamera },
-      { text: 'Choose from Gallery', onPress: openGallery },
-      { text: 'Cancel', style: 'cancel' },
+    dialog(hi ? 'प्रोफ़ाइल फ़ोटो' : 'Profile Photo', hi ? 'आप अपनी फ़ोटो कैसे सेट करना चाहेंगे?' : 'How would you like to set your photo?', [
+      { text: hi ? 'फ़ोटो लें' : 'Take Photo', onPress: openCamera },
+      { text: hi ? 'गैलरी से चुनें' : 'Choose from Gallery', onPress: openGallery },
+      { text: hi ? 'रद्द करें' : 'Cancel', style: 'cancel' },
     ]);
   };
 
@@ -199,7 +200,7 @@ export function EditProfileScreen({ navigation }: any) {
   const save = async () => {
     if (nameErr || emailErr || mobileErr) {
       hError();
-      dialog('Please fix the highlighted fields', 'Name, a valid email and a valid mobile number are required.');
+      dialog(hi ? 'कृपया चिह्नित फ़ील्ड ठीक करें' : 'Please fix the highlighted fields', hi ? 'नाम, एक वैध ईमेल और एक वैध मोबाइल नंबर आवश्यक हैं।' : 'Name, a valid email and a valid mobile number are required.');
       return;
     }
     const resolved = birthLocation || (place.trim().length >= 3 ? await resolveLocation({ query: place.trim(), lang }).then((r) => r.item).catch(() => null) : null);
@@ -219,8 +220,8 @@ export function EditProfileScreen({ navigation }: any) {
     await updateStoredUser({ name: name.trim(), email, phone: mobile, profile });
 
     hSuccess();
-    dialog('Profile updated', 'Your details have been saved.', [
-      { text: 'OK', onPress: () => navigation.navigate('Main', { screen: 'Profile' }) },
+    dialog(hi ? 'प्रोफ़ाइल अपडेट हुई' : 'Profile updated', hi ? 'आपकी जानकारी सहेज दी गई है।' : 'Your details have been saved.', [
+      { text: hi ? 'ठीक है' : 'OK', onPress: () => navigation.navigate('Main', { screen: 'Profile' }) },
     ]);
   };
 
@@ -239,15 +240,15 @@ export function EditProfileScreen({ navigation }: any) {
             <CameraIcon color={theme.gold1} size={14} />
           </Pressable>
         </View>
-        <Text style={[styles.avatarNote, { color: theme.textSoft }]}>Keep your details up to date for accurate predictions.</Text>
+        <Text style={[styles.avatarNote, { color: theme.textSoft }]}>{hi ? 'सटीक भविष्यवाणियों के लिए अपनी जानकारी अपडेट रखें।' : 'Keep your details up to date for accurate predictions.'}</Text>
       </Card>
 
       <Text style={[styles.section, { color: theme.goldText }]}>{t('edit.personal', 'Personal Details')}</Text>
       <Card contentStyle={styles.formCard}>
         <View style={styles.formGap}>
-          <TextField icon={<UserLine color={theme.gold2} size={20} />} label={t('profile.fullName', 'Full Name')} value={name} onChangeText={setName} placeholder="Raj Kumar" autoCapitalize="words" error={nameErr ? 'Required' : null} />
-          <TextField icon={<MailIcon color={theme.gold2} size={20} />} label={t('profile.email', 'Email')} value={email} onChangeText={setEmail} placeholder="raj.kumar@cosmos.com" keyboardType="email-address" error={emailErr ? 'Enter a valid email' : null} />
-          <TextField icon={<UserLine color={theme.gold2} size={20} />} label={t('auth.mobileNumber', 'Mobile Number')} value={mobile} onChangeText={setMobile} placeholder="+91 98765 43210" keyboardType="phone-pad" error={mobileErr ? 'Enter a valid mobile number' : null} />
+          <TextField icon={<UserLine color={theme.gold2} size={20} />} label={t('profile.fullName', 'Full Name')} value={name} onChangeText={setName} placeholder="Raj Kumar" autoCapitalize="words" error={nameErr ? (hi ? 'आवश्यक' : 'Required') : null} />
+          <TextField icon={<MailIcon color={theme.gold2} size={20} />} label={t('profile.email', 'Email')} value={email} onChangeText={setEmail} placeholder="raj.kumar@cosmos.com" keyboardType="email-address" error={emailErr ? (hi ? 'वैध ईमेल दर्ज करें' : 'Enter a valid email') : null} />
+          <TextField icon={<UserLine color={theme.gold2} size={20} />} label={t('auth.mobileNumber', 'Mobile Number')} value={mobile} onChangeText={setMobile} placeholder="+91 98765 43210" keyboardType="phone-pad" error={mobileErr ? (hi ? 'वैध मोबाइल नंबर दर्ज करें' : 'Enter a valid mobile number') : null} />
         </View>
       </Card>
 
@@ -255,7 +256,7 @@ export function EditProfileScreen({ navigation }: any) {
       <Card contentStyle={styles.formCard}>
         <View style={styles.formGap}>
           <PickerField icon={<CalendarIcon color={theme.gold2} size={20} />} label={t('profile.dob', 'Date of Birth')} value={fmtDob(dob)} onPress={() => { hTap(); setShowDate(true); }} theme={theme} />
-          <TimeField value={tob} onChangeText={setTob} onClock={() => { hTap(); setShowTime(true); }} theme={theme} />
+          <TimeField value={tob} onChangeText={setTob} onClock={() => { hTap(); setShowTime(true); }} theme={theme} hi={hi} />
           <BirthPlaceField label={t('profile.place', 'Place of Birth')} value={place} onChangeText={setPlace} onSelect={setBirthLocation} placeholder="Agolai, Jodhpur, Rajasthan" />
 
           {/* Gender selector (web had a <select> — here as premium segmented chips) */}

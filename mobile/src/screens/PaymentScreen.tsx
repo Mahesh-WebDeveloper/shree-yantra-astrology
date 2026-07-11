@@ -8,6 +8,7 @@ import Svg, { Path, Rect, Circle, Line } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
+import { useLang } from '../i18n/LanguageProvider';
 import { Theme, fonts, radii } from '../theme/tokens';
 import { CosmicBackground } from '../components/CosmicBackground';
 import { TopBar } from '../components/TopBar';
@@ -125,6 +126,8 @@ type Method = 'upi' | 'card' | 'bank';
 
 export function PaymentScreen({ navigation }: any) {
   const { theme } = useTheme();
+  const { lang } = useLang();
+  const hi = lang === 'hi';
   const insets = useSafeAreaInsets();
 
   const [method, setMethod] = useState<Method>('upi');
@@ -197,7 +200,7 @@ export function PaymentScreen({ navigation }: any) {
   return (
     <View style={[styles.fill, { backgroundColor: theme.bgDeep }]}>
       <CosmicBackground />
-      <TopBar title="Payment" onBack={() => { hTap(); navigation.goBack(); }} right={<BellIcon color={theme.gold1} size={20} />} onRight={() => navigation.navigate('Notifications')} />
+      <TopBar title={hi ? 'भुगतान' : 'Payment'} onBack={() => { hTap(); navigation.goBack(); }} right={<BellIcon color={theme.gold1} size={20} />} onRight={() => navigation.navigate('Notifications')} />
 
       <KeyboardAwareScroll
         contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: insets.bottom + 110 }}
@@ -211,8 +214,8 @@ export function PaymentScreen({ navigation }: any) {
         >
           <View style={styles.sumTopRow}>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.kicker, { color: dim }]}>YOU’RE SUBSCRIBING TO</Text>
-              <Text style={[styles.planName, { color: theme.goldText }]}>Premium Astrology</Text>
+              <Text style={[styles.kicker, { color: dim }]}>{hi ? 'आप सदस्यता ले रहे हैं' : 'YOU’RE SUBSCRIBING TO'}</Text>
+              <Text style={[styles.planName, { color: theme.goldText }]}>{hi ? 'Premium ज्योतिष' : 'Premium Astrology'}</Text>
             </View>
             <View style={[styles.crown, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : '#ffffff' }]}>
               <Svg width={22} height={22} viewBox="0 0 24 24" fill={theme.gold1}><Path d="M2 8l4 6 5-7 5 7 4-4-2 12H4z" /></Svg>
@@ -222,25 +225,25 @@ export function PaymentScreen({ navigation }: any) {
           {/* amount rows */}
           <View style={[styles.amtRows, { borderTopColor: theme.line }]}>
             <View style={styles.amtRow}>
-              <Text style={[styles.amtK, { color: theme.textSoft }]}>7-day premium trial</Text>
+              <Text style={[styles.amtK, { color: theme.textSoft }]}>{hi ? '7-दिन Premium ट्रायल' : '7-day premium trial'}</Text>
               <Text style={[styles.amtV, { color: theme.text }]}>₹1</Text>
             </View>
           </View>
 
           <View style={[styles.totalRow, { borderTopColor: theme.line }]}>
-            <Text style={[styles.totalK, { color: theme.text }]}>Payable today</Text>
+            <Text style={[styles.totalK, { color: theme.text }]}>{hi ? 'आज देय' : 'Payable today'}</Text>
             <Text style={[styles.totalV, { color: theme.goldText }]}>₹1</Text>
           </View>
         </LinearGradient>
 
-        <Text style={[styles.sectionLbl, { color: dim }]}>CHOOSE PAYMENT METHOD</Text>
+        <Text style={[styles.sectionLbl, { color: dim }]}>{hi ? 'भुगतान का तरीका चुनें' : 'CHOOSE PAYMENT METHOD'}</Text>
 
         {/* ── UPI ── */}
         <View style={{ gap: 10 }}>
-          <MethodHead id="upi" title="UPI" sub="GPay, PhonePe, Paytm & more" icon={<UpiIcon c={theme.gold1} />} badge="RECOMMENDED" />
+          <MethodHead id="upi" title="UPI" sub={hi ? 'GPay, PhonePe, Paytm और अन्य' : 'GPay, PhonePe, Paytm & more'} icon={<UpiIcon c={theme.gold1} />} badge={hi ? 'अनुशंसित' : 'RECOMMENDED'} />
           {method === 'upi' && (
             <View style={[styles.body, { borderColor: theme.cardBorder, backgroundColor: subtle }]}>
-              <Text style={[styles.bodyLbl, { color: dim }]}>PAY USING YOUR UPI APP</Text>
+              <Text style={[styles.bodyLbl, { color: dim }]}>{hi ? 'अपने UPI ऐप से भुगतान करें' : 'PAY USING YOUR UPI APP'}</Text>
               <View style={styles.appsRow}>
                 {UPI_APPS.map((a) => {
                   const on = upiApp === a.key && !showQr;
@@ -258,7 +261,7 @@ export function PaymentScreen({ navigation }: any) {
 
               <View style={styles.orRow}>
                 <View style={[styles.orLine, { backgroundColor: theme.line }]} />
-                <Text style={[styles.orText, { color: theme.textMuted }]}>or enter UPI ID</Text>
+                <Text style={[styles.orText, { color: theme.textMuted }]}>{hi ? 'या UPI ID दर्ज करें' : 'or enter UPI ID'}</Text>
                 <View style={[styles.orLine, { backgroundColor: theme.line }]} />
               </View>
 
@@ -278,13 +281,13 @@ export function PaymentScreen({ navigation }: any) {
               {/* Scan QR toggle */}
               <Pressable onPress={() => { hTap(); easeNext(); setShowQr((q) => !q); if (!showQr) setUpiApp(null); }} style={[styles.qrToggle, { borderColor: showQr ? theme.gold2 : theme.cardBorder, backgroundColor: showQr ? (theme.isDark ? 'rgba(246,210,122,0.10)' : 'rgba(176,115,22,0.07)') : 'transparent' }]}>
                 <QrIcon c={theme.gold1} />
-                <Text style={[styles.qrToggleText, { color: theme.goldText }]}>{showQr ? 'Hide QR code' : 'Scan QR with any UPI app'}</Text>
+                <Text style={[styles.qrToggleText, { color: theme.goldText }]}>{showQr ? (hi ? 'QR कोड छिपाएँ' : 'Hide QR code') : (hi ? 'किसी भी UPI ऐप से QR स्कैन करें' : 'Scan QR with any UPI app')}</Text>
               </Pressable>
 
               {showQr && (
                 <View style={styles.qrWrap}>
                   <View style={styles.qrCard}><QrCode size={172} /></View>
-                  <Text style={[styles.qrHint, { color: theme.textSoft }]}>Open GPay / PhonePe / Paytm, tap <Text style={{ color: theme.goldText, fontFamily: fonts.interBold }}>Scan</Text> and pay <Text style={{ color: theme.goldText, fontFamily: fonts.interBold }}>₹1</Text></Text>
+                  <Text style={[styles.qrHint, { color: theme.textSoft }]}>{hi ? 'GPay / PhonePe / Paytm खोलें, ' : 'Open GPay / PhonePe / Paytm, tap '}<Text style={{ color: theme.goldText, fontFamily: fonts.interBold }}>{hi ? 'Scan' : 'Scan'}</Text>{hi ? ' पर टैप करें और ' : ' and pay '}<Text style={{ color: theme.goldText, fontFamily: fonts.interBold }}>₹1</Text>{hi ? ' का भुगतान करें' : ''}</Text>
                 </View>
               )}
             </View>
@@ -293,7 +296,7 @@ export function PaymentScreen({ navigation }: any) {
 
         {/* ── Cards ── */}
         <View style={{ gap: 10, marginTop: 10 }}>
-          <MethodHead id="card" title="Credit / Debit Card" sub="Visa, Mastercard, RuPay" icon={<CardIcon c={theme.gold1} />} />
+          <MethodHead id="card" title={hi ? 'क्रेडिट / डेबिट कार्ड' : 'Credit / Debit Card'} sub="Visa, Mastercard, RuPay" icon={<CardIcon c={theme.gold1} />} />
           {method === 'card' && (
             <View style={[styles.body, { borderColor: theme.cardBorder, backgroundColor: subtle, gap: 10 }]}>
               <View style={[styles.input, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.55)' : '#ffffff' }]}>
@@ -314,7 +317,7 @@ export function PaymentScreen({ navigation }: any) {
 
         {/* ── Netbanking / Wallets ── */}
         <View style={{ gap: 10, marginTop: 10 }}>
-          <MethodHead id="bank" title="Netbanking & Wallets" sub="All major banks · Paytm, Amazon Pay" icon={<BankIcon c={theme.gold1} />} />
+          <MethodHead id="bank" title={hi ? 'नेटबैंकिंग और वॉलेट' : 'Netbanking & Wallets'} sub={hi ? 'सभी प्रमुख बैंक · Paytm, Amazon Pay' : 'All major banks · Paytm, Amazon Pay'} icon={<BankIcon c={theme.gold1} />} />
           {method === 'bank' && (
             <View style={[styles.body, { borderColor: theme.cardBorder, backgroundColor: subtle }]}>
               <View style={styles.bankRow}>
@@ -331,7 +334,7 @@ export function PaymentScreen({ navigation }: any) {
         {/* trust */}
         <View style={styles.trust}>
           <Lock c={theme.gold2} />
-          <Text style={[styles.trustText, { color: theme.textMuted }]}>100% secure payments · Cancel anytime · No hidden charges</Text>
+          <Text style={[styles.trustText, { color: theme.textMuted }]}>{hi ? '100% सुरक्षित भुगतान · कभी भी रद्द करें · कोई छिपा शुल्क नहीं' : '100% secure payments · Cancel anytime · No hidden charges'}</Text>
         </View>
       </KeyboardAwareScroll>
 
@@ -339,7 +342,7 @@ export function PaymentScreen({ navigation }: any) {
       <View style={[styles.payBar, { paddingBottom: insets.bottom + 12, borderTopColor: theme.line, backgroundColor: theme.isDark ? 'rgba(8,7,12,0.98)' : 'rgba(255,253,247,0.99)' }]}>
         <View style={{ flex: 1 }}>
           <Text style={[styles.payBarAmt, { color: theme.goldText }]}>₹1</Text>
-          <Text style={[styles.payBarSub, { color: theme.textMuted }]}>Total payable today</Text>
+          <Text style={[styles.payBarSub, { color: theme.textMuted }]}>{hi ? 'आज कुल देय' : 'Total payable today'}</Text>
         </View>
         <Pressable onPress={pay} disabled={!canPay} style={({ pressed }) => [styles.payBtnWrap, { opacity: canPay ? 1 : 0.5 }, pressed && canPay && { transform: [{ scale: 0.98 }] }]}>
           <LinearGradient colors={theme.buttonGradient} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.payBtn}>
@@ -348,7 +351,7 @@ export function PaymentScreen({ navigation }: any) {
             ) : (
               <>
                 <Lock c={theme.buttonInk} size={15} />
-                <Text style={[styles.payText, { color: theme.buttonInk }]}>PAY ₹1 SECURELY</Text>
+                <Text style={[styles.payText, { color: theme.buttonInk }]}>{hi ? '₹1 सुरक्षित भुगतान करें' : 'PAY ₹1 SECURELY'}</Text>
               </>
             )}
           </LinearGradient>

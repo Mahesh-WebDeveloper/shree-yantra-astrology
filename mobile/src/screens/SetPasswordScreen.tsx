@@ -18,6 +18,7 @@ export function SetPasswordScreen({ navigation }: any) {
   const { theme } = useTheme();
   const dialog = useDialog();
   const { lang } = useLang();
+  const hi = lang === 'hi';
 
   const [hasPassword, setHasPassword] = useState(false);
   const [email, setEmail] = useState('');
@@ -49,12 +50,12 @@ export function SetPasswordScreen({ navigation }: any) {
       const r = await setPasswordApi({ email: emailLocked ? undefined : email.trim(), password: pw });
       await updateStoredUser({ email: r.user.email, providers: r.user.providers });
       hSuccess();
-      dialog('Done', 'You can now sign in with email + password too. (Mobile OTP still works — same account.)', [
-        { text: 'OK', onPress: () => navigation.goBack() },
+      dialog(hi ? 'हो गया' : 'Done', hi ? 'अब आप ईमेल + पासवर्ड से भी साइन इन कर सकते हैं। (मोबाइल OTP भी काम करेगा — वही खाता।)' : 'You can now sign in with email + password too. (Mobile OTP still works — same account.)', [
+        { text: hi ? 'ठीक है' : 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (e: any) {
       hError();
-      dialog('Could not save', e?.message || 'Please try again.');
+      dialog(hi ? 'सहेजा नहीं जा सका' : 'Could not save', e?.message || (hi ? 'कृपया पुनः प्रयास करें।' : 'Please try again.'));
     } finally {
       setBusy(false);
     }
@@ -66,13 +67,13 @@ export function SetPasswordScreen({ navigation }: any) {
         <Card contentStyle={{ padding: 18 }}>
           <Text style={[styles.lead, { color: theme.textSoft }]}>
             {hasPassword
-              ? 'Update your login password.'
-              : 'Set this once to also sign in with email + password alongside mobile OTP. Both work on the same account.'}
+              ? (hi ? 'अपना लॉगिन पासवर्ड अपडेट करें।' : 'Update your login password.')
+              : (hi ? 'इसे एक बार सेट करें ताकि मोबाइल OTP के साथ-साथ ईमेल + पासवर्ड से भी साइन इन कर सकें। दोनों एक ही खाते पर काम करते हैं।' : 'Set this once to also sign in with email + password alongside mobile OTP. Both work on the same account.')}
           </Text>
           <View style={{ gap: 14, marginTop: 16 }}>
             <TextField
               icon={<MailIcon color={theme.gold2} size={20} />}
-              label={emailLocked ? 'Email (linked)' : 'Email'}
+              label={emailLocked ? (hi ? 'ईमेल (लिंक्ड)' : 'Email (linked)') : (hi ? 'ईमेल' : 'Email')}
               value={email}
               onChangeText={setEmail}
               placeholder="you@example.com"
@@ -81,25 +82,25 @@ export function SetPasswordScreen({ navigation }: any) {
             />
             <TextField
               icon={<LockIcon color={theme.gold2} size={20} />}
-              label="New Password"
+              label={hi ? 'नया पासवर्ड' : 'New Password'}
               value={pw}
               onChangeText={setPw}
-              placeholder="Min 6 characters"
+              placeholder={hi ? 'कम से कम 6 वर्ण' : 'Min 6 characters'}
               secureTextEntry
               error={pwErr ? (lang === 'hi' ? 'कम से कम 6 वर्ण' : 'At least 6 characters') : null}
             />
             <TextField
               icon={<LockIcon color={theme.gold2} size={20} />}
-              label="Confirm Password"
+              label={hi ? 'पासवर्ड की पुष्टि करें' : 'Confirm Password'}
               value={pw2}
               onChangeText={setPw2}
-              placeholder="Re-enter password"
+              placeholder={hi ? 'पासवर्ड फिर से दर्ज करें' : 'Re-enter password'}
               secureTextEntry
               error={matchErr ? (lang === 'hi' ? 'पासवर्ड मेल नहीं खाते' : 'Passwords don’t match') : null}
             />
           </View>
           <View style={{ marginTop: 18 }}>
-            <GoldButton label={busy ? 'Saving…' : hasPassword ? 'Update Password' : 'Add Email Login'} onPress={save} />
+            <GoldButton label={busy ? (hi ? 'सहेजा जा रहा है…' : 'Saving…') : hasPassword ? (hi ? 'पासवर्ड अपडेट करें' : 'Update Password') : (hi ? 'ईमेल लॉगिन जोड़ें' : 'Add Email Login')} onPress={save} />
           </View>
         </Card>
         <Text style={[styles.note, { color: theme.textMuted }]}>
