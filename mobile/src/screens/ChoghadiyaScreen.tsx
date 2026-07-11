@@ -4,6 +4,7 @@ import Svg, { Circle, Path, Polyline, Defs, RadialGradient, Stop, LinearGradient
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme/ThemeProvider';
 import { Theme, fonts } from '../theme/tokens';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Screen } from '../components/Screen';
 import { BrandHeader } from '../components/BrandHeader';
 import { GradientText } from '../components/GradientText';
@@ -371,6 +372,7 @@ function SectionHeader({ icon, label, color, rule }: { icon: React.ReactNode; la
 
 export function ChoghadiyaScreen({ navigation }: any) {
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
   const cg = useScreen('choghadiya'); // admin-managed content
   const tr = useT();
   const { lang } = useLang();
@@ -749,7 +751,7 @@ export function ChoghadiyaScreen({ navigation }: any) {
       {/* Muhurat Finder bottom-sheet */}
       <Modal visible={muhuratOpen} transparent animationType="slide" onRequestClose={() => setMuhuratOpen(false)}>
         <Pressable style={mh.backdrop} onPress={() => setMuhuratOpen(false)}>
-          <Pressable style={[mh.sheet, { backgroundColor: theme.isDark ? '#0b0913' : '#fffdf6', borderColor: 'rgba(238,203,122,0.45)' }]} onPress={(e) => e.stopPropagation()}>
+          <Pressable style={[mh.sheet, { backgroundColor: theme.isDark ? '#0b0913' : '#fffdf6', borderColor: 'rgba(238,203,122,0.45)', paddingBottom: insets.bottom + 24 }]} onPress={(e) => e.stopPropagation()}>
             <View style={mh.handle} />
             <View style={mh.headRow}>
               <Sparkle color={theme.goldText} size={17} />

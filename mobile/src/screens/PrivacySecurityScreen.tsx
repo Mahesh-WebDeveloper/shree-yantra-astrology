@@ -116,11 +116,6 @@ export function PrivacySecurityScreen({ navigation }: any) {
     hTap();
     Linking.openURL(url).catch(() => dialog(fallbackTitle, fallbackMsg));
   };
-  const deleteAccount = () => dialog(hi ? 'खाता हटाएँ?' : 'Delete account?', hi ? 'यह आपकी प्रोफ़ाइल, कुंडली डेटा व सदस्यता स्थायी रूप से मिटा देगा। इसे पूर्ववत नहीं किया जा सकता।' : 'This permanently erases your profile, kundli data and subscription. This cannot be undone.', [
-    { text: hi ? 'खाता रखें' : 'Keep Account', style: 'cancel' },
-    { text: hi ? 'हटाएँ' : 'Delete', style: 'destructive', onPress: () => dialog(hi ? 'हटाना पुष्टि करें' : 'Confirm deletion', hi ? 'हमने आपको एक पुष्टि लिंक ईमेल किया है। पुष्टि होते ही आपका खाता हटा दिया जाएगा।' : 'We have emailed you a confirmation link. Your account will be deleted once confirmed.') },
-  ]);
-
   return (
     <Page title={hi ? 'गोपनीयता व सुरक्षा' : 'Privacy & Security'} onBack={() => { hTap(); navigation.goBack(); }}>
       {/* intro */}
@@ -151,11 +146,6 @@ export function PrivacySecurityScreen({ navigation }: any) {
         <ActionRow icon="download" title={hi ? 'मेरा डेटा डाउनलोड करें' : 'Download My Data'} sub={hi ? 'अपने खाते के डेटा की एक प्रति प्राप्त करें' : 'Get a copy of your account data'} onPress={downloadData} theme={theme} />
         <ActionRow icon="doc" title={hi ? 'गोपनीयता नीति' : 'Privacy Policy'} sub={hi ? 'हम आपकी जानकारी कैसे संभालते हैं' : 'How we handle your information'} onPress={openLink('https://shreeyantra.app/privacy', hi ? 'गोपनीयता नीति' : 'Privacy Policy', 'Visit shreeyantra.app/privacy')} theme={theme} />
         <ActionRow icon="doc" title={hi ? 'सेवा की शर्तें' : 'Terms of Service'} sub={hi ? 'हमारे नियम व शर्तें' : 'Our terms & conditions'} onPress={openLink('https://shreeyantra.app/terms', hi ? 'सेवा की शर्तें' : 'Terms of Service', 'Visit shreeyantra.app/terms')} theme={theme} last />
-      </Card>
-
-      <SectionLabel text={hi ? 'सावधानी क्षेत्र' : 'Danger Zone'} theme={theme} />
-      <Card padded={false} contentStyle={styles.listCard}>
-        <ActionRow icon="trash" title={hi ? 'खाता हटाएँ' : 'Delete Account'} sub={hi ? 'अपना खाता व डेटा स्थायी रूप से हटाएँ' : 'Permanently remove your account & data'} onPress={deleteAccount} theme={theme} destructive last />
       </Card>
 
       <Text style={[styles.foot, { color: theme.textMuted }]}>{hi ? '🔒 आपकी रीडिंग व जन्म-डेटा हमारे सर्वर पर एन्क्रिप्टेड हैं।' : '🔒 Your readings & birth data are encrypted on our servers.'}</Text>

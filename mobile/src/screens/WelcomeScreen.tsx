@@ -551,7 +551,6 @@ export function WelcomeScreen({ navigation }: any) {
         {[
           { label: 'My Profile', lkey: 'nav.profile', route: 'Profile', danger: false, icon: () => <><Path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><Circle cx={12} cy={7} r={4} /></> },
           { label: 'Manage Subscription', lkey: 'nav.subscription', route: 'ManageSubscription', danger: false, icon: () => <><Rect x={2} y={5} width={20} height={14} rx={2} /><Line x1={2} y1={10} x2={22} y2={10} /></> },
-          { label: 'Logout', lkey: 'common.logout', route: 'SignIn', danger: true, icon: () => <><Path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><Polyline points="16 17 21 12 16 7" /><Line x1={21} y1={12} x2={9} y2={12} /></> },
         ].map((row, i, arr) => {
           const ic = row.danger ? (theme.isDark ? '#f59f9f' : '#c0392b') : theme.gold1;
           return (

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Modal, Pressable, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts } from '../theme/tokens';
 import { SpeakButton } from './SpeakButton';
@@ -16,6 +17,7 @@ function DigDot({ d }: { d: Dignity }) {
  *  language with an example. Driven entirely by a pre-resolved ExplainView. */
 export function ChartExplainModal({ view, lang, onClose }: { view: ExplainView | null; lang: 'en' | 'hi'; onClose: () => void }) {
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
   return (
     <Modal visible={!!view} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <Pressable style={styles.backdrop} onPress={onClose}>
@@ -23,7 +25,7 @@ export function ChartExplainModal({ view, lang, onClose }: { view: ExplainView |
           <LinearGradient
             colors={theme.isDark ? ['#1a1206', '#0b0b06'] : ['#fffdf6', '#fff3d6']}
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-            style={[styles.sheet, { borderColor: theme.gold1 }]}
+            style={[styles.sheet, { borderColor: theme.gold1, paddingBottom: insets.bottom + 18 }]}
           >
             <View style={[styles.grab, { backgroundColor: theme.cardBorder }]} />
             {!!view && (
