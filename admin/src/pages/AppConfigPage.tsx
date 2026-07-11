@@ -187,6 +187,15 @@ export default function AppConfigPage() {
   if (configQuery.isError) return <ErrorState message="Could not load app config." onRetry={() => void configQuery.refetch()} />
   if (configQuery.isLoading || !draft) return <LoadingPanel label="Loading app config" />
 
+  // Feature flags parsed from the JSON draft, so the labelled toggles below and the raw
+  // JSON editor stay in sync (both write draft.flagsText, which is what save parses).
+  let parsedFlags: Record<string, unknown> = {}
+  try { parsedFlags = JSON.parse(draft.flagsText || '{}') as Record<string, unknown> } catch { parsedFlags = {} }
+  const setFlag = (key: string, value: boolean) => {
+    const next = { ...parsedFlags, [key]: value }
+    setDraft({ ...draft, flagsText: JSON.stringify(next, null, 2) })
+  }
+
   return (
     <form
       className="grid gap-6"
@@ -286,8 +295,28 @@ export default function AppConfigPage() {
           </div>
         ))}
       </section>
+      <section className="grid gap-4 rounded-lg border border-border bg-card p-4">
+        <div>
+          <h3 className="text-sm font-semibold">Profile editing</h3>
+          <p className="text-xs text-muted-foreground">Control whether users can change their Name and Date of Birth in the app. Off = locked (read-only). DOB is best kept locked so kundli calculations stay accurate.</p>
+        </div>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium">Allow name editing</p>
+            <p className="text-xs text-muted-foreground">Users can edit their full name.</p>
+          </div>
+          <Switch checked={!!parsedFlags.profileNameEditable} onCheckedChange={(checked) => setFlag('profileNameEditable', checked)} />
+        </div>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium">Allow date-of-birth editing</p>
+            <p className="text-xs text-muted-foreground">Users can edit their date of birth.</p>
+          </div>
+          <Switch checked={!!parsedFlags.profileDobEditable} onCheckedChange={(checked) => setFlag('profileDobEditable', checked)} />
+        </div>
+      </section>
       <section className="rounded-lg border border-border bg-card p-4">
-        <Field label="Feature flags JSON">
+        <Field label="Feature flags JSON (advanced)">
           <Textarea className="min-h-40 font-mono text-xs" value={draft.flagsText} onChange={(event) => setDraft({ ...draft, flagsText: event.target.value })} />
         </Field>
       </section>

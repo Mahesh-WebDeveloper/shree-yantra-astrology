@@ -16,12 +16,13 @@ interface Props {
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   autoComplete?: any;
   error?: string | null;
+  editable?: boolean;   // false → read-only (locked); shows a lock and can't be edited
 }
 
 /** Themed input field — RN port of the web `.sy-field` (icon · label · input). */
 export function TextField({
   icon, label, value, onChangeText, placeholder, secureTextEntry,
-  keyboardType, autoCapitalize = 'none', autoComplete, error,
+  keyboardType, autoCapitalize = 'none', autoComplete, error, editable = true,
 }: Props) {
   const { theme } = useTheme();
   const [focused, setFocused] = useState(false);
@@ -35,9 +36,10 @@ export function TextField({
   return (
     <View>
       <Pressable
-        onPress={() => inputRef.current?.focus()}
+        onPress={() => { if (editable) inputRef.current?.focus(); }}
         style={[
           styles.field,
+          !editable && { opacity: 0.6 },
           {
             backgroundColor: invalid ? (theme.isDark ? 'rgba(36,12,18,0.55)' : '#fff2f2') : (theme.isDark ? (focused ? 'rgba(0,0,0,0.78)' : 'rgba(0,0,0,0.70)') : '#ffffff'),
             borderColor,
@@ -60,6 +62,7 @@ export function TextField({
               ref={inputRef}
               value={value}
               onChangeText={onChangeText}
+              editable={editable}
               placeholder={placeholder}
               placeholderTextColor={theme.isDark ? 'rgba(216,203,168,0.42)' : theme.textMuted}
               secureTextEntry={hide}
@@ -70,7 +73,8 @@ export function TextField({
               onBlur={() => setFocused(false)}
               style={[styles.input, { color: theme.text }]}
             />
-            {secureTextEntry && (
+            {!editable && <LockGlyph color={theme.gold2} />}
+            {editable && secureTextEntry && (
               <Pressable onPress={() => setHide((h) => !h)} hitSlop={10}>
                 <EyeIcon open={!hide} color={theme.gold2} />
               </Pressable>
@@ -80,6 +84,15 @@ export function TextField({
       </Pressable>
       {invalid && <Text style={[styles.error, { color: theme.isDark ? '#ff9d9d' : theme.red }]}>{error}</Text>}
     </View>
+  );
+}
+
+function LockGlyph({ color }: { color: string }) {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M6 11h12v9H6z" />
+      <Path d="M8 11V8a4 4 0 0 1 8 0v3" />
+    </Svg>
   );
 }
 

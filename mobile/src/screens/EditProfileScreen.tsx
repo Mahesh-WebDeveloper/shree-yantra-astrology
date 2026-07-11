@@ -22,6 +22,7 @@ import { useDialog } from '../components/DialogProvider';
 import { useKeyboardAwareFocus } from '../components/KeyboardAwareScroll';
 import { getStoredUser, updateStoredUser } from '../lib/auth';
 import { useT, useLang } from '../i18n/LanguageProvider';
+import { useAppConfig } from '../context/AppConfigProvider';
 import { LocationSuggestion, resolveLocation, updateProfileApi, uploadAvatar, avatarUrl } from '../lib/api';
 
 const AVATAR_KEY = 'sy.avatar';
@@ -61,15 +62,16 @@ const savedLocation = (place?: string, lat?: number | null, lng?: number | null)
 );
 
 /** Read-only tappable field that mirrors the TextField look (icon · label · value · chevron). */
-function PickerField({ icon, label, value, onPress, theme }: { icon: React.ReactNode; label: string; value: string; onPress: () => void; theme: Theme }) {
+function PickerField({ icon, label, value, onPress, theme, locked }: { icon: React.ReactNode; label: string; value: string; onPress: () => void; theme: Theme; locked?: boolean }) {
   return (
     <Pressable
-      onPress={onPress}
+      onPress={locked ? undefined : onPress}
       style={({ pressed }) => [
         styles.pf,
+        locked && { opacity: 0.6 },
         {
           backgroundColor: theme.isDark ? 'rgba(0,0,0,0.70)' : '#fffdf7',
-          borderColor: pressed ? theme.gold1 : (theme.isDark ? 'rgba(201,150,46,0.35)' : 'rgba(176,115,22,0.30)'),
+          borderColor: (pressed && !locked) ? theme.gold1 : (theme.isDark ? 'rgba(201,150,46,0.35)' : 'rgba(176,115,22,0.30)'),
           shadowColor: theme.isDark ? '#000000' : '#5c3f12',
         },
       ]}
@@ -79,7 +81,11 @@ function PickerField({ icon, label, value, onPress, theme }: { icon: React.React
         <Text style={[styles.pfLabel, { color: theme.goldText }]}>{label.toUpperCase()}</Text>
         <Text style={[styles.pfValue, { color: theme.text }]}>{value}</Text>
       </View>
-      <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={theme.gold2} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Polyline points="6 9 12 15 18 9" /></Svg>
+      {locked ? (
+        <Svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke={theme.gold2} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><Path d="M6 11h12v9H6z" /><Path d="M8 11V8a4 4 0 0 1 8 0v3" /></Svg>
+      ) : (
+        <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={theme.gold2} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Polyline points="6 9 12 15 18 9" /></Svg>
+      )}
     </Pressable>
   );
 }
@@ -118,6 +124,10 @@ export function EditProfileScreen({ navigation }: any) {
   const t = useT();
   const { lang } = useLang();
   const hi = lang === 'hi';
+  // Admin-controlled locks (default LOCKED until enabled from the dashboard).
+  const { config } = useAppConfig();
+  const nameEditable = config.featureFlags?.profileNameEditable ?? false;
+  const dobEditable = config.featureFlags?.profileDobEditable ?? false;
   const [avatar, setAvatar] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -246,16 +256,18 @@ export function EditProfileScreen({ navigation }: any) {
       <Text style={[styles.section, { color: theme.goldText }]}>{t('edit.personal', 'Personal Details')}</Text>
       <Card contentStyle={styles.formCard}>
         <View style={styles.formGap}>
-          <TextField icon={<UserLine color={theme.gold2} size={20} />} label={t('profile.fullName', 'Full Name')} value={name} onChangeText={setName} placeholder="Raj Kumar" autoCapitalize="words" error={nameErr ? (hi ? 'आवश्यक' : 'Required') : null} />
+          <TextField icon={<UserLine color={theme.gold2} size={20} />} label={t('profile.fullName', 'Full Name')} value={name} onChangeText={setName} placeholder="Raj Kumar" autoCapitalize="words" editable={nameEditable} error={nameErr ? (hi ? 'आवश्यक' : 'Required') : null} />
           <TextField icon={<MailIcon color={theme.gold2} size={20} />} label={t('profile.email', 'Email')} value={email} onChangeText={setEmail} placeholder="raj.kumar@cosmos.com" keyboardType="email-address" error={emailErr ? (hi ? 'वैध ईमेल दर्ज करें' : 'Enter a valid email') : null} />
           <TextField icon={<UserLine color={theme.gold2} size={20} />} label={t('auth.mobileNumber', 'Mobile Number')} value={mobile} onChangeText={setMobile} placeholder="+91 98765 43210" keyboardType="phone-pad" error={mobileErr ? (hi ? 'वैध मोबाइल नंबर दर्ज करें' : 'Enter a valid mobile number') : null} />
+          {!nameEditable && <Text style={[styles.lockNote, { color: theme.textMuted }]}>🔒 {hi ? 'नाम में बदलाव अभी बंद है। मदद के लिए सहायता से संपर्क करें।' : 'Name editing is currently disabled. Contact support for help.'}</Text>}
         </View>
       </Card>
 
       <Text style={[styles.section, { color: theme.goldText }]}>{t('edit.birthDetails', 'Birth Details')}</Text>
       <Card contentStyle={styles.formCard}>
         <View style={styles.formGap}>
-          <PickerField icon={<CalendarIcon color={theme.gold2} size={20} />} label={t('profile.dob', 'Date of Birth')} value={fmtDob(dob)} onPress={() => { hTap(); setShowDate(true); }} theme={theme} />
+          <PickerField icon={<CalendarIcon color={theme.gold2} size={20} />} label={t('profile.dob', 'Date of Birth')} value={fmtDob(dob)} onPress={() => { hTap(); setShowDate(true); }} theme={theme} locked={!dobEditable} />
+          {!dobEditable && <Text style={[styles.lockNote, { color: theme.textMuted }]}>🔒 {hi ? 'जन्म तिथि में बदलाव अभी बंद है (सटीक कुंडली के लिए)। मदद हेतु सहायता से संपर्क करें।' : 'Date of birth editing is currently disabled (to keep your kundli accurate). Contact support for help.'}</Text>}
           <TimeField value={tob} onChangeText={setTob} onClock={() => { hTap(); setShowTime(true); }} theme={theme} hi={hi} />
           <BirthPlaceField label={t('profile.place', 'Place of Birth')} value={place} onChangeText={setPlace} onSelect={setBirthLocation} placeholder="Agolai, Jodhpur, Rajasthan" />
 
@@ -318,6 +330,7 @@ const styles = StyleSheet.create({
   avatarImg: { width: '100%', height: '100%' },
   avatarEdit: { position: 'absolute', right: 4, bottom: 4, width: 32, height: 32, borderRadius: 16, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   avatarNote: { fontFamily: fonts.inter, fontSize: 12.5, textAlign: 'center', lineHeight: 18 },
+  lockNote: { fontFamily: fonts.inter, fontSize: 11.5, lineHeight: 16, marginTop: -2, paddingHorizontal: 4 },
 
   section: { fontFamily: fonts.cinzelSemi, fontSize: 13, letterSpacing: 1.4, marginTop: 22, marginBottom: 10, marginLeft: 2 },
   formCard: { padding: 18 },
