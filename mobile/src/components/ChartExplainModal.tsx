@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Modal, Pressable, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Modal, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
@@ -29,7 +29,7 @@ export function ChartExplainModal({ view, lang, onClose }: { view: ExplainView |
           >
             <View style={[styles.grab, { backgroundColor: theme.cardBorder }]} />
             {!!view && (
-              <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
+              <View>
                 <Text style={[styles.heading, { color: theme.goldText }]}>{view.heading}</Text>
                 <Text style={[styles.sub, { color: theme.gold2 }]}>{view.sub}</Text>
 
@@ -56,7 +56,7 @@ export function ChartExplainModal({ view, lang, onClose }: { view: ExplainView |
                     <Text style={[styles.closeTxt, { color: theme.gold1 }]}>{lang === 'hi' ? 'ठीक है' : 'Got it'}</Text>
                   </Pressable>
                 </View>
-              </ScrollView>
+              </View>
             )}
           </LinearGradient>
         </Pressable>
@@ -67,7 +67,7 @@ export function ChartExplainModal({ view, lang, onClose }: { view: ExplainView |
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end', padding: 12 },
-  sheet: { borderWidth: 1.4, borderRadius: 22, paddingHorizontal: 18, paddingTop: 10, paddingBottom: 18, maxHeight: '78%' },
+  sheet: { borderWidth: 1.4, borderRadius: 22, paddingHorizontal: 18, paddingTop: 10, paddingBottom: 18 },
   grab: { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 12 },
   heading: { fontFamily: fonts.playfairBold, fontSize: 20, lineHeight: 26 },
   sub: { fontFamily: fonts.interSemi, fontSize: 12.5, marginTop: 3 },
