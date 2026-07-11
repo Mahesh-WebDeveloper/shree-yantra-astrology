@@ -8,10 +8,8 @@ import { Card } from '../components/Card';
 import { useDialog } from '../components/DialogProvider';
 import { hTap, hSelect } from '../lib/haptics';
 import { useAppConfig } from '../context/AppConfigProvider';
-import { useT } from '../i18n/LanguageProvider';
+import { useLang } from '../i18n/LanguageProvider';
 import { getFaq } from '../lib/api';
-
-const QUICK_KEY: Record<string, string> = { chat: 'help.chat', email: 'help.emailSupport' };
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -20,16 +18,16 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 const sw = (c: string, n = 1.7) => ({ width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none' as const, stroke: c, strokeWidth: n, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const });
 
 const QUICK = [
-  { key: 'chat', label: 'Chat with us', icon: (c: string) => <Svg {...sw(c)}><Path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></Svg> },
-  { key: 'email', label: 'Email support', icon: (c: string) => <Svg {...sw(c)}><Path d="M4 4h16v16H4z" /><Polyline points="4 4 12 13 20 4" /></Svg> },
+  { key: 'chat', label: 'Chat with us', labelHi: 'हमसे चैट करें', icon: (c: string) => <Svg {...sw(c)}><Path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></Svg> },
+  { key: 'email', label: 'Email support', labelHi: 'ईमेल सहायता', icon: (c: string) => <Svg {...sw(c)}><Path d="M4 4h16v16H4z" /><Polyline points="4 4 12 13 20 4" /></Svg> },
 ];
 
 const FAQS = [
-  { q: 'How is my horoscope calculated?', a: 'We use authentic Vedic Lahiri ayanamsa with your exact birth date, time and location to generate planetary positions and dasha periods.' },
-  { q: 'Can I cancel my Premium subscription?', a: "Yes, cancel anytime from Profile → Manage Subscription. You'll continue to enjoy Premium until the end of the billing cycle." },
-  { q: 'Are the astrologers verified?', a: 'All our astrologers go through a 7-step verification including qualification check, test consultations and user-rating review.' },
-  { q: 'How accurate are the predictions?', a: 'Vedic astrology is a science of probabilities, not absolutes. Our 4.8★ user rating reflects the average accuracy reported by our community.' },
-  { q: 'How do I talk to an astrologer?', a: 'Open “Ask the Astrologer” from the home screen and ask your questions any time — your answers use your exact birth chart and planetary data.' },
+  { q: 'How is my horoscope calculated?', qHi: 'मेरी कुंडली कैसे बनती है?', a: 'We use authentic Vedic Lahiri ayanamsa with your exact birth date, time and location to generate planetary positions and dasha periods.', aHi: 'हम प्रामाणिक वैदिक लाहिड़ी अयनांश और आपकी सटीक जन्म तिथि, समय व स्थान का उपयोग करके ग्रहों की स्थिति व दशा-काल की गणना करते हैं।' },
+  { q: 'Can I cancel my Premium subscription?', qHi: 'क्या मैं प्रीमियम सदस्यता रद्द कर सकता/सकती हूँ?', a: "Yes, cancel anytime from Profile → Manage Subscription. You'll continue to enjoy Premium until the end of the billing cycle.", aHi: 'हाँ, प्रोफ़ाइल → सदस्यता प्रबंधन से कभी भी रद्द करें। बिलिंग अवधि समाप्त होने तक प्रीमियम सुविधाएँ मिलती रहेंगी।' },
+  { q: 'Are the astrologers verified?', qHi: 'क्या ज्योतिषी सत्यापित हैं?', a: 'All our astrologers go through a 7-step verification including qualification check, test consultations and user-rating review.', aHi: 'हमारे सभी ज्योतिषी 7-चरणीय सत्यापन से गुज़रते हैं — योग्यता जाँच, परीक्षण परामर्श व उपयोगकर्ता-रेटिंग समीक्षा सहित।' },
+  { q: 'How accurate are the predictions?', qHi: 'भविष्यवाणियाँ कितनी सटीक होती हैं?', a: 'Vedic astrology is a science of probabilities, not absolutes. Our 4.8★ user rating reflects the average accuracy reported by our community.', aHi: 'वैदिक ज्योतिष संभावनाओं का विज्ञान है, निश्चितताओं का नहीं। हमारी 4.8★ रेटिंग समुदाय द्वारा बताई गई औसत सटीकता दर्शाती है।' },
+  { q: 'How do I talk to an astrologer?', qHi: 'ज्योतिषी से कैसे बात करूँ?', a: 'Open “Ask the Astrologer” from the home screen and ask your questions any time — your answers use your exact birth chart and planetary data.', aHi: 'होम स्क्रीन से "ज्योतिषी से पूछें" खोलें और कभी भी प्रश्न पूछें — उत्तर आपकी सटीक जन्म-कुंडली व ग्रह-स्थिति पर आधारित होते हैं।' },
 ];
 
 function Faq({ q, a, open, onToggle, theme }: { q: string; a: string; open: boolean; onToggle: () => void; theme: Theme }) {
@@ -59,7 +57,7 @@ export function HelpScreen({ navigation }: any) {
   const { theme } = useTheme();
   const dialog = useDialog();
   const { config } = useAppConfig();
-  const t = useT();
+  const hi = useLang().lang === 'hi';
   const supportEmail = config.support?.email || 'support@shreeyantra.app';
   const [openFaq, setOpenFaq] = useState(0); // first open by default (matches web)
 
@@ -70,7 +68,7 @@ export function HelpScreen({ navigation }: any) {
       if (r.faq && r.faq.length) setLiveFaqs(r.faq.map((f) => ({ q: f.question, a: f.answer })));
     }).catch(() => {});
   }, []);
-  const faqs = liveFaqs || FAQS;
+  const faqs = liveFaqs || FAQS.map((f) => ({ q: hi ? f.qHi : f.q, a: hi ? f.aHi : f.a }));
 
   const toggleFaq = (i: number) => {
     hSelect();
@@ -83,18 +81,18 @@ export function HelpScreen({ navigation }: any) {
     if (key === 'email') {
       Linking.openURL(`mailto:${supportEmail}?subject=Support%20Request`).catch(() => dialog('Email support', supportEmail));
     } else {
-      dialog('Live Chat', 'Connecting you to our cosmic support team — a guide will join within a minute. 🌟');
+      dialog(hi ? 'लाइव चैट' : 'Live Chat', hi ? 'हम आपको हमारी सहायता टीम से जोड़ रहे हैं — एक मिनट में कोई सदस्य जुड़ जाएगा। 🌟' : 'Connecting you to our cosmic support team — a guide will join within a minute. 🌟');
     }
   };
 
   return (
-    <Page title="Help" onBack={() => { hTap(); navigation.goBack(); }}>
+    <Page title={hi ? 'सहायता' : 'Help'} onBack={() => { hTap(); navigation.goBack(); }}>
       <Card contentStyle={{ alignItems: 'center', paddingVertical: 22 }}>
         <View style={[styles.pill, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.08)' : 'rgba(176,115,22,0.07)' }]}>
-          <Text style={[styles.pillText, { color: theme.goldText }]}>SUPPORT 24×7</Text>
+          <Text style={[styles.pillText, { color: theme.goldText }]}>{hi ? 'सहायता 24×7' : 'SUPPORT 24×7'}</Text>
         </View>
-        <Text style={[styles.h2, { color: theme.goldText }]}>How can we help?</Text>
-        <Text style={[styles.sub, { color: theme.textMuted }]}>Our cosmic team responds within an hour.</Text>
+        <Text style={[styles.h2, { color: theme.goldText }]}>{hi ? 'हम आपकी कैसे मदद करें?' : 'How can we help?'}</Text>
+        <Text style={[styles.sub, { color: theme.textMuted }]}>{hi ? 'हमारी टीम एक घंटे के भीतर उत्तर देती है।' : 'Our cosmic team responds within an hour.'}</Text>
       </Card>
 
       <View style={styles.quick}>
@@ -110,12 +108,12 @@ export function HelpScreen({ navigation }: any) {
             ]}
           >
             {q.icon(theme.gold1)}
-            <Text style={[styles.quickLabel, { color: theme.text }]}>{t(QUICK_KEY[q.key] || '', q.label)}</Text>
+            <Text style={[styles.quickLabel, { color: theme.text }]}>{hi ? q.labelHi : q.label}</Text>
           </Pressable>
         ))}
       </View>
 
-      <Text style={[styles.section, { color: theme.goldText }]}>{t('help.faq', 'Frequently Asked Questions')}</Text>
+      <Text style={[styles.section, { color: theme.goldText }]}>{hi ? 'अक्सर पूछे जाने वाले प्रश्न' : 'Frequently Asked Questions'}</Text>
       <View style={{ gap: 10 }}>
         {faqs.map((f, i) => (
           <Faq key={f.q} q={f.q} a={f.a} open={openFaq === i} onToggle={() => toggleFaq(i)} theme={theme} />

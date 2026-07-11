@@ -130,7 +130,7 @@ export function OccasionScreen({ route, navigation }: any) {
   const openMuhurat = () => { hTap(); const key = MUHURAT_KEY[id]; if (key) navigation.navigate('MuhuratFinder', { categoryKey: key }); else navigation.navigate('Muhurat'); };
   const focusAsk = () => { scrollTo('ai'); setTimeout(() => askRef.current?.focus(), 260); };
 
-  if (!o) return <Page title="Shubh Avsar" onBack={() => navigation.goBack()}><Text style={{ color: theme.textMuted, textAlign: 'center', marginTop: 40, fontFamily: fonts.inter }}>Not found</Text></Page>;
+  if (!o) return <Page title={hi ? 'शुभ अवसर' : 'Shubh Avsar'} onBack={() => navigation.goBack()}><Text style={{ color: theme.textMuted, textAlign: 'center', marginTop: 40, fontFamily: fonts.inter }}>{hi ? 'नहीं मिला' : 'Not found'}</Text></Page>;
 
   const cardBg = theme.isDark ? '#000000' : 'rgba(255,253,247,0.92)';
 

@@ -359,6 +359,7 @@ export const STRINGS: Record<string, { en: string; hi: string }> = {
   // ── manage subscription ──
   'ms.title': { en: 'Manage Plan', hi: 'प्लान प्रबंधन' },
   'ms.billing': { en: 'Billing', hi: 'बिलिंग' },
+  'billing.title': { en: 'Billing & Account', hi: 'बिलिंग व खाता' },
 
   // ── Bhagavad Gita ──
   'gita.title': { en: 'Bhagavad Gita', hi: 'भगवद् गीता' },

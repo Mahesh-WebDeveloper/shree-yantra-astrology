@@ -10,7 +10,7 @@ import { PressableScale } from '../components/PressableScale';
 import { useDialog } from '../components/DialogProvider';
 import { hTap, hSelect, hSuccess } from '../lib/haptics';
 import { useCurrentUser } from '../lib/auth';
-import { useT } from '../i18n/LanguageProvider';
+import { useLang } from '../i18n/LanguageProvider';
 
 const STORE_KEY = 'sy.privacy';
 
@@ -95,7 +95,7 @@ const DEFAULTS: Prefs = { appLock: false, twoFA: false, personalized: true, anal
 export function PrivacySecurityScreen({ navigation }: any) {
   const { theme } = useTheme();
   const dialog = useDialog();
-  const t = useT();
+  const hi = useLang().lang === 'hi';
   const user = useCurrentUser();
   const hasPassword = !!user?.providers?.includes('password');
   const [p, setP] = useState<Prefs>(DEFAULTS);
@@ -108,57 +108,57 @@ export function PrivacySecurityScreen({ navigation }: any) {
     setP((cur) => { const next = { ...cur, [k]: v }; AsyncStorage.setItem(STORE_KEY, JSON.stringify(next)).catch(() => {}); return next; });
   };
 
-  const loginActivity = () => dialog('Recent Login Activity', 'Last sign-in: Today, 9:42 AM · Jaipur, India · Android.\nNo suspicious activity detected. ✓');
-  const downloadData = () => dialog('Download My Data', 'We will prepare a copy of your data and email a download link within 24 hours.', [
-    { text: 'Cancel', style: 'cancel' }, { text: 'Request', onPress: () => { hSuccess(); dialog('Request received', 'Your data export is being prepared. 📦'); } },
+  const loginActivity = () => dialog(hi ? 'हाल की लॉगिन गतिविधि' : 'Recent Login Activity', hi ? 'अंतिम साइन-इन: आज, सुबह 9:42 · जयपुर, भारत · Android.\nकोई संदिग्ध गतिविधि नहीं मिली। ✓' : 'Last sign-in: Today, 9:42 AM · Jaipur, India · Android.\nNo suspicious activity detected. ✓');
+  const downloadData = () => dialog(hi ? 'मेरा डेटा डाउनलोड करें' : 'Download My Data', hi ? 'हम आपके डेटा की एक प्रति तैयार कर 24 घंटे के भीतर डाउनलोड लिंक ईमेल कर देंगे।' : 'We will prepare a copy of your data and email a download link within 24 hours.', [
+    { text: hi ? 'रद्द करें' : 'Cancel', style: 'cancel' }, { text: hi ? 'अनुरोध करें' : 'Request', onPress: () => { hSuccess(); dialog(hi ? 'अनुरोध प्राप्त हुआ' : 'Request received', hi ? 'आपका डेटा एक्सपोर्ट तैयार हो रहा है। 📦' : 'Your data export is being prepared. 📦'); } },
   ]);
   const openLink = (url: string, fallbackTitle: string, fallbackMsg: string) => () => {
     hTap();
     Linking.openURL(url).catch(() => dialog(fallbackTitle, fallbackMsg));
   };
-  const deleteAccount = () => dialog('Delete account?', 'This permanently erases your profile, kundli data and subscription. This cannot be undone.', [
-    { text: 'Keep Account', style: 'cancel' },
-    { text: 'Delete', style: 'destructive', onPress: () => dialog('Confirm deletion', 'We have emailed you a confirmation link. Your account will be deleted once confirmed.') },
+  const deleteAccount = () => dialog(hi ? 'खाता हटाएँ?' : 'Delete account?', hi ? 'यह आपकी प्रोफ़ाइल, कुंडली डेटा व सदस्यता स्थायी रूप से मिटा देगा। इसे पूर्ववत नहीं किया जा सकता।' : 'This permanently erases your profile, kundli data and subscription. This cannot be undone.', [
+    { text: hi ? 'खाता रखें' : 'Keep Account', style: 'cancel' },
+    { text: hi ? 'हटाएँ' : 'Delete', style: 'destructive', onPress: () => dialog(hi ? 'हटाना पुष्टि करें' : 'Confirm deletion', hi ? 'हमने आपको एक पुष्टि लिंक ईमेल किया है। पुष्टि होते ही आपका खाता हटा दिया जाएगा।' : 'We have emailed you a confirmation link. Your account will be deleted once confirmed.') },
   ]);
 
   return (
-    <Page title="Privacy & Security" onBack={() => { hTap(); navigation.goBack(); }}>
+    <Page title={hi ? 'गोपनीयता व सुरक्षा' : 'Privacy & Security'} onBack={() => { hTap(); navigation.goBack(); }}>
       {/* intro */}
       <Card contentStyle={styles.intro}>
         <View style={[styles.shieldWrap, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : '#ffffff' }]}>
           <Svg width={30} height={30} viewBox="0 0 24 24" fill="none" stroke={theme.gold1} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><Path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z" /><Polyline points="9 12 11 14 15 10" /></Svg>
         </View>
-        <Text style={[styles.introTitle, { color: theme.text }]}>{t('ps.protected', 'Your data is protected')}</Text>
-        <Text style={[styles.introSub, { color: theme.textMuted }]}>{t('ps.protectedSub', 'Manage how you sign in, what you share, and your account data — all in one place.')}</Text>
+        <Text style={[styles.introTitle, { color: theme.text }]}>{hi ? 'आपका डेटा सुरक्षित है' : 'Your data is protected'}</Text>
+        <Text style={[styles.introSub, { color: theme.textMuted }]}>{hi ? 'आप कैसे साइन-इन करते हैं, क्या साझा करते हैं व अपना खाता डेटा — सब एक ही जगह प्रबंधित करें।' : 'Manage how you sign in, what you share, and your account data — all in one place.'}</Text>
       </Card>
 
-      <SectionLabel text={t('ps.security', 'Security')} theme={theme} />
+      <SectionLabel text={hi ? 'सुरक्षा' : 'Security'} theme={theme} />
       <Card padded={false} contentStyle={styles.listCard}>
-        <ToggleRow icon="finger" title="App Lock" sub="Require fingerprint / face to open the app" value={p.appLock} onValueChange={set('appLock')} theme={theme} />
-        <ActionRow icon="activity" title="Login Activity" sub="See recent sign-ins to your account" onPress={loginActivity} theme={theme} last />
+        <ToggleRow icon="finger" title={hi ? 'ऐप लॉक' : 'App Lock'} sub={hi ? 'ऐप खोलने के लिए फिंगरप्रिंट / फेस अनिवार्य करें' : 'Require fingerprint / face to open the app'} value={p.appLock} onValueChange={set('appLock')} theme={theme} />
+        <ActionRow icon="activity" title={hi ? 'लॉगिन गतिविधि' : 'Login Activity'} sub={hi ? 'अपने खाते के हाल के साइन-इन देखें' : 'See recent sign-ins to your account'} onPress={loginActivity} theme={theme} last />
       </Card>
 
-      <SectionLabel text={t('ps.privacy', 'Privacy')} theme={theme} />
+      <SectionLabel text={hi ? 'गोपनीयता' : 'Privacy'} theme={theme} />
       <Card padded={false} contentStyle={styles.listCard}>
-        <ToggleRow icon="sparkles" title="Personalised Predictions" sub="Use my birth details to tailor readings" value={p.personalized} onValueChange={set('personalized')} theme={theme} />
-        <ToggleRow icon="chart" title="Usage Analytics" sub="Share anonymous app usage to improve" value={p.analytics} onValueChange={set('analytics')} theme={theme} />
-        <ToggleRow icon="mail" title="Marketing Emails" sub="Offers, festival horoscopes & updates" value={p.marketing} onValueChange={set('marketing')} theme={theme} />
-        <ToggleRow icon="eye" title="Discoverable Profile" sub="Let astrologers find me for consults" value={p.discoverable} onValueChange={set('discoverable')} theme={theme} last />
+        <ToggleRow icon="sparkles" title={hi ? 'व्यक्तिगत भविष्यवाणियाँ' : 'Personalised Predictions'} sub={hi ? 'रीडिंग को अनुकूल बनाने हेतु मेरे जन्म-विवरण का उपयोग करें' : 'Use my birth details to tailor readings'} value={p.personalized} onValueChange={set('personalized')} theme={theme} />
+        <ToggleRow icon="chart" title={hi ? 'उपयोग विश्लेषण' : 'Usage Analytics'} sub={hi ? 'ऐप को बेहतर बनाने हेतु अनाम उपयोग-डेटा साझा करें' : 'Share anonymous app usage to improve'} value={p.analytics} onValueChange={set('analytics')} theme={theme} />
+        <ToggleRow icon="mail" title={hi ? 'मार्केटिंग ईमेल' : 'Marketing Emails'} sub={hi ? 'ऑफ़र, त्योहार राशिफल व अपडेट' : 'Offers, festival horoscopes & updates'} value={p.marketing} onValueChange={set('marketing')} theme={theme} />
+        <ToggleRow icon="eye" title={hi ? 'खोज-योग्य प्रोफ़ाइल' : 'Discoverable Profile'} sub={hi ? 'ज्योतिषियों को परामर्श हेतु मुझे खोजने दें' : 'Let astrologers find me for consults'} value={p.discoverable} onValueChange={set('discoverable')} theme={theme} last />
       </Card>
 
-      <SectionLabel text={t('ps.data', 'Data & Policies')} theme={theme} />
+      <SectionLabel text={hi ? 'डेटा व नीतियाँ' : 'Data & Policies'} theme={theme} />
       <Card padded={false} contentStyle={styles.listCard}>
-        <ActionRow icon="download" title="Download My Data" sub="Get a copy of your account data" onPress={downloadData} theme={theme} />
-        <ActionRow icon="doc" title="Privacy Policy" sub="How we handle your information" onPress={openLink('https://shreeyantra.app/privacy', 'Privacy Policy', 'Visit shreeyantra.app/privacy')} theme={theme} />
-        <ActionRow icon="doc" title="Terms of Service" sub="Our terms & conditions" onPress={openLink('https://shreeyantra.app/terms', 'Terms of Service', 'Visit shreeyantra.app/terms')} theme={theme} last />
+        <ActionRow icon="download" title={hi ? 'मेरा डेटा डाउनलोड करें' : 'Download My Data'} sub={hi ? 'अपने खाते के डेटा की एक प्रति प्राप्त करें' : 'Get a copy of your account data'} onPress={downloadData} theme={theme} />
+        <ActionRow icon="doc" title={hi ? 'गोपनीयता नीति' : 'Privacy Policy'} sub={hi ? 'हम आपकी जानकारी कैसे संभालते हैं' : 'How we handle your information'} onPress={openLink('https://shreeyantra.app/privacy', hi ? 'गोपनीयता नीति' : 'Privacy Policy', 'Visit shreeyantra.app/privacy')} theme={theme} />
+        <ActionRow icon="doc" title={hi ? 'सेवा की शर्तें' : 'Terms of Service'} sub={hi ? 'हमारे नियम व शर्तें' : 'Our terms & conditions'} onPress={openLink('https://shreeyantra.app/terms', hi ? 'सेवा की शर्तें' : 'Terms of Service', 'Visit shreeyantra.app/terms')} theme={theme} last />
       </Card>
 
-      <SectionLabel text={t('ps.danger', 'Danger Zone')} theme={theme} />
+      <SectionLabel text={hi ? 'सावधानी क्षेत्र' : 'Danger Zone'} theme={theme} />
       <Card padded={false} contentStyle={styles.listCard}>
-        <ActionRow icon="trash" title="Delete Account" sub="Permanently remove your account & data" onPress={deleteAccount} theme={theme} destructive last />
+        <ActionRow icon="trash" title={hi ? 'खाता हटाएँ' : 'Delete Account'} sub={hi ? 'अपना खाता व डेटा स्थायी रूप से हटाएँ' : 'Permanently remove your account & data'} onPress={deleteAccount} theme={theme} destructive last />
       </Card>
 
-      <Text style={[styles.foot, { color: theme.textMuted }]}>🔒 Your readings & birth data are encrypted on our servers.</Text>
+      <Text style={[styles.foot, { color: theme.textMuted }]}>{hi ? '🔒 आपकी रीडिंग व जन्म-डेटा हमारे सर्वर पर एन्क्रिप्टेड हैं।' : '🔒 Your readings & birth data are encrypted on our servers.'}</Text>
     </Page>
   );
 }

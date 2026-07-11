@@ -61,7 +61,7 @@ export function SetPasswordScreen({ navigation }: any) {
   };
 
   return (
-    <Page title={hasPassword ? 'Change Password' : 'Add Email Login'} onBack={() => navigation.goBack()}>
+    <Page title={hasPassword ? (lang === 'hi' ? 'पासवर्ड बदलें' : 'Change Password') : (lang === 'hi' ? 'ईमेल लॉगिन जोड़ें' : 'Add Email Login')} onBack={() => navigation.goBack()}>
       <KeyboardAwareScroll contentContainerStyle={{ paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
         <Card contentStyle={{ padding: 18 }}>
           <Text style={[styles.lead, { color: theme.textSoft }]}>

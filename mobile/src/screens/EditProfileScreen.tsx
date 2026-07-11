@@ -225,7 +225,7 @@ export function EditProfileScreen({ navigation }: any) {
   };
 
   return (
-    <Page title="Edit Profile" onBack={() => { hTap(); navigation.goBack(); }}>
+    <Page title={lang === 'hi' ? 'प्रोफ़ाइल संपादित करें' : 'Edit Profile'} onBack={() => { hTap(); navigation.goBack(); }}>
       <Card style={styles.avatarCardOuter} contentStyle={styles.avatarCardInner}>
         <View style={styles.avatarWrap}>
           {/* delicate outer hairline ring (with a gap) — premium medallion frame */}
