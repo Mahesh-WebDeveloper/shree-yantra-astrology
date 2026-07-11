@@ -915,12 +915,18 @@ async function getPanchang(input) {
   const nowParts = localNowParts(tzMin);
   const includeTransitions = input.includeTransitions !== false;
   const includeMoonTimes = input.includeMoonTimes !== false;
+  let regionText = place || '';
   if ((lat == null || lng == null) && place) {
     const geo = await geocode(place);
     lat = geo.lat;
     lng = geo.lng;
+    regionText = geo.name || place; // includes the state, e.g. "Jodhpur, Rajasthan, India"
   }
   if (lat == null || lng == null) throw Object.assign(new Error('lat/lng ya place chahiye'), { status: 400 });
+
+  // Month-naming convention by region: Amanta (South/West states) vs Purnimanta (rest, default).
+  const AMANTA_RE = /gujarat|maharashtra|goa|karnataka|kerala|tamil ?nadu|andhra|telangana|गुजरात|महाराष्ट्र|गोवा|कर्नाटक|केरल|तमिल|आंध्र|तेलंगा/i;
+  const monthSystem = AMANTA_RE.test(regionText) ? 'amanta' : 'purnimanta';
 
   const ayan = env.vedastro.ayanamsa;
   const location = { Name: place || 'Place', Latitude: Number(lat), Longitude: Number(lng) };
@@ -1019,6 +1025,7 @@ async function getPanchang(input) {
   const masa = sIdx == null ? null : {
     amanta: MASA[sIdx],
     purnimanta: MASA[(sIdx + (isKrishna ? 1 : 0)) % 12],
+    system: monthSystem, // 'amanta' | 'purnimanta' — which one to show for this region
   };
   const sunriseMasa = sunriseSIdx == null ? masa : {
     amanta: MASA[sunriseSIdx],

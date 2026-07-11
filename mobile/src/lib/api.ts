@@ -432,7 +432,7 @@ export interface PanchangResponse {
   sunriseNakshatra?: { num: number; name: string; hi?: string; pada: number; endsAt?: AngaEnd } | null;
   sunriseYoga?: { num: number; name: string; hi?: string; endsAt?: AngaEnd } | null;
   sunriseKarana?: { name: string; hi?: string; isBhadra?: boolean; endsAt?: AngaEnd } | null;
-  masa?: { amanta: { en: string; hi: string }; purnimanta: { en: string; hi: string } } | null;
+  masa?: { amanta: { en: string; hi: string }; purnimanta: { en: string; hi: string }; system?: 'amanta' | 'purnimanta' } | null;
   ritu?: { en: string; hi: string } | null;
   ayana?: { en: string; hi: string } | null;
   samvat?: { vikram: number; shaka: number } | null;

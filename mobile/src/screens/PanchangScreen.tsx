@@ -441,28 +441,20 @@ export function PanchangScreen({ navigation }: any) {
             {!!data.ayana && <>{'   ·   '}<Text style={{ color: theme.gold1 }}>{L(data.ayana)}</Text></>}
           </Text>
 
-          {/* Hindu month — BOTH Amanta (South/West) & Purnimanta (North), like Drik Panchang */}
+          {/* Hindu month — location-based: Amanta (South/West states) vs Purnimanta (North; default) */}
           {!!data.masa && (() => {
-            const amanta = L(data.masa.amanta); const purnimanta = L(data.masa.purnimanta);
-            const same = amanta === purnimanta;
+            const sys = data.masa.system === 'amanta' ? 'amanta' : 'purnimanta';
+            const chosen = L(sys === 'amanta' ? data.masa.amanta : data.masa.purnimanta);
+            const other = L(sys === 'amanta' ? data.masa.purnimanta : data.masa.amanta);
+            const sysName = lang === 'hi' ? (sys === 'amanta' ? 'अमांत' : 'पूर्णिमांत') : (sys === 'amanta' ? 'Amanta' : 'Purnimanta');
+            const otherName = lang === 'hi' ? (sys === 'amanta' ? 'पूर्णिमांत' : 'अमांत') : (sys === 'amanta' ? 'Purnimanta' : 'Amanta');
+            const emoji = sys === 'amanta' ? '🌙' : '🌕';
             return (
               <View style={[styles.masaCard, { borderColor: theme.gold2 + '55', backgroundColor: theme.isDark ? 'rgba(214,160,59,0.08)' : 'rgba(214,160,59,0.10)' }]}>
                 <Text style={[styles.masaHead, { color: theme.gold2 }]}>{lang === 'hi' ? 'हिन्दू मास' : 'Hindu Month'}</Text>
-                {same ? (
-                  <Text style={[styles.masaOne, { color: theme.text }]}>{amanta}</Text>
-                ) : (
-                  <View style={styles.masaRow}>
-                    <View style={styles.masaCol}>
-                      <Text style={[styles.masaLabel, { color: theme.textMuted }]}>🌙 {lang === 'hi' ? 'अमांत' : 'Amanta'}</Text>
-                      <Text style={[styles.masaVal, { color: theme.text }]}>{amanta}</Text>
-                    </View>
-                    <View style={[styles.masaDiv, { backgroundColor: theme.cardBorder }]} />
-                    <View style={styles.masaCol}>
-                      <Text style={[styles.masaLabel, { color: theme.textMuted }]}>🌕 {lang === 'hi' ? 'पूर्णिमांत' : 'Purnimanta'}</Text>
-                      <Text style={[styles.masaVal, { color: theme.text }]}>{purnimanta}</Text>
-                    </View>
-                  </View>
-                )}
+                <Text style={[styles.masaOne, { color: theme.text }]}>{emoji} {chosen}</Text>
+                <Text style={[styles.masaSys, { color: theme.gold2 }]}>{sysName} {lang === 'hi' ? 'पद्धति' : 'system'}</Text>
+                {chosen !== other && <Text style={[styles.masaOther, { color: theme.textMuted }]}>{otherName}: {other}</Text>}
               </View>
             );
           })()}
@@ -663,7 +655,9 @@ const styles = StyleSheet.create({
   ribbonLine: { fontFamily: fonts.inter, fontSize: 12.5, textAlign: 'center', letterSpacing: 0.2 },
   masaCard: { borderWidth: 1, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12, alignItems: 'center' },
   masaHead: { fontFamily: fonts.cinzelSemi, fontSize: 10.5, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 7 },
-  masaOne: { fontFamily: fonts.cinzelSemi, fontSize: 16 },
+  masaOne: { fontFamily: fonts.cinzelSemi, fontSize: 18 },
+  masaSys: { fontFamily: fonts.interSemi, fontSize: 10.5, marginTop: 4, letterSpacing: 0.3 },
+  masaOther: { fontFamily: fonts.inter, fontSize: 10.5, marginTop: 3 },
   masaRow: { flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', justifyContent: 'center' },
   masaCol: { flex: 1, alignItems: 'center' },
   masaDiv: { width: 1, height: 30, marginHorizontal: 8 },
