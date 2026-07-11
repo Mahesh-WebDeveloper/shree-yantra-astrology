@@ -40,7 +40,7 @@ export function StotraSangrahScreen({ navigation }: any) {
       <LinearGradient colors={theme.isDark ? ['rgba(233,184,80,0.16)', 'rgba(233,184,80,0.03)'] : ['rgba(255,247,224,0.95)', 'rgba(255,253,247,0.9)']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={[styles.hero, { borderColor: theme.gold3 }]}>
         <LinearGradient colors={theme.buttonGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.crest}><Text style={{ fontSize: 30 }}>📜</Text></LinearGradient>
         <Text style={[styles.heroDeva, { color: theme.text }]}>स्तोत्र संग्रह</Text>
-        <GradientText style={styles.heroTitle}>STOTRA SANGRAH</GradientText>
+        <GradientText style={styles.heroTitle}>{hi ? 'स्तोत्र संग्रह' : 'STOTRA SANGRAH'}</GradientText>
         <Text style={[styles.heroSub, { color: theme.gold2 }]}>{hi ? 'प्रामाणिक संस्कृत स्तोत्र' : 'Authentic Sanskrit stotras'}</Text>
       </LinearGradient>
 

@@ -117,8 +117,8 @@ export function LanguageSelectScreen({ navigation, route }: any) {
       <Animated.View style={[styles.content, { opacity: fade, paddingTop: insets.top + 28, paddingBottom: insets.bottom + 22 }]}>
         <View style={styles.header}>
           <ShreeYantraLogo size={64} dark={theme.isDark} />
-          <GradientText style={styles.h1}>Choose Your Language</GradientText>
-          <Text style={[styles.h1Hi, { color: theme.gold2 }]}>अपनी भाषा चुनें</Text>
+          <GradientText style={styles.h1}>{choice === 'hi' ? 'अपनी भाषा चुनें' : 'Choose Your Language'}</GradientText>
+          <Text style={[styles.h1Hi, { color: theme.gold2 }]}>{choice === 'hi' ? 'Choose Your Language' : 'अपनी भाषा चुनें'}</Text>
           <Text style={[styles.sub, { color: theme.textMuted }]}>
             You can change this anytime in Settings · इसे आप कभी भी सेटिंग्स में बदल सकते हैं
           </Text>

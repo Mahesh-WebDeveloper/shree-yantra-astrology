@@ -58,7 +58,7 @@ export function HanumanChalisaScreen({ navigation }: any) {
           <Text style={styles.crestGlyph}>🚩</Text>
         </LinearGradient>
         <Text style={[styles.heroDeva, { color: theme.text }]}>श्री हनुमान चालीसा</Text>
-        <GradientText style={styles.heroTitle}>SHRI HANUMAN CHALISA</GradientText>
+        <GradientText style={styles.heroTitle}>{hi ? 'श्री हनुमान चालीसा' : 'SHRI HANUMAN CHALISA'}</GradientText>
         <Text style={[styles.heroAuthor, { color: theme.gold2 }]}>{hi ? 'रचयिता — गोस्वामी तुलसीदास' : 'by Goswami Tulsidas'}</Text>
         <View style={styles.heroTags}>
           {[hi ? '43 पद' : '43 verses', hi ? 'हिंदी + English' : 'Hindi + English', hi ? 'AI अर्थ' : 'AI meaning'].map((tag) => (

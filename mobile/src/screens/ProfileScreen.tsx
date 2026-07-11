@@ -237,7 +237,7 @@ export function ProfileScreen({ navigation }: any) {
         {isPremium ? (
           <LinearGradient colors={theme.buttonGradient} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.premium}>
             <CrownIcon color={theme.buttonInk} size={13} />
-            <Text style={[styles.premiumText, { color: theme.buttonInk }]}>{pscr.t('premiumBadge', 'PREMIUM MEMBER')}</Text>
+            <Text style={[styles.premiumText, { color: theme.buttonInk }]}>{pscr.t('premiumBadge', hi ? 'प्रीमियम सदस्य' : 'PREMIUM MEMBER')}</Text>
           </LinearGradient>
         ) : (
           <Pressable onPress={() => { hTap(); navigation.navigate('Subscribe'); }} style={({ pressed }) => [styles.premium, { backgroundColor: 'transparent', borderWidth: 1, borderColor: theme.gold1, opacity: pressed ? 0.9 : 1 }]}>

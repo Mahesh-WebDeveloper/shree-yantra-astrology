@@ -52,7 +52,7 @@ export function AartiSangrahScreen({ navigation }: any) {
       <LinearGradient colors={theme.isDark ? ['rgba(233,184,80,0.16)', 'rgba(233,184,80,0.03)'] : ['rgba(255,247,224,0.95)', 'rgba(255,253,247,0.9)']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={[styles.hero, { borderColor: theme.gold3 }]}>
         <LinearGradient colors={theme.buttonGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.crest}><Text style={{ fontSize: 30 }}>🪔</Text></LinearGradient>
         <Text style={[styles.heroDeva, { color: theme.text }]}>आरती संग्रह</Text>
-        <GradientText style={styles.heroTitle}>AARTI SANGRAH</GradientText>
+        <GradientText style={styles.heroTitle}>{hi ? 'आरती संग्रह' : 'AARTI SANGRAH'}</GradientText>
         <Text style={[styles.heroSub, { color: theme.gold2 }]}>{hi ? `${AARTI_LIST.length} सम्पूर्ण आरतियाँ · सभी देवी-देवता` : `${AARTI_LIST.length} complete aartis · all deities`}</Text>
       </LinearGradient>
 

@@ -655,7 +655,7 @@ export function BrihatKundliScreen({ navigation }: any) {
           <BookIcon color={theme.gold1} size={30} />
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
-          <GradientText style={styles.heroTitle}>BRIHAT KUNDLI</GradientText>
+          <GradientText style={styles.heroTitle}>{lang === 'hi' ? 'बृहत कुंडली' : 'BRIHAT KUNDLI'}</GradientText>
           <Text style={[styles.heroText, { color: theme.textSoft }]}>
             {lang === 'hi'
               ? 'चार्ट, वर्ग, दशा, दोष, गोचर, उपाय और क्षेत्र-वार विश्लेषण के साथ विस्तृत रिपोर्ट।'

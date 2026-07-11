@@ -174,8 +174,8 @@ export function SubscribeNowScreen({ navigation, route }: any) {
           <CornerBrackets />
           <View style={styles.panelInner} pointerEvents="none" />
           <View style={styles.form}>
-            <Text style={styles.trialHead}>{sub.t('trialHead', 'Start your free trial at just ₹1')}</Text>
-            <Text style={styles.trialTiny}>{sub.t('trialTiny', 'for 7 days')}</Text>
+            <Text style={styles.trialHead}>{sub.t('trialHead', hi ? 'सिर्फ ₹1 में अपना नि:शुल्क ट्रायल शुरू करें' : 'Start your free trial at just ₹1')}</Text>
+            <Text style={styles.trialTiny}>{sub.t('trialTiny', hi ? '7 दिनों के लिए' : 'for 7 days')}</Text>
 
             <Pressable onPress={submit} style={({ pressed }) => [styles.ctaWrap, pressed && { transform: [{ scale: 0.985 }], opacity: 0.97 }]}>
               <LinearGradient colors={['#fff1ad', '#f4c34a', '#b67a16']} locations={[0, 0.45, 1]} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.cta}>
@@ -187,7 +187,7 @@ export function SubscribeNowScreen({ navigation, route }: any) {
 
             <View style={styles.note}>
               <Sparkle />
-              <Text style={styles.noteText}>{sub.t('subtitle', 'Unlock Premium Predictions & Remedies')}</Text>
+              <Text style={styles.noteText}>{sub.t('subtitle', hi ? 'प्रीमियम भविष्यवाणियाँ व उपाय अनलॉक करें' : 'Unlock Premium Predictions & Remedies')}</Text>
               <Sparkle />
             </View>
           </View>

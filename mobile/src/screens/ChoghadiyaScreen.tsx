@@ -516,11 +516,11 @@ export function ChoghadiyaScreen({ navigation }: any) {
         <View style={styles.cgTitle}>
           <TitleOrnament color={theme.gold2} />
           <Sparkle color={theme.goldText} size={13} />
-          <GradientText style={styles.cgTitleText}>CHOGHADIYA</GradientText>
+          <GradientText style={styles.cgTitleText}>{lang === 'hi' ? 'चौघड़िया' : 'CHOGHADIYA'}</GradientText>
           <Sparkle color={theme.goldText} size={13} />
           <TitleOrnament color={theme.gold2} flip />
         </View>
-        <Text style={[styles.subtitle, { color: theme.isDark ? '#aaaaaa' : theme.textMuted }]}>{cg.t('subtitle', "Know Today's Auspicious & Inauspicious Timings")}</Text>
+        <Text style={[styles.subtitle, { color: theme.isDark ? '#aaaaaa' : theme.textMuted }]}>{cg.t('subtitle', lang === 'hi' ? 'आज के शुभ व अशुभ समय जानें' : "Know Today's Auspicious & Inauspicious Timings")}</Text>
 
         <Pressable
           onPress={() => { hTap(); setCalOpen(true); }}

@@ -362,10 +362,10 @@ export function LibraryScreen({ navigation }: any) {
         <View style={styles.bookWrap}><BookMark /></View>
         <View style={styles.titleRow}>
           <Sparkle color={dim} size={16} />
-          <GradientText style={styles.heroTitle}>{lib.t('heading', 'DIVINE LIBRARY')}</GradientText>
+          <GradientText style={styles.heroTitle}>{lib.t('heading', hi ? 'दिव्य पुस्तकालय' : 'DIVINE LIBRARY')}</GradientText>
           <Sparkle color={dim} size={16} />
         </View>
-        <Text style={[styles.heroSub, { color: theme.isDark ? '#d9d9d9' : theme.text }]}>{lib.t('subtitle', 'Mantras, Scriptures & Vedic Wisdom')}</Text>
+        <Text style={[styles.heroSub, { color: theme.isDark ? '#d9d9d9' : theme.text }]}>{lib.t('subtitle', hi ? 'मंत्र, शास्त्र व वैदिक ज्ञान' : 'Mantras, Scriptures & Vedic Wisdom')}</Text>
         <View style={styles.dotsRow}>
           {['Listen', 'Read', 'Learn', 'Grow'].map((w, i) => (
             <React.Fragment key={w}>

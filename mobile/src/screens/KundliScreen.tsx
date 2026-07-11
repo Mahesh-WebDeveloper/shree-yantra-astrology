@@ -199,11 +199,12 @@ function CrownIcon({ color }: { color: string }) {
 function PageHero() {
   const { theme } = useTheme();
   const k = useScreen('kundli');
+  const hi = useLang().lang === 'hi';
   return (
     <View style={styles.pageHero}>
       <TitleOrnament color={theme.gold2} />
       <PageSparkle color={theme.goldText} />
-      <GradientText style={styles.pageHeroTitle}>{k.t('pageTitle', 'KUNDLI')}</GradientText>
+      <GradientText style={styles.pageHeroTitle}>{k.t('pageTitle', hi ? 'कुंडली' : 'KUNDLI')}</GradientText>
       <PageSparkle color={theme.goldText} />
       <TitleOrnament color={theme.gold2} flip />
     </View>

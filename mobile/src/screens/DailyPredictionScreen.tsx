@@ -532,7 +532,7 @@ export function DailyPredictionScreen({ navigation }: any) {
         </View>
         <Text style={[styles.noteText, { color: theme.textSoft }]}>
           <Text style={{ color: theme.goldText, fontFamily: fonts.interBold }}>{aAstroText(t('dp.source', 'Source | '), lang)}</Text>
-          {aAstroText(pred?.sourceNote || dp.t('noteText', 'Predictions are based on your precise chart and Panchang data.'), lang)}
+          {aAstroText(pred?.sourceNote || dp.t('noteText', lang === 'hi' ? 'भविष्यवाणियाँ आपकी सटीक कुंडली व पंचांग डेटा पर आधारित हैं।' : 'Predictions are based on your precise chart and Panchang data.'), lang)}
         </Text>
       </LinearGradient>
 
