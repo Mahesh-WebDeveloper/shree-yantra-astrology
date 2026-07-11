@@ -1,0 +1,2273 @@
+[
+ {
+  "id": "puran-brahma",
+  "title": "Brahma Purana",
+  "hindi": "ब्रह्म पुराण",
+  "subtitle": "महापुराण · Brahma · ~10,000 श्लोक",
+  "intro": "Traditionally counted first among the eighteen Mahapuranas — hence its title Adi Purana (the First Purana). Classed as a rajasic Purana associated with Brahma, it holds about 10,000 verses across a Purvabhaga (former part) and Uttarabhaga (latter part), narrated by the Suta Lomaharshana to the sages at Naimisharanya. It is famous as a pilgrim's guide to the sacred sites of the Godavari region and Odisha — including the Konark Sun Temple and the Jagannath shrine of Purushottama Kshetra (Puri).",
+  "sections": [
+   {
+    "veda": "puran-brahma",
+    "book": 1,
+    "bookName": "मंगलाचरण · Invocation",
+    "section": 1,
+    "sectionName": "मंगलाचरण · Invocation",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "नारायणं नमस्कृत्य नरं चैव नरोत्तमम् ।\nदेवीं सरस्वतीं व्यासं ततो जयमुदीरयेत् ॥",
+      "transliteration": "Mangalacharana",
+      "english": "Having bowed to Narayana, to Nara the most exalted of men, to the goddess Sarasvati and to Vyasa — then let one proclaim the sacred narration. This is the benedictory opening with which the First Purana begins at Naimisha forest.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-brahma",
+    "book": 2,
+    "bookName": "पूर्वभाग · Srishti (Creation)",
+    "section": 1,
+    "sectionName": "पूर्वभाग · Srishti (Creation)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "ब्रह्मणः सृष्टिवर्णनम्",
+      "transliteration": "Purvabhaga · Creation",
+      "english": "The sages of Naimisha question the Suta Lomaharshana, who recounts the origin of the cosmos from Brahma — the manvantaras, the lineages of gods and sages, and the ordering of the worlds. This opens the former part of the Purana.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-brahma",
+    "book": 3,
+    "bookName": "सूर्य-माहात्म्य · Surya & Konark",
+    "section": 1,
+    "sectionName": "सूर्य-माहात्म्य · Surya & Konark",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "सूर्योपासना · कोणार्क-क्षेत्रम्",
+      "transliteration": "Sun worship · Konark",
+      "english": "A celebrated section on the worship of Surya, the Sun, describing the greatness of the solar deity and the sacred region of Konark in Odisha with its famed Sun temple — a hallmark of this non-sectarian Purana.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-brahma",
+    "book": 4,
+    "bookName": "पुरुषोत्तम-क्षेत्र · Jagannath Puri",
+    "section": 1,
+    "sectionName": "पुरुषोत्तम-क्षेत्र · Jagannath Puri",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "पुरुषोत्तम-क्षेत्र-माहात्म्यम्",
+      "transliteration": "Purushottama Kshetra",
+      "english": "The glory of Purushottama Kshetra (Puri) and the worship of Lord Jagannath (Krishna) — one of the most extensively described pilgrimage sites in the Purana, reflecting its Vaishnava devotional heart.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-brahma",
+    "book": 5,
+    "bookName": "गौतमी-माहात्म्य · The Godavari",
+    "section": 1,
+    "sectionName": "गौतमी-माहात्म्य · The Godavari",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "गौतमी-माहात्म्यम् (गोदावरी-तीर्थानि)",
+      "transliteration": "Gautami / Godavari Mahatmya",
+      "english": "The extensive Gautami-Mahatmya — a travel guide to the holy tirthas along the Godavari (Gautami) river, its bathing places, temples and legends. It circulated separately and forms a major portion of the text.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-brahma",
+    "book": 6,
+    "bookName": "उत्तरभाग · Dharma & Moksha",
+    "section": 1,
+    "sectionName": "उत्तरभाग · Dharma & Moksha",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "धर्म · योग · मोक्ष",
+      "transliteration": "Uttarabhaga · Liberation",
+      "english": "The latter part turns to dharma, right conduct for the four varnas and ashramas, ancestral rites, yoga and the paths to liberation — closing the Purana with its teaching on release from rebirth.",
+      "hindi": ""
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "puran-padma",
+  "title": "Padma Purana",
+  "hindi": "पद्म पुराण",
+  "subtitle": "महापुराण · Vaishnava · ~55,000 श्लोक",
+  "intro": "A sattvic Vaishnava Mahapurana and, at roughly 55,000 verses, the second largest of the eighteen. It is named after the padma — the cosmic lotus that rises from the navel of Vishnu, upon which Brahma is seated to begin creation. Arranged in five khandas (Srishti, Bhumi, Svarga, Patala/Brahma and Uttara), it is renowned for the Bhagavad Gita Mahatmya, the Bhagavata Mahatmya, glorification of Rama and the holy Tulasi.",
+  "sections": [
+   {
+    "veda": "puran-padma",
+    "book": 1,
+    "bookName": "मंगलाचरण · Invocation",
+    "section": 1,
+    "sectionName": "मंगलाचरण · Invocation",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "मङ्गलं भगवान् विष्णुर्मङ्गलं गरुडध्वजः ।\nमङ्गलं पुण्डरीकाक्षो मङ्गलायतनो हरिः ॥",
+      "transliteration": "Mangalacharana",
+      "english": "Auspicious is the Lord Vishnu, auspicious is He whose banner bears Garuda; auspicious is the lotus-eyed one, and Hari, the very abode of all auspiciousness. A Vaishnava invocation opening this Purana of Goodness (sattva).",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-padma",
+    "book": 2,
+    "bookName": "सृष्टि-खण्ड · Creation",
+    "section": 1,
+    "sectionName": "सृष्टि-खण्ड · Creation",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "सृष्टि-खण्ड · पद्म-सम्भवः",
+      "transliteration": "Srishti Khanda",
+      "english": "The Book of Creation — cosmology, genealogy, geography, rivers and seasons, framed by the image of Brahma born on the lotus that springs from Vishnu's navel, from which the Purana takes its name.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-padma",
+    "book": 3,
+    "bookName": "भूमि-खण्ड · Earth",
+    "section": 1,
+    "sectionName": "भूमि-खण्ड · Earth",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "भूमि-खण्ड · तीर्थ-कथाः",
+      "transliteration": "Bhumi Khanda",
+      "english": "The Book of the Earth — a pilgrimage guide interwoven with legends and moral tales, describing the sacred places of the land and the merit of visiting them.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-padma",
+    "book": 4,
+    "bookName": "स्वर्ग-खण्ड · Heaven",
+    "section": 1,
+    "sectionName": "स्वर्ग-खण्ड · Heaven",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "स्वर्ग-खण्ड · लोक-वर्णनम्",
+      "transliteration": "Svarga Khanda",
+      "english": "The Book of Heaven — the cosmology and sacred geography of the worlds and of Bharatavarsha, its holy regions, mountains and the ordering of the heavens.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-padma",
+    "book": 5,
+    "bookName": "पाताल / ब्रह्म-खण्ड · Rama & Tulasi",
+    "section": 1,
+    "sectionName": "पाताल / ब्रह्म-खण्ड · Rama & Tulasi",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "पाताल-खण्ड · राम-कथा · तुलसी",
+      "transliteration": "Patala / Brahma Khanda",
+      "english": "This khanda glorifies Vishnu — recounting an alternative telling of the story of Rama and Sita, the festivals and rites of devotion, and the sanctity of the Tulasi plant beloved of the Lord.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-padma",
+    "book": 6,
+    "bookName": "उत्तर-खण्ड · Gita & Bhagavata Mahatmya",
+    "section": 1,
+    "sectionName": "उत्तर-खण्ड · Gita & Bhagavata Mahatmya",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "उत्तर-खण्ड · गीता-माहात्म्य · भागवत-माहात्म्य",
+      "transliteration": "Uttara Khanda",
+      "english": "The final and largest book — famed for the Bhagavad Gita Mahatmya (praising each of the Gita's chapters), the Bhagavata Mahatmya, and discourses on festivals, bhakti, yoga and Vedanta.",
+      "hindi": ""
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "puran-vishnu",
+  "title": "Vishnu Purana",
+  "hindi": "विष्णु पुराण",
+  "subtitle": "महापुराण · Vaishnava · ~23,000 श्लोक",
+  "intro": "A sattvic Vaishnava Mahapurana revered as the Purana-ratna, the very gem of the Puranas, for its clear and concentrated doctrine. Traditionally of about 23,000 verses, it is arranged in six amshas (parts) and unfolds as a dialogue in which the sage Parashara answers his disciple Maitreya on the nature of the universe. It centres wholly on Vishnu — from whom all arises, in whom all abides, and into whom all returns — and includes the beloved tales of Dhruva, Prahlada and the life of Krishna.",
+  "sections": [
+   {
+    "veda": "puran-vishnu",
+    "book": 1,
+    "bookName": "मंगलाचरण · Invocation",
+    "section": 1,
+    "sectionName": "मंगलाचरण · Invocation",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "जितं ते पुण्डरीकाक्ष नमस्ते विश्वभावन ।\nनमस्तेऽस्तु हृषीकेश महापुरुष पूर्वज ॥",
+      "transliteration": "Vishnu Purana 1.1",
+      "english": "Victory is Thine, O lotus-eyed one; salutation to Thee, source of the universe. Salutation to Thee, O Hrishikesha, master of the senses, the Great Being (Mahapurusha), first-born before all. With this salutation to Vishnu the Purana opens.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-vishnu",
+    "book": 2,
+    "bookName": "प्रथम अंश · Creation",
+    "section": 1,
+    "sectionName": "प्रथम अंश · Creation",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "विष्णोः सकाशादुद्भूतं जगत्तत्रैव च स्थितम् ।",
+      "transliteration": "Amsha 1 · Srishti",
+      "english": "From Vishnu the world arises, in Vishnu it abides, and into Vishnu it dissolves. The first part sets out creation, the manvantaras, and the loved stories of Dhruva's steadfast devotion and of Prahlada saved by Narasimha.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-vishnu",
+    "book": 3,
+    "bookName": "द्वितीय अंश · The Earth",
+    "section": 1,
+    "sectionName": "द्वितीय अंश · The Earth",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "द्वितीयांश · भूगोल · भरत-चरितम्",
+      "transliteration": "Amsha 2 · Bhugola",
+      "english": "A cosmography of the seven continents and oceans, Mount Meru, the motions of Sun and planets, and the geography of Bharatavarsha — including the story of King Bharata and his rebirth as a deer.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-vishnu",
+    "book": 4,
+    "bookName": "तृतीय अंश · Time & Duty",
+    "section": 1,
+    "sectionName": "तृतीय अंश · Time & Duty",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "तृतीयांश · मन्वन्तर · वर्णाश्रम-धर्म",
+      "transliteration": "Amsha 3 · Kala",
+      "english": "The measures of time and the manvantaras, the arrangement of the Vedas by Vyasa, and the duties (dharma) of the four varnas and four ashramas, together with the rites owed to the ancestors.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-vishnu",
+    "book": 5,
+    "bookName": "चतुर्थ अंश · The Dynasties",
+    "section": 1,
+    "sectionName": "चतुर्थ अंश · The Dynasties",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "चतुर्थांश · सूर्य-वंश · चन्द्र-वंश",
+      "transliteration": "Amsha 4 · Vamsha",
+      "english": "The royal genealogies — the Solar and Lunar dynasties and the lines of kings across the ages, tracing the descent that leads toward Krishna.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-vishnu",
+    "book": 6,
+    "bookName": "पञ्चम अंश · Krishna",
+    "section": 1,
+    "sectionName": "पञ्चम अंश · Krishna",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "पञ्चमांश · कृष्ण-जन्म · वृन्दावन-लीला",
+      "transliteration": "Amsha 5 · Krishna-charita",
+      "english": "The longest part — the birth of Krishna, his childhood in Gokula and Vrindavan, the lifting of Govardhana, the slaying of Kamsa, and his deeds as the incarnation of Vishnu.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-vishnu",
+    "book": 7,
+    "bookName": "षष्ठ अंश · Liberation",
+    "section": 1,
+    "sectionName": "षष्ठ अंश · Liberation",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "षष्ठांश · कलि-युग · प्रलय · मोक्ष",
+      "transliteration": "Amsha 6 · Moksha",
+      "english": "The concluding part — the evils of the Kali age, the dissolution of the worlds, and the yoga of meditation on Vishnu by which the soul attains union with Brahman and final release.",
+      "hindi": ""
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "puran-bhagavata",
+  "title": "Shrimad Bhagavatam",
+  "hindi": "श्रीमद् भागवत",
+  "subtitle": "महापुराण · Vaishnava · ~18,000 श्लोक",
+  "intro": "The Bhagavata Purana — the crown jewel of the sattvic Vaishnava Puranas and the most beloved scripture of bhakti. In some 18,000 verses across twelve skandhas (books), it is narrated by Shuka to King Parikshit in his last seven days of life. It moves from creation to liberation and reaches its heart in the tenth Skandha, the full life-story (lila) of Krishna — including such treasured episodes as the deliverance of Gajendra the elephant-king.",
+  "sections": [
+   {
+    "veda": "puran-bhagavata",
+    "book": 1,
+    "bookName": "मंगलाचरण · Invocation (1.1.1)",
+    "section": 1,
+    "sectionName": "मंगलाचरण · Invocation (1.1.1)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "जन्माद्यस्य यतोऽन्वयादितरतश्चार्थेष्वभिज्ञः स्वराट्\nतेने ब्रह्म हृदा य आदिकवये मुह्यन्ति यत्सूरयः ।\nतेजोवारिमृदां यथा विनिमयो यत्र त्रिसर्गोऽमृषा\nधाम्ना स्वेन सदा निरस्तकुहकं सत्यं परं धीमहि ॥",
+      "transliteration": "1.1.1",
+      "english": "I meditate upon the Supreme Truth, from whom the creation, sustenance and dissolution of this universe proceed; who is conscious of all, self-luminous; who revealed the Veda in the heart of the first sage Brahma; about whom even the gods are bewildered; in whom the threefold creation appears real as a mirage of fire, water and earth; who by His own splendour is ever free of illusion. The famed opening verse of the Bhagavatam.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-bhagavata",
+    "book": 2,
+    "bookName": "स्कन्ध 1–2 · The Question",
+    "section": 1,
+    "sectionName": "स्कन्ध 1–2 · The Question",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "प्रथम-द्वितीय स्कन्ध · परीक्षित-प्रश्नः",
+      "transliteration": "Skandha 1–2 · Prashna",
+      "english": "King Parikshit, cursed to die in seven days, sits fasting on the Ganga's bank; the sage Shuka arrives and, asked what a dying man should do, begins the Bhagavatam. These skandhas set the frame and teach that hearing and remembering the Lord is the highest duty.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-bhagavata",
+    "book": 3,
+    "bookName": "स्कन्ध 3–4 · Cosmology",
+    "section": 1,
+    "sectionName": "स्कन्ध 3–4 · Cosmology",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "तृतीय-चतुर्थ स्कन्ध · कपिल-सांख्य · ध्रुव",
+      "transliteration": "Skandha 3–4 · Srishti",
+      "english": "Creation unfolds through the dialogue of Vidura and Maitreya; Kapila teaches the Sankhya of devotion to his mother Devahuti; and the boy Dhruva wins by penance an undying place among the stars.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-bhagavata",
+    "book": 4,
+    "bookName": "स्कन्ध 5–6 · Worlds & Ajamila",
+    "section": 1,
+    "sectionName": "स्कन्ध 5–6 · Worlds & Ajamila",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "पञ्चम-षष्ठ स्कन्ध · जम्बूद्वीप · अजामिल-मोक्ष",
+      "transliteration": "Skandha 5–6 · Loka",
+      "english": "The cosmography of the worlds — the continents, planetary systems, heavens and hells — and the redemption of the fallen Ajamila, saved at death merely by calling the name of Narayana, showing the power of the Holy Name.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-bhagavata",
+    "book": 5,
+    "bookName": "स्कन्ध 7–8 · Prahlada & Gajendra",
+    "section": 1,
+    "sectionName": "स्कन्ध 7–8 · Prahlada & Gajendra",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "सप्तम-अष्टम स्कन्ध · प्रह्लाद · गजेन्द्र-मोक्ष",
+      "transliteration": "Skandha 7–8 · Bhakti",
+      "english": "The child-devotee Prahlada is protected by Narasimha from his demon father; the ocean of milk is churned; Vamana reclaims the worlds; and Gajendra, the elephant-king seized by a crocodile, is delivered the instant he surrenders to the Lord — the celebrated Gajendra Moksha.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-bhagavata",
+    "book": 6,
+    "bookName": "स्कन्ध 9–10 · Krishna-lila",
+    "section": 1,
+    "sectionName": "स्कन्ध 9–10 · Krishna-lila",
+    "verseCount": 2,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "दशम स्कन्ध · कृष्ण-लीला",
+      "transliteration": "Skandha 10 · The Life of Krishna",
+      "english": "The heart of the Bhagavatam — the birth of Krishna in Mathura, his childhood in Vrindavan, the raslila with the gopis, the lifting of Govardhana, the slaying of Kamsa and his royal deeds. The ninth skandha traces the dynasties leading to him.",
+      "hindi": ""
+     },
+     {
+      "verse": 2,
+      "sanskrit": "एते चांशकलाः पुंसः कृष्णस्तु भगवान्स्वयम् ।\nइन्द्रारिव्याकुलं लोकं मृडयन्ति युगे युगे ॥",
+      "transliteration": "1.3.28",
+      "english": "All these are portions and parts of the Supreme Person, but Krishna is the Lord, Bhagavan, Himself; in every age they protect the world when it is troubled by the enemies of the gods. A famous verse declaring Krishna the source of all avataras.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-bhagavata",
+    "book": 7,
+    "bookName": "स्कन्ध 11–12 · Uddhava Gita & Kali",
+    "section": 1,
+    "sectionName": "स्कन्ध 11–12 · Uddhava Gita & Kali",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "एकादश-द्वादश स्कन्ध · उद्धव-गीता · कलि-युग",
+      "transliteration": "Skandha 11–12 · Nirvana",
+      "english": "Krishna gives his last teaching to Uddhava (the Uddhava Gita) and departs the world; the failings of the Kali age are foretold; and the Purana closes by extolling the chanting of the divine name (nama-sankirtana) as the one refuge of the age.",
+      "hindi": ""
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "puran-shiva",
+  "title": "Shiva Purana",
+  "hindi": "शिव पुराण",
+  "subtitle": "महापुराण · शैव · ~24,000 श्लोक",
+  "intro": "The great Shaiva Mahapurana, presided over by Lord Shiva and narrated by the sage Vyasa through Suta to the sages of Naimisharanya. It celebrates Shiva as the supreme reality worshipped through the Linga, the Panchakshara mantra \"Om Namah Shivaya\", and the twelve Jyotirlingas. The surviving text runs to about 24,000 verses arranged in seven Samhitas (books) — Vidyeshvara, Rudra, Shatarudra, Kotirudra, Uma, Kailasa and Vayaviya.",
+  "sections": [
+   {
+    "veda": "puran-shiva",
+    "book": 1,
+    "bookName": "विद्येश्वर संहिता · मंगलाचरण (Invocation)",
+    "section": 1,
+    "sectionName": "विद्येश्वर संहिता · मंगलाचरण (Invocation)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "ॐ त्र्यम्बकं यजामहे सुगन्धिं पुष्टिवर्धनम् ।\nउर्वारुकमिव बन्धनान्मृत्योर्मुक्षीय मामृतात् ॥",
+      "transliteration": "महामृत्युंजय मंत्र",
+      "english": "The Mahamrityunjaya Mantra (Rigveda 7.59.12), the great life-giving invocation to Shiva Tryambaka (the three-eyed one) that opens Shaiva worship: \"We worship the fragrant three-eyed Lord who nourishes all beings. As the ripe cucumber is freed from its stalk, may He free us from death — not from immortality.\"",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-shiva",
+    "book": 2,
+    "bookName": "विद्येश्वर संहिता (Vidyeshvara Samhita)",
+    "section": 1,
+    "sectionName": "विद्येश्वर संहिता (Vidyeshvara Samhita)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "ॐ नमः शिवाय",
+      "transliteration": "पञ्चाक्षर · Om Namah Shivaya",
+      "english": "The first book establishes the supremacy of Shiva and the worship of the Linga. It expounds the Panchakshara (\"five-syllable\") mantra Om Namah Shivaya, the merit of Shiva devotion, and the framing dialogue in which Suta answers the sages' questions about the highest path.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-shiva",
+    "book": 3,
+    "bookName": "रुद्र संहिता (Rudra Samhita)",
+    "section": 1,
+    "sectionName": "रुद्र संहिता (Rudra Samhita)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "रुद्रसंहिता — शिवलीला",
+      "transliteration": "सृष्टि · सती · पार्वती · कुमार · युद्ध",
+      "english": "The largest and most beloved book, in five sections (Srishti, Sati, Parvati, Kumara, Yuddha). It narrates creation, the story of Sati and Daksha's sacrifice, Parvati's penance and marriage to Shiva, and the births of Ganesha and Kartikeya.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-shiva",
+    "book": 4,
+    "bookName": "शतरुद्र संहिता (Shatarudra Samhita)",
+    "section": 1,
+    "sectionName": "शतरुद्र संहिता (Shatarudra Samhita)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "शतरुद्रसंहिता — रुद्रावतार",
+      "transliteration": "शिव के अवतार",
+      "english": "Describes the many manifestations and incarnations of Shiva — including Nataraja, the Rudra-avataras, and the tradition that Hanuman is an avatar of Rudra — together with the glory of Shiva's sacred forms.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-shiva",
+    "book": 5,
+    "bookName": "कोटिरुद्र संहिता · द्वादश ज्योतिर्लिंग (Kotirudra Samhita)",
+    "section": 1,
+    "sectionName": "कोटिरुद्र संहिता · द्वादश ज्योतिर्लिंग (Kotirudra Samhita)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "सौराष्ट्रे सोमनाथं च श्रीशैले मल्लिकार्जुनम् ।\nउज्जयिन्यां महाकालमोङ्कारममलेश्वरम् ॥",
+      "transliteration": "द्वादश ज्योतिर्लिंग स्तोत्र",
+      "english": "This book recounts the origins and glories of the twelve Jyotirlingas — Somnath, Mallikarjuna, Mahakala, Omkareshwar and the rest — the twelve luminous self-manifest shrines of Shiva sung in the famous Dwadasha Jyotirlinga Stotra.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-shiva",
+    "book": 6,
+    "bookName": "उमा संहिता (Uma Samhita)",
+    "section": 1,
+    "sectionName": "उमा संहिता (Uma Samhita)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "उमासंहिता — शक्तितत्त्व",
+      "transliteration": "शक्ति · देवी महिमा",
+      "english": "Centred on the Goddess Uma (Parvati) as the Shakti of Shiva — her greatness, the nature of the divine feminine, and teachings on virtue, sin, and the fruits of action.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-shiva",
+    "book": 7,
+    "bookName": "कैलास संहिता (Kailasa Samhita)",
+    "section": 1,
+    "sectionName": "कैलास संहिता (Kailasa Samhita)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "ॐ",
+      "transliteration": "प्रणव · ॐकार उपासना",
+      "english": "The esoteric book of Mount Kailasa — the inner meaning of the Pranava (Om), Shaiva initiation, sannyasa and yoga, revealing the subtle philosophy behind Shiva worship.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-shiva",
+    "book": 8,
+    "bookName": "वायवीय संहिता (Vayaviya Samhita)",
+    "section": 1,
+    "sectionName": "वायवीय संहिता (Vayaviya Samhita)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "वायवीयसंहिता — शिवतत्त्व",
+      "transliteration": "सृष्टि · शैव दर्शन",
+      "english": "Narrated by Vayu, the wind-god — cosmology, the process of creation and dissolution, Shaiva philosophy, and the paths of devotion and knowledge that lead to Shiva.",
+      "hindi": ""
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "puran-skanda",
+  "title": "Skanda Purana",
+  "hindi": "स्कन्द पुराण",
+  "subtitle": "महापुराण · शैव · ~81,000 श्लोक",
+  "intro": "The largest of all eighteen Mahapuranas, presided over by Skanda (Kartikeya), the warrior son of Shiva and Parvati, who narrates it to the sages. With roughly 81,000 verses, it is above all a vast treasury of Mahatmyas (glories) of sacred places. The common recension is arranged in seven khandas — Maheshwara, Vaishnava, Brahma, Kashi, Avanti, Nagara and Prabhasa — famous for the Kashi Khanda (Varanasi), the Kedara and Kaumarika sections, and the Satyanarayana Vrata Katha.",
+  "sections": [
+   {
+    "veda": "puran-skanda",
+    "book": 1,
+    "bookName": "मंगलाचरण · गुरु वन्दना (Invocation)",
+    "section": 1,
+    "sectionName": "मंगलाचरण · गुरु वन्दना (Invocation)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "गुरुर्ब्रह्मा गुरुर्विष्णुर्गुरुर्देवो महेश्वरः ।\nगुरुः साक्षात् परं ब्रह्म तस्मै श्रीगुरवे नमः ॥",
+      "transliteration": "गुरु गीता (Skanda Purana)",
+      "english": "The celebrated Guru-vandana from the Guru Gita, which is preserved within the Skanda Purana: \"The Guru is Brahma, the Guru is Vishnu, the Guru is the Lord Maheshwara; the Guru is verily the Supreme Brahman — to that revered Guru I bow.\"",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-skanda",
+    "book": 2,
+    "bookName": "माहेश्वर खण्ड (Maheshwara Khanda)",
+    "section": 1,
+    "sectionName": "माहेश्वर खण्ड (Maheshwara Khanda)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "माहेश्वरखण्ड — तारकवध",
+      "transliteration": "केदार · कौमारिका · अरुणाचल",
+      "english": "Opens the Purana with the glory of Shiva: the Kedara section, the birth of Kartikeya and the slaying of the demon Taraka, and the Arunachala Mahatmya of the sacred hill of Tiruvannamalai.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-skanda",
+    "book": 3,
+    "bookName": "वैष्णव खण्ड (Vaishnava Khanda)",
+    "section": 1,
+    "sectionName": "वैष्णव खण्ड (Vaishnava Khanda)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "वैष्णवखण्ड — विष्णुक्षेत्र माहात्म्य",
+      "transliteration": "वेङ्कटाचल · पुरुषोत्तम · बदरी",
+      "english": "The glories of great Vishnu shrines — the Venkatachala Mahatmya (Tirupati), the Purushottama Kshetra (Jagannath, Puri), Badarikashrama, and the Margashirsha and Vaishakha vrata observances.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-skanda",
+    "book": 4,
+    "bookName": "ब्रह्म खण्ड (Brahma Khanda)",
+    "section": 1,
+    "sectionName": "ब्रह्म खण्ड (Brahma Khanda)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "ब्रह्मखण्ड — सेतु माहात्म्य",
+      "transliteration": "सेतु · धर्मारण्य · उत्तर",
+      "english": "Contains the Setu Mahatmya of Rameshwaram (the bridge to Lanka), the Dharmaranya section, and the Uttara portion which carries the Guru Gita — teachings on pilgrimage, dharma and devotion.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-skanda",
+    "book": 5,
+    "bookName": "काशी खण्ड (Kashi Khanda)",
+    "section": 1,
+    "sectionName": "काशी खण्ड (Kashi Khanda)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "काशीक्षेत्र — विश्वनाथ माहात्म्य",
+      "transliteration": "काशी · विश्वनाथ · मणिकर्णिका",
+      "english": "The renowned pilgrimage guide to Kashi (Varanasi) — the eternal city of Shiva. It extols Vishwanath, the Manikarnika ghat, the Ganga, and the belief that death in Kashi confers liberation (moksha).",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-skanda",
+    "book": 6,
+    "bookName": "अवन्ति खण्ड (Avanti Khanda)",
+    "section": 1,
+    "sectionName": "अवन्ति खण्ड (Avanti Khanda)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "अवन्तीखण्ड — महाकाल माहात्म्य",
+      "transliteration": "उज्जयिनी · महाकाल · क्षिप्रा",
+      "english": "The Mahatmya of Avanti (Ujjain) on the Kshipra river — the glory of the Mahakaleshwar Jyotirlinga and the sacred sites of one of the seven mokshadayaka cities.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-skanda",
+    "book": 7,
+    "bookName": "नागर खण्ड (Nagara Khanda)",
+    "section": 1,
+    "sectionName": "नागर खण्ड (Nagara Khanda)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "नागरखण्ड — हाटकेश्वर क्षेत्र",
+      "transliteration": "हाटकेश्वर · तीर्थ माहात्म्य",
+      "english": "Praises the Hatakeshwara Kshetra and the sacred tirthas of the Nagara region (Gujarat) — their origin legends and the merit of pilgrimage.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-skanda",
+    "book": 8,
+    "bookName": "प्रभास खण्ड (Prabhasa Khanda)",
+    "section": 1,
+    "sectionName": "प्रभास खण्ड (Prabhasa Khanda)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "प्रभासखण्ड — सोमनाथ माहात्म्य",
+      "transliteration": "सोमनाथ · प्रभास · द्वारका",
+      "english": "The glory of Prabhasa on the western sea — the Somnath Jyotirlinga, the Sarasvati's confluence, and Dwarka, the city of Krishna. It also transmits the popular Satyanarayana Vrata Katha.",
+      "hindi": ""
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "puran-linga",
+  "title": "Linga Purana",
+  "hindi": "लिङ्ग पुराण",
+  "subtitle": "महापुराण · शैव · ~11,000 श्लोक",
+  "intro": "A core Shaiva Mahapurana of about 11,000 verses, named for its central theme — the worship of Shiva in the aniconic form of the Linga. Narrated by Vyasa, it is arranged in two parts (Purva-bhaga and Uttara-bhaga) and famously tells of the Lingodbhava: the beginningless, endless pillar of light from which Shiva reveals himself as the ultimate reality beyond Brahma and Vishnu. It covers cosmology, the Yugas and Manvantaras, Shaiva yoga, ritual Linga-worship, tirthas and ethics.",
+  "sections": [
+   {
+    "veda": "puran-linga",
+    "book": 1,
+    "bookName": "मंगलाचरण (Invocation)",
+    "section": 1,
+    "sectionName": "मंगलाचरण (Invocation)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "ॐ नमः शिवाय",
+      "transliteration": "शिव वन्दना · पञ्चाक्षर",
+      "english": "The Purana opens with obeisance to the Supreme Soul — Shiva, who is Rudra, Vishnu and Brahma, lord of Pradhana and Purusha and cause of the creation, sustenance and dissolution of the universe — invoked through the eternal five-syllable mantra Om Namah Shivaya.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-linga",
+    "book": 2,
+    "bookName": "लिङ्गोद्भव (Lingodbhava)",
+    "section": 1,
+    "sectionName": "लिङ्गोद्भव (Lingodbhava)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "लिङ्गोद्भव — अग्निस्तम्भ",
+      "transliteration": "ज्योतिर्लिंग · अनादि अनन्त स्तम्भ",
+      "english": "The signature narrative: when Brahma and Vishnu disputed who was supreme, an infinite pillar of fire (the Linga) appeared. Brahma flew up and Vishnu dived down, yet neither could find its top or base — revealing Shiva as the limitless origin of all, and the reason he is worshipped as the Linga.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-linga",
+    "book": 3,
+    "bookName": "सृष्टि · कल्प · मन्वन्तर (Cosmology)",
+    "section": 1,
+    "sectionName": "सृष्टि · कल्प · मन्वन्तर (Cosmology)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "लिङ्गपुराण — सृष्टिवर्णन",
+      "transliteration": "सर्ग · प्रतिसर्ग",
+      "english": "Accounts of primary and secondary creation, the divisions of time — Yugas, Kalpas and Manvantaras — the movements of sun and planets, and the sacred geography of the cosmos, in the encyclopedic Puranic manner.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-linga",
+    "book": 4,
+    "bookName": "शिव के अवतार (The Yogeshwaras)",
+    "section": 1,
+    "sectionName": "शिव के अवतार (The Yogeshwaras)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "लिङ्गपुराण — शिवावतार",
+      "transliteration": "अष्टाविंशति योगेश्वर",
+      "english": "Describes the twenty-eight incarnations of Shiva as teachers of yoga (the Yogeshwaras) and their disciples, presenting the Shaiva path of meditation and inner discipline.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-linga",
+    "book": 5,
+    "bookName": "लिङ्ग पूजा विधि (Linga Worship)",
+    "section": 1,
+    "sectionName": "लिङ्ग पूजा विधि (Linga Worship)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "लिङ्गार्चन माहात्म्य",
+      "transliteration": "पूजा · अभिषेक · व्रत",
+      "english": "The rites of Linga worship — installation, abhisheka, offerings and vows — and their fruits: how devotion to the Linga washes away sin, grants prosperity, and leads the soul to liberation.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-linga",
+    "book": 6,
+    "bookName": "पञ्चब्रह्म · तीर्थ (Panchabrahma & Tirthas)",
+    "section": 1,
+    "sectionName": "पञ्चब्रह्म · तीर्थ (Panchabrahma & Tirthas)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "पञ्चब्रह्ममन्त्र",
+      "transliteration": "सद्योजात · वामदेव · अघोर · तत्पुरुष · ईशान",
+      "english": "Expounds the five faces of Shiva (Panchabrahma) — Sadyojata, Vamadeva, Aghora, Tatpurusha and Ishana — together with sacred pilgrimage places, vratas and observances dear to Shiva.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-linga",
+    "book": 7,
+    "bookName": "उत्तर भाग (Uttara-bhaga)",
+    "section": 1,
+    "sectionName": "उत्तर भाग (Uttara-bhaga)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "लिङ्गपुराण — उत्तरभाग",
+      "transliteration": "अम्बिका · विष्णु अवतार · उपसंहार",
+      "english": "The concluding part turns to the Goddess Ambika, the incarnations of Vishnu, further hymns and stotras to Shiva, and the merit of hearing and reciting the Purana.",
+      "hindi": ""
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "puran-markandeya",
+  "title": "Markandeya Purana",
+  "hindi": "मार्कण्डेय पुराण",
+  "subtitle": "महापुराण · देवी/शाक्त · ~9,000 श्लोक",
+  "intro": "One of the oldest Mahapuranas, of about 9,000 verses, framed as the wisdom of the immortal sage Markandeya. It opens with the sage Jaimini approaching four wise Dharmika birds who answer his questions from the Mahabharata. Above all it is treasured for the Devi Mahatmya (Durga Saptashati) — cantos 81 to 93 — the foundational Shakta scripture of 700 verses that hymns the Great Goddess as the supreme power, recited across every Navaratri.",
+  "sections": [
+   {
+    "veda": "puran-markandeya",
+    "book": 1,
+    "bookName": "मंगलाचरण · देवी वन्दना (Invocation)",
+    "section": 1,
+    "sectionName": "मंगलाचरण · देवी वन्दना (Invocation)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "सर्वमङ्गलमाङ्गल्ये शिवे सर्वार्थसाधिके ।\nशरण्ये त्र्यम्बके गौरि नारायणि नमोऽस्तु ते ॥",
+      "transliteration": "देवी माहात्म्य 11",
+      "english": "The most beloved invocation of the Goddess, from the Devi Mahatmya: \"O auspicious one among all that is auspicious, O gracious Shiva, accomplisher of every aim; O refuge, three-eyed Gauri, O Narayani — salutations unto You.\"",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-markandeya",
+    "book": 2,
+    "bookName": "जैमिनि प्रश्न · धर्मपक्षी (The Frame)",
+    "section": 1,
+    "sectionName": "जैमिनि प्रश्न · धर्मपक्षी (The Frame)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "मार्कण्डेयपुराण — जैमिनि-प्रश्न",
+      "transliteration": "चार धर्मात्मा पक्षी",
+      "english": "The narrative frame: unable to resolve four questions arising from the Mahabharata, Jaimini is sent by Markandeya to four wise birds — sons of the sage Mandapala — who, remembering their past births, expound dharma and the great tales that follow.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-markandeya",
+    "book": 3,
+    "bookName": "मदालसा उपाख्यान (Madalasa)",
+    "section": 1,
+    "sectionName": "मदालसा उपाख्यान (Madalasa)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "शुद्धोऽसि बुद्धोऽसि निरञ्जनोऽसि\nसंसारमाया परिवर्जितोऽसि ।",
+      "transliteration": "आत्मविद्या · मदालसा गीत",
+      "english": "The story of the enlightened queen Madalasa, who sings to her infant sons the highest Vedanta as a lullaby: \"You are pure, you are awakened, you are stainless — you are free from the illusion of the world\" — awakening them to the deathless Self.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-markandeya",
+    "book": 4,
+    "bookName": "दत्तात्रेय · अलर्क (Yoga & Wisdom)",
+    "section": 1,
+    "sectionName": "दत्तात्रेय · अलर्क (Yoga & Wisdom)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "मार्कण्डेयपुराण — दत्तात्रेयोपदेश",
+      "transliteration": "योग · राजनीति उपदेश",
+      "english": "Teachings given by the avadhuta sage Dattatreya to King Alarka — on yoga, detachment, and the conduct of a righteous life — among the philosophical dialogues of the Purana.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-markandeya",
+    "book": 5,
+    "bookName": "देवी माहात्म्य · दुर्गा सप्तशती (Devi Mahatmya)",
+    "section": 1,
+    "sectionName": "देवी माहात्म्य · दुर्गा सप्तशती (Devi Mahatmya)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "सावर्णिः सूर्यतनयो यो मनुः कथ्यतेऽष्टमः ।\nनिशामय तदुत्पत्तिं विस्तराद्गदतो मम ॥",
+      "transliteration": "देवी माहात्म्य · आरम्भ",
+      "english": "The crown of the Purana begins here (canto 81): the sage tells King Suratha and the merchant Samadhi of Savarni, son of the Sun, the eighth Manu — a tale that unfolds into the glory of the Goddess who is the power behind all creation.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-markandeya",
+    "book": 6,
+    "bookName": "महिषासुरमर्दिनी · या देवी (The Three Charitas)",
+    "section": 1,
+    "sectionName": "महिषासुरमर्दिनी · या देवी (The Three Charitas)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "या देवी सर्वभूतेषु शक्तिरूपेण संस्थिता ।\nनमस्तस्यै नमस्तस्यै नमस्तस्यै नमो नमः ॥",
+      "transliteration": "देवी माहात्म्य 5",
+      "english": "The three charitas praise the Goddess as Mahakali (slaying Madhu-Kaitabha), Mahalakshmi (slaying Mahishasura), and Mahasaraswati (slaying Shumbha-Nishumbha). This central refrain adores her indwelling presence: \"To the Goddess who abides in all beings as Power — salutation, salutation, again and again salutation.\"",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-markandeya",
+    "book": 7,
+    "bookName": "सूर्य · मन्वन्तर (Surya & the Manvantaras)",
+    "section": 1,
+    "sectionName": "सूर्य · मन्वन्तर (Surya & the Manvantaras)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "मार्कण्डेयपुराण — मन्वन्तरवर्णन",
+      "transliteration": "आदित्य महिमा · सावर्णि मनु",
+      "english": "The later chapters glorify Surya (Aditya), recount the fourteen Manvantaras — especially the coming age of Savarni Manu — and close the Purana with genealogies and the merit of its recitation.",
+      "hindi": ""
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "puran-narada",
+  "title": "Narada Purana",
+  "hindi": "नारद पुराण",
+  "subtitle": "महापुराण · वैष्णव · ~25,000 श्लोक",
+  "intro": "A Vaishnava Mahapurana narrated by the celestial sage Narada, traditionally counted at ~25,000 verses and arranged in two parts — the Purvabhaga (125 chapters, in four padas) and the Uttarabhaga (82 chapters). It is famed for its encyclopedic treatment of the six Vedangas — above all Jyotisha (astrology and astronomy) — for chapter-by-chapter summaries of all eighteen Puranas, and for its teachings on bhakti, dharma and sacred music.",
+  "sections": [
+   {
+    "veda": "puran-narada",
+    "book": 1,
+    "bookName": "मंगलाचरण · Invocation",
+    "section": 1,
+    "sectionName": "मंगलाचरण · Invocation",
+    "verseCount": 2,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "वन्दे वृन्दावनासीनमिन्दिरानन्दमन्दिरम् ।\nउपेन्द्रं सान्द्रकारुण्यं परानन्दं परात्परम् ॥",
+      "transliteration": "1.1",
+      "english": "I bow to Him who is seated in Vrindavan, the abode and delight of Indira (Lakshmi) — to Upendra, dense with compassion, the supreme bliss, higher than the highest.",
+      "hindi": ""
+     },
+     {
+      "verse": 2,
+      "sanskrit": "नारायणं नमस्कृत्य नरं चैव नरोत्तमम् ।\nदेवीं सरस्वतीं व्यासं ततो जयमुदीरयेत् ॥",
+      "transliteration": "1.2",
+      "english": "Having bowed to Narayana, and to Nara most exalted of men, and to the goddess Sarasvati and to Vyasa — then let one proclaim the Jaya, the sacred narration.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-narada",
+    "book": 2,
+    "bookName": "पूर्वभाग · विष्णुभक्ति (Vishnu-Bhakti)",
+    "section": 1,
+    "sectionName": "पूर्वभाग · विष्णुभक्ति (Vishnu-Bhakti)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "विष्णुभक्ति",
+      "transliteration": "Purvabhaga · Ch 1-41",
+      "english": "The opening chapters of the Purvabhaga are devoted to Vishnu-bhakti — devotional worship, Vaishnava festivals, vratas and ritual ceremonies — setting the devotional frame for the whole work.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-narada",
+    "book": 3,
+    "bookName": "षड्वेदाङ्ग · ज्योतिष (The Vedangas & Astrology)",
+    "section": 1,
+    "sectionName": "षड्वेदाङ्ग · ज्योतिष (The Vedangas & Astrology)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "षड्वेदाङ्ग · ज्योतिष",
+      "transliteration": "Purvabhaga · Vedangas",
+      "english": "The larger, encyclopedic body of the Purvabhaga expounds the six Vedangas — Shiksha, Kalpa, Vyakarana, Nirukta, Chandas and Jyotisha — and is especially renowned for its detailed astrology and astronomy, covering time-reckoning, yugas, manvantaras and predictions for the Kali age.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-narada",
+    "book": 4,
+    "bookName": "अष्टादश-पुराण-अनुक्रमणिका (Summaries of the 18 Puranas)",
+    "section": 1,
+    "sectionName": "अष्टादश-पुराण-अनुक्रमणिका (Summaries of the 18 Puranas)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "अष्टादशपुराणानुक्रमणिका",
+      "transliteration": "Purvabhaga · Ch 92-109",
+      "english": "A celebrated scholarly feature: one chapter apiece summarising each of the eighteen major Puranas — a resource valued because its summaries sometimes differ from the surviving manuscripts.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-narada",
+    "book": 5,
+    "bookName": "रुक्माङ्गद-चरित · मोहिनी (Rukmangada & Mohini)",
+    "section": 1,
+    "sectionName": "रुक्माङ्गद-चरित · मोहिनी (Rukmangada & Mohini)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "रुक्माङ्गदचरित · मोहिनी",
+      "transliteration": "Uttarabhaga",
+      "english": "The story of King Rukmangada, whose Ekadashi vow and devotion to Vishnu are tested by the enchantress Mohini — a narrative that later inspired plays and dance-dramas such as Kathakali.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-narada",
+    "book": 6,
+    "bookName": "तीर्थ-माहात्म्य (Pilgrimage along the Ganges)",
+    "section": 1,
+    "sectionName": "तीर्थ-माहात्म्य (Pilgrimage along the Ganges)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "तीर्थमाहात्म्य",
+      "transliteration": "Uttarabhaga · Tirthas",
+      "english": "Much of the Uttarabhaga is a pilgrimage guide glorifying tirthas along the Ganges — from Haridwar through Kashi (Banaras) toward Bengal — with the sacred-site praises (mahatmyas) of each.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-narada",
+    "book": 7,
+    "bookName": "राधा मूलप्रकृति · धर्म-मोक्ष (Radha, Dharma & Moksha)",
+    "section": 1,
+    "sectionName": "राधा मूलप्रकृति · धर्म-मोक्ष (Radha, Dharma & Moksha)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "राधा मूलप्रकृति",
+      "transliteration": "Dharma & Devotion",
+      "english": "The text glorifies Radha as mula-prakriti, the primordial creative principle, and sets out dharma-shastra ethics, varna-ashrama duties, the doctrine of moksha, and methods of worship for Ganesha, Narasimha, Rama, Krishna, Shiva and Lakshmi.",
+      "hindi": ""
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "puran-agni",
+  "title": "Agni Purana",
+  "hindi": "अग्नि पुराण",
+  "subtitle": "महापुराण · ज्ञानकोश · ~15,000 श्लोक",
+  "intro": "Traditionally recited by Agni, the fire-god, to the sage Vasishtha, this Mahapurana of about 15,000 verses in some 382 chapters is renowned as an encyclopedia of all knowledge. Its chapters range across cosmology and the avatars of Vishnu, ritual and mantra, temple architecture (vastu) and iconography, statecraft, gemology, Ayurveda and the healing of humans, animals and plants, grammar, meter and poetics, law, astrology and the science of war — ending on yoga and liberation.",
+  "sections": [
+   {
+    "veda": "puran-agni",
+    "book": 1,
+    "bookName": "मंगलाचरण · Invocation",
+    "section": 1,
+    "sectionName": "मंगलाचरण · Invocation",
+    "verseCount": 2,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "श्रियं सरस्वतीं गौरीं गणेशं स्कन्दमीश्वरम् ।\nब्रह्माणं वह्निमिन्द्रादीन् वासुदेवं नमाम्यहम् ॥",
+      "transliteration": "1.1",
+      "english": "I bow to Shri (Lakshmi), Sarasvati and Gauri (Parvati); to Ganesha, Skanda and Ishvara (Shiva); to Brahma, Vahni (Agni), Indra and the other celestials, and to Vasudeva (Krishna).",
+      "hindi": ""
+     },
+     {
+      "verse": 2,
+      "sanskrit": "नैमिषे हरिमीजाना ऋषयः शौनकादयः ।\nतीर्थयात्राप्रसङ्गेन स्वागतं सूतमब्रुवन् ॥",
+      "transliteration": "1.2",
+      "english": "At the sacred forest of Naimisha, Shaunaka and the other sages, engaged in a sacrifice to Hari (Vishnu), welcomed Suta the reciter as he arrived after a pilgrimage.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-agni",
+    "book": 2,
+    "bookName": "विष्णु अवतार · सृष्टि (Avatars & Creation)",
+    "section": 1,
+    "sectionName": "विष्णु अवतार · सृष्टि (Avatars & Creation)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "विष्णु अवतार · सृष्टि",
+      "transliteration": "Ch 2-16",
+      "english": "After the invocation the text narrates the ten avatars of Vishnu — Matsya, Kurma, Varaha, Narasimha and the rest — together with condensed retellings of the Ramayana and Mahabharata, and accounts of cosmology and creation.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-agni",
+    "book": 3,
+    "bookName": "पूजा · मन्त्र · कर्मकाण्ड (Worship & Ritual)",
+    "section": 1,
+    "sectionName": "पूजा · मन्त्र · कर्मकाण्ड (Worship & Ritual)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "पूजा · मन्त्र · कर्मकाण्ड",
+      "transliteration": "Ritual sections",
+      "english": "Extensive chapters on ritual worship, the installation and consecration of images, mantras, initiation (diksha) and Tantric worship procedures of the Vaishnava and Shaiva traditions.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-agni",
+    "book": 4,
+    "bookName": "वास्तु · प्रतिमालक्षण (Architecture & Iconography)",
+    "section": 1,
+    "sectionName": "वास्तु · प्रतिमालक्षण (Architecture & Iconography)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "वास्तु · देवालय · प्रतिमालक्षण",
+      "transliteration": "Vastu-shastra",
+      "english": "Temple architecture, town planning and the making of divine images, giving the proportions and rules for constructing temples and sculpting icons of the deities.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-agni",
+    "book": 5,
+    "bookName": "आयुर्वेद · चिकित्सा (Ayurveda & Medicine)",
+    "section": 1,
+    "sectionName": "आयुर्वेद · चिकित्सा (Ayurveda & Medicine)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "आयुर्वेद · चिकित्सा",
+      "transliteration": "Chikitsa",
+      "english": "Sections on medicine and healing that treat not only human ailments but also veterinary care of animals and the science of plant health (vriksha-ayurveda).",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-agni",
+    "book": 6,
+    "bookName": "राजधर्म · धनुर्वेद (Statecraft & War)",
+    "section": 1,
+    "sectionName": "राजधर्म · धनुर्वेद (Statecraft & War)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "राजधर्म · धनुर्वेद",
+      "transliteration": "Rajadharma",
+      "english": "Statecraft, diplomacy, law and the coronation of kings, alongside Dhanurveda — military science, weapons and the martial arts.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-agni",
+    "book": 7,
+    "bookName": "व्याकरण · छन्दस् · अलङ्कार (Grammar & Poetics)",
+    "section": 1,
+    "sectionName": "व्याकरण · छन्दस् · अलङ्कार (Grammar & Poetics)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "व्याकरण · छन्दस् · अलङ्कार",
+      "transliteration": "Literary sciences",
+      "english": "A complete block on the literary sciences — grammar, prosody and meter, and poetics and rhetoric (alankara) — a rare treasury within a Purana.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-agni",
+    "book": 8,
+    "bookName": "ज्योतिष · योग-मोक्ष (Astrology, Yoga & Liberation)",
+    "section": 1,
+    "sectionName": "ज्योतिष · योग-मोक्ष (Astrology, Yoga & Liberation)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "ज्योतिष · योग-मोक्ष",
+      "transliteration": "Closing chapters",
+      "english": "The encyclopedia closes with astronomy and astrology and then the philosophical chapters on yoga, knowledge of Brahman and liberation, ending on Vedantic and soteriological themes.",
+      "hindi": ""
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "puran-bhavishya",
+  "title": "Bhavishya Purana",
+  "hindi": "भविष्य पुराण",
+  "subtitle": "महापुराण · सौर · ~14,000 श्लोक",
+  "intro": "Its very name means the Purana of what is to come — bhavishya, the future. Traditionally reckoned at about 14,000 verses and divided into four parvas (Brahma, Madhyama, Pratisarga and Uttara), it is a classic authority on vratas and festivals and the most comprehensive Puranic source for the worship of Surya, the Sun, and the Maga (Shakadvipiya) solar priests. Its Pratisarga Parva is famous — and much debated — for its prophetic narratives of coming ages.",
+  "sections": [
+   {
+    "veda": "puran-bhavishya",
+    "book": 1,
+    "bookName": "मंगलाचरण · Invocation",
+    "section": 1,
+    "sectionName": "मंगलाचरण · Invocation",
+    "verseCount": 2,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "ॐ श्रीपरमात्मने नमः ॥\nश्रीगणेशाय नमः ॥\nॐ नमो भगवते वासुदेवाय ॥",
+      "transliteration": "Opening",
+      "english": "Om, salutation to the Supreme Self; salutation to Shri Ganesha; Om, salutation to the Lord Vasudeva — the benedictory salutations that head the text.",
+      "hindi": ""
+     },
+     {
+      "verse": 2,
+      "sanskrit": "नारायणं नमस्कृत्य नरं चैव नरोत्तमम् ।\nदेवीं सरस्वतीं व्यासं ततो जयमुदीरयेत् ॥",
+      "transliteration": "Brahma Parva 1.1",
+      "english": "Having bowed to Narayana, and to Nara most exalted of men, and to the goddess Sarasvati and to Vyasa — then let one recite the Jaya, the sacred narration.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-bhavishya",
+    "book": 2,
+    "bookName": "ब्राह्मपर्व (Brahma Parva)",
+    "section": 1,
+    "sectionName": "ब्राह्मपर्व (Brahma Parva)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "ब्राह्मपर्व",
+      "transliteration": "Brahma Parva",
+      "english": "The opening and largest book: sage Sumantu narrates to King Shatanika on creation, the duties of the varnas and ashramas, the samskaras (rites of passage), daily ritual, and above all the worship of Surya, the Sun.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-bhavishya",
+    "book": 3,
+    "bookName": "सौर · मग ब्राह्मण (Sun-Worship & the Maga Priests)",
+    "section": 1,
+    "sectionName": "सौर · मग ब्राह्मण (Sun-Worship & the Maga Priests)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "सौर · मग (शाकद्वीपीय) ब्राह्मण",
+      "transliteration": "Saura section",
+      "english": "How Krishna's son Samba, cured of leprosy by worshipping Surya, brought eighteen Maga (Shakadvipiya) Brahmins from Shakadvipa to serve as priests of the Sun — the foundational solar-cult narrative of Indian sun worship.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-bhavishya",
+    "book": 4,
+    "bookName": "मध्यमपर्व (Madhyama Parva)",
+    "section": 1,
+    "sectionName": "मध्यमपर्व (Madhyama Parva)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "मध्यमपर्व",
+      "transliteration": "Madhyama Parva",
+      "english": "A later, Tantra-inflected book centred on festivals, vrata-kathas (the narratives of religious vows) and the devotional merit of observances such as Ekadashi and Shivaratri, with ritual and shraddha material.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-bhavishya",
+    "book": 5,
+    "bookName": "प्रतिसर्गपर्व (Pratisarga Parva)",
+    "section": 1,
+    "sectionName": "प्रतिसर्गपर्व (Pratisarga Parva)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "प्रतिसर्गपर्व",
+      "transliteration": "Pratisarga Parva",
+      "english": "The prophecy book — royal and sage genealogies together with narratives of the ages to come; it is well known for late interpolations, which scholars date largely to the medieval and colonial periods.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-bhavishya",
+    "book": 6,
+    "bookName": "उत्तरपर्व · भविष्योत्तर (Uttara Parva)",
+    "section": 1,
+    "sectionName": "उत्तरपर्व · भविष्योत्तर (Uttara Parva)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "उत्तरपर्व · भविष्योत्तरपुराण",
+      "transliteration": "Uttara Parva",
+      "english": "A book so self-contained that it circulates as its own work, the Bhavishyottara Purana — a practical handbook of vratas, danas (charitable gifts), festivals and pilgrimage mahatmyas for the Kali age.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-bhavishya",
+    "book": 7,
+    "bookName": "व्रत · उत्सव (Vratas & Festivals)",
+    "section": 1,
+    "sectionName": "व्रत · उत्सव (Vratas & Festivals)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "व्रत · उत्सव",
+      "transliteration": "Vrata material",
+      "english": "Running across the Madhyama and Uttara Parvas, the corpus for which the Purana is a classic authority — the rules, dates, procedures and rewards of religious vows and festival observances.",
+      "hindi": ""
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "puran-brahmavaivarta",
+  "title": "Brahmavaivarta Purana",
+  "hindi": "ब्रह्मवैवर्त पुराण",
+  "subtitle": "महापुराण · वैष्णव · ~18,000 श्लोक",
+  "intro": "A Krishna-centric Vaishnava Mahapurana of about 18,000 verses, arranged in four khandas — Brahma, Prakriti, Ganesha (Ganapati) and Sri Krishna Janma. It exalts Krishna as the supreme being from whom all gods arise, and Radha as his inseparable divine energy; it unfolds the theology of Prakriti, the Divine Feminine, in her five forms, and narrates the birth and greatness of Ganesha and the eternal realm of Goloka.",
+  "sections": [
+   {
+    "veda": "puran-brahmavaivarta",
+    "book": 1,
+    "bookName": "मंगलाचरण · Invocation",
+    "section": 1,
+    "sectionName": "मंगलाचरण · Invocation",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "गणेशब्रह्मेशसुरेशशेषाः सुराश्च सर्वे मनवो मुनीन्द्राः ।\nसरस्वतीश्रीगिरिजादिकाश्च नमन्ति देव्यः प्रणमामि तं विभुम् ॥",
+      "transliteration": "Brahma Khanda 1.1",
+      "english": "Ganesha, Brahma, Isha (Shiva), Suresha (Indra) and Shesha; all the gods, the Manus and the chief of sages; and the goddesses Sarasvati, Shri (Lakshmi), Girija (Parvati) and the rest — all bow down. To that all-pervading Lord (Krishna) I offer my obeisance.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-brahmavaivarta",
+    "book": 2,
+    "bookName": "ब्रह्मखण्ड (Brahma Khanda)",
+    "section": 1,
+    "sectionName": "ब्रह्मखण्ड (Brahma Khanda)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "ब्रह्मखण्ड",
+      "transliteration": "Brahma Khanda · 30 ch",
+      "english": "Describes creation and the cosmos, presenting Krishna as the ultimate cause from whom Brahma and the whole creative order arise.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-brahmavaivarta",
+    "book": 3,
+    "bookName": "प्रकृतिखण्ड (Prakriti Khanda)",
+    "section": 1,
+    "sectionName": "प्रकृतिखण्ड (Prakriti Khanda)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "प्रकृतिखण्ड · पञ्चप्रकृति",
+      "transliteration": "Prakriti Khanda · 67 ch",
+      "english": "Expounds the theology of Prakriti, the Divine Feminine, in her five principal forms — Durga, Lakshmi, Sarasvati, Savitri and Radha — teaching that every woman is a portion of the Goddess.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-brahmavaivarta",
+    "book": 4,
+    "bookName": "गणेशखण्ड · गणपतिखण्ड (Ganesha Khanda)",
+    "section": 1,
+    "sectionName": "गणेशखण्ड · गणपतिखण्ड (Ganesha Khanda)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "गणेशखण्ड · गणपतिखण्ड",
+      "transliteration": "Ganesha Khanda · 46 ch",
+      "english": "Narrates the birth, the greatness and the exploits of Ganesha, together with the related family narratives of Shiva and Parvati.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-brahmavaivarta",
+    "book": 5,
+    "bookName": "श्रीकृष्णजन्मखण्ड (Krishna Janma Khanda)",
+    "section": 1,
+    "sectionName": "श्रीकृष्णजन्मखण्ड (Krishna Janma Khanda)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "श्रीकृष्णजन्मखण्ड",
+      "transliteration": "Krishna Janma Khanda · ~131 ch",
+      "english": "The longest and most celebrated section: the birth of Krishna, his love with Radha, the lilas of Vrindavan with the gopis, and the supreme transcendent realm of Goloka.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-brahmavaivarta",
+    "book": 6,
+    "bookName": "गोलोक · राधाकृष्ण (Goloka & Radha-Krishna)",
+    "section": 1,
+    "sectionName": "गोलोक · राधाकृष्ण (Goloka & Radha-Krishna)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "गोलोक · राधाकृष्ण",
+      "transliteration": "Krishna Janma Khanda",
+      "english": "Depicts the eternal abode Goloka and the Radha-Krishna theology in which Radha is Krishna's inseparable creative energy, the shakti of the Supreme.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-brahmavaivarta",
+    "book": 7,
+    "bookName": "पञ्चप्रकृति (The Five Divine Mothers)",
+    "section": 1,
+    "sectionName": "पञ्चप्रकृति (The Five Divine Mothers)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "पञ्चप्रकृति",
+      "transliteration": "Prakriti Khanda",
+      "english": "The doctrine that the one Divine Mother manifests as five goddesses, and that all female beings have come forth from the divine feminine — so that an offence against any woman is an offence against the Goddess.",
+      "hindi": ""
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "puran-varaha",
+  "title": "Varaha Purana",
+  "hindi": "वराह पुराण",
+  "subtitle": "महापुराण · वैष्णव · ~24,000 श्लोक",
+  "intro": "A Vaishnava Mahapurana traditionally reckoned at ~24,000 verses (the surviving text runs to some 217 chapters), narrated by Lord Vishnu in his Varaha, the boar avatar, to the Earth goddess Bhudevi whom he has just lifted from the cosmic waters. It is famed for the story of that rescue and for its teachings on vratas, on the tirthas of Mathura, on charity and the rites for ancestors, and on devotion to Vishnu.",
+  "sections": [
+   {
+    "veda": "puran-varaha",
+    "book": 1,
+    "bookName": "मंगलाचरण · Invocation",
+    "section": 1,
+    "sectionName": "मंगलाचरण · Invocation",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "नारायणं नमस्कृत्य नरं चैव नरोत्तमम् ।\nदेवीं सरस्वतीं व्यासं ततो जयमुदीरयेत् ॥",
+      "transliteration": "1.1",
+      "english": "Having bowed to Narayana, and to Nara most exalted of men, and to the goddess Sarasvati and to Vyasa — then let one recite the Jaya, the sacred narration.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-varaha",
+    "book": 2,
+    "bookName": "वराह-पृथिवी संवाद (Varaha & the Earth)",
+    "section": 1,
+    "sectionName": "वराह-पृथिवी संवाद (Varaha & the Earth)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "वराह-पृथिवी संवाद",
+      "transliteration": "Ch 1-112",
+      "english": "The core frame: Vishnu as the cosmic Boar, having raised the Earth from the flood-waters, instructs the Earth goddess (Prithvi / Dharani) on creation, dharma and liberation.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-varaha",
+    "book": 3,
+    "bookName": "सृष्टि (Creation & Cosmology)",
+    "section": 1,
+    "sectionName": "सृष्टि (Creation & Cosmology)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "सृष्टि",
+      "transliteration": "Cosmology",
+      "english": "Accounts of creation, the cosmic cycles and dissolution, and the incarnations of Vishnu — Matsya recovering the Vedas, Kurma at the churning, Varaha raising the Earth — forming the philosophical framework of the text.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-varaha",
+    "book": 4,
+    "bookName": "व्रत (Vratas & Observances)",
+    "section": 1,
+    "sectionName": "व्रत (Vratas & Observances)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "कोकिल-व्रत · चातुर्मास्य-माहात्म्य",
+      "transliteration": "Vrata sections",
+      "english": "Extensive prescriptions of vows, fasts and festival observances — among them the Kokila-vrata and the glory of the Chaturmasya months — with their procedures and rewards.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-varaha",
+    "book": 5,
+    "bookName": "मथुरा-माहात्म्य (Mathura & Pilgrimage)",
+    "section": 1,
+    "sectionName": "मथुरा-माहात्म्य (Mathura & Pilgrimage)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "मथुरा-माहात्म्य · तीर्थयात्रा",
+      "transliteration": "Tirtha-yatra",
+      "english": "A large mahatmya glorifying the sacred sites and temples of Mathura (and sites in Nepal), guiding the pilgrim from shrine to shrine.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-varaha",
+    "book": 6,
+    "bookName": "नाचिकेत-उपाख्यान (The Story of Nachiketa)",
+    "section": 1,
+    "sectionName": "नाचिकेत-उपाख्यान (The Story of Nachiketa)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "नाचिकेत-उपाख्यान",
+      "transliteration": "Nachiketa",
+      "english": "The tale of Nachiketa's journey to the realm of Yama and his return, cataloguing the hells and the workings of karma and its retribution.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-varaha",
+    "book": 7,
+    "bookName": "धर्मसंहिता · श्राद्ध-दान (Dharma, Shraddha & Charity)",
+    "section": 1,
+    "sectionName": "धर्मसंहिता · श्राद्ध-दान (Dharma, Shraddha & Charity)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "धर्मसंहिता · श्राद्ध · दान",
+      "transliteration": "Ch 193-212",
+      "english": "The Dharmasamhita, a dialogue of King Janamejaya and the sage Vaishampayana, expounding dharma and ethical conduct, the shraddha rites for ancestors, and the merit of dana (charity).",
+      "hindi": ""
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "puran-vamana",
+  "title": "Vamana Purana",
+  "hindi": "वामन पुराण",
+  "subtitle": "महापुराण · वैष्णव · ~10,000 श्लोक",
+  "intro": "The Purana of Vishnu's dwarf incarnation, Vamana, who as Trivikrama measured the three worlds in three strides and humbled the demon-king Bali. A Mahapurana of about 10,000 verses narrated by the sage Pulastya, it weaves together Vaishnava, Shaiva and tirtha lore. It is especially famed for the Trivikrama story, the tale of Prahlada, and its Saromahatmya on sacred lakes and Kurukshetra.",
+  "sections": [
+   {
+    "veda": "puran-vamana",
+    "book": 1,
+    "bookName": "अध्याय १ · मंगलाचरण (Invocation)",
+    "section": 1,
+    "sectionName": "अध्याय १ · मंगलाचरण (Invocation)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "नारायणं नमस्कृत्य नरं चैव नरोत्तमम् ।\nदेवीं सरस्वतीं व्यासं ततो जयमुदीरयेत् ॥",
+      "transliteration": "1.1",
+      "english": "Having bowed to Narayana and to Nara, the most exalted of men, and to the goddess Sarasvati and to Vyasa — then let one recite the sacred narrative. The opening benediction (mangalacharana) of the Vamana Purana, spoken before the sage Pulastya begins the telling.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-vamana",
+    "book": 2,
+    "bookName": "वामनावतार · Trivikrama & King Bali",
+    "section": 1,
+    "sectionName": "वामनावतार · Trivikrama & King Bali",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "त्रिविक्रम · वामनावतार",
+      "transliteration": "Vamana Charita",
+      "english": "The heart of the Purana: Vishnu takes birth as the dwarf Vamana, approaches the generous demon-king Bali at his sacrifice and begs three paces of land. Granted the boon, he grows into the cosmic Trivikrama and covers earth, sky and heaven in three strides, restoring the worlds to the gods while honouring Bali's devotion.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-vamana",
+    "book": 3,
+    "bookName": "शिव-पार्वती · Shiva, Parvati & Kartikeya",
+    "section": 1,
+    "sectionName": "शिव-पार्वती · Shiva, Parvati & Kartikeya",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "शिवपार्वतीविवाह · अन्धकासुरवध",
+      "transliteration": "Shaiva Katha",
+      "english": "A large Shaiva portion narrates the marriage of Shiva and Parvati, the birth of Kartikeya (Skanda), and the slaying of the demon Andhaka. These chapters knit the Vaishnava frame together with the worship of Shiva and the Great Goddess.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-vamana",
+    "book": 4,
+    "bookName": "प्रह्लाद-चरित · The Devotion of Prahlada",
+    "section": 1,
+    "sectionName": "प्रह्लाद-चरित · The Devotion of Prahlada",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "प्रह्लादभक्ति · विष्णुशरणागति",
+      "transliteration": "Prahlada",
+      "english": "The story of the boy-devotee Prahlada, whose unwavering faith in Vishnu withstands his demon father's wrath — a discourse on surrender (sharanagati) and the protecting grace of the Lord.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-vamana",
+    "book": 5,
+    "bookName": "सरोमाहात्म्य · Sacred Lakes & Kurukshetra",
+    "section": 1,
+    "sectionName": "सरोमाहात्म्य · Sacred Lakes & Kurukshetra",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "तीर्थमाहात्म्य · कुरुक्षेत्र",
+      "transliteration": "Saromahatmya",
+      "english": "The famed Saromahatmya glorifies holy lakes and pilgrimage sites, above all the sacred field of Kurukshetra — describing their origin, the merit of bathing and gifting there, and the vows (vratas) observed by pilgrims.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-vamana",
+    "book": 6,
+    "bookName": "सृष्टि व वंश · Cosmogony & Genealogies",
+    "section": 1,
+    "sectionName": "सृष्टि व वंश · Cosmogony & Genealogies",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "सर्ग · प्रतिसर्ग · वंश",
+      "transliteration": "Sarga & Vamsha",
+      "english": "Like every Mahapurana it recounts the five marks (pancha-lakshana): creation and re-creation of the cosmos, the ages of the Manus, and the genealogies of gods, sages and kings — including the tale of Daksha's sacrifice.",
+      "hindi": ""
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "puran-kurma",
+  "title": "Kurma Purana",
+  "hindi": "कूर्म पुराण",
+  "subtitle": "महापुराण · शैव · ~17,000 श्लोक",
+  "intro": "Narrated by Vishnu in his Kurma (tortoise) form during the churning of the ocean of milk, this Mahapurana of about 17,000 verses is arranged in a Purva and an Uttara portion. It is most celebrated for embedding the Ishvara Gita — Lord Shiva's discourse on yoga, OM and non-dual reality to the sages at Badarikashrama — together with the Vyasa Gita. It blends Vaishnava, Shaiva and Shakta devotion and glorifies Varanasi and Prayaga.",
+  "sections": [
+   {
+    "veda": "puran-kurma",
+    "book": 1,
+    "bookName": "अध्याय १ · मंगलाचरण (Invocation)",
+    "section": 1,
+    "sectionName": "अध्याय १ · मंगलाचरण (Invocation)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "नमस्कृत्वाप्रमेयाय विष्णवे कूर्मरूपिणे ।\nपुराणं संप्रवक्ष्यामि यदुक्तं विश्वयोनिना ॥",
+      "transliteration": "1.1.1",
+      "english": "Bowing to the immeasurable Vishnu who took the form of the tortoise (Kurma), I shall relate the Purana as it was told by the Source of the universe. The Kurma Purana's opening verse, spoken as the sages of Naimisha ask the story of Suta.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-kurma",
+    "book": 2,
+    "bookName": "कूर्मावतार · The Tortoise & the Churning",
+    "section": 1,
+    "sectionName": "कूर्मावतार · The Tortoise & the Churning",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "समुद्रमन्थन · कूर्मरूप",
+      "transliteration": "Kurma Avatara",
+      "english": "The frame narrative: during the churning of the ocean for the nectar of immortality, Vishnu becomes the great tortoise upon whose back Mount Mandara turns. Seated thus, he answers the sages' questions and reveals the Purana.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-kurma",
+    "book": 3,
+    "bookName": "ईश्वरगीता · The Ishvara Gita",
+    "section": 1,
+    "sectionName": "ईश्वरगीता · The Ishvara Gita",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "ईश्वरगीता · योग · प्रणव · अद्वैत",
+      "transliteration": "Uttara 1–11",
+      "english": "The Purana's most famous portion — eleven chapters in which Lord Shiva (Ishvara), at Badarikashrama, teaches the assembled sages the eight-fold yoga, the meaning of OM (pranava), and the non-dual identity of the Self with Brahman. It is a Shaiva companion to the Bhagavad Gita.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-kurma",
+    "book": 4,
+    "bookName": "व्यासगीता · The Vyasa Gita",
+    "section": 1,
+    "sectionName": "व्यासगीता · The Vyasa Gita",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "आचार · धर्म · वर्णाश्रम",
+      "transliteration": "Vyasa Gita",
+      "english": "The Vyasa Gita sets out right conduct (achara), the duties of the stages and orders of life (varnashrama-dharma), and the disciplines of daily worship and purity.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-kurma",
+    "book": 5,
+    "bookName": "काशी-प्रयाग माहात्म्य · Varanasi & Prayaga",
+    "section": 1,
+    "sectionName": "काशी-प्रयाग माहात्म्य · Varanasi & Prayaga",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "वाराणसी · प्रयाग · तीर्थ",
+      "transliteration": "Kashi Mahatmya",
+      "english": "Extended glorifications of Varanasi (Kashi), the city of Shiva, and of Prayaga at the confluence of the rivers — describing their sanctity, shrines and the liberation granted to those who dwell or die there.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-kurma",
+    "book": 6,
+    "bookName": "सृष्टि व मन्वन्तर · Creation & the Manvantaras",
+    "section": 1,
+    "sectionName": "सृष्टि व मन्वन्तर · Creation & the Manvantaras",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "सर्ग · मन्वन्तर · देवीमाहात्म्य",
+      "transliteration": "Sarga & Manvantara",
+      "english": "Accounts of cosmic creation, the reigns of the Manus, and the greatness of Lakshmi and Parvati as the Divine Mother, along with genealogies of sages and royal houses.",
+      "hindi": ""
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "puran-matsya",
+  "title": "Matsya Purana",
+  "hindi": "मत्स्य पुराण",
+  "subtitle": "महापुराण · शैव · ~14,000 श्लोक",
+  "intro": "Told by Vishnu in his Matsya (fish) avatar to King Manu during the great deluge, this Mahapurana of roughly 14,000 verses is among the oldest of the eighteen. The fish tows Manu's ark to safety, preserving the seeds of all life and the Vedas across the cosmic flood. It is uniquely famed for its detailed chapters on temple architecture and Vastu Shastra, and for the Narmada Mahatmya.",
+  "sections": [
+   {
+    "veda": "puran-matsya",
+    "book": 1,
+    "bookName": "अध्याय १ · मत्स्यावतार (Invocation)",
+    "section": 1,
+    "sectionName": "अध्याय १ · मत्स्यावतार (Invocation)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "श्रुतीनां यत्र कल्पादौ प्रवृत्त्यर्थं जनार्दनः ।\nमत्स्यरूपेण मनवे नरसिंहस्य वर्णनम् ॥",
+      "transliteration": "Matsya",
+      "english": "That in which, at the beginning of a cosmic age, Janardana (Vishnu) in the form of a fish related to Manu — for the sake of promulgating the Vedas — the account of Narasimha and the ages: this is declared the Matsya Purana. The verse by which the Purana names and defines itself.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-matsya",
+    "book": 2,
+    "bookName": "प्रलय व नौका · The Deluge and the Ark",
+    "section": 1,
+    "sectionName": "प्रलय व नौका · The Deluge and the Ark",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "प्रलय · मनु · वेदरक्षा",
+      "transliteration": "Matsya Avatara",
+      "english": "The central legend: warned of the coming flood, King Manu shelters a small fish that grows to immense size. As the waters rise, the fish tows Manu's boat — bearing the seeds of all beings and the Vedas — tethered by a serpent to its horn, until the deluge subsides and creation begins anew.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-matsya",
+    "book": 3,
+    "bookName": "सृष्टि व वंश · Creation & Dynasties",
+    "section": 1,
+    "sectionName": "सृष्टि व वंश · Creation & Dynasties",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "सर्ग · वंश · मन्वन्तर",
+      "transliteration": "Sarga & Vamsha",
+      "english": "Cosmogony and the genealogies of gods, sages, and the solar and lunar royal lines, including accounts of the Andhra and other dynasties and the duties of kings (rajadharma).",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-matsya",
+    "book": 4,
+    "bookName": "देवालय व वास्तु · Temple Architecture & Vastu",
+    "section": 1,
+    "sectionName": "देवालय व वास्तु · Temple Architecture & Vastu",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "देवालयलक्षण · वास्तुशास्त्र · प्रतिमा",
+      "transliteration": "Vastu Shastra",
+      "english": "The chapters for which the Purana is best known — describing about twenty styles of Hindu temple, the sacred square grids (mandalas) of building design, the making and consecration of images, and the rites of construction.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-matsya",
+    "book": 5,
+    "bookName": "नर्मदा माहात्म्य · The Glory of the Narmada",
+    "section": 1,
+    "sectionName": "नर्मदा माहात्म्य · The Glory of the Narmada",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "नर्मदा · तीर्थ · प्रयाग",
+      "transliteration": "Narmada Mahatmya",
+      "english": "The renowned Narmada Mahatmya, a pilgrim's guide to the shrines and sacred fords along the Narmada river, together with the glory of Prayaga and the merit of bathing at these tirthas.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-matsya",
+    "book": 6,
+    "bookName": "दान व व्रत · Great Gifts and Vows",
+    "section": 1,
+    "sectionName": "दान व व्रत · Great Gifts and Vows",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "षोडशमहादान · व्रत · श्राद्ध",
+      "transliteration": "Dana & Vrata",
+      "english": "A detailed treatment of religious giving — including the sixteen great gifts (shodasha-mahadana) such as the golden-embryo and cosmic-egg gifts — along with sacred vows (vratas) and the rites of ancestral offering.",
+      "hindi": ""
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "puran-garuda",
+  "title": "Garuda Purana",
+  "hindi": "गरुड़ पुराण",
+  "subtitle": "महापुराण · वैष्णव · ~19,000 श्लोक",
+  "intro": "A Vaishnava Mahapurana of about 19,000 verses, presented as the knowledge Vishnu imparted to his mount Garuda and retold by Suta to the sages of Naimisha. Its first part (Acara Khanda) covers Vishnu devotion, worship, cosmology, gemmology and medicine. It is most widely known for the Preta Khanda, which addresses death, the soul's journey and the rites for the departed — for which it is traditionally read after a death in the family.",
+  "sections": [
+   {
+    "veda": "puran-garuda",
+    "book": 1,
+    "bookName": "अध्याय १ · मंगलाचरण (Invocation)",
+    "section": 1,
+    "sectionName": "अध्याय १ · मंगलाचरण (Invocation)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "अजमजरमनन्तं ज्ञानरूपं महान्तं\nशिवममलमनादिं भूतदेहादिहीनम् ।\nसकलकरणहीनं सर्वभूतस्थितं तं\nहरिममलममायं सर्वगं वन्द एकम् ॥",
+      "transliteration": "1.1.1",
+      "english": "Unborn, ageless, endless, the very form of knowledge, vast, auspicious, spotless, beginningless, free of elements and body, without any organs yet dwelling in all beings — that one Hari, pure, without illusion, all-pervading, I worship. The opening verse of the Garuda Purana's first chapter.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-garuda",
+    "book": 2,
+    "bookName": "विष्णुभक्ति · Worship of Vishnu",
+    "section": 1,
+    "sectionName": "विष्णुभक्ति · Worship of Vishnu",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "विष्णुपूजा · अवतार · व्रत",
+      "transliteration": "Acara Khanda",
+      "english": "The dialogue of Vishnu and Garuda on devotion: the forms and incarnations of the Lord, the methods of worship and installation, sacred vows and festivals, and the path of bhakti as the surest means of liberation.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-garuda",
+    "book": 3,
+    "bookName": "नीति व विद्या · Worldly Knowledge",
+    "section": 1,
+    "sectionName": "नीति व विद्या · Worldly Knowledge",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "रत्नपरीक्षा · आयुर्वेद · नीति",
+      "transliteration": "Vidya",
+      "english": "A remarkable compendium of practical learning — the testing of gems (ratna-pariksha), the medicine of Dhanvantari, astrology, grammar and statecraft (niti) — set within the Purana's devotional frame.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-garuda",
+    "book": 4,
+    "bookName": "प्रेतकल्प · The Preta Khanda (After Death)",
+    "section": 1,
+    "sectionName": "प्रेतकल्प · The Preta Khanda (After Death)",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "प्रेतकल्प · यमलोक · शरीरानित्यता",
+      "transliteration": "Preta Khanda",
+      "english": "The Purana's most famous portion, read respectfully in a house of mourning. It reflects on the impermanence of the body, describes the soul's passage after death and the realm of Yama, and prescribes the shraddha and pinda-dana rites by which the living aid the departed toward a peaceful onward journey.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-garuda",
+    "book": 5,
+    "bookName": "शरीर व मोक्ष · Body, Soul and Liberation",
+    "section": 1,
+    "sectionName": "शरीर व मोक्ष · Body, Soul and Liberation",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "आत्मज्ञान · मोक्षधर्म",
+      "transliteration": "Brahma Khanda",
+      "english": "Teachings on the nature of the soul, the making of the human body, and the discipline of self-knowledge that leads beyond birth and death to final release (moksha).",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-garuda",
+    "book": 6,
+    "bookName": "सारोद्धार · The Garuda Gita",
+    "section": 1,
+    "sectionName": "सारोद्धार · The Garuda Gita",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "गरुडगीता · धर्मसार",
+      "transliteration": "Garuda Gita",
+      "english": "A distilled dialogue in which Vishnu answers Garuda's questions on the fate of the good and the wicked, the value of charity and truth, and the essence of dharma — a summary of the whole Purana's counsel.",
+      "hindi": ""
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "puran-brahmanda",
+  "title": "Brahmanda Purana",
+  "hindi": "ब्रह्माण्ड पुराण",
+  "subtitle": "महापुराण · शाक्त · ~12,000 श्लोक",
+  "intro": "One of the oldest Mahapuranas — about 12,000 verses named for the Brahmanda, the cosmic egg from which the universe unfolds. Narrated by Suta and arranged in four sections (Prakriya, Anushanga, Upodghata and Upasamhara), it details creation, sacred geography and the ages of the Manus. It is celebrated above all for containing the Lalita Sahasranama, the thousand names of the Goddess Lalita Tripurasundari, and it also carries the Adhyatma Ramayana.",
+  "sections": [
+   {
+    "veda": "puran-brahmanda",
+    "book": 1,
+    "bookName": "अध्याय १ · मंगलाचरण (Invocation)",
+    "section": 1,
+    "sectionName": "अध्याय १ · मंगलाचरण (Invocation)",
+    "verseCount": 2,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "नमोनमः क्षये सृष्टौ स्थितौ सत्त्वमयाय वा ।\nनमो रजस्तमःसत्त्वत्रिरूपाय स्वयंभुवे ॥",
+      "transliteration": "1.1.1",
+      "english": "Obeisance, obeisance to the Self-born, embodied in goodness (sattva), in dissolution, creation and sustenance; obeisance to the one of threefold nature — the qualities of rajas, tamas and sattva. The opening invocation of the Brahmanda Purana.",
+      "hindi": ""
+     },
+     {
+      "verse": 2,
+      "sanskrit": "जितं भगवता तेन हरिणा लोकधारिणा ।\nअजेन विश्वरूपेण निर्गुणेन गुणात्मना ॥",
+      "transliteration": "1.1.2",
+      "english": "Victorious is the Lord Hari, upholder of the worlds — the unborn, of universal form, beyond the qualities yet their very soul.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-brahmanda",
+    "book": 2,
+    "bookName": "ब्रह्माण्ड · The Cosmic Egg",
+    "section": 1,
+    "sectionName": "ब्रह्माण्ड · The Cosmic Egg",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "ब्रह्माण्ड · क्षेत्रज्ञ · सृष्टि",
+      "transliteration": "Prakriya Pada",
+      "english": "The cosmology that gives the Purana its name: from unmanifest Prakriti forms the golden Cosmic Egg (Brahmanda), within which Brahma the Field-knower (kshetrajna) awakens as the first embodied being and creation proceeds through its ordered stages.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-brahmanda",
+    "book": 3,
+    "bookName": "भुवनकोश व मन्वन्तर · Geography & the Ages",
+    "section": 1,
+    "sectionName": "भुवनकोश व मन्वन्तर · Geography & the Ages",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "भुवनकोश · मन्वन्तर · वंश",
+      "transliteration": "Anushanga & Upodghata",
+      "english": "The description of the worlds (bhuvana-kosha) — continents, oceans and mountains — together with the reckoning of time, the reigns of the Manus, and the genealogies of gods, sages and kings.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-brahmanda",
+    "book": 4,
+    "bookName": "ललिता सहस्रनाम · Thousand Names of Lalita",
+    "section": 1,
+    "sectionName": "ललिता सहस्रनाम · Thousand Names of Lalita",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "श्रीमाता श्रीमहाराज्ञी श्रीमत्सिंहासनेश्वरी ।\nचिदग्निकुण्डसम्भूता देवकार्यसमुद्यता ॥",
+      "transliteration": "Lalita Sahasranama",
+      "english": "The auspicious Mother, the great Empress, sovereign of the glorious lion-throne; born from the fire-pit of pure consciousness, arisen to accomplish the work of the gods. The opening names of the celebrated Lalita Sahasranama, the thousand names of the Goddess Lalita Tripurasundari, revealed in this Purana's Lalitopakhyana.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-brahmanda",
+    "book": 5,
+    "bookName": "अध्यात्म रामायण · The Adhyatma Ramayana",
+    "section": 1,
+    "sectionName": "अध्यात्म रामायण · The Adhyatma Ramayana",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "अध्यात्मरामायण · रामतत्त्व",
+      "transliteration": "Adhyatma Ramayana",
+      "english": "Embedded within the Brahmanda Purana, the Adhyatma Ramayana retells the story of Rama as a spiritual allegory — a dialogue of Shiva and Parvati in which Rama is the supreme Brahman and Sita the divine power, teaching devotion and self-knowledge.",
+      "hindi": ""
+     }
+    ]
+   },
+   {
+    "veda": "puran-brahmanda",
+    "book": 6,
+    "bookName": "भविष्य व उपसंहार · Future Ages & Conclusion",
+    "section": 1,
+    "sectionName": "भविष्य व उपसंहार · Future Ages & Conclusion",
+    "verseCount": 1,
+    "verses": [
+     {
+      "verse": 1,
+      "sanskrit": "भविष्यराजवंश · परशुराम · उपसंहार",
+      "transliteration": "Upasamhara Pada",
+      "english": "The concluding section foretells the royal lines of the ages to come, recounts the deeds of Parashurama, and closes the Purana with the fruit (phala) of hearing it.",
+      "hindi": ""
+     }
+    ]
+   }
+  ]
+ }
+]

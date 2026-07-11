@@ -184,6 +184,8 @@ export function LibraryScreen({ navigation }: any) {
     if (bookId === 'yajurveda' || bookId === 'samaveda' || bookId === 'atharvaveda' || bookId === 'upanishads')
       return navigation.navigate('Veda', { veda: bookId });
     if (bookId === 'mahabharat') return navigation.navigate('Veda', { veda: 'mahabharata' });
+    // 18 Mahapuranas → same DB-backed VedaScreen flow (chapters → verses + per-verse AI meaning)
+    if (bookId.startsWith('puran-')) return navigation.navigate('Veda', { veda: bookId });
     navigation.navigate('LibraryReader', { id: bookId });
   };
   const openCmsBook = (book: ContentBook) => {
