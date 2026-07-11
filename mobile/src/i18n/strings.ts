@@ -333,11 +333,18 @@ export const STRINGS: Record<string, { en: string; hi: string }> = {
 
   // ── library filters ──
   'lib.filter.all': { en: 'ALL', hi: 'सभी' },
-  'lib.filter.mantras': { en: 'MANTRAS', hi: 'मंत्र' },
-  'lib.filter.scriptures': { en: 'SCRIPTURES', hi: 'ग्रंथ' },
+  'lib.filter.mantra': { en: 'MANTRA', hi: 'मंत्र' },
+  'lib.filter.aarti': { en: 'AARTI', hi: 'आरती' },
+  'lib.filter.veda': { en: 'VEDAS', hi: 'वेद' },
+  'lib.filter.purana': { en: 'PURANA', hi: 'पुराण' },
+  'lib.filter.gita': { en: 'GITA & EPICS', hi: 'गीता · महाकाव्य' },
   'lib.filter.music': { en: 'MUSIC', hi: 'संगीत' },
-  'lib.filter.bhajans': { en: 'BHAJANS', hi: 'भजन' },
   'lib.filter.saved': { en: 'SAVED', hi: 'सहेजे' },
+  'lib.sec.mantra': { en: 'MANTRAS & CHANTS', hi: 'मंत्र व जाप' },
+  'lib.sec.aarti': { en: 'AARTI & DEVOTION', hi: 'आरती व भक्ति' },
+  'lib.sec.veda': { en: 'THE VEDAS', hi: 'वेद' },
+  'lib.sec.purana': { en: '18 MAHAPURANAS', hi: '18 महापुराण' },
+  'lib.sec.gita': { en: 'GITA, RAMAYANA & EPICS', hi: 'गीता, रामायण व महाकाव्य' },
 
   // ── profile menu rows ──
   'menu.Edit Profile': { en: 'Edit Profile', hi: 'प्रोफ़ाइल संपादित करें' },

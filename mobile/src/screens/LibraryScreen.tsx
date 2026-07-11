@@ -20,7 +20,7 @@ import { useLang, useT } from '../i18n/LanguageProvider';
 import { avatarUrl, getLibrary, getMedia, getDailyShloka, ContentBook, MediaItem, DailyShloka } from '../lib/api';
 import { hTap, hSelect } from '../lib/haptics';
 import {
-  LIB_FILTERS, MANTRAS, MUSIC, SCRIPTURES, CONTINUE,
+  LIB_FILTERS, SCRIPTURES, CONTINUE, booksByCat,
   byId, itemById, TRACKS, Track, TrackColor, LibraryItem, FilterKey, LibFilter,
 } from '../data/library';
 import { useLibraryStore, toggleSaved } from '../lib/libraryStore';
@@ -34,7 +34,10 @@ function FilterIcon({ name, color }: { name: LibFilter['icon']; color: string })
   switch (name) {
     case 'sparkle': return <Svg {...fic(color)}><Path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z" fill={color} /></Svg>;
     case 'mantra': return <Svg {...fic(color)}><Circle cx={12} cy={12} r={8} strokeDasharray="2 3" /><Circle cx={12} cy={4} r={2} fill={color} /></Svg>;
-    case 'book': return <Svg {...fic(color)}><Path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5z" /><Path d="M8 7h8" /></Svg>;
+    case 'flame': return <Svg {...fic(color)}><Path d="M12 3c1.6 2.7 4 4.4 4 7.8A4 4 0 0 1 8 11c0-1.6.8-2.8 1.8-3.8.4 1 .9 1.6 2.2 1.2-1.2-1.6-1.1-3.4 0-5.4z" fill={color} fillOpacity={0.15} /></Svg>;
+    case 'scroll': return <Svg {...fic(color)}><Path d="M7 4h10v13a3 3 0 0 1-3 3H6a3 3 0 0 0 3-3V6a2 2 0 0 0-2-2z" /><Path d="M10 8h4M10 12h4" /></Svg>;
+    case 'stack': return <Svg {...fic(color)}><Path d="M12 3l8 4-8 4-8-4z" /><Path d="M4 12l8 4 8-4M4 17l8 4 8-4" /></Svg>;
+    case 'lotus': return <Svg {...fic(color)}><Path d="M12 5c1.3 1.7 2 3.6 2 6 1-1.4 2.3-2.2 4-2.6-.3 2.3-1.6 4.2-3.6 5.2 1.8.5 3.6.2 5.1-.8-.7 3-3.6 5.2-7.5 5.2s-6.8-2.2-7.5-5.2c1.5 1 3.3 1.3 5.1.8C7.6 12.6 6.3 10.7 6 8.4c1.7.4 3 1.2 4 2.6 0-2.4.7-4.3 2-6z" fill={color} fillOpacity={0.15} /></Svg>;
     case 'music': return <Svg {...fic(color)}><Path d="M9 18V5l12-2v13" /><Circle cx={6} cy={18} r={3} /><Circle cx={18} cy={16} r={3} /></Svg>;
     case 'bookmark': return <Svg {...fic(color)}><Path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></Svg>;
     default: return null;
@@ -351,6 +354,52 @@ export function LibraryScreen({ navigation }: any) {
     </LibCard>
   );
 
+  // Book grid for one topic category (Vedas / Puranas / Gita & Epics / etc.)
+  const renderBookGrid = (label: string, hint: string, books: LibraryItem[]) => {
+    if (!books.length) return null;
+    return (
+      <LibCard theme={theme}>
+        <SectionHead label={label} theme={theme} />
+        {!!hint && <Text style={[styles.scriptHint, { color: theme.textMuted }]}>{hint}</Text>}
+        <View style={styles.vedaGrid}>
+          {books.map((b) => {
+            const ac = colorFor(theme, b.color);
+            return (
+              <Pressable
+                key={b.id}
+                onPress={() => openReader(b.bookId!)}
+                android_ripple={{ color: theme.ripple }}
+                style={({ pressed }) => [styles.vedaCard, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.6)' : '#ffffff' }, pressed && { transform: [{ scale: 0.97 }] }]}
+              >
+                <LinearGradient colors={[ac + 'cc', '#0c0c18']} start={{ x: 0.2, y: 0.1 }} end={{ x: 0.8, y: 1 }} style={styles.vedaCover}>
+                  <Text style={styles.vedaCoverOm}>ॐ</Text>
+                  <Text style={styles.vedaCoverName} numberOfLines={2}>{b.hindi}</Text>
+                </LinearGradient>
+                <Text style={[styles.vedaName, { color: theme.isDark ? '#f0e8d0' : theme.text }]} numberOfLines={2}>
+                  {b.bookId === 'gita' ? tr('gita.title', b.title) : b.bookId === 'ramayan' ? tr('ram.title', b.title) : b.bookId === 'ramcharitmanas' ? tr('rcm.title', b.title) : b.bookId === 'rigveda' ? tr('rig.title', b.title) : b.title}
+                </Text>
+                <Text style={[styles.vedaSub, { color: dim }]}>
+                  {b.bookId === 'gita' ? tr('gita.subtitle', '18 Chapters · 700 Verses')
+                    : b.bookId === 'ramayan' ? tr('ram.subtitle', 'Sanskrit & English · 7 Kanda')
+                    : b.bookId === 'ramcharitmanas' ? tr('rcm.subtitle', 'Hindi · 7 Kand · 1074 Verses')
+                    : b.bookId === 'rigveda' ? tr('rig.subtitle', 'Sanskrit & English · 10 Mandala')
+                    : b.subtitle}
+                </Text>
+                <View style={[styles.readPill, { borderColor: theme.isDark ? 'rgba(220,180,80,0.4)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : '#ffffff' }]}>
+                  <Text style={[styles.readPillText, { color: theme.goldText }]}>{hi ? 'पढ़ें' : 'READ'}</Text>
+                  <Chevron color={theme.goldText} size={13} />
+                </View>
+                <View style={styles.saveBtnAbs} pointerEvents="box-none">
+                  <BookmarkBtn active={saved.includes(b.id)} onPress={() => { hSelect(); toggleSaved(b.id); }} theme={theme} />
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+      </LibCard>
+    );
+  };
+
   return (
     <Screen
       header={<BrandHeader onMenu={openMenu} onBell={() => navigation.navigate('Notifications')} />}
@@ -447,8 +496,8 @@ export function LibraryScreen({ navigation }: any) {
         </LibCard>
       )}
 
-      {/* ── TODAY'S SPIRITUAL BOOST — daily rotating shloka + AI detail (All + Scriptures) ── */}
-      {(filter === 'all' || filter === 'scriptures') && (
+      {/* ── TODAY'S SPIRITUAL BOOST — daily rotating shloka + AI detail ── */}
+      {filter === 'all' && (
         <LibCard theme={theme}>
           <SectionHead label={tr('daily.boostLabel', "TODAY'S SPIRITUAL BOOST")} theme={theme} />
           {daily ? (
@@ -484,8 +533,8 @@ export function LibraryScreen({ navigation }: any) {
         </LibCard>
       )}
 
-      {/* ── CONTINUE LISTENING — resume the last audio (only on All; not a mantra) ── */}
-      {filter === 'all' && (
+      {/* ── CONTINUE LISTENING — only when there's REAL audio (playing, or Gita audio loaded); no demo ── */}
+      {filter === 'all' && (liveActive || !!gitaCh2) && (
         <LibCard theme={theme}>
           <SectionHead label="CONTINUE LISTENING" theme={theme} />
           <Pressable style={styles.contRow} onPress={() => { if (liveActive) { hTap(); player.openSheet(); } }} disabled={!liveActive}>
@@ -515,91 +564,27 @@ export function LibraryScreen({ navigation }: any) {
         </LibCard>
       )}
 
-      {(filter === 'all' || filter === 'mantras') && mediaMantras.length > 0 && renderMediaSection(tr('lib.dynamicMantras', 'MANTRAS'), mediaMantras)}
+      {/* ── MANTRAS & CHANTS — CMS audio + mantra/stotra/chalisa books ── */}
+      {(filter === 'all' || filter === 'mantra') && mediaMantras.length > 0 && renderMediaSection(tr('lib.sec.mantra', 'MANTRAS & CHANTS'), mediaMantras)}
+      {(filter === 'all' || filter === 'mantra') && renderBookGrid(tr('lib.sec.mantra', 'MANTRAS & CHANTS'), hi ? 'मंत्र, जाप, स्तोत्र व चालीसा — पढ़ें व जपें।' : 'Mantras, jaap, stotra & chalisa — read & chant.', booksByCat('mantra'))}
 
-      {/* ── POPULAR MANTRAS (All + Mantras) ── */}
-      {(filter === 'all' || filter === 'mantras') && mediaMantras.length === 0 && (
-        <LibCard theme={theme}>
-          <SectionHead label="POPULAR MANTRAS" theme={theme} />
-          <View style={{ gap: 12 }}>
-            {MANTRAS.map((m) => (
-              <Pressable
-                key={m.id}
-                onPress={() => playTrack(byId(m.trackId!))}
-                style={({ pressed }) => [styles.mantra, (isCurrent(m.trackId) || pressed) && { backgroundColor: theme.isDark ? 'rgba(230,194,119,0.06)' : 'rgba(176,115,22,0.06)' }]}
-              >
-                <LinearGradient colors={theme.isDark ? MANTRA_TILE_DARK : MANTRA_TILE_LIGHT} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={[styles.mantraImg, { borderColor: theme.cardBorder }]}>
-                  <ItemGlyph name={m.glyph} color={theme.goldText} />
-                </LinearGradient>
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={[styles.mantraTitle, { color: theme.isDark ? '#fff' : theme.text }]} numberOfLines={1}>{m.title}</Text>
-                  <View style={styles.countRow}>
-                    <Svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke={theme.textMuted} strokeWidth={2}><Path d="M12 2v20M2 12h20M12 2a10 10 0 0 1 10 10M2 12a10 10 0 0 1 10-10" /></Svg>
-                    <Text style={[styles.countText, { color: theme.textMuted }]}>{m.subtitle}</Text>
-                  </View>
-                </View>
-                <BookmarkBtn active={saved.includes(m.id)} onPress={() => { hSelect(); toggleSaved(m.id); }} theme={theme} />
-                <View style={[styles.playDot, { borderColor: 'rgba(220,180,80,0.4)', backgroundColor: playing(m.trackId) ? theme.gold1 : (theme.isDark ? 'rgba(0,0,0,0.3)' : 'rgba(176,115,22,0.06)') }]}>
-                  {playing(m.trackId) ? <PauseIcon color={theme.goldInk} size={14} /> : <PlayIcon color={theme.goldText} size={13} />}
-                </View>
-              </Pressable>
-            ))}
-          </View>
-        </LibCard>
-      )}
+      {/* ── AARTI & DEVOTION — aarti book + CMS aarti/bhajan audio ── */}
+      {(filter === 'all' || filter === 'aarti') && renderBookGrid(tr('lib.sec.aarti', 'AARTI & DEVOTION'), hi ? 'सभी देवी-देवताओं की पूर्ण आरती।' : 'Full aarti of every deity.', booksByCat('aarti'))}
+      {(filter === 'all' || filter === 'aarti') && mediaAarti.length > 0 && renderMediaSection(tr('lib.dynamicAarti', 'AARTI'), mediaAarti)}
+      {(filter === 'all' || filter === 'aarti') && mediaBhajans.length > 0 && renderMediaSection(tr('lib.dynamicBhajans', 'BHAJANS'), mediaBhajans)}
 
-      {/* ── SCRIPTURES grid (All + Scriptures) ── */}
-      {(filter === 'all' || filter === 'scriptures') && (
-        <LibCard theme={theme}>
-          <SectionHead label="SACRED SCRIPTURES" theme={theme} />
-          <Text style={[styles.scriptHint, { color: theme.textMuted }]}>{hi ? 'किसी भी ग्रंथ पर टैप करें और अध्याय-दर-अध्याय पढ़ें।' : 'Tap any book to read it chapter-by-chapter.'}</Text>
-          <View style={styles.vedaGrid}>
-            {SCRIPTURES.map((b) => {
-              const ac = colorFor(theme, b.color);
-              return (
-                <Pressable
-                  key={b.id}
-                  onPress={() => openReader(b.bookId!)}
-                  android_ripple={{ color: theme.ripple }}
-                  style={({ pressed }) => [styles.vedaCard, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.6)' : '#ffffff' }, pressed && { transform: [{ scale: 0.97 }] }]}
-                >
-                  <LinearGradient colors={[ac + 'cc', '#0c0c18']} start={{ x: 0.2, y: 0.1 }} end={{ x: 0.8, y: 1 }} style={styles.vedaCover}>
-                    <Text style={styles.vedaCoverOm}>ॐ</Text>
-                    <Text style={styles.vedaCoverName} numberOfLines={2}>{b.hindi}</Text>
-                  </LinearGradient>
-                  <Text style={[styles.vedaName, { color: theme.isDark ? '#f0e8d0' : theme.text }]} numberOfLines={2}>
-                    {b.bookId === 'gita' ? tr('gita.title', b.title) : b.bookId === 'ramayan' ? tr('ram.title', b.title) : b.bookId === 'ramcharitmanas' ? tr('rcm.title', b.title) : b.bookId === 'rigveda' ? tr('rig.title', b.title) : b.title}
-                  </Text>
-                  <Text style={[styles.vedaSub, { color: dim }]}>
-                    {b.bookId === 'gita' ? tr('gita.subtitle', '18 Chapters · 700 Verses')
-                      : b.bookId === 'ramayan' ? tr('ram.subtitle', 'Sanskrit & English · 7 Kanda')
-                      : b.bookId === 'ramcharitmanas' ? tr('rcm.subtitle', 'Hindi · 7 Kand · 1074 Verses')
-                      : b.bookId === 'rigveda' ? tr('rig.subtitle', 'Sanskrit & English · 10 Mandala')
-                      : b.subtitle}
-                  </Text>
-                  {/* explicit READ affordance so it's never mistaken for an audio tile */}
-                  <View style={[styles.readPill, { borderColor: theme.isDark ? 'rgba(220,180,80,0.4)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : '#ffffff' }]}>
-                    <Text style={[styles.readPillText, { color: theme.goldText }]}>{hi ? 'पढ़ें' : 'READ'}</Text>
-                    <Chevron color={theme.goldText} size={13} />
-                  </View>
-                  {/* save / bookmark toggle */}
-                  <View style={styles.saveBtnAbs} pointerEvents="box-none">
-                    <BookmarkBtn active={saved.includes(b.id)} onPress={() => { hSelect(); toggleSaved(b.id); }} theme={theme} />
-                  </View>
-                </Pressable>
-              );
-            })}
-          </View>
-        </LibCard>
-      )}
+      {/* ── THE VEDAS ── */}
+      {(filter === 'all' || filter === 'veda') && renderBookGrid(tr('lib.sec.veda', 'THE VEDAS'), hi ? 'ऋग्, यजुर्, साम, अथर्व व उपनिषद्।' : 'Rig, Yajur, Sama, Atharva & Upanishads.', booksByCat('veda'))}
 
-      {(filter === 'all' || filter === 'bhajans') && mediaAarti.length > 0 && renderMediaSection(tr('lib.dynamicAarti', 'AARTI'), mediaAarti)}
+      {/* ── 18 MAHAPURANAS ── */}
+      {(filter === 'all' || filter === 'purana') && renderBookGrid(tr('lib.sec.purana', '18 MAHAPURANAS'), hi ? 'सभी 18 महापुराण — मंगलाचरण, खंड-सार व मंत्र।' : 'All 18 Mahapuranas — invocation, section summaries & mantras.', booksByCat('purana'))}
 
-      {(filter === 'all' || filter === 'bhajans') && mediaBhajans.length > 0 && renderMediaSection(tr('lib.dynamicBhajans', 'BHAJANS'), mediaBhajans)}
+      {/* ── GITA, RAMAYANA & EPICS ── */}
+      {(filter === 'all' || filter === 'gita') && renderBookGrid(tr('lib.sec.gita', 'GITA, RAMAYANA & EPICS'), hi ? 'श्रीमद्भगवद्गीता, रामायण, रामचरितमानस व महाभारत।' : 'Bhagavad Gita, Ramayana, Ramcharitmanas & Mahabharata.', booksByCat('gita'))}
 
       {/* ── BHAGAVAD GITA AUDIO — Yatharth Geeta playlist. It's AUDIO → lives in Music (NOT
             Scriptures, which is books-only). Also on All. ── */}
-      {(filter === 'all' || filter === 'music') && gitaAudio.length > 0 && (
+      {(filter === 'all' || filter === 'gita' || filter === 'music') && gitaAudio.length > 0 && (
         <LibCard theme={theme}>
           <SectionHead label={tr('lib.gitaAudio', 'BHAGAVAD GITA AUDIO')} theme={theme} />
           <Text style={[styles.scriptHint, { color: theme.textMuted }]}>{tr('lib.gitaAudioHint', 'Yatharth Geeta · Swami Adgadanand · Hindi — tap to listen, auto-plays next.')}</Text>
@@ -640,7 +625,7 @@ export function LibraryScreen({ navigation }: any) {
         </LibCard>
       )}
 
-      {(filter === 'all' || filter === 'scriptures') && cmsBooks.length > 0 && (
+      {filter === 'all' && cmsBooks.length > 0 && (
         <LibCard theme={theme}>
           <SectionHead label={tr('lib.cmsBooks', 'FROM ADMIN LIBRARY')} theme={theme} />
           <View style={{ gap: 12 }}>
@@ -670,39 +655,16 @@ export function LibraryScreen({ navigation }: any) {
         </LibCard>
       )}
 
+      {/* ── SPIRITUAL MUSIC — real admin-published audio only (demo drones removed) ── */}
       {(filter === 'all' || filter === 'music') && mediaMusic.length > 0 && renderMediaSection(tr('lib.dynamicMusic', 'SPIRITUAL MUSIC'), mediaMusic)}
-
-      {/* ── SPIRITUAL MUSIC (All + Music) ── */}
-      {(filter === 'all' || filter === 'music') && mediaMusic.length === 0 && (
+      {filter === 'music' && mediaMusic.length === 0 && gitaAudio.length === 0 && mediaBhajans.length === 0 && (
         <LibCard theme={theme}>
-          <View style={{ marginBottom: 12 }}>
-            <Text style={[styles.secLabel, { color: dim }]}>{hi ? 'आध्यात्मिक संगीत मोड' : 'SPIRITUAL MUSIC MODE'}</Text>
-            <Text style={[styles.musicHint, { color: theme.textMuted }]}>{hi ? 'अपनी साधना के लिए उत्तम वातावरण तैयार करें' : 'Set the perfect atmosphere for your spiritual practice'}</Text>
-          </View>
-          <View style={{ gap: 10 }}>
-            {MUSIC.map((m) => {
-              const ac = colorFor(theme, m.color);
-              const mixed = m.glyph === 'mix';
-              return (
-                <Pressable
-                  key={m.id}
-                  onPress={() => { if (m.trackId) playTrack(byId(m.trackId)); else hTap(); }}
-                  style={({ pressed }) => [
-                    styles.musicItem,
-                    { backgroundColor: theme.isDark ? 'rgba(0,0,0,0.8)' : '#ffffff', borderColor: isCurrent(m.trackId) ? ac : (mixed ? 'rgba(238,203,122,0.4)' : ac + '4d'), borderStyle: mixed ? 'dashed' : 'solid' },
-                    pressed && { transform: [{ scale: 0.98 }] },
-                  ]}
-                >
-                  {!mixed && <View style={styles.musicIc}><ItemGlyph name={m.glyph} color={ac} /></View>}
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text style={[styles.musicTitle, { color: mixed ? theme.goldText : ac }]} numberOfLines={1}>{m.title}</Text>
-                    <Text style={[styles.itemSub, { color: theme.textMuted }]} numberOfLines={1}>{m.subtitle}</Text>
-                  </View>
-                  {!mixed && <BookmarkBtn active={saved.includes(m.id)} onPress={() => { hSelect(); toggleSaved(m.id); }} theme={theme} />}
-                  {mixed ? <ItemGlyph name="mix" color={dim} /> : (playing(m.trackId) ? <Waveform color={ac} /> : <PlayIcon color={ac} size={16} />)}
-                </Pressable>
-              );
-            })}
+          <View style={styles.empty}>
+            <View style={[styles.emptyIc, { borderColor: theme.cardBorder }]}>
+              <Svg width={26} height={26} viewBox="0 0 24 24" fill="none" stroke={theme.gold2} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><Path d="M9 18V5l12-2v13" /><Circle cx={6} cy={18} r={3} /><Circle cx={18} cy={16} r={3} /></Svg>
+            </View>
+            <Text style={[styles.emptyTitle, { color: theme.text }]}>{hi ? 'संगीत जल्द आ रहा है' : 'Music coming soon'}</Text>
+            <Text style={[styles.emptySub, { color: theme.textMuted }]}>{hi ? 'भजन, मंत्र व आध्यात्मिक संगीत जल्द ही यहाँ जोड़े जाएँगे।' : 'Bhajans, mantras & spiritual music will be added here soon.'}</Text>
           </View>
         </LibCard>
       )}

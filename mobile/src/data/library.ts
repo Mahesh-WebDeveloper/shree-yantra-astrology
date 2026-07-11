@@ -57,24 +57,11 @@ export interface LibraryItem {
   glyph?: 'sun' | 'target' | 'star' | 'om' | 'bells' | 'flute' | 'rain' | 'mix';
 }
 
-/* Mantras (tap → play). */
-export const MANTRAS: LibraryItem[] = [
-  { id: 'maha',    type: 'mantra', title: 'Mahamrityunjaya Mantra', subtitle: '108 Times', color: 'purple', trackId: 'mahamrityunjaya', glyph: 'sun' },
-  { id: 'gayatri', type: 'mantra', title: 'Gayatri Mantra',         subtitle: '108 Times', color: 'gold',   trackId: 'gayatri',         glyph: 'target' },
-  { id: 'shiva',   type: 'mantra', title: 'Om Namah Shivaya',       subtitle: '108 Times', color: 'blue',   trackId: 'om-namah',        glyph: 'sun' },
-  { id: 'lakshmi', type: 'mantra', title: 'Mahalakshmi Mantra',     subtitle: '108 Times', color: 'gold',   trackId: 'gita-ch2',        glyph: 'target' },
-  { id: 'durga',   type: 'mantra', title: 'Durga Mantra',           subtitle: '108 Times', color: 'rose',   trackId: 'meditation',      glyph: 'sun' },
-  { id: 'saras',   type: 'mantra', title: 'Saraswati Mantra',       subtitle: '108 Times', color: 'green',  trackId: 'flute',           glyph: 'target' },
-];
-
-/* Spiritual music modes (tap → play; 'mix' is a placeholder builder). */
-export const MUSIC: LibraryItem[] = [
-  { id: 'om-mode', type: 'music', title: 'OM CHANTING',   subtitle: 'Deep Om chanting for peace & healing',    color: 'purple', trackId: 'meditation',   glyph: 'om' },
-  { id: 'bells',   type: 'music', title: 'TEMPLE BELLS',  subtitle: 'Sacred temple bells for positive energy', color: 'gold',   trackId: 'temple-bells', glyph: 'bells' },
-  { id: 'flute-m', type: 'music', title: 'FLUTE MUSIC',   subtitle: "Lord Krishna's flute for relaxation",     color: 'green',  trackId: 'flute',        glyph: 'flute' },
-  { id: 'rain',    type: 'music', title: 'RAIN + MANTRA', subtitle: 'Rain sounds with mantra chanting',        color: 'blue',   trackId: 'tanpura',      glyph: 'rain' },
-  { id: 'mix',     type: 'music', title: 'MIX & MATCH',   subtitle: 'Create your own spiritual ambience',      color: 'gold',   glyph: 'mix' },
-];
+/* NOTE: the old static demo MANTRAS + MUSIC ("Deep Meditation", "OM CHANTING",
+   "RAIN + MANTRA", "MIX & MATCH", etc.) were synthesized placeholder drones and
+   have been REMOVED from the library. Real mantras live in the Mantra Sangrah
+   book + admin-published (CMS) audio; real music comes from the admin media
+   library. TRACKS below remain only as the ambient "Listen" audio for readers. */
 
 /* ── Reading content: books with chapters (the reader reads from here) ── */
 export interface ReaderVerse { ref: string; sa: string; en: string }
@@ -906,18 +893,34 @@ export const SCRIPTURES: LibraryItem[] = BOOK_LIST.map((b) => ({
   color: b.cover, bookId: b.id, trackId: b.trackId, glyph: 'om',
 }));
 
-/* ── Top filter chips — clean content-type filters (not a mix of books). ── */
-export type FilterKey = 'all' | 'mantras' | 'scriptures' | 'music' | 'bhajans' | 'saved';
-export interface LibFilter { key: FilterKey; label: string; icon: 'sparkle' | 'mantra' | 'book' | 'music' | 'bookmark' }
+/* ── Top filter chips — TOPIC categories (each shows its own books + audio). ── */
+export type FilterKey = 'all' | 'mantra' | 'aarti' | 'veda' | 'purana' | 'gita' | 'music' | 'saved';
+export type IconName = 'sparkle' | 'mantra' | 'flame' | 'scroll' | 'stack' | 'lotus' | 'music' | 'bookmark';
+export interface LibFilter { key: FilterKey; label: string; icon: IconName }
 export const LIB_FILTERS: LibFilter[] = [
-  { key: 'all',        label: 'ALL',        icon: 'sparkle' },
-  { key: 'mantras',    label: 'MANTRAS',    icon: 'mantra' },
-  { key: 'scriptures', label: 'SCRIPTURES', icon: 'book' },
-  { key: 'music',      label: 'MUSIC',      icon: 'music' },
-  { key: 'bhajans',    label: 'BHAJANS',    icon: 'music' },
-  { key: 'saved',      label: 'SAVED',      icon: 'bookmark' },
+  { key: 'all',    label: 'ALL',      icon: 'sparkle' },
+  { key: 'mantra', label: 'MANTRA',   icon: 'mantra' },
+  { key: 'aarti',  label: 'AARTI',    icon: 'flame' },
+  { key: 'veda',   label: 'VEDAS',    icon: 'scroll' },
+  { key: 'purana', label: 'PURANA',   icon: 'stack' },
+  { key: 'gita',   label: 'GITA & EPICS', icon: 'lotus' },
+  { key: 'music',  label: 'MUSIC',    icon: 'music' },
+  { key: 'saved',  label: 'SAVED',    icon: 'bookmark' },
 ];
 
-/** All saveable items (books + mantras + music) — for resolving the Saved tab. */
-export const ALL_ITEMS: LibraryItem[] = [...SCRIPTURES, ...MANTRAS, ...MUSIC];
+/** Which category a static book belongs to (drives the topic tabs). */
+export type BookCat = 'veda' | 'purana' | 'gita' | 'mantra' | 'aarti';
+const VEDA_IDS = ['rigveda', 'yajurveda', 'samaveda', 'atharvaveda', 'upanishads'];
+const GITA_IDS = ['gita', 'ramayan', 'ramcharitmanas', 'mahabharat'];
+export const bookCat = (id: string): BookCat =>
+  id.startsWith('puran-') ? 'purana'
+    : VEDA_IDS.includes(id) ? 'veda'
+    : GITA_IDS.includes(id) ? 'gita'
+    : id === 'aarti-sangrah' ? 'aarti'
+    : 'mantra'; // mantra-sangrah, stotra-sangrah, hanuman-chalisa (chants)
+/** Books for a topic category (Scriptures grid, filtered). */
+export const booksByCat = (cat: BookCat): LibraryItem[] => SCRIPTURES.filter((b) => bookCat(b.bookId!) === cat);
+
+/** All saveable items (books) — for resolving the Saved tab. (Demo mantras/music removed.) */
+export const ALL_ITEMS: LibraryItem[] = [...SCRIPTURES];
 export const itemById = (id: string) => ALL_ITEMS.find((i) => i.id === id);
