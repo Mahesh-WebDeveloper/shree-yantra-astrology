@@ -254,6 +254,10 @@ export function WelcomeScreen({ navigation }: any) {
   const user = useCurrentUser();
   const firstName = (user?.name || 'Guest').trim().split(/\s+/)[0];
   const { config } = useAppConfig();
+  // Admin-controlled hero zodiac wheel: show/hide + vertical position (App Config → Welcome screen)
+  const wheelFlags = (config.featureFlags || {}) as Record<string, any>;
+  const showWheel = wheelFlags.showZodiacWheel !== false; // default ON
+  const wheelOffsetY = Math.max(-120, Math.min(120, Number(wheelFlags.zodiacWheelOffsetY) || 0));
   const home = useScreen('home');        // admin-managed home content (override)
   const brand = useBranding();           // logo / app name / tagline
   const t = useT();
@@ -324,13 +328,16 @@ export function WelcomeScreen({ navigation }: any) {
         </View>
       )}
 
-      {/* gold glow + spinning zodiac-wheel watermark behind the brand (web .bg-zodiac-left) */}
-      <View style={styles.watermark} pointerEvents="none">
-        <GoldGlow size={320} style={{ top: -10 }} dark={theme.isDark} opacity={theme.isDark ? 0.16 : 0.12} />
-        <View style={{ opacity: theme.isDark ? 0.6 : 0.88 }}>
-          <BgZodiac size={262} dark={theme.isDark} />
+      {/* gold glow + spinning zodiac-wheel watermark behind the brand (web .bg-zodiac-left).
+          Admin can hide it and shift it up/down via App Config → Welcome screen. */}
+      {showWheel && (
+        <View style={[styles.watermark, { transform: [{ translateY: wheelOffsetY }] }]} pointerEvents="none">
+          <GoldGlow size={320} style={{ top: -10 }} dark={theme.isDark} opacity={theme.isDark ? 0.16 : 0.12} />
+          <View style={{ opacity: theme.isDark ? 0.6 : 0.88 }}>
+            <BgZodiac size={262} dark={theme.isDark} />
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Logo block */}
       <View style={styles.logoBlock}>

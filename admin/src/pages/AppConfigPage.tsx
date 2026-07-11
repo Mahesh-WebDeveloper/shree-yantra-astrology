@@ -191,7 +191,7 @@ export default function AppConfigPage() {
   // JSON editor stay in sync (both write draft.flagsText, which is what save parses).
   let parsedFlags: Record<string, unknown> = {}
   try { parsedFlags = JSON.parse(draft.flagsText || '{}') as Record<string, unknown> } catch { parsedFlags = {} }
-  const setFlag = (key: string, value: boolean) => {
+  const setFlag = (key: string, value: boolean | number) => {
     const next = { ...parsedFlags, [key]: value }
     setDraft({ ...draft, flagsText: JSON.stringify(next, null, 2) })
   }
@@ -314,6 +314,28 @@ export default function AppConfigPage() {
           </div>
           <Switch checked={!!parsedFlags.profileDobEditable} onCheckedChange={(checked) => setFlag('profileDobEditable', checked)} />
         </div>
+      </section>
+      <section className="grid gap-4 rounded-lg border border-border bg-card p-4">
+        <div>
+          <h3 className="text-sm font-semibold">Welcome screen</h3>
+          <p className="text-xs text-muted-foreground">Control the spinning zodiac wheel behind the logo on the app's home/welcome screen.</p>
+        </div>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium">Show zodiac wheel</p>
+            <p className="text-xs text-muted-foreground">Off = hide the background zodiac wheel.</p>
+          </div>
+          <Switch checked={parsedFlags.showZodiacWheel !== false} onCheckedChange={(checked) => setFlag('showZodiacWheel', checked)} />
+        </div>
+        <Field label="Zodiac wheel vertical position (px, -120 to 120; negative = up, positive = down)">
+          <Input
+            type="number"
+            min={-120}
+            max={120}
+            value={String(Number(parsedFlags.zodiacWheelOffsetY) || 0)}
+            onChange={(event) => setFlag('zodiacWheelOffsetY', Math.max(-120, Math.min(120, Number(event.target.value) || 0)))}
+          />
+        </Field>
       </section>
       <section className="rounded-lg border border-border bg-card p-4">
         <Field label="Feature flags JSON (advanced)">
