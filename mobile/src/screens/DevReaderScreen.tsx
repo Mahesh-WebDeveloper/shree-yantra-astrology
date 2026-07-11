@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Share } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Share, Vibration } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import * as Speech from 'expo-speech';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Page } from '../components/Page';
@@ -7,7 +9,7 @@ import { GradientText } from '../components/GradientText';
 import { ExplainButton } from '../components/ExplainButton';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts } from '../theme/tokens';
-import { hTap, hSelect, hSuccess } from '../lib/haptics';
+import { hSelect, hTap } from '../lib/haptics';
 import { useLang } from '../i18n/LanguageProvider';
 import { AARTIS } from '../data/aartis';
 import { MANTRAS_COLL } from '../data/mantraSangrah';
@@ -16,6 +18,9 @@ import { STOTRAS } from '../data/stotras';
 type Kind = 'aarti' | 'mantra' | 'stotra';
 const CREST: Record<Kind, string> = { aarti: '🪔', mantra: '📿', stotra: '📜' };
 const FSCALE_KEY = 'sy.devFontScale';
+const MALA_OPTIONS = [1, 3, 5, 7, 11, 21, 54, 108];
+const GREEN = '#3ec77a';
+const strongTap = () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
 
 export function DevReaderScreen({ route, navigation }: any) {
   const { theme } = useTheme();
@@ -34,21 +39,40 @@ export function DevReaderScreen({ route, navigation }: any) {
   useEffect(() => { AsyncStorage.getItem(FSCALE_KEY).then((v) => { const n = parseFloat(v || ''); if (n >= 0.8 && n <= 1.8) setScale(n); }); }, []);
   const bump = (d: number) => { hSelect(); setScale((s) => { const n = Math.max(0.85, Math.min(1.7, +(s + d).toFixed(2))); AsyncStorage.setItem(FSCALE_KEY, String(n)).catch(() => {}); return n; }); };
 
-  // jaap counter (mantra only), persisted
+  // jaap counter (mantra only), persisted. jaap = total beads; target = malas × 108.
   const isMantra = kind === 'mantra';
   const JK = `sy.jaap.${id}`;
   const [jaap, setJaap] = useState(0);
-  const [rounds, setRounds] = useState(0);
-  useEffect(() => { if (!isMantra) return; AsyncStorage.getItem(JK).then((v) => { if (v) try { const o = JSON.parse(v); setJaap(o.j || 0); setRounds(o.r || 0); } catch {} }); }, [JK, isMantra]);
-  const tapJaap = () => {
-    setJaap((j) => {
-      let nj = j + 1; let nr = rounds;
-      if (nj >= 108) { nj = 0; nr = rounds + 1; setRounds(nr); hSuccess(); } else { hTap(); }
-      AsyncStorage.setItem(JK, JSON.stringify({ j: nj, r: nr })).catch(() => {});
-      return nj;
-    });
+  const [malas, setMalas] = useState(1);
+  const target = malas * 108;
+  const done = isMantra && jaap >= target;
+  const roundsDone = Math.floor(jaap / 108);
+  const bead = jaap % 108 === 0 && jaap > 0 ? 108 : jaap % 108; // show 108 at a mala boundary
+  const persist = (j: number, m: number) => AsyncStorage.setItem(JK, JSON.stringify({ j, m })).catch(() => {});
+  useEffect(() => { if (!isMantra) return; AsyncStorage.getItem(JK).then((v) => { if (v) try { const o = JSON.parse(v); setJaap(o.j || 0); setMalas(o.m || 1); } catch {} }); }, [JK, isMantra]);
+
+  const speakDone = () => {
+    Speech.stop();
+    Speech.speak(hi ? 'जाप पूरा हुआ। हरि ॐ।' : 'Your jaap is complete. Well done.', { language: hi ? 'hi-IN' : 'en-US', rate: hi ? 0.9 : 1.0, pitch: 1.0 });
   };
-  const resetJaap = () => { hSelect(); setJaap(0); setRounds(0); AsyncStorage.setItem(JK, JSON.stringify({ j: 0, r: 0 })).catch(() => {}); };
+  const tapJaap = () => {
+    if (jaap >= target) return; // reached the goal — stop counting
+    const nj = jaap + 1;
+    if (nj >= target) { // GOAL reached
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      Vibration.vibrate([0, 350, 130, 350, 130, 550]);
+      speakDone();
+    } else if (nj % 108 === 0) { // one mala complete (not the last)
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      Vibration.vibrate(140);
+    } else {
+      strongTap();
+    }
+    setJaap(nj);
+    persist(nj, malas);
+  };
+  const setMalaTarget = (m: number) => { hSelect(); Speech.stop(); const cap = Math.min(jaap, m * 108); setMalas(m); setJaap(cap); persist(cap, m); };
+  const resetJaap = () => { hSelect(); Speech.stop(); Vibration.cancel(); setJaap(0); persist(0, malas); };
 
   if (!item) return <Page title="—" onBack={() => navigation.goBack()}><Text style={{ color: theme.textMuted, textAlign: 'center', marginTop: 40, fontFamily: fonts.inter }}>Not found</Text></Page>;
 
@@ -102,20 +126,57 @@ export function DevReaderScreen({ route, navigation }: any) {
             </View>
           )}
 
-          {/* JAAP counter */}
-          <View style={[styles.card, { borderColor: theme.gold2 + '66', backgroundColor: theme.isDark ? 'rgba(233,184,80,0.06)' : 'rgba(255,247,224,0.7)' }]}>
-            <View style={styles.jaapHead}>
-              <Text style={[styles.cardTitle, { color: theme.gold1, marginBottom: 0 }]}>🧎 {hi ? 'जाप (माला)' : 'Jaap (Mala)'}</Text>
-              <Pressable onPress={resetJaap} hitSlop={8}><Text style={[styles.reset, { color: theme.textMuted }]}>{hi ? 'रीसेट' : 'Reset'}</Text></Pressable>
+          {/* WORLD-CLASS JAAP */}
+          <View style={[styles.card, { borderColor: done ? GREEN + '99' : theme.gold2 + '66', backgroundColor: theme.isDark ? 'rgba(233,184,80,0.06)' : 'rgba(255,247,224,0.7)' }]}>
+            <Text style={[styles.cardTitle, { color: theme.gold1 }]}>🧎 {hi ? 'जाप — माला गिनें' : 'Jaap — Count Malas'}</Text>
+
+            {/* how many malas */}
+            <Text style={[styles.jaapLabel, { color: theme.textMuted }]}>{hi ? 'कितनी मालाएँ करनी हैं?' : 'How many malas?'}</Text>
+            <View style={styles.malaRow}>
+              {MALA_OPTIONS.map((m) => {
+                const on = malas === m;
+                return (
+                  <Pressable key={m} onPress={() => setMalaTarget(m)} style={[styles.malaChip, { borderColor: on ? theme.gold1 : theme.cardBorder, backgroundColor: on ? theme.gold1 : 'transparent' }]}>
+                    <Text style={[styles.malaChipTxt, { color: on ? theme.buttonInk : theme.gold2 }]}>{m}</Text>
+                  </Pressable>
+                );
+              })}
             </View>
-            <Text style={[styles.jaapSub, { color: theme.textMuted }]}>{hi ? 'हर जाप पर मनके को टैप करें — 108 पर एक माला पूरी' : 'Tap the bead for each chant — 108 completes one mala'}</Text>
-            <Pressable onPress={tapJaap} style={styles.jaapBtnWrap}>
-              <LinearGradient colors={theme.buttonGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.jaapBtn}>
-                <Text style={[styles.jaapCount, { color: theme.buttonInk }]}>{jaap}</Text>
-                <Text style={[styles.jaapOf, { color: theme.buttonInk }]}>/ 108</Text>
+
+            {/* progress */}
+            <View style={styles.jaapProgHead}>
+              <Text style={[styles.jaapProgTxt, { color: theme.gold2 }]}>{hi ? `माला ${roundsDone}/${malas}` : `Mala ${roundsDone}/${malas}`}</Text>
+              <Text style={[styles.jaapProgTxt, { color: theme.gold2 }]}>{jaap} / {target}</Text>
+            </View>
+            <View style={[styles.jaapBar, { backgroundColor: theme.cardBorder }]}><View style={{ width: `${target ? Math.min(100, (jaap / target) * 100) : 0}%`, height: '100%', backgroundColor: done ? GREEN : theme.gold1, borderRadius: 5 }} /></View>
+
+            {/* mantra kept RIGHT HERE so it's readable while tapping */}
+            <Text style={[styles.jaapMantra, { color: theme.text, borderColor: theme.cardBorder }]}>{item.sanskrit}</Text>
+
+            {/* the big tap bead */}
+            <Pressable onPress={tapJaap} disabled={done} style={({ pressed }) => [styles.tapWrap, pressed && !done && { transform: [{ scale: 0.96 }] }]}>
+              <LinearGradient colors={done ? [GREEN, '#1f9e57'] : theme.buttonGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.tapBead}>
+                {done ? (
+                  <><Text style={styles.tapDone}>✓</Text><Text style={[styles.tapDoneTxt, { color: '#08351d' }]}>{hi ? 'पूर्ण' : 'Done'}</Text></>
+                ) : (
+                  <><Text style={[styles.tapCount, { color: theme.buttonInk }]}>{bead}</Text><Text style={[styles.tapOf, { color: theme.buttonInk }]}>/ 108</Text></>
+                )}
               </LinearGradient>
             </Pressable>
-            <Text style={[styles.jaapRounds, { color: theme.gold2 }]}>{hi ? `पूरी मालाएँ: ${rounds}  ·  कुल जाप: ${rounds * 108 + jaap}` : `Malas: ${rounds}  ·  Total: ${rounds * 108 + jaap}`}</Text>
+
+            {done ? (
+              <>
+                <Text style={[styles.doneBanner, { color: GREEN }]}>🎉 {hi ? 'जाप पूरा हुआ!' : 'Jaap complete!'}</Text>
+                <Pressable onPress={resetJaap} style={{ borderRadius: 14, overflow: 'hidden', marginTop: 12 }}>
+                  <LinearGradient colors={theme.buttonGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.bigReset}><Text style={[styles.bigResetTxt, { color: theme.buttonInk }]}>🔄 {hi ? 'फिर से जाप शुरू करें' : 'Start jaap again'}</Text></LinearGradient>
+                </Pressable>
+              </>
+            ) : (
+              <View style={styles.jaapFoot}>
+                <Text style={[styles.jaapHint, { color: theme.textMuted }]}>{hi ? 'हर जाप पर वृत्त दबाएँ' : 'Tap the circle for each chant'}</Text>
+                <Pressable onPress={resetJaap} hitSlop={8}><Text style={[styles.reset, { color: theme.textMuted }]}>{hi ? 'रीसेट' : 'Reset'}</Text></Pressable>
+              </View>
+            )}
           </View>
         </>
       )}
@@ -157,14 +218,26 @@ const styles = StyleSheet.create({
   pillTxt: { fontFamily: fonts.interSemi, fontSize: 11, includeFontPadding: false },
   benefit: { fontFamily: fonts.inter, marginTop: 10, fontStyle: 'italic' },
 
-  jaapHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  reset: { fontFamily: fonts.interSemi, fontSize: 11.5 },
-  jaapSub: { fontFamily: fonts.inter, fontSize: 11.5, lineHeight: 17, marginTop: 6, marginBottom: 14 },
-  jaapBtnWrap: { alignSelf: 'center', borderRadius: 999, overflow: 'hidden' },
-  jaapBtn: { width: 150, height: 150, borderRadius: 75, alignItems: 'center', justifyContent: 'center' },
-  jaapCount: { fontFamily: fonts.cinzelSemi, fontSize: 52, lineHeight: 58 },
-  jaapOf: { fontFamily: fonts.interSemi, fontSize: 14, marginTop: 2 },
-  jaapRounds: { fontFamily: fonts.interSemi, fontSize: 12, textAlign: 'center', marginTop: 14 },
+  reset: { fontFamily: fonts.interSemi, fontSize: 12 },
+  jaapLabel: { fontFamily: fonts.interSemi, fontSize: 12, marginTop: 2, marginBottom: 9 },
+  malaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  malaChip: { minWidth: 42, height: 38, borderWidth: 1.5, borderRadius: 10, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
+  malaChipTxt: { fontFamily: fonts.interBold, fontSize: 15 },
+  jaapProgHead: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 16 },
+  jaapProgTxt: { fontFamily: fonts.interBold, fontSize: 13 },
+  jaapBar: { height: 9, borderRadius: 5, marginTop: 8, overflow: 'hidden' },
+  jaapMantra: { fontFamily: fonts.devanagari, fontSize: 17, lineHeight: 30, textAlign: 'center', marginTop: 16, borderTopWidth: 1, paddingTop: 14 },
+  tapWrap: { alignSelf: 'center', borderRadius: 999, overflow: 'hidden', marginTop: 16 },
+  tapBead: { width: 190, height: 190, borderRadius: 95, alignItems: 'center', justifyContent: 'center' },
+  tapCount: { fontFamily: fonts.cinzelSemi, fontSize: 68, lineHeight: 74 },
+  tapOf: { fontFamily: fonts.interSemi, fontSize: 15, marginTop: 2 },
+  tapDone: { fontSize: 66, lineHeight: 72, color: '#08351d' },
+  tapDoneTxt: { fontFamily: fonts.interBold, fontSize: 16, marginTop: 2 },
+  doneBanner: { fontFamily: fonts.interBold, fontSize: 16, textAlign: 'center', marginTop: 14 },
+  bigReset: { paddingVertical: 15, alignItems: 'center', justifyContent: 'center' },
+  bigResetTxt: { fontFamily: fonts.interBold, fontSize: 15.5 },
+  jaapFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 },
+  jaapHint: { fontFamily: fonts.inter, fontSize: 12 },
 
   actions: { flexDirection: 'row', gap: 8, marginTop: 2 },
   actBtn: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8 },
