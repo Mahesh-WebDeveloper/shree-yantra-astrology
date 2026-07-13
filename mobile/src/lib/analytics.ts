@@ -11,7 +11,7 @@
  */
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Location from 'expo-location';
+import { getDeviceCoords } from './deviceLocation';
 import { trackAnalytics, AnalyticsEventIn } from './api';
 import { getStoredUser } from './auth';
 
@@ -54,46 +54,6 @@ function getDeviceMeta(): { deviceBrand?: string; deviceModel?: string } {
   } catch (_) { return {}; }
 }
 
-/* ── DEVICE GPS (accurate city) ─────────────────────────────────────────────
- * Permission ek hi baar maangte hain. Mile → low-accuracy coords (city-level,
- * battery-friendly) cache karke har event-batch ke saath bhejte hain; backend
- * unhe reverse-geocode karke asli sheher nikaalta hai. Na mile → kuch nahi
- * bhejte, backend IP fallback (approx) use karta hai. Poora flow fail-silent.
- */
-type Gps = { lat: number; lng: number; accuracy?: number };
-let gpsCache: Gps | null = null;
-let gpsAt = 0;
-let gpsDenied = false;      // permission denied → dobara mat pucho
-let gpsAsked = false;
-
-async function getGps(): Promise<Gps | null> {
-  if (gpsDenied) return null;
-  if (gpsCache && Date.now() - gpsAt < GPS_TTL_MS) return gpsCache; // fresh enough
-  try {
-    let { status } = await Location.getForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      if (gpsAsked) { gpsDenied = true; return null; } // pehle hi pooch chuke, mana kar diya
-      gpsAsked = true;
-      ({ status } = await Location.requestForegroundPermissionsAsync());
-      if (status !== 'granted') { gpsDenied = true; return null; }
-    }
-    // last-known pehle (instant, zero battery); na mile to ek low-accuracy fix
-    const pos =
-      (await Location.getLastKnownPositionAsync({ maxAge: GPS_TTL_MS })) ||
-      (await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low }));
-    if (!pos || !pos.coords) return null;
-    gpsCache = {
-      lat: pos.coords.latitude,
-      lng: pos.coords.longitude,
-      accuracy: typeof pos.coords.accuracy === 'number' ? pos.coords.accuracy : undefined,
-    };
-    gpsAt = Date.now();
-    return gpsCache;
-  } catch (_) {
-    return null; // location services off / any error → IP fallback
-  }
-}
-
 async function flush() {
   timer = null;
   if (!queue.length) return;
@@ -103,7 +63,7 @@ async function flush() {
     const did = await getDeviceId();
     const u = await getStoredUser().catch(() => null);
     const meta = getDeviceMeta();
-    const gps = await getGps().catch(() => null);
+    const gps = await getDeviceCoords().catch(() => null);
     await trackAnalytics({
       deviceId: did,
       sessionId,

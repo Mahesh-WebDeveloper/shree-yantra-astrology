@@ -19,6 +19,7 @@ import { hTap, hSelect, hPress, hSuccess } from '../lib/haptics';
 import { openAppDrawer } from '../navigation/AppDrawerHost';
 import { getSunTimes, getChoghadiyaMessage, getMuhuratPick, MuhuratPick } from '../lib/api';
 import { birthFromProfile } from '../lib/birth';
+import { locationForPanchang } from '../lib/deviceLocation';
 import { useScreen } from '../context/AppConfigProvider';
 import { useT, useLang } from '../i18n/LanguageProvider';
 import { aPeriod, aTag, aPeriodDesc, aBlurb, aDateHi } from '../i18n/astro';
@@ -389,28 +390,39 @@ export function ChoghadiyaScreen({ navigation }: any) {
   const [selectedDate, setSelectedDate] = useState<Date>(() => stripTime(new Date()));
   const [calOpen, setCalOpen] = useState(false);
 
-  // Location for sunrise/sunset — user's birth place (best available proxy),
-  // else Jaipur. Choghadiya is location-dependent, so this drives accuracy.
+  // Location for sunrise/sunset — the user's CURRENT place (device GPS). Choghadiya is
+  // driven entirely by sunrise/sunset, so it must follow where the user actually IS, not
+  // where they were born. (Birth place is for the kundli.) No GPS permission → fall back
+  // to the profile place, then Jaipur — exactly the old behaviour.
   const [placeName, setPlaceName] = useState('Jaipur');
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   // Real sunrise/sunset (VedAstro / Swiss Ephemeris) for the selected date.
   // null until the first fetch lands → buildPeriods falls back to demo constants.
   const [sun, setSun] = useState<SunTimes | null>(null);
 
   useEffect(() => {
-    birthFromProfile()
-      .then((b) => { if (b?.place) setPlaceName(b.place); })
-      .catch(() => {});
+    let on = true;
+    (async () => {
+      const b: any = await birthFromProfile().catch(() => null);
+      const fallback = b?.place || 'Jaipur';
+      const loc = await locationForPanchang(fallback);
+      if (!on) return;
+      setPlaceName(loc.city);
+      setCoords(loc.fromGps && loc.lat != null && loc.lng != null ? { lat: loc.lat, lng: loc.lng } : null);
+    })();
+    return () => { on = false; };
   }, []);
 
   // Fetch real sunrise/sunset whenever the date or place changes.
   useEffect(() => {
     let cancelled = false;
     setSun(null); // avoid showing stale times for the previous date
-    getSunTimes({ place: placeName, date: apiDate(selectedDate) })
+    const where = coords ? { lat: coords.lat, lng: coords.lng } : { place: placeName };
+    getSunTimes({ ...where, date: apiDate(selectedDate) })
       .then((r) => { if (!cancelled) setSun({ sunrise: r.sunrise, sunset: r.sunset }); })
       .catch(() => { /* network down → buildPeriods uses demo fallback */ });
     return () => { cancelled = true; };
-  }, [selectedDate, placeName]);
+  }, [selectedDate, placeName, coords]);
 
   const isToday = sameDay(selectedDate, now);
   const periods = useMemo(() => buildPeriods(selectedDate, sun ?? undefined), [selectedDate, sun]);

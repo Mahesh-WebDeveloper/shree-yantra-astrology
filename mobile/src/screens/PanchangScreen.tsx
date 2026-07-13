@@ -11,6 +11,7 @@ import { track } from '../lib/analytics';
 import { useT, useLang } from '../i18n/LanguageProvider';
 import { aSign } from '../i18n/astro';
 import { birthFromProfile } from '../lib/birth';
+import { locationForPanchang } from '../lib/deviceLocation';
 import { getPanchang, getPanchangFestivals, searchPanchangFestivals, getPanchangFestivalDetail, PanchangResponse, PanchangPeriod, AngaEnd, PanchangFestivalDay, PanchangFestivalDetail } from '../lib/api';
 
 const DEFAULT_PLACE = 'Jaipur';
@@ -259,6 +260,7 @@ export function PanchangScreen({ navigation }: any) {
   const { lang } = useLang();
   const t = useT();
   const [place, setPlace] = useState<string>(DEFAULT_PLACE);
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null); // GPS (panchang = abhi ki jagah)
   const [date, setDate] = useState<Date>(new Date());
   const [data, setData] = useState<PanchangResponse | null>(null);
   const [festivals, setFestivals] = useState<PanchangFestivalDay[]>([]);
@@ -274,9 +276,24 @@ export function PanchangScreen({ navigation }: any) {
   const [err, setErr] = useState(false);
   const detailRequestRef = useRef(0);
 
-  useEffect(() => { birthFromProfile().then((b: any) => { if (b?.place) setPlace(b.place); }).catch(() => {}); }, []);
+  // PANCHANG = ABHI KI LOCATION par. Sunrise/sunset se hi tithi, nakshatra aur choghadiya
+  // ke timings bante hain — isliye user jahan ABHI hai wahi chahiye. Janm-sthaan sirf
+  // kundli ke liye hai (Jodhpur me paida hua banda Delhi me ho to Delhi ka panchang chahiye).
+  // GPS permission na mile → chup-chaap profile ke place par fallback (pehle jaisa).
+  useEffect(() => {
+    let on = true;
+    (async () => {
+      const prof: any = await birthFromProfile().catch(() => null);
+      const fallback = prof?.place || DEFAULT_PLACE;
+      const loc = await locationForPanchang(fallback);
+      if (!on) return;
+      setPlace(loc.city);
+      setCoords(loc.fromGps && loc.lat != null && loc.lng != null ? { lat: loc.lat, lng: loc.lng } : null);
+    })();
+    return () => { on = false; };
+  }, []);
 
-  const load = useCallback((d: Date, pl: string) => {
+  const load = useCallback((d: Date, pl: string, c: { lat: number; lng: number } | null) => {
     let on = true;
     setLoading(true); setErr(false);
     setFestivals([]);
@@ -285,16 +302,17 @@ export function PanchangScreen({ navigation }: any) {
     setFestivalDetail(null);
     setDetailError(null);
     setDetailMode('details');
-    getPanchang({ place: pl, date: toDMY(d), tz: '+05:30' })
-      .then((r) => { if (on) { setData(r); setLoading(false); track('panchang_view', undefined, { city: pl }); } })
+    const where = c ? { lat: c.lat, lng: c.lng } : { place: pl }; // GPS ho to exact coords
+    getPanchang({ ...where, date: toDMY(d), tz: '+05:30' })
+      .then((r) => { if (on) { setData(r); setLoading(false); track('panchang_view', undefined, { city: pl, gps: !!c }); } })
       .catch(() => { if (on) { setErr(true); setLoading(false); } });
-    getPanchangFestivals({ place: pl, date: toDMY(d), tz: '+05:30', days: 8 })
+    getPanchangFestivals({ ...where, date: toDMY(d), tz: '+05:30', days: 8 })
       .then((r) => { if (on) setFestivals(r.items || []); })
       .catch(() => {});
     return () => { on = false; };
   }, []);
 
-  useEffect(() => load(date, place), [date, place, load]);
+  useEffect(() => load(date, place, coords), [date, place, coords, load]);
 
   // Auto-update the CURRENT tithi/time without a manual refresh: when viewing TODAY,
   // silently re-fetch every 60s and whenever the app returns to the foreground, so a
@@ -304,14 +322,14 @@ export function PanchangScreen({ navigation }: any) {
     if (!isTodayNow()) return;
     let on = true;
     const refresh = () => {
-      getPanchang({ place, date: toDMY(date), tz: '+05:30' })
+      getPanchang({ ...(coords ? { lat: coords.lat, lng: coords.lng } : { place }), date: toDMY(date), tz: '+05:30' })
         .then((r) => { if (on) setData(r); })
         .catch(() => {});
     };
     const id = setInterval(refresh, 60000);
     const sub = AppState.addEventListener('change', (s) => { if (s === 'active') refresh(); });
     return () => { on = false; clearInterval(id); sub.remove(); };
-  }, [date, place]);
+  }, [date, place, coords]);
 
   useEffect(() => {
     const q = festivalQuery.trim();
