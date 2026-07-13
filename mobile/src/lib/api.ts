@@ -124,7 +124,9 @@ async function requestJson<T>(path: string, makeRequest: () => Promise<Response>
           continue;
         }
         const { message, code } = await parseErrorBody(res);
-        if (res.status === 401 && code === 'SESSION_REVOKED') onSessionRevoked?.();
+        // SESSION_REVOKED = doosre device par login | AUTH_INVALID = account delete/blocked
+        // dono me is device ka session mar chuka hai → force logout
+        if (res.status === 401 && (code === 'SESSION_REVOKED' || code === 'AUTH_INVALID')) onSessionRevoked?.();
         throw createApiError(message, retryable, res.status);
       }
       return await res.json();

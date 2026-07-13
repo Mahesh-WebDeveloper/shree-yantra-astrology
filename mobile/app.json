@@ -24,6 +24,7 @@
       "package": "com.shreeyantra.astrology",
       "googleServicesFile": "./google-services.json",
       "usesCleartextTraffic": true,
+      "allowBackup": false,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#4a0c10"

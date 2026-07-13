@@ -10,8 +10,10 @@ module.exports = async function requireAuth(req, res, next) {
 
     const payload = verifyToken(token);
     const user = await getUserById(payload.sub);
-    if (!user) return res.status(401).json({ error: 'User nahi mila' });
-    if (user.blocked) return res.status(401).json({ error: 'Account blocked hai' });
+    // AUTH_INVALID → app force-logout kare. Account DB se delete ho gaya (ya blocked)
+    // par purana token device par pada tha → app "logged in" dikhta rehta tha.
+    if (!user) return res.status(401).json({ error: 'Aapka account ab maujood nahi hai — dobara login karein.', code: 'AUTH_INVALID' });
+    if (user.blocked) return res.status(401).json({ error: 'Account blocked hai', code: 'AUTH_INVALID' });
 
     // SINGLE-DEVICE ENFORCEMENT (server-side, non-bypassable): the token is only
     // valid if its session id matches the user's current activeSessionId. A newer

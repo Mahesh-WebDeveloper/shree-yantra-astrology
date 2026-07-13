@@ -11,7 +11,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { setAuthToken, AuthUser } from './api';
+import { setAuthToken, AuthUser, getMe } from './api';
 
 const TOKEN_KEY = 'sy.token';
 const USER_KEY = 'sy.user';
@@ -80,7 +80,39 @@ export async function getStartRoute(): Promise<'LanguageSelect' | 'Subscribe' | 
     const token = await AsyncStorage.getItem(TOKEN_KEY);
     if (!token) return 'LanguageSelect'; // fresh: pick language → login → subscribe → …
     setAuthToken(token);
-    const [prem, user] = await Promise.all([AsyncStorage.getItem('sy.premium'), getStoredUser()]);
+
+    // SESSION VALIDATION: sirf local token par bharosa mat karo. Account DB se delete
+    // ho sakta hai, block ho sakta hai, ya doosre device par login se revoke ho sakta
+    // hai — phir bhi app "logged in" khulta tha. Server se ek baar poocho.
+    //   401 (AUTH_INVALID / SESSION_REVOKED) → session mar chuka hai → logout.
+    //   network error (offline) → FAIL-OPEN: cached user se chalne do, warna offline
+    //   user bina wajah logout ho jaayega.
+    let fresh: AuthUser | null = null;
+    const SESSION_CHECK_MS = 6000; // slow network par splash na atke
+    try {
+      const check = getMe();
+      check.catch(() => {}); // race ke baad bhi unhandled rejection na ho
+      const settled = await Promise.race([
+        check.then((r) => r.user),
+        new Promise<undefined>((resolve) => setTimeout(() => resolve(undefined), SESSION_CHECK_MS)),
+      ]);
+      if (settled) {
+        fresh = settled;
+        await updateStoredUser(fresh); // plan/profile bhi taaza ho jaata hai
+      }
+      // timeout hua → fail-open (cached se chalte hain). Agar wo call baad me 401 de,
+      // to pehli hi API call par global handler force-logout kar dega.
+    } catch (e: any) {
+      if (e?.status === 401) {
+        // account delete/blocked (AUTH_INVALID) ya doosre device par login (SESSION_REVOKED)
+        await clearAuth();
+        return 'LanguageSelect';
+      }
+      // offline / server down → cached data se aage badho
+    }
+
+    const [prem, stored] = await Promise.all([AsyncStorage.getItem('sy.premium'), getStoredUser()]);
+    const user = fresh || stored;
     const subscribed = prem === '1' || user?.plan === 'premium';
     if (!subscribed) return 'Subscribe';
     return isProfileComplete(user) ? 'Main' : 'BirthDetails';
