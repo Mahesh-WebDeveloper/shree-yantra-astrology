@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { runOnJS, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts } from '../theme/tokens';
 import { usePlayer, usePlayerTime, SHEET_SPRING } from './PlayerProvider';
-import { PlayIcon, PauseIcon, PrevIcon, NextIcon, CloseIcon, Equalizer, BookmarkIcon } from './PlayerIcons';
+import { PlayIcon, PauseIcon, PrevIcon, NextIcon, CloseIcon, EqBars, BookmarkIcon } from './PlayerIcons';
 import { toggleSaved, useLibraryStore } from '../lib/libraryStore';
 import { hSelect } from '../lib/haptics';
 
@@ -29,6 +29,10 @@ export function NowPlayingBar({ hasBottomNav = true }: { hasBottomNav?: boolean 
   const { width } = useWindowDimensions();
   const { saved } = useLibraryStore();
   const compact = width < 380;
+
+  // whole-bar spring press feedback (UI-thread transform only)
+  const barScale = useSharedValue(1);
+  const barPressStyle = useAnimatedStyle(() => ({ transform: [{ scale: barScale.value }] }));
 
   // Big-music-player style: bar docked rehti hai; swipe UP par PURA full player finger ke
   // saath upar uthta (height grow) hai aur release par smooth spring se khulta hai.
@@ -63,7 +67,8 @@ export function NowPlayingBar({ hasBottomNav = true }: { hasBottomNav?: boolean 
   return (
     <View style={[styles.wrap, { bottom: dockBottom }]} pointerEvents="box-none">
       <GestureDetector gesture={pan}>
-        <View
+        <Animated.View
+          collapsable={false}
           style={[
             styles.bar,
             compact && styles.barCompact,
@@ -71,14 +76,26 @@ export function NowPlayingBar({ hasBottomNav = true }: { hasBottomNav?: boolean 
               backgroundColor: theme.isDark ? 'rgba(14,14,22,0.97)' : 'rgba(255,251,243,0.98)',
               borderColor: theme.cardBorder,
             },
+            barPressStyle,
           ]}
         >
           <View style={[styles.handle, { backgroundColor: theme.cardBorder }]} />
           <ProgressLine trackColor={theme.line} fillColor={theme.gold1} />
 
-          <Pressable style={styles.expandZone} onPress={openSheet} hitSlop={4}>
+          <Pressable
+            style={styles.expandZone}
+            onPress={openSheet}
+            onPressIn={() => { barScale.value = withSpring(0.985, { damping: 22, stiffness: 420, mass: 0.6 }); }}
+            onPressOut={() => { barScale.value = withSpring(1, { damping: 15, stiffness: 300, mass: 0.7 }); }}
+            hitSlop={4}
+          >
             <View style={[styles.art, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : 'rgba(176,115,22,0.10)' }]}>
-              {isPlaying ? <Equalizer color={theme.gold1} playing /> : <Text style={[styles.om, { color: theme.gold1 }]}>ॐ</Text>}
+              <Text style={[styles.om, { color: theme.gold1, opacity: isPlaying ? 0.28 : 1 }]}>ॐ</Text>
+              {isPlaying ? (
+                <View style={styles.artEq} pointerEvents="none">
+                  <EqBars color={theme.gold1} playing height={13} barWidth={2.5} gap={2} />
+                </View>
+              ) : null}
             </View>
             <View style={styles.info}>
               <Text style={[styles.title, { color: theme.text }]} numberOfLines={1}>{track.title}</Text>
@@ -101,7 +118,7 @@ export function NowPlayingBar({ hasBottomNav = true }: { hasBottomNav?: boolean 
             <BookmarkIcon color={isSaved ? theme.gold1 : theme.textMuted} active={isSaved} />
           </Pressable>
           <Pressable onPress={stop} hitSlop={8} style={styles.btn}><CloseIcon color={theme.textMuted} /></Pressable>
-        </View>
+        </Animated.View>
       </GestureDetector>
     </View>
   );
@@ -119,8 +136,9 @@ const styles = StyleSheet.create({
   progress: { position: 'absolute', top: 0, left: 0, right: 0, height: 2 },
   progressFill: { height: 2 },
   expandZone: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, minWidth: 0 },
-  art: { width: 38, height: 38, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  art: { width: 38, height: 38, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   om: { fontSize: 18, fontFamily: fonts.devanagari },
+  artEq: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
   info: { flex: 1, minWidth: 0 },
   title: { fontFamily: fonts.interSemi, fontSize: 13 },
   sub: { fontFamily: fonts.inter, fontSize: 10.5, marginTop: 1 },

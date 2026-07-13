@@ -16,6 +16,7 @@ interface Props {
 export function Seekbar({ progress, onSeek, height = 6, showThumb = true, style }: Props) {
   const { theme } = useTheme();
   const [w, setW] = useState(0);
+  const [dragging, setDragging] = useState(false);
   const p = Math.max(0, Math.min(1, progress || 0));
 
   const handle = (e: GestureResponderEvent) => {
@@ -23,12 +24,16 @@ export function Seekbar({ progress, onSeek, height = 6, showThumb = true, style 
     onSeek(Math.max(0, Math.min(1, e.nativeEvent.locationX / w)));
   };
 
+  // enlarged + gold-glowing thumb while the finger is down
+  const thumbSize = dragging ? 18 : 12;
   return (
     <View
       onLayout={(e) => setW(e.nativeEvent.layout.width)}
       onStartShouldSetResponder={() => true}
-      onResponderGrant={handle}
+      onResponderGrant={(e) => { setDragging(true); handle(e); }}
       onResponderMove={handle}
+      onResponderRelease={() => setDragging(false)}
+      onResponderTerminate={() => setDragging(false)}
       style={[styles.hit, style]}
     >
       <View style={[styles.track, { height, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.12)' : 'rgba(176,115,22,0.20)' }]}>
@@ -39,7 +44,22 @@ export function Seekbar({ progress, onSeek, height = 6, showThumb = true, style 
           style={[styles.fill, { width: `${p * 100}%` }]}
         />
         {showThumb && w > 0 && (
-          <View style={[styles.thumb, { left: Math.max(0, p * w - 6), borderColor: theme.gold1, backgroundColor: theme.goldSoft }]} />
+          <View
+            style={[
+              styles.thumb,
+              {
+                width: thumbSize,
+                height: thumbSize,
+                borderRadius: thumbSize / 2,
+                marginTop: -thumbSize / 2,
+                left: Math.max(0, p * w - thumbSize / 2),
+                borderColor: theme.gold1,
+                borderWidth: dragging ? 2 : 1,
+                backgroundColor: theme.goldSoft,
+              },
+              dragging && { shadowColor: theme.gold1, shadowOpacity: 0.9, shadowRadius: 8, shadowOffset: { width: 0, height: 0 }, elevation: 6 },
+            ]}
+          />
         )}
       </View>
     </View>
@@ -50,5 +70,5 @@ const styles = StyleSheet.create({
   hit: { paddingVertical: 8, justifyContent: 'center' },
   track: { borderRadius: 999, justifyContent: 'center' },
   fill: { height: '100%', borderRadius: 999 },
-  thumb: { position: 'absolute', width: 12, height: 12, borderRadius: 6, borderWidth: 1, top: '50%', marginTop: -6 },
+  thumb: { position: 'absolute', top: '50%' },
 });

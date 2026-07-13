@@ -9,24 +9,26 @@ interface Props {
   style?: StyleProp<TextStyle>;
   /** override gradient colours; defaults to the theme heading gradient */
   colors?: [string, string, string];
+  /** clamp the text (applied to both mask + layout text) */
+  numberOfLines?: number;
 }
 
 /**
  * Gold clipped-text headings — the RN equivalent of the web app's
  * `background-clip: text` gold gradient titles (Cinzel/Playfair).
  */
-export function GradientText({ children, style, colors }: Props) {
+export function GradientText({ children, style, colors, numberOfLines }: Props) {
   const { theme } = useTheme();
   const grad = colors ?? theme.headingGradient;
   return (
     <MaskedView
       maskElement={
-        <Text style={[{ backgroundColor: 'transparent' }, style]}>{children}</Text>
+        <Text numberOfLines={numberOfLines} style={[{ backgroundColor: 'transparent' }, style]}>{children}</Text>
       }
     >
       <LinearGradient colors={grad} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}>
         {/* invisible text reserves the exact layout box */}
-        <Text style={[style, { opacity: 0 }]}>{children}</Text>
+        <Text numberOfLines={numberOfLines} style={[style, { opacity: 0 }]}>{children}</Text>
       </LinearGradient>
     </MaskedView>
   );

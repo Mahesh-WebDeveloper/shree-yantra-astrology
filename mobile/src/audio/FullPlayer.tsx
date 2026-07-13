@@ -1,34 +1,149 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View, Text, StyleSheet, Pressable, useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
+  cancelAnimation,
+  Easing,
   Extrapolation,
   interpolate,
   runOnJS,
   useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Circle } from 'react-native-svg';
 import { useTheme } from '../theme/ThemeProvider';
-import { fonts } from '../theme/tokens';
+import { fonts, Theme } from '../theme/tokens';
 import { CosmicBackground } from '../components/CosmicBackground';
 import { GradientText } from '../components/GradientText';
 import { Seekbar } from './Seekbar';
 import { usePlayer, usePlayerTime, fmtTime, SHEET_SPRING } from './PlayerProvider';
-import { PlayIcon, PauseIcon, PrevIcon, NextIcon, Equalizer, BookmarkIcon } from './PlayerIcons';
+import { PlayIcon, PauseIcon, PrevIcon, NextIcon, BookmarkIcon, SkipIcon, EqBars, SpringPressable } from './PlayerIcons';
 import { toggleSaved, useLibraryStore } from '../lib/libraryStore';
+import { TrackColor } from '../data/library';
+import { useLang } from '../i18n/LanguageProvider';
 import { hTap, hPress, hSelect } from '../lib/haptics';
+
+/* track accent → theme hex (same mapping as the Library's colorFor) */
+const tintFor = (theme: Theme, c: TrackColor) =>
+  c === 'purple' ? theme.purple : c === 'green' ? theme.green : c === 'blue' ? theme.blue : c === 'rose' ? theme.red : theme.gold1;
+
+/* ── Rotating sacred disc — gold mandala medallion, spins while playing ──
+ * Transform-only (rotate + opacity) → runs entirely on the UI thread. */
+function RotatingDisc({ size, playing, theme, compact }: { size: number; playing: boolean; theme: Theme; compact: boolean }) {
+  const rot = useSharedValue(0);
+  const glow = useSharedValue(0.16);
+
+  useEffect(() => {
+    if (playing) {
+      // 360° / 12s, seamless loop (repeat snaps back exactly one revolution)
+      rot.value = rot.value % 360;
+      rot.value = withRepeat(withTiming(rot.value + 360, { duration: 12000, easing: Easing.linear }), -1, false);
+      glow.value = withRepeat(
+        withSequence(
+          withTiming(0.3, { duration: 1500, easing: Easing.inOut(Easing.sin) }),
+          withTiming(0.15, { duration: 1500, easing: Easing.inOut(Easing.sin) })
+        ),
+        -1,
+        false
+      );
+    } else {
+      cancelAnimation(rot);
+      rot.value = rot.value % 360; // freeze where it is
+      cancelAnimation(glow);
+      glow.value = withTiming(0.16, { duration: 420 });
+    }
+    return () => { cancelAnimation(rot); cancelAnimation(glow); };
+  }, [playing, rot, glow]);
+
+  const discStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${rot.value}deg` }] }));
+  const glowStyle = useAnimatedStyle(() => ({ opacity: glow.value }));
+
+  const ring = theme.gold1;
+  return (
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          { position: 'absolute', width: size + 34, height: size + 34, borderRadius: (size + 34) / 2, backgroundColor: theme.gold1 },
+          glowStyle,
+        ]}
+      />
+      <Animated.View style={[{ width: size, height: size, borderRadius: size / 2, overflow: 'hidden' }, discStyle]}>
+        <LinearGradient
+          colors={theme.isDark ? ['#1a1530', '#07071a'] : ['#fff7e0', '#f3e3b8']}
+          style={[StyleSheet.absoluteFill, { borderRadius: size / 2, borderWidth: 1, borderColor: theme.cardBorder }]}
+        />
+        <Svg width={size} height={size} viewBox="0 0 200 200">
+          {/* concentric mandala rings */}
+          <Circle cx={100} cy={100} r={95} stroke={ring} strokeOpacity={0.5} strokeWidth={1.6} fill="none" />
+          <Circle cx={100} cy={100} r={86} stroke={ring} strokeOpacity={0.35} strokeWidth={1.2} strokeDasharray="2 6" fill="none" />
+          <Circle cx={100} cy={100} r={74} stroke={ring} strokeOpacity={0.28} strokeWidth={4} strokeDasharray="1 11" fill="none" />
+          <Circle cx={100} cy={100} r={62} stroke={ring} strokeOpacity={0.4} strokeWidth={1} strokeDasharray="12 7" fill="none" />
+          <Circle cx={100} cy={100} r={50} stroke={ring} strokeOpacity={0.5} strokeWidth={1.2} strokeDasharray="2 4" fill="none" />
+          <Circle cx={100} cy={100} r={38} stroke={ring} strokeOpacity={0.3} strokeWidth={1} fill="none" />
+          <Circle cx={100} cy={100} r={3} fill={ring} fillOpacity={0.7} />
+        </Svg>
+        <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]} pointerEvents="none">
+          <Text style={{ color: theme.gold1, fontFamily: fonts.devanagari, fontSize: compact ? 54 : 68, lineHeight: compact ? 66 : 82 }}>ॐ</Text>
+        </View>
+      </Animated.View>
+    </View>
+  );
+}
+
+/* ── HOT leaf: seekbar + time labels — the ONLY sheet part re-rendering per tick ── */
+function SeekSection() {
+  const { theme } = useTheme();
+  const { seekFraction } = usePlayer();
+  const { position, duration } = usePlayerTime();
+  const pct = duration > 0 ? position / duration : 0;
+  return (
+    <View style={styles.seekWrap}>
+      <Seekbar progress={pct} onSeek={seekFraction} showThumb />
+      <View style={styles.timeRow}>
+        <Text style={[styles.time, { color: theme.textMuted }]}>{fmtTime(position)}</Text>
+        <Text style={[styles.time, { color: theme.textMuted }]}>{duration > 0 ? fmtTime(duration) : '--:--'}</Text>
+      </View>
+    </View>
+  );
+}
+
+/* ── HOT leaf: ±10s — subscribes to time itself so the sheet body never ticks ── */
+function SkipButton({ dir }: { dir: -1 | 1 }) {
+  const { theme } = useTheme();
+  const { seekTo } = usePlayer();
+  const { position, duration } = usePlayerTime();
+  const onPress = () => {
+    hTap();
+    const target = dir === -1 ? Math.max(0, position - 10) : position + 10;
+    seekTo(duration > 0 ? Math.min(duration, target) : target);
+  };
+  return (
+    <SpringPressable
+      onPress={onPress}
+      hitSlop={8}
+      scaleTo={0.86}
+      style={[styles.skipBtn, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.35)' : '#ffffff' }]}
+    >
+      <SkipIcon color={theme.goldText} size={21} forward={dir === 1} />
+    </SpringPressable>
+  );
+}
 
 export function FullPlayer() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
-  const { track, isPlaying, toggle, next, prev, seekFraction, expanded, setExpanded, sheetY, screenH, closeSheet } = usePlayer();
-  const { position, duration } = usePlayerTime();
+  const { lang } = useLang();
+  const hi = lang === 'hi';
+  const { track, isPlaying, toggle, next, prev, expanded, setExpanded, sheetY, screenH, closeSheet } = usePlayer();
   const { saved } = useLibraryStore();
   const { width } = useWindowDimensions();
   const compact = screenH < 720;
@@ -79,14 +194,22 @@ export function FullPlayer() {
 
   if (!expanded || !track) return null;
 
-  const pct = duration > 0 ? position / duration : 0;
   const isSaved = saved.includes(track.id);
+  const tint = tintFor(theme, track.color);
 
   return (
     <Animated.View style={[StyleSheet.absoluteFill, styles.host, { transformOrigin: ['50%', originY, 0] }, sheetStyle]}>
       <Animated.View style={[StyleSheet.absoluteFill, backdropStyle]}>
         <LinearGradient colors={theme.bgGradient} style={StyleSheet.absoluteFill} />
         <CosmicBackground />
+        {/* subtle track-colour tint washing down from the top */}
+        <LinearGradient
+          colors={[tint + (theme.isDark ? '3a' : '1f'), tint + '00']}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 0.75 }}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
       </Animated.View>
 
       <GestureDetector gesture={pan}>
@@ -97,7 +220,7 @@ export function FullPlayer() {
               <Pressable onPress={minimise} hitSlop={10} style={({ pressed }) => [styles.iconBtn, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.45)' : '#ffffff' }, pressed && { transform: [{ scale: 0.92 }] }]}>
                 <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={theme.gold1} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M6 9l6 6 6-6" /></Svg>
               </Pressable>
-              <Text style={[styles.eyebrow, { color: theme.isDark ? '#b89a5b' : theme.textMuted }]}>NOW PLAYING</Text>
+              <Text style={[styles.eyebrow, { color: theme.isDark ? '#b89a5b' : theme.textMuted }]}>{hi ? 'अभी बज रहा है' : 'NOW PLAYING'}</Text>
               <Pressable
                 onPress={() => { hSelect(); toggleSaved(track.id); }}
                 hitSlop={10}
@@ -118,38 +241,48 @@ export function FullPlayer() {
 
           <View style={[styles.body, compact && styles.bodyCompact]}>
             <View style={[styles.artWrap, compact && styles.artWrapCompact]}>
-              <View style={[styles.artGlow, { width: artSize + 28, height: artSize + 28, borderRadius: artSize, backgroundColor: theme.gold1 }]} />
-              <LinearGradient colors={theme.isDark ? ['#1a1530', '#07071a'] : ['#fff7e0', '#f3e3b8']} style={[styles.art, { width: artSize, height: artSize, borderRadius: compact ? 22 : 28, borderColor: theme.cardBorder }]}>
-                {isPlaying ? <Equalizer color={theme.gold1} playing /> : <Text style={[styles.artOm, compact && styles.artOmCompact, { color: theme.gold1 }]}>ॐ</Text>}
-              </LinearGradient>
+              <RotatingDisc size={artSize} playing={isPlaying} theme={theme} compact={compact} />
             </View>
 
-            <GradientText style={[styles.title, compact && styles.titleCompact]}>{track.title}</GradientText>
-            <Text style={[styles.sub, { color: theme.textMuted }]} numberOfLines={2}>{track.sub}</Text>
-
-            <View style={styles.seekWrap}>
-              <Seekbar progress={pct} onSeek={seekFraction} showThumb />
-              <View style={styles.timeRow}>
-                <Text style={[styles.time, { color: theme.textMuted }]}>{fmtTime(position)}</Text>
-                <Text style={[styles.time, { color: theme.textMuted }]}>{duration > 0 ? fmtTime(duration) : '--:--'}</Text>
+            <View style={styles.titleRow}>
+              <EqBars color={theme.gold1} playing={isPlaying} height={compact ? 14 : 16} />
+              <View style={styles.titleClamp}>
+                <GradientText numberOfLines={2} style={[styles.title, compact && styles.titleCompact]}>{track.title}</GradientText>
               </View>
             </View>
+            <Text style={[styles.sub, { color: theme.textMuted }]} numberOfLines={2}>{track.sub}</Text>
+
+            <SeekSection />
 
             <View style={styles.transport}>
-              <Pressable onPress={() => { hTap(); prev(); }} hitSlop={10} style={({ pressed }) => [styles.tBtn, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.4)' : '#ffffff' }, pressed && { transform: [{ scale: 0.92 }] }]}>
+              <SkipButton dir={-1} />
+              <SpringPressable
+                onPress={() => { hTap(); prev(); }}
+                hitSlop={8}
+                scaleTo={0.88}
+                style={[styles.tBtn, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.4)' : '#ffffff' }]}
+              >
                 <PrevIcon color={theme.goldText} size={22} />
-              </Pressable>
-              <Pressable onPress={() => { hPress(); toggle(); }} hitSlop={10} style={({ pressed }) => [pressed && { transform: [{ scale: 0.95 }] }]}>
-                <LinearGradient colors={['#fce8a8', '#e9b850', '#b87f1a']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.playBig}>
-                  {isPlaying ? <PauseIcon color="#211300" size={28} /> : <PlayIcon color="#211300" size={28} />}
+              </SpringPressable>
+              <SpringPressable onPress={() => { hPress(); toggle(); }} hitSlop={8} scaleTo={0.9}>
+                <LinearGradient colors={theme.buttonGradient} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.playBig}>
+                  {isPlaying ? <PauseIcon color={theme.goldInk} size={28} /> : <PlayIcon color={theme.goldInk} size={28} />}
                 </LinearGradient>
-              </Pressable>
-              <Pressable onPress={() => { hTap(); next(); }} hitSlop={10} style={({ pressed }) => [styles.tBtn, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.4)' : '#ffffff' }, pressed && { transform: [{ scale: 0.92 }] }]}>
+              </SpringPressable>
+              <SpringPressable
+                onPress={() => { hTap(); next(); }}
+                hitSlop={8}
+                scaleTo={0.88}
+                style={[styles.tBtn, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.4)' : '#ffffff' }]}
+              >
                 <NextIcon color={theme.goldText} size={22} />
-              </Pressable>
+              </SpringPressable>
+              <SkipButton dir={1} />
             </View>
 
-            <Text style={[styles.hint, compact && styles.hintCompact, { color: theme.textMuted }]}>Swipe down to minimise</Text>
+            <Text style={[styles.hint, compact && styles.hintCompact, { color: theme.textMuted }]}>
+              {hi ? 'छोटा करने के लिए नीचे स्वाइप करें' : 'Swipe down to minimise'}
+            </Text>
           </View>
         </View>
       </GestureDetector>
@@ -169,11 +302,9 @@ const styles = StyleSheet.create({
   bodyCompact: { justifyContent: 'flex-start', paddingTop: 18, paddingBottom: 16 },
   artWrap: { alignItems: 'center', justifyContent: 'center', marginBottom: 26 },
   artWrapCompact: { marginBottom: 14 },
-  artGlow: { position: 'absolute', opacity: 0.18 },
-  art: { borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  artOm: { fontSize: 96, fontFamily: fonts.devanagari, lineHeight: 110 },
-  artOmCompact: { fontSize: 78, lineHeight: 90 },
-  title: { fontFamily: fonts.cinzel, fontSize: 22, fontWeight: '700', textAlign: 'center', marginTop: 8 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, maxWidth: '100%', marginTop: 8 },
+  titleClamp: { flexShrink: 1 },
+  title: { fontFamily: fonts.cinzel, fontSize: 22, fontWeight: '700', textAlign: 'center' },
   titleCompact: { fontSize: 18, lineHeight: 24 },
   sub: { fontFamily: fonts.inter, fontSize: 13, lineHeight: 19, marginTop: 4, marginBottom: 18, textAlign: 'center' },
 
@@ -181,9 +312,10 @@ const styles = StyleSheet.create({
   timeRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
   time: { fontFamily: fonts.inter, fontSize: 11 },
 
-  transport: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 28, marginTop: 26 },
-  tBtn: { width: 56, height: 56, borderRadius: 28, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  playBig: { width: 76, height: 76, borderRadius: 38, alignItems: 'center', justifyContent: 'center', shadowColor: '#e9b850', shadowOpacity: 0.45, shadowRadius: 18, shadowOffset: { width: 0, height: 6 }, elevation: 12 },
+  transport: { alignSelf: 'stretch', marginHorizontal: -14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 26 },
+  tBtn: { width: 52, height: 52, borderRadius: 26, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  skipBtn: { width: 42, height: 42, borderRadius: 21, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  playBig: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', shadowColor: '#e9b850', shadowOpacity: 0.45, shadowRadius: 18, shadowOffset: { width: 0, height: 6 }, elevation: 12 },
   hint: { fontFamily: fonts.inter, fontSize: 11, marginTop: 26, opacity: 0.8 },
   hintCompact: { marginTop: 14 },
 });
