@@ -14,6 +14,7 @@ import { Chevron, Sparkle } from '../components/icons/CommonIcons';
 import { usePlayer, usePlayerTime, fmtTime } from '../audio/PlayerProvider';
 import { Seekbar } from '../audio/Seekbar';
 import { PlayIcon, PauseIcon, PrevIcon, NextIcon } from '../audio/PlayerIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { openAppDrawer } from '../navigation/AppDrawerHost';
 import { useScreen } from '../context/AppConfigProvider';
 import { useLang, useT } from '../i18n/LanguageProvider';
@@ -198,6 +199,79 @@ const FilterChip = React.memo(function FilterChip({ active, label, icon, theme, 
     </Animated.View>
   );
 });
+
+/* The category rail scrolls horizontally, but a first-time user has no way to know that —
+   it just looks like a row that happens to end at the screen edge. Three affordances, no
+   arrows and no dots:
+     1. PEEK      — the rail bleeds past the right edge so a chip is always cut in half.
+                    A half-chip reads as "there is more" in a way a full row never does.
+     2. EDGE FADE — content dissolves into the page background at whichever edge still has
+                    more to scroll (right fade drops to 0 once you reach the end, left fade
+                    appears once you leave the start), so the cut never looks like a border.
+     3. NUDGE     — on the very first visit the rail slides a little and springs back on its
+                    own. Motion is the affordance every user understands. Shown once ever.
+   The fades ride on a native-driver Animated.Value, so scrolling stays on the UI thread. */
+const RAIL_HINT_KEY = 'sy.lib.railHinted';
+
+function CategoryRail({ theme, children }: { theme: Theme; children: React.ReactNode }) {
+  const ref = useRef<any>(null);          // Animated.ScrollView — required for native-driven onScroll
+  const x = useRef(new Animated.Value(0)).current;
+  const [maxX, setMaxX] = useState(0);   // contentWidth - viewportWidth
+  const viewW = useRef(0);
+
+  const measure = (content: number) => setMaxX(Math.max(0, content - viewW.current));
+
+  // First visit ever: slide out and spring back so the rail visibly moves.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (await AsyncStorage.getItem(RAIL_HINT_KEY)) return;      // already hinted once
+      await new Promise((r) => setTimeout(r, 900));                // let the screen settle
+      if (cancelled || !ref.current) return;
+      ref.current.scrollTo({ x: 64, animated: true });
+      setTimeout(() => ref.current?.scrollTo({ x: 0, animated: true }), 620);
+      AsyncStorage.setItem(RAIL_HINT_KEY, '1').catch(() => {});
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const fade = (side: 'left' | 'right') => {
+    // Right fade is on until you reach the end; left fade turns on once you scroll away.
+    const opacity = maxX <= 0 ? 0 : side === 'right'
+      ? x.interpolate({ inputRange: [Math.max(0, maxX - 40), maxX], outputRange: [1, 0], extrapolate: 'clamp' })
+      : x.interpolate({ inputRange: [0, 28], outputRange: [0, 1], extrapolate: 'clamp' });
+    const bg = theme.bgDeep;
+    return (
+      <Animated.View pointerEvents="none" style={[styles.railFade, side === 'right' ? { right: 0 } : { left: 0 }, { opacity }]}>
+        <LinearGradient
+          colors={side === 'right' ? ['transparent', bg] : [bg, 'transparent']}
+          start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }}
+          style={StyleSheet.absoluteFill}
+        />
+      </Animated.View>
+    );
+  };
+
+  return (
+    <View style={styles.railHost}>
+      <Animated.ScrollView
+        ref={ref}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        onLayout={(e) => { viewW.current = e.nativeEvent.layout.width; }}
+        onContentSizeChange={measure}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { x } } }], { useNativeDriver: true })}
+        scrollEventThrottle={16}
+        style={styles.catsScroll}
+        contentContainerStyle={styles.catsContent}
+      >
+        {children}
+      </Animated.ScrollView>
+      {fade('left')}
+      {fade('right')}
+    </View>
+  );
+}
 
 /* One scripture card — memoized so grids don't fully re-render on every
    save/progress tick; spring press scale for a premium feel.
@@ -617,7 +691,7 @@ export function LibraryScreen({ navigation }: any) {
       {/* ── Filter chips (topic categories — gold active state) ── */}
       {!searching && (
       <Animated.View style={rise(0.08)}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catsScroll} contentContainerStyle={styles.catsContent}>
+      <CategoryRail theme={theme}>
         {LIB_FILTERS.map((c) => (
           <FilterChip
             key={c.key}
@@ -628,7 +702,7 @@ export function LibraryScreen({ navigation }: any) {
             onPress={() => { hSelect(); setFilter(c.key); }}
           />
         ))}
-      </ScrollView>
+      </CategoryRail>
       </Animated.View>
       )}
 
@@ -898,8 +972,13 @@ const styles = StyleSheet.create({
   dotWord: { fontFamily: fonts.inter, fontSize: 12 },
   dotSep: { fontSize: 7 },
 
-  catsScroll: { marginHorizontal: -18, marginBottom: 20 },
-  catsContent: { gap: 12, paddingHorizontal: 18, paddingVertical: 4 },
+  // The host bleeds to the screen edges so the fades sit on the true edge, not inside the gutter.
+  railHost: { marginHorizontal: -18, marginBottom: 20 },
+  catsScroll: {},
+  // paddingRight < paddingLeft so the rail runs past the edge and a chip is always
+  // caught mid-way — the "peek" that tells you the row keeps going.
+  catsContent: { gap: 12, paddingLeft: 18, paddingRight: 40, paddingVertical: 4 },
+  railFade: { position: 'absolute', top: 0, bottom: 0, width: 34 },
   catCard: { width: 78, height: 86, borderRadius: 14, alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 6, overflow: 'hidden' },
   catLabel: { fontFamily: fonts.interSemi, fontSize: 9, letterSpacing: 0.4, textAlign: 'center', lineHeight: 12, textTransform: 'uppercase' },
 
