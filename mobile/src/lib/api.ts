@@ -996,9 +996,13 @@ export const getRigvedaExplanation = (mandala: number, sukta: number, verse: num
 
 // ── Generic Veda (Yajurveda / Samaveda / Atharvaveda) ──
 export interface VedaBook { book: number; bookName?: string; sections: number; verses: number }
-export interface VedaSectionInfo { book: number; section: number; sectionName?: string; verseCount: number }
+/** Plain-language retelling of a chapter, written from its own shlokas — see the backend's
+ *  generateShivaStories script. Absent on chapters (and texts) that don't have one. */
+export interface VedaStory { hi?: string; en?: string }
+
+export interface VedaSectionInfo { book: number; section: number; sectionName?: string; verseCount: number; storyTitle?: VedaStory }
 export interface VedaVerse { verse: number; sanskrit: string; transliteration?: string; english?: string; hindi?: string }
-export interface VedaSectionFull { veda: string; book: number; bookName?: string; section: number; sectionName?: string; verseCount: number; verses: VedaVerse[] }
+export interface VedaSectionFull { veda: string; book: number; bookName?: string; section: number; sectionName?: string; verseCount: number; verses: VedaVerse[]; story?: VedaStory; storyTitle?: VedaStory }
 export const getVedaBooks = (veda: string) => get<{ veda: string; books: VedaBook[] }>(`/api/veda/${veda}`);
 export const getVedaSections = (veda: string, book: number) => get<{ veda: string; book: number; sections: VedaSectionInfo[] }>(`/api/veda/${veda}/${book}`);
 export const getVedaSection = (veda: string, book: number, section: number) => get<{ section: VedaSectionFull }>(`/api/veda/${veda}/${book}/${section}`);

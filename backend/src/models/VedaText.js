@@ -24,6 +24,13 @@ const vedaTextSchema = new mongoose.Schema(
     verseCount: Number,
     hindiReady: { type: Boolean, default: false },
     verses: { type: [vTextVerseSchema], default: [] },
+
+    // Chapter retold as a plain-language story, for readers with no background in the
+    // scripture (children included). Written from THIS chapter's own shlokas — never from a
+    // third-party retelling — so it stays faithful and is ours to ship.
+    storyTitle: { hi: String, en: String },   // the chapter's theme, e.g. 'ऋषियों का प्रश्न'
+    story: { hi: String, en: String },
+    storyReady: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

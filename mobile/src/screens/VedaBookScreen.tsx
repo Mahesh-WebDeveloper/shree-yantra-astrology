@@ -64,8 +64,15 @@ export function VedaBookScreen({ navigation, route }: any) {
               <Text style={styles.numText}>{s.section}</Text>
             </LinearGradient>
             <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>{s.sectionName || `${L(cfg.sectionLabel)} ${s.section}`}</Text>
-              <Text style={[styles.sub, { color: theme.textMuted }]} numberOfLines={1}>{s.verseCount} {L(cfg.verseLabel)}</Text>
+              {/* Lead with what the chapter is ABOUT when we have a story for it — "अध्याय 7"
+                  tells a newcomer nothing; "ब्रह्मा-विष्णु का विवाद" tells them everything. */}
+              <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
+                {(lang === 'hi' ? s.storyTitle?.hi : (s.storyTitle?.en || s.storyTitle?.hi))
+                  || s.sectionName || `${L(cfg.sectionLabel)} ${s.section}`}
+              </Text>
+              <Text style={[styles.sub, { color: theme.textMuted }]} numberOfLines={1}>
+                {s.storyTitle ? `${L(cfg.sectionLabel)} ${s.section} · ` : ''}{s.verseCount} {L(cfg.verseLabel)}
+              </Text>
             </View>
             <Chevron c={theme.gold2} />
           </Pressable>
