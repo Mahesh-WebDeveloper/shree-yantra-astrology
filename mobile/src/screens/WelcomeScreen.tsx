@@ -553,31 +553,6 @@ export function WelcomeScreen({ navigation }: any) {
         </View>
       </GoldBorderCard>
 
-      {/* List card */}
-      <GoldBorderCard style={{ marginTop: 20 }}>
-        {[
-          { label: 'My Profile', lkey: 'nav.profile', route: 'Profile', danger: false, icon: () => <><Path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><Circle cx={12} cy={7} r={4} /></> },
-          { label: 'Manage Subscription', lkey: 'nav.subscription', route: 'ManageSubscription', danger: false, icon: () => <><Rect x={2} y={5} width={20} height={14} rx={2} /><Line x1={2} y1={10} x2={22} y2={10} /></> },
-        ].map((row, i, arr) => {
-          const ic = row.danger ? (theme.isDark ? '#f59f9f' : '#c0392b') : theme.gold1;
-          return (
-            <Pressable
-              key={row.label}
-              onPress={() => { hTap(); navigation.navigate(row.route); }}
-              android_ripple={{ color: theme.ripple }}
-              style={({ pressed }) => [styles.listRow, { borderBottomColor: theme.isDark ? 'rgba(201,150,46,0.10)' : theme.line }, i === arr.length - 1 && { borderBottomWidth: 0 }, pressed && { transform: [{ scale: 0.985 }] }]}
-            >
-              <View style={styles.listLeft}>
-                <View style={[styles.listIc, { borderColor: row.danger ? 'rgba(245,100,100,0.25)' : (theme.isDark ? 'rgba(246,210,122,0.20)' : theme.cardBorder), backgroundColor: row.danger ? 'rgba(245,100,100,0.06)' : (theme.isDark ? 'rgba(0,0,0,0.5)' : '#f8fafc') }]}>
-                  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={ic} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">{row.icon()}</Svg>
-                </View>
-                <Text style={[styles.listLabel, { color: theme.text }]}>{t(row.lkey, row.label)}</Text>
-              </View>
-              <Chevron c={theme.isDark ? 'rgba(233,184,80,0.6)' : theme.gold3} size={18} />
-            </Pressable>
-          );
-        })}
-      </GoldBorderCard>
     </Screen>
   );
 }

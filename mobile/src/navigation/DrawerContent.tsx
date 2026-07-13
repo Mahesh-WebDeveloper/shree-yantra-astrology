@@ -147,7 +147,6 @@ const NAV: Array<
   { divider: true },
   { label: 'My Profile', icon: 'user', route: 'Profile', tab: 'Profile' },
   { label: 'Notifications', icon: 'bell', route: 'Notifications', stack: true },
-  { label: 'Manage Subscription', icon: 'crown', route: 'ManageSubscription', stack: true },
   { label: 'Help & Support', icon: 'help', route: 'Help', stack: true },
   { label: 'Logout', icon: 'logout', route: 'PhoneAuth', stack: true, logout: true },
 ];
