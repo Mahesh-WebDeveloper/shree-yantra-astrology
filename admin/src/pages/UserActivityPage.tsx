@@ -342,14 +342,27 @@ function UserDetailDrawer({ id, onClose }: { id: string; onClose: () => void }) 
             {/* locations */}
             <div className="rounded-md border border-border bg-background p-3">
               <h3 className="text-sm font-semibold">Locations</h3>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">Approximate, from IP.</p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                <span className="font-medium text-success">GPS</span> = exact (device, with permission).{' '}
+                <span className="font-medium">IP</span> = approximate — mobile carriers (Jio/Airtel) route users through
+                a shared gateway, so the IP city is often the wrong city.
+              </p>
               <div className="mt-2 grid gap-1.5">
                 {d.locations.length === 0 && <p className="text-xs text-muted-foreground">No locations recorded.</p>}
                 {d.locations.map((location, index) => (
                   <div key={`${location.city}-${location.region}-${location.country}-${index}`} className="flex items-center justify-between gap-2 rounded-md px-1 py-1 text-xs transition-all hover:bg-muted/50">
                     <span className="flex min-w-0 items-center gap-1.5">
-                      <MapPin className="size-3 shrink-0 text-accent" />
+                      <MapPin className={`size-3 shrink-0 ${location.locSource === 'gps' ? 'text-success' : 'text-accent'}`} />
                       <span className="truncate">{[location.city, location.region, location.country].filter(Boolean).join(', ') || 'Unknown'}</span>
+                      <span
+                        className={`shrink-0 rounded px-1 py-px text-[10px] font-medium ${
+                          location.locSource === 'gps'
+                            ? 'bg-success/15 text-success'
+                            : 'bg-muted text-muted-foreground'
+                        }`}
+                      >
+                        {location.locSource === 'gps' ? 'GPS' : 'IP · approx'}
+                      </span>
                     </span>
                     <span className="shrink-0 text-muted-foreground">
                       {location.count.toLocaleString('en-IN')} · {relativeTime(location.lastSeen)}
@@ -566,8 +579,16 @@ export default function UserActivityPage() {
                           <td className="border-b border-border px-3 py-3">
                             {user.city || user.country ? (
                               <span className="inline-flex items-center gap-1 text-xs">
-                                <MapPin className="size-3 shrink-0 text-accent" />
+                                <MapPin className={`size-3 shrink-0 ${user.locSource === 'gps' ? 'text-success' : 'text-accent'}`} />
                                 <span className="truncate">{[user.city, user.country].filter(Boolean).join(', ')}</span>
+                                <span
+                                  className={`shrink-0 rounded px-1 py-px text-[10px] font-medium ${
+                                    user.locSource === 'gps' ? 'bg-success/15 text-success' : 'bg-muted text-muted-foreground'
+                                  }`}
+                                  title={user.locSource === 'gps' ? 'Exact — from device GPS' : 'Approximate — from IP (carrier gateway, often the wrong city)'}
+                                >
+                                  {user.locSource === 'gps' ? 'GPS' : 'IP'}
+                                </span>
                               </span>
                             ) : (
                               <span className="text-xs text-muted-foreground">—</span>

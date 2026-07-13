@@ -221,6 +221,7 @@ export interface ActivityUser {
   appVersion?: string
   city?: string
   country?: string
+  locSource?: 'gps' | 'ip' | null
   events: number
   sessions: number
   devices: number
@@ -263,7 +264,7 @@ export interface ActivityUserDetail {
   }
   summary: { events: number; sessions: number; firstSeen?: string; lastSeen?: string; online: boolean }
   devices: { deviceId: string; device?: string; platform?: string; osVersion?: string; appVersion?: string; lastSeen?: string; events: number }[]
-  locations: { city?: string; region?: string; country?: string; count: number; lastSeen?: string }[]
+  locations: { city?: string; region?: string; country?: string; locSource?: 'gps' | 'ip' | null; count: number; lastSeen?: string }[]
   topScreens: { screen: string; count: number }[]
   perDay: { date: string; count: number }[]
   timeline: ActivityTimelineEvent[]

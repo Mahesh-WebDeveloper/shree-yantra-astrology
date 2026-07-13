@@ -16,13 +16,16 @@ const analyticsEventSchema = new mongoose.Schema(
     appVersion: String,
     deviceBrand: String,  // e.g. 'Samsung' (Platform.constants — no extra permission)
     deviceModel: String,  // e.g. 'SM-G991B'
-    // location (IP se)
+    // location — 'gps' (device, accurate, user ne permission di) ya 'ip' (approx, carrier CGNAT
+    // ki wajah se Indian mobile par galat ho sakti hai — isliye GPS ko prefer karte hain)
+    locSource: { type: String, enum: ['gps', 'ip'], index: true },
     ip: String,
     country: String,
     region: String,
     city: String,
     lat: Number,
     lng: Number,
+    accuracy: Number,  // GPS accuracy in metres (gps only)
   },
   { timestamps: true }
 );

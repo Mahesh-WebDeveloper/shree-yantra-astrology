@@ -1008,7 +1008,11 @@ export interface AnalyticsEventIn { name: string; screen?: string; props?: any }
 export const trackAnalytics = (body: {
   deviceId: string; sessionId: string; userId?: string | null;
   platform?: string; osVersion?: string | number; appVersion?: string;
-  deviceBrand?: string; deviceModel?: string; events: AnalyticsEventIn[];
+  deviceBrand?: string; deviceModel?: string;
+  // real device coords (permission granted) — backend reverse-geocodes these to the
+  // true city; without them it falls back to (inaccurate) IP geolocation
+  gps?: { lat: number; lng: number; accuracy?: number };
+  events: AnalyticsEventIn[];
 }) => post<{ ok: boolean; tracked: number }>('/api/analytics/track', body);
 
 // ── Kundli Milan (Gun Milan / Ashtakoot) ──

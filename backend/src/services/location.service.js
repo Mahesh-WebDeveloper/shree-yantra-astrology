@@ -461,4 +461,40 @@ async function resolveLocation({ provider, placeId, query, description, lat, lng
   throw Object.assign(new Error(`Place nahi mila: ${q}`), { status: 404 });
 }
 
-module.exports = { searchLocations, resolveLocation };
+/* ── REVERSE GEOCODE (GPS lat/lng → city) ──────────────────────────────────
+ * Analytics uses this when the device sends real GPS coords. IP-geo is unreliable
+ * on Indian mobile networks (Jio/Airtel CGNAT: the whole carrier block maps to one
+ * city), so accurate city comes from the device, and we turn coords into a name here.
+ * Cached by coords rounded to ~1km so a user's event stream hits the API once.
+ */
+const NOMINATIM_REVERSE_URL = 'https://nominatim.openstreetmap.org/reverse';
+const REVERSE_CACHE = new Map();
+
+async function reverseGeocode(lat, lng) {
+  const la = Number(lat), ln = Number(lng);
+  if (!Number.isFinite(la) || !Number.isFinite(ln)) return null;
+  const key = `${la.toFixed(2)},${ln.toFixed(2)}`; // ~1.1 km bucket
+  if (REVERSE_CACHE.has(key)) return REVERSE_CACHE.get(key);
+
+  let out = null;
+  try {
+    const qs = new URLSearchParams({
+      lat: String(la), lon: String(ln), format: 'jsonv2', zoom: '10', addressdetails: '1',
+    });
+    const j = await fetchJson(`${NOMINATIM_REVERSE_URL}?${qs.toString()}`, {
+      headers: { 'User-Agent': USER_AGENT },
+    });
+    const a = (j && j.address) || {};
+    const city = addressPart(a, ['city', 'town', 'village', 'municipality', 'suburb', 'county', 'state_district']);
+    const region = addressPart(a, ['state', 'region']);
+    const country = String(a.country_code || '').toUpperCase() || undefined;
+    if (city || region || country) out = { city: city || undefined, region: region || undefined, country };
+  } catch (_) {
+    out = null; // best-effort — caller falls back to storing raw coords
+  }
+  REVERSE_CACHE.set(key, out);
+  if (REVERSE_CACHE.size > 5000) REVERSE_CACHE.clear();
+  return out;
+}
+
+module.exports = { searchLocations, resolveLocation, reverseGeocode };

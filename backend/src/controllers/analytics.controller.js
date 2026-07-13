@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const asyncHandler = require('../middleware/asyncHandler');
 const AnalyticsEvent = require('../models/AnalyticsEvent');
 const User = require('../models/User');
+const { reverseGeocode } = require('../services/location.service');
 
 const ONLINE_WINDOW_MS = 2 * 60 * 1000; // "online now" = any event in the last 2 minutes
 
@@ -16,22 +17,46 @@ function clientIp(req) {
 // POST /api/analytics/track  { deviceId, sessionId, userId?, platform, osVersion, appVersion, events:[{name, screen?, props?}] }
 // Public (app se aata hai). req.user agar ho to wahi userId, warna body se.
 exports.track = asyncHandler(async (req, res) => {
-  const { deviceId, sessionId, platform, osVersion, appVersion, deviceBrand, deviceModel, events } = req.body;
+  const { deviceId, sessionId, platform, osVersion, appVersion, deviceBrand, deviceModel, events, gps } = req.body;
   if (!Array.isArray(events) || !events.length) return res.status(400).json({ error: 'events[] chahiye' });
 
   const ip = clientIp(req);
-  const geo = geoip.lookup(ip) || null; // private/localhost IP par null
   const userId = (req.user && req.user._id) || req.body.userId || null;
+
+  // LOCATION: prefer real device GPS (accurate). IP-geo is only a fallback — on Indian
+  // mobile carriers (Jio/Airtel CGNAT) a whole IP block maps to one city, so IP city is
+  // frequently wrong (e.g. a Jodhpur user showing as Hyderabad).
+  let loc = { locSource: undefined, country: undefined, region: undefined, city: undefined, lat: undefined, lng: undefined, accuracy: undefined };
+  const hasGps = gps && Number.isFinite(Number(gps.lat)) && Number.isFinite(Number(gps.lng));
+  if (hasGps) {
+    const place = await reverseGeocode(gps.lat, gps.lng).catch(() => null);
+    loc = {
+      locSource: 'gps',
+      lat: Number(gps.lat),
+      lng: Number(gps.lng),
+      accuracy: Number.isFinite(Number(gps.accuracy)) ? Number(gps.accuracy) : undefined,
+      city: place ? place.city : undefined,
+      region: place ? place.region : undefined,
+      country: place ? place.country : undefined,
+    };
+  } else {
+    const geo = geoip.lookup(ip) || null; // private/localhost IP par null
+    if (geo) {
+      loc = {
+        locSource: 'ip',
+        country: geo.country, region: geo.region, city: geo.city,
+        lat: geo.ll ? geo.ll[0] : undefined,
+        lng: geo.ll ? geo.ll[1] : undefined,
+        accuracy: undefined,
+      };
+    }
+  }
 
   const base = {
     deviceId, sessionId, user: userId || undefined, platform, osVersion, appVersion,
     deviceBrand, deviceModel,
     ip,
-    country: geo ? geo.country : undefined,
-    region: geo ? geo.region : undefined,
-    city: geo ? geo.city : undefined,
-    lat: geo && geo.ll ? geo.ll[0] : undefined,
-    lng: geo && geo.ll ? geo.ll[1] : undefined,
+    ...loc,
   };
   const docs = events.slice(0, 50).map((e) => ({
     ...base,
@@ -138,11 +163,12 @@ exports.activityUsers = asyncHandler(async (req, res) => {
       deviceModel: { $first: '$deviceModel' },
       city: { $first: '$city' },
       country: { $first: '$country' },
+      locSource: { $first: '$locSource' },
       events: { $sum: 1 },
       sessions: { $addToSet: '$sessionId' },
       devices: { $addToSet: '$deviceId' },
     } },
-    { $project: { lastSeen: 1, lastScreen: 1, lastEvent: 1, platform: 1, osVersion: 1, appVersion: 1, deviceBrand: 1, deviceModel: 1, city: 1, country: 1, events: 1, sessions: { $size: '$sessions' }, devices: { $size: '$devices' } } },
+    { $project: { lastSeen: 1, lastScreen: 1, lastEvent: 1, platform: 1, osVersion: 1, appVersion: 1, deviceBrand: 1, deviceModel: 1, city: 1, country: 1, locSource: 1, events: 1, sessions: { $size: '$sessions' }, devices: { $size: '$devices' } } },
     { $sort: { lastSeen: -1 } },
     { $facet: {
       total: [{ $count: 'n' }],
@@ -179,6 +205,7 @@ exports.activityUsers = asyncHandler(async (req, res) => {
       appVersion: r.appVersion || null,
       city: r.city || null,
       country: r.country || null,
+      locSource: r.locSource || null,
       events: r.events,
       sessions: r.sessions,
       devices: r.devices,
@@ -213,9 +240,9 @@ exports.activityUser = asyncHandler(async (req, res) => {
     ]),
     AnalyticsEvent.aggregate([
       { $match: { user: uid, city: { $nin: [null, ''] } } },
-      { $group: { _id: { city: '$city', region: '$region', country: '$country' }, count: { $sum: 1 }, lastSeen: { $max: '$createdAt' } } },
+      { $group: { _id: { city: '$city', region: '$region', country: '$country', locSource: '$locSource' }, count: { $sum: 1 }, lastSeen: { $max: '$createdAt' } } },
       { $sort: { lastSeen: -1 } }, { $limit: 8 },
-      { $project: { _id: 0, city: '$_id.city', region: '$_id.region', country: '$_id.country', count: 1, lastSeen: 1 } },
+      { $project: { _id: 0, city: '$_id.city', region: '$_id.region', country: '$_id.country', locSource: '$_id.locSource', count: 1, lastSeen: 1 } },
     ]),
     AnalyticsEvent.aggregate([
       { $match: { user: uid, name: 'screen_view', screen: { $ne: null } } },
