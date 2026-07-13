@@ -187,7 +187,7 @@ const FilterChip = React.memo(function FilterChip({ active, label, icon, theme, 
           {
             borderColor: active ? theme.gold1 : (theme.isDark ? 'rgba(220,180,80,0.18)' : 'rgba(176,115,22,0.2)'),
             borderWidth: active ? 1.5 : 1,
-            backgroundColor: active ? 'transparent' : (theme.isDark ? 'rgba(16,16,21,0.92)' : '#ffffff'),
+            backgroundColor: active ? 'transparent' : theme.cardBg,
           },
         ]}
       >
@@ -200,7 +200,11 @@ const FilterChip = React.memo(function FilterChip({ active, label, icon, theme, 
 });
 
 /* One scripture card — memoized so grids don't fully re-render on every
-   save/progress tick; spring press scale for a premium feel. */
+   save/progress tick; spring press scale for a premium feel.
+
+   Card surfaces here use the OPAQUE theme.cardBg, never a translucent rgba black:
+   the spring-scale Animated.View promotes the card to a hardware layer, and Android
+   composites a translucent layer against white — which turned the cards white in dark mode. */
 const BookCard = React.memo(function BookCard({ item, title, subtitle, theme, hi, dim, saved, onOpen, onToggleSave }: {
   item: LibraryItem; title: string; subtitle: string; theme: Theme; hi: boolean; dim: string;
   saved: boolean; onOpen: (bookId: string) => void; onToggleSave: (id: string) => void;
@@ -216,7 +220,7 @@ const BookCard = React.memo(function BookCard({ item, title, subtitle, theme, hi
         onPressIn={pressIn}
         onPressOut={pressOut}
         android_ripple={{ color: theme.ripple }}
-        style={[styles.vedaCard, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.6)' : '#ffffff' }]}
+        style={[styles.vedaCard, { borderColor: theme.cardBorder, backgroundColor: theme.cardBg }]}
       >
         <LinearGradient colors={[ac + 'cc', '#0c0c18']} start={{ x: 0.2, y: 0.1 }} end={{ x: 0.8, y: 1 }} style={styles.vedaCover}>
           <Text style={styles.vedaCoverOm}>ॐ</Text>
@@ -843,7 +847,7 @@ export function LibraryScreen({ navigation }: any) {
                 onPress={() => openCmsBook(book)}
                 style={({ pressed }) => [
                   styles.mantra,
-                  { backgroundColor: theme.isDark ? 'rgba(0,0,0,0.58)' : '#ffffff', borderColor: theme.cardBorder },
+                  { backgroundColor: theme.cardBg, borderColor: theme.cardBorder },
                   pressed && { backgroundColor: theme.isDark ? 'rgba(230,194,119,0.06)' : 'rgba(176,115,22,0.06)' },
                 ]}
               >
