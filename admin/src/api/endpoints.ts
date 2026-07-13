@@ -205,6 +205,7 @@ export interface ScreenContent {
 export interface ActivityUser {
   id: string
   name?: string
+  deleted?: boolean   // account delete ho chuka, par activity data maujood hai
   phone?: string
   email?: string
   plan: 'free' | 'premium'
@@ -252,6 +253,7 @@ export interface ActivityUserDetail {
   user: {
     id: string
     name?: string
+    deleted?: boolean   // account delete ho chuka, par activity data maujood hai
     phone?: string
     email?: string
     plan: 'free' | 'premium'

@@ -255,10 +255,16 @@ function UserDetailDrawer({ id, onClose }: { id: string; onClose: () => void }) 
                   </p>
                   <p className="mt-0.5 break-all text-xs text-muted-foreground">{d.user.phone || d.user.email || d.user.id}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
+                    {d.user.deleted ? <Badge tone="danger">account deleted</Badge> : null}
                     <Badge tone={d.user.plan === 'premium' ? 'warning' : 'neutral'}>{d.user.plan}</Badge>
                     {d.summary.online ? <Badge tone="success">online</Badge> : <Badge>offline</Badge>}
                     {d.user.blocked ? <Badge tone="danger">blocked</Badge> : null}
                   </div>
+                  {d.user.deleted ? (
+                    <p className="mt-2 text-[11px] text-muted-foreground">
+                      This account no longer exists — its past activity is kept here.
+                    </p>
+                  ) : null}
                 </div>
               </div>
               <div className="mt-3 grid gap-1 text-xs text-muted-foreground">
@@ -510,7 +516,8 @@ export default function UserActivityPage() {
                         <Avatar name={user.name} avatar={user.avatar} />
                         <div className="min-w-0 flex-1">
                           <p className="flex items-center gap-1.5 truncate font-semibold">
-                            {user.name || 'Unnamed user'}
+                            <span className={user.deleted ? 'italic text-muted-foreground' : undefined}>{user.name || 'Unnamed user'}</span>
+                            {user.deleted ? <Badge tone="danger">deleted</Badge> : null}
                             {user.plan === 'premium' ? <Crown className="size-3.5 shrink-0 text-warning" /> : null}
                           </p>
                           <p className="mt-0.5 truncate text-xs text-muted-foreground">{user.phone || user.email || user.id}</p>
@@ -557,7 +564,8 @@ export default function UserActivityPage() {
                               <Avatar name={user.name} avatar={user.avatar} />
                               <div className="min-w-0">
                                 <p className="flex items-center gap-1.5 truncate font-medium">
-                                  {user.name || 'Unnamed user'}
+                                  <span className={user.deleted ? 'italic text-muted-foreground' : undefined}>{user.name || 'Unnamed user'}</span>
+                                  {user.deleted ? <Badge tone="danger">deleted</Badge> : null}
                                   {user.plan === 'premium' ? <Crown className="size-3.5 shrink-0 text-warning" /> : null}
                                 </p>
                                 <p className="truncate text-xs text-muted-foreground">{user.phone || user.email || user.id}</p>

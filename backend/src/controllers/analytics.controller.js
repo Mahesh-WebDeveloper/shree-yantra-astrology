@@ -185,16 +185,21 @@ exports.activityUsers = asyncHandler(async (req, res) => {
   const onlineCut = Date.now() - ONLINE_WINDOW_MS;
 
   const out = items.map((r) => {
-    const u = byId.get(String(r._id)) || {};
+    const u = byId.get(String(r._id));
+    // user delete ho chuka hai par uske events abhi bhi hain (orphan ref) → data
+    // fenkte nahi, saaf-saaf "Deleted user" mark karke dikhate hain.
+    const gone = !u;
+    const uu = u || {};
     return {
       id: r._id,
-      name: u.name || 'Unknown',
-      phone: u.phone || null,
-      email: u.email || null,
-      plan: u.plan || 'free',
-      blocked: !!u.blocked,
-      avatar: (u.profile && u.profile.avatar) || null,
-      joinedAt: u.createdAt || null,
+      name: gone ? 'Deleted user' : (uu.name || 'Unknown'),
+      deleted: gone,
+      phone: uu.phone || null,
+      email: uu.email || null,
+      plan: uu.plan || 'free',
+      blocked: !!uu.blocked,
+      avatar: (uu.profile && uu.profile.avatar) || null,
+      joinedAt: uu.createdAt || null,
       online: new Date(r.lastSeen).getTime() > onlineCut,
       lastSeen: r.lastSeen,
       lastScreen: r.lastScreen || null,
@@ -261,10 +266,19 @@ exports.activityUser = asyncHandler(async (req, res) => {
       .select('name screen props platform city country deviceBrand deviceModel sessionId createdAt').lean(),
   ]);
 
-  if (!user) return res.status(404).json({ error: 'User nahi mila' });
   const s = summary[0] || { events: 0, sessions: 0, firstSeen: null, lastSeen: null };
+
+  // Account delete ho chuka hai par events abhi bhi hain → 404 mat do (dashboard
+  // "Could not load" dikhata tha). Activity dikhao, user ko "Deleted user" mark karo.
+  // Sirf tab 404 jab na user ho aur na hi koi activity.
+  if (!user && !s.events) return res.status(404).json({ error: 'User nahi mila' });
+
+  const userOut = user
+    ? { id: user._id, name: user.name, deleted: false, phone: user.phone || null, email: user.email || null, plan: user.plan, blocked: !!user.blocked, joinedAt: user.createdAt, lastLoginAt: user.lastLoginAt || null, interests: user.interests || [], avatar: (user.profile && user.profile.avatar) || null, place: (user.profile && user.profile.place) || null }
+    : { id: uid, name: 'Deleted user', deleted: true, phone: null, email: null, plan: 'free', blocked: false, joinedAt: null, lastLoginAt: null, interests: [], avatar: null, place: null };
+
   res.json({
-    user: { id: user._id, name: user.name, phone: user.phone || null, email: user.email || null, plan: user.plan, blocked: !!user.blocked, joinedAt: user.createdAt, lastLoginAt: user.lastLoginAt || null, interests: user.interests || [], avatar: (user.profile && user.profile.avatar) || null, place: (user.profile && user.profile.place) || null },
+    user: userOut,
     summary: { ...s, online: s.lastSeen ? new Date(s.lastSeen).getTime() > Date.now() - ONLINE_WINDOW_MS : false },
     devices: devices.map((d) => ({ deviceId: d._id, device: [d.deviceBrand, d.deviceModel].filter(Boolean).join(' ') || null, platform: d.platform, osVersion: d.osVersion, appVersion: d.appVersion, lastSeen: d.lastSeen, events: d.events })),
     locations, topScreens, perDay, timeline,
