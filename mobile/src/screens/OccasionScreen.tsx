@@ -9,6 +9,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { fonts } from '../theme/tokens';
 import { hTap, hSelect } from '../lib/haptics';
 import { track } from '../lib/analytics';
+import { updateUserData, hydrateUserData, getUserDataSnapshot } from '../lib/userDataSync';
 import { useLang } from '../i18n/LanguageProvider';
 import { occasionById } from '../data/occasions';
 import { ExplainButton } from '../components/ExplainButton';
@@ -113,9 +114,31 @@ export function OccasionScreen({ route, navigation }: any) {
   }, [id, lang, curated]);
 
   // persisted samagri checklist
-  const CK = `sy.samagri.${id}`;
-  useEffect(() => { AsyncStorage.getItem(CK).then((v) => { if (v) try { setChecked(new Set(JSON.parse(v))); } catch {} }); }, [CK]);
-  const toggleCheck = (i: number) => { hSelect(); ease(); setChecked((s) => { const n = new Set(s); n.has(i) ? n.delete(i) : n.add(i); AsyncStorage.setItem(CK, JSON.stringify([...n])).catch(() => {}); return n; }); };
+  // samagri checklist — ab server-backed (kisi bhi phone par wapas milegi)
+  const CK = `sy.samagri.${id}`; // legacy key — ek baar migrate karne ke liye
+  useEffect(() => {
+    let on = true;
+    (async () => {
+      await hydrateUserData();
+      const legacy = await AsyncStorage.getItem(CK).catch(() => null);
+      if (legacy) {
+        try { updateUserData({ samagri: { [id]: { items: JSON.parse(legacy), at: 1 } } }); } catch {}
+        AsyncStorage.removeItem(CK).catch(() => {});
+      }
+      const e = getUserDataSnapshot().samagri[id];
+      if (on && e?.items) setChecked(new Set(e.items));
+    })();
+    return () => { on = false; };
+  }, [id, CK]);
+  const toggleCheck = (i: number) => {
+    hSelect(); ease();
+    setChecked((s) => {
+      const n = new Set(s);
+      n.has(i) ? n.delete(i) : n.add(i);
+      updateUserData({ samagri: { [id]: { items: [...n], at: Date.now() } } });
+      return n;
+    });
+  };
 
   const samagriItems: { label: string; reason?: string }[] = useMemo(() => {
     if (curated) return curated.samagri.map((s) => ({ label: L(s.name), reason: L(s.reason) }));

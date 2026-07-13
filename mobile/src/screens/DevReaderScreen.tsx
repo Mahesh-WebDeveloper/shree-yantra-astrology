@@ -10,6 +10,7 @@ import { ExplainButton } from '../components/ExplainButton';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts } from '../theme/tokens';
 import { hSelect, hTap } from '../lib/haptics';
+import { updateUserData, hydrateUserData, getUserDataSnapshot } from '../lib/userDataSync';
 import { track } from '../lib/analytics';
 import { useLang } from '../i18n/LanguageProvider';
 import { AARTIS } from '../data/aartis';
@@ -40,17 +41,39 @@ export function DevReaderScreen({ route, navigation }: any) {
   useEffect(() => { AsyncStorage.getItem(FSCALE_KEY).then((v) => { const n = parseFloat(v || ''); if (n >= 0.8 && n <= 1.8) setScale(n); }); }, []);
   const bump = (d: number) => { hSelect(); setScale((s) => { const n = Math.max(0.85, Math.min(1.7, +(s + d).toFixed(2))); AsyncStorage.setItem(FSCALE_KEY, String(n)).catch(() => {}); return n; }); };
 
-  // jaap counter (mantra only), persisted. jaap = total beads; target = malas × 108.
+  // jaap counter (mantra only). Ab SERVER-BACKED — count kisi bhi phone par wapas milta
+  // hai. Local turant likhta hai, server debounced sync hota hai (merge me count ka MAX
+  // liya jaata hai, isliye mala kabhi peeche nahi jaati).
   const isMantra = kind === 'mantra';
-  const JK = `sy.jaap.${id}`;
+  const JK = `sy.jaap.${id}`; // legacy key — sirf ek baar migrate karne ke liye
   const [jaap, setJaap] = useState(0);
   const [malas, setMalas] = useState(1);
   const target = malas * 108;
   const done = isMantra && jaap >= target;
   const roundsDone = Math.floor(jaap / 108);
   const bead = jaap % 108 === 0 && jaap > 0 ? 108 : jaap % 108; // show 108 at a mala boundary
-  const persist = (j: number, m: number) => AsyncStorage.setItem(JK, JSON.stringify({ j, m })).catch(() => {});
-  useEffect(() => { if (!isMantra) return; AsyncStorage.getItem(JK).then((v) => { if (v) try { const o = JSON.parse(v); setJaap(o.j || 0); setMalas(o.m || 1); } catch {} }); }, [JK, isMantra]);
+  const persist = (j: number, m: number) => updateUserData({ jaap: { [id]: { j, m, at: Date.now() } } });
+
+  // sync store se load + purane local count ko ek baar migrate karo (kuch kho na jaaye)
+  useEffect(() => {
+    if (!isMantra) return;
+    let on = true;
+    (async () => {
+      await hydrateUserData();
+      const legacyRaw = await AsyncStorage.getItem(JK).catch(() => null);
+      if (legacyRaw) {
+        try {
+          const o = JSON.parse(legacyRaw);
+          // at:1 → server par jo hai wo jeetega, par count ka MAX phir bhi bachega
+          updateUserData({ jaap: { [id]: { j: o.j || 0, m: o.m || 1, at: 1 } } });
+        } catch {}
+        AsyncStorage.removeItem(JK).catch(() => {});
+      }
+      const e = getUserDataSnapshot().jaap[id];
+      if (on && e) { setJaap(e.j || 0); setMalas(e.m || 1); }
+    })();
+    return () => { on = false; };
+  }, [id, isMantra, JK]);
 
   const speakDone = () => {
     Speech.stop();

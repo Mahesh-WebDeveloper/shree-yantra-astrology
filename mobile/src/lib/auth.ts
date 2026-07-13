@@ -13,6 +13,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setAuthToken, AuthUser, getMe } from './api';
 import { secureGet, secureSet, secureDelete, migrateToSecure } from './secureStore';
+import { syncUserData, clearUserData } from './userDataSync';
 
 const TOKEN_KEY = 'sy.token';
 const PREMIUM_KEY = 'sy.premium'; // entitlement — backup se restore hokar paywall bypass na ho
@@ -36,6 +37,7 @@ export async function saveAuth(token: string, user: AuthUser) {
   await secureSet(TOKEN_KEY, token);
   await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
   await syncLocalProfile(user);
+  syncUserData().catch(() => {}); // login → jaap/bookmarks/progress server se wapas
 }
 
 export async function clearAuth() {
@@ -46,6 +48,7 @@ export async function clearAuth() {
   await secureDelete(TOKEN_KEY);
   await AsyncStorage.removeItem(USER_KEY);
   if (prev?.id) await AsyncStorage.removeItem(`sy.chat.${prev.id}`).catch(() => {});
+  await clearUserData(); // agle user ko pichle user ke jaap/bookmarks na dikhein
 }
 
 export async function getStoredUser(): Promise<AuthUser | null> {
@@ -118,6 +121,9 @@ export async function getStartRoute(): Promise<'LanguageSelect' | 'Subscribe' | 
       }
       // offline / server down → cached data se aage badho
     }
+
+    // jaap counts / bookmarks / progress server se pull (background — splash na roke)
+    syncUserData().catch(() => {});
 
     const [prem, stored] = await Promise.all([secureGet(PREMIUM_KEY), getStoredUser()]);
     const user = fresh || stored;

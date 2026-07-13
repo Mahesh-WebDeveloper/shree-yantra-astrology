@@ -772,6 +772,20 @@ export const askAiAstrologer = (input: KundliInput & { name?: string; question: 
   // give it very generous room to avoid any "request timed out" error on cold (uncached) questions.
   post<AiAstrologerResponse>('/api/ai/ask-astrologer', { ...input, lang: apiLang }, 'POST', 180000);
 
+// ── User app-data sync (jaap counts, bookmarks, progress, samagri, prefs) ──
+// Server source-of-truth; PUT partial patch bhejta hai aur server MERGE karke
+// (jaap = MAX, baaki = last-write-wins) poora merged data wapas deta hai.
+export interface UserDataDto {
+  jaap: Record<string, { j: number; m: number; at: number }>;
+  saved: Record<string, { on: boolean; at: number }>;
+  progress: Record<string, { chapter: number; percent: number; at: number }>;
+  samagri: Record<string, { items: number[]; at: number }>;
+  prefs: Record<string, any>;
+}
+export const getUserData = () => get<{ data: UserDataDto }>('/api/me/data');
+export const putUserData = (patch: Partial<UserDataDto>) =>
+  post<{ data: UserDataDto }>('/api/me/data', patch, 'PUT');
+
 // ── Astrologer chat history — DB me all-time; app 2 din local cache karta hai ──
 export interface ChatTurnDto {
   id: string;

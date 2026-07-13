@@ -31,6 +31,7 @@ const notificationsCtrl = require('../controllers/notifications.controller');
 const appConfigCtrl = require('../controllers/appConfig.controller');
 const faqCtrl = require('../controllers/faq.controller');
 const analyticsCtrl = require('../controllers/analytics.controller');
+const userDataCtrl = require('../controllers/userData.controller');
 const screensCtrl = require('../controllers/screens.controller');
 const mediaCtrl = require('../controllers/media.controller');
 const locationCtrl = require('../controllers/location.controller');
@@ -250,6 +251,9 @@ router.post('/baby-names', aiCtrl.babyNames);
 router.post('/name-ask', aiCtrl.nameAsk);
 // optionalAuth: answer sabko milta hai; logged-in user ka turn history me save hota hai
 router.post('/ai/ask-astrologer', optionalAuth, aiCtrl.askAstrologer);
+// user app-data sync (protected) — jaap counts, bookmarks, progress, samagri, prefs
+router.get('/me/data', requireAuth, userDataCtrl.getData);
+router.put('/me/data', requireAuth, userDataCtrl.putData);
 // astrologer chat history (protected) — DB me all-time; app 2 din local cache karta hai
 router.get('/chat/history', requireAuth, aiCtrl.chatHistory);
 router.delete('/chat/history', requireAuth, aiCtrl.clearChatHistory);
