@@ -7,14 +7,15 @@
  * prompt. Combine with the backend user.plan via isPremiumNow().
  */
 import { useSyncExternalStore } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { secureGet, secureSet } from './secureStore';
 
 const KEY = 'sy.premium';
 let premium = false;
 const listeners = new Set<() => void>();
 
-// hydrate once at startup
-AsyncStorage.getItem(KEY).then((v) => {
+// hydrate once at startup. Entitlement SecureStore me hai (AsyncStorage nahi) — warna
+// Android Auto-Backup se restore hokar paywall bypass ho sakta tha.
+secureGet(KEY).then((v) => {
   if (v === '1' && !premium) { premium = true; listeners.forEach((l) => l()); }
 }).catch(() => {});
 
@@ -24,7 +25,7 @@ export function getPremium() { return premium; }
 export function setPremium(v: boolean) {
   if (premium === v) return;
   premium = v;
-  AsyncStorage.setItem(KEY, v ? '1' : '0').catch(() => {});
+  secureSet(KEY, v ? '1' : '0').catch(() => {});
   listeners.forEach((l) => l());
 }
 

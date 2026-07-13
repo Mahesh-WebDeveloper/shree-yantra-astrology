@@ -24,7 +24,7 @@
       "package": "com.shreeyantra.astrology",
       "googleServicesFile": "./google-services.json",
       "usesCleartextTraffic": true,
-      "allowBackup": false,
+      "allowBackup": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#4a0c10"
@@ -43,7 +43,9 @@
         {
           "icon": "./assets/notification-icon.png",
           "color": "#e9b850",
-          "sounds": ["./assets/bell.wav"]
+          "sounds": [
+            "./assets/bell.wav"
+          ]
         }
       ],
       [
@@ -71,7 +73,8 @@
       "expo-audio",
       "@react-native-community/datetimepicker",
       "expo-sharing",
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      "expo-secure-store"
     ],
     "extra": {
       "eas": {

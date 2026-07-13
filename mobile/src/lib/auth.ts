@@ -12,8 +12,10 @@ import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setAuthToken, AuthUser, getMe } from './api';
+import { secureGet, secureSet, secureDelete, migrateToSecure } from './secureStore';
 
 const TOKEN_KEY = 'sy.token';
+const PREMIUM_KEY = 'sy.premium'; // entitlement — backup se restore hokar paywall bypass na ho
 const USER_KEY = 'sy.user';
 const PROFILE_KEY = 'sy.profile'; // birth.ts isi se padhta hai
 
@@ -29,7 +31,10 @@ function syncLocalProfile(user: AuthUser) {
 
 export async function saveAuth(token: string, user: AuthUser) {
   setAuthToken(token);
-  await AsyncStorage.multiSet([[TOKEN_KEY, token], [USER_KEY, JSON.stringify(user)]]);
+  // TOKEN → SecureStore (Keystore-encrypted, device-bound). Cloud backup me nahi
+  // jaata, isliye reinstall/doosre device par restore hokar login nahi kar sakta.
+  await secureSet(TOKEN_KEY, token);
+  await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
   await syncLocalProfile(user);
 }
 
@@ -38,7 +43,8 @@ export async function clearAuth() {
   // pichle user ki chat na dikhe (DB me uski history surakshit rehti hai).
   const prev = await getStoredUser().catch(() => null);
   setAuthToken(null);
-  await AsyncStorage.multiRemove([TOKEN_KEY, USER_KEY]);
+  await secureDelete(TOKEN_KEY);
+  await AsyncStorage.removeItem(USER_KEY);
   if (prev?.id) await AsyncStorage.removeItem(`sy.chat.${prev.id}`).catch(() => {});
 }
 
@@ -54,7 +60,8 @@ export async function getStoredUser(): Promise<AuthUser | null> {
 /** App start par token storage se load karke api client ko de do. */
 export async function bootstrapAuth(): Promise<boolean> {
   try {
-    const token = await AsyncStorage.getItem(TOKEN_KEY);
+    await migrateToSecure([TOKEN_KEY, PREMIUM_KEY]); // purane plaintext token ko Keystore me le jao
+    const token = await secureGet(TOKEN_KEY);
     if (token) { setAuthToken(token); return true; }
   } catch {}
   return false;
@@ -77,7 +84,8 @@ export function isProfileComplete(user: AuthUser | null): boolean {
  */
 export async function getStartRoute(): Promise<'LanguageSelect' | 'Subscribe' | 'BirthDetails' | 'Main'> {
   try {
-    const token = await AsyncStorage.getItem(TOKEN_KEY);
+    await migrateToSecure([TOKEN_KEY, PREMIUM_KEY]); // pehle launch par plaintext → Keystore
+    const token = await secureGet(TOKEN_KEY);
     if (!token) return 'LanguageSelect'; // fresh: pick language → login → subscribe → …
     setAuthToken(token);
 
@@ -111,7 +119,7 @@ export async function getStartRoute(): Promise<'LanguageSelect' | 'Subscribe' | 
       // offline / server down → cached data se aage badho
     }
 
-    const [prem, stored] = await Promise.all([AsyncStorage.getItem('sy.premium'), getStoredUser()]);
+    const [prem, stored] = await Promise.all([secureGet(PREMIUM_KEY), getStoredUser()]);
     const user = fresh || stored;
     const subscribed = prem === '1' || user?.plan === 'premium';
     if (!subscribed) return 'Subscribe';
