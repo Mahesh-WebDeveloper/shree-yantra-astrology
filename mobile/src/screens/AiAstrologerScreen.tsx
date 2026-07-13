@@ -7,7 +7,9 @@ import { Card } from '../components/Card';
 import { SpeakButton } from '../components/SpeakButton';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts, radii } from '../theme/tokens';
-import { askAiAstrologer, AiAstrologerResponse } from '../lib/api';
+import { askAiAstrologer, AiAstrologerResponse, getChatHistory, ChatTurnDto } from '../lib/api';
+import { loadCachedChat, saveCachedChat, CachedTurn } from '../lib/chatCache';
+import { getStoredUser } from '../lib/auth';
 import { birthFromProfile } from '../lib/birth';
 import { hTap } from '../lib/haptics';
 import { track } from '../lib/analytics';
@@ -24,6 +26,7 @@ type ChatTurn = {
   response?: AiAstrologerResponse;
   loading?: boolean;
   error?: string;
+  createdAt?: string; // ISO — history ordering + 2-din cache pruning ke liye
 };
 
 function SparkIcon({ color, size = 18 }: { color: string; size?: number }) {
@@ -52,6 +55,12 @@ export function AiAstrologerScreen({ navigation, route }: any) {
   const [question, setQuestion] = useState('');
   const [history, setHistory] = useState<ChatTurn[]>([]);
   const [sending, setSending] = useState(false);
+  // chat history: 2 din local cache (turant) + server par all-time (purani chat load-more se)
+  const [userId, setUserId] = useState<string | null>(null);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const initialSentRef = useRef(false);
   const scrollRef = useRef<any>(null);
   const historyYRef = useRef(0);
   // the newest answer is prepended to the TOP of the history list → scroll up to it so the
@@ -80,10 +89,11 @@ export function AiAstrologerScreen({ navigation, route }: any) {
     const id = retryTurnId || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     setQuestion('');
     setSending(true);
+    const now = new Date().toISOString();
     if (retryTurnId) {
-      setHistory((h) => h.map((turn) => (turn.id === retryTurnId ? { id, question: q, loading: true } : turn)));
+      setHistory((h) => h.map((turn) => (turn.id === retryTurnId ? { id, question: q, loading: true, createdAt: now } : turn)));
     } else {
-      setHistory((h) => [{ id, question: q, loading: true }, ...h]);
+      setHistory((h) => [{ id, question: q, loading: true, createdAt: now }, ...h]);
     }
     scrollToAnswer();
     try {
@@ -91,21 +101,82 @@ export function AiAstrologerScreen({ navigation, route }: any) {
       const birth = profileBirth || DEFAULT_BIRTH;
       const response = await askAiAstrologer({ ...birth, name: (profileBirth as any)?.name, question: q });
       track('ai_ask', undefined, { q: q.slice(0, 80) });
-      setHistory((h) => h.map((turn) => (turn.id === id ? { id, question: q, response } : turn)));
+      // backend ne ise user ki history me permanently save kar diya hai
+      setHistory((h) => h.map((turn) => (turn.id === id ? { id, question: q, response, createdAt: now } : turn)));
       scrollToAnswer();
     } catch (e: any) {
-      setHistory((h) => h.map((turn) => (turn.id === id ? { id, question: q, error: friendlyAiError(e?.message) } : turn)));
+      setHistory((h) => h.map((turn) => (turn.id === id ? { id, question: q, error: friendlyAiError(e?.message), createdAt: now } : turn)));
     } finally {
       setSending(false);
     }
   };
 
+  const dtoToTurn = (d: ChatTurnDto): ChatTurn => ({
+    id: d.id,
+    question: d.question,
+    response: d.response || undefined,
+    createdAt: d.createdAt,
+  });
+
+  /* 1) App khulte hi: pehle 2-din ka LOCAL cache (turant dikhe, network ka wait nahi),
+        phir background me server se poori history aakar use replace kar deti hai. */
   useEffect(() => {
+    let on = true;
+    (async () => {
+      const u = await getStoredUser().catch(() => null);
+      if (!on) return;
+      const uid = u?.id ? String(u.id) : null;
+      setUserId(uid);
+
+      const cached = await loadCachedChat(uid);
+      if (on && cached.length) {
+        setHistory(cached.map((c) => ({ id: c.id, question: c.question, response: c.response || undefined, createdAt: c.createdAt })));
+      }
+      if (!uid) { if (on) setHistoryLoaded(true); return; } // guest → sirf local
+
+      try {
+        const r = await getChatHistory();
+        if (!on) return;
+        setHistory(r.turns.map(dtoToTurn));
+        setHasMore(r.hasMore);
+      } catch { /* offline → cache hi dikhta rahega */ }
+      if (on) setHistoryLoaded(true);
+    })();
+    return () => { on = false; };
+  }, []);
+
+  /* 2) Har badlaav par 2-din ka cache refresh (DB me to sab kuch pehle se hai). */
+  useEffect(() => {
+    if (!historyLoaded) return;
+    const cacheable: CachedTurn[] = history
+      .filter((t) => t.response) // sirf mukammal jawab cache karo
+      .map((t) => ({ id: t.id, question: t.question, response: t.response, createdAt: t.createdAt || new Date().toISOString() }));
+    saveCachedChat(userId, cacheable);
+  }, [history, historyLoaded, userId]);
+
+  /* 3) Purani chat (2 din se bhi purani) — DB se cursor le kar aur load karo. */
+  const loadOlder = async () => {
+    if (loadingMore || !hasMore) return;
+    const oldest = history[history.length - 1];
+    if (!oldest?.createdAt) return;
+    hTap();
+    setLoadingMore(true);
+    try {
+      const r = await getChatHistory(oldest.createdAt);
+      setHistory((h) => [...h, ...r.turns.map(dtoToTurn)]);
+      setHasMore(r.hasMore);
+    } catch { /* ignore */ }
+    finally { setLoadingMore(false); }
+  };
+
+  // route se aaya sawaal — history load hone ke BAAD bhejo (warna wo overwrite ho jaayega)
+  useEffect(() => {
+    if (!historyLoaded || initialSentRef.current) return;
+    initialSentRef.current = true;
     const initial = String(route?.params?.question || '').trim();
     if (initial) sendQuestion(initial);
-    // Run only once for the route-provided prompt.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [historyLoaded]);
 
   return (
     <Page title={t('ai.title', 'Vedic Astrologer')} onBack={() => navigation.goBack()} scrollRef={scrollRef}>
@@ -282,6 +353,27 @@ export function AiAstrologerScreen({ navigation, route }: any) {
           )}
         </Card>
       ))}
+
+      {/* purani chat (2 din se purani) — DB me sab kuch surakshit hai, yahan se load hoti hai */}
+      {hasMore && (
+        <Pressable
+          onPress={loadOlder}
+          disabled={loadingMore}
+          style={({ pressed }) => [
+            styles.olderBtn,
+            { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.06)' : '#ffffff' },
+            pressed && { opacity: 0.75 },
+          ]}
+        >
+          {loadingMore ? (
+            <ActivityIndicator color={theme.gold1} size="small" />
+          ) : (
+            <Text style={[styles.olderTxt, { color: theme.gold1 }]}>
+              {lang === 'hi' ? '↑ पुरानी चैट देखें' : '↑ Load older chat'}
+            </Text>
+          )}
+        </Pressable>
+      )}
     </Page>
   );
 }
@@ -330,4 +422,6 @@ const styles = StyleSheet.create({
   followWrap: { gap: 8, marginTop: 14 },
   followChip: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10 },
   followText: { fontFamily: fonts.interSemi, fontSize: 12, lineHeight: 17 },
+  olderBtn: { marginTop: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: 14, paddingVertical: 13 },
+  olderTxt: { fontFamily: fonts.interSemi, fontSize: 13 },
 });

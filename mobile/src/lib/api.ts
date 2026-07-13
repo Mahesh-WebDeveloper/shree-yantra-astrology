@@ -769,6 +769,20 @@ export const askAiAstrologer = (input: KundliInput & { name?: string; question: 
   // and the AI then writes a long dual-language (technical + simple) answer over a large context — so
   // give it very generous room to avoid any "request timed out" error on cold (uncached) questions.
   post<AiAstrologerResponse>('/api/ai/ask-astrologer', { ...input, lang: apiLang }, 'POST', 180000);
+
+// ── Astrologer chat history — DB me all-time; app 2 din local cache karta hai ──
+export interface ChatTurnDto {
+  id: string;
+  question: string;
+  response: AiAstrologerResponse | null;
+  createdAt: string;
+}
+export const getChatHistory = (before?: string, limit = 30) =>
+  get<{ turns: ChatTurnDto[]; hasMore: boolean }>(
+    `/api/chat/history?limit=${limit}${before ? `&before=${encodeURIComponent(before)}` : ''}`
+  );
+export const clearChatHistory = () => del<{ ok: boolean; deleted: number }>('/api/chat/history');
+
 export const getAiInsights = (input: KundliInput) =>
   post<{ insights: KundliInsight[] }>('/api/ai/insights', { ...input, lang: apiLang });
 export const getChoghadiyaMessage = (input: KundliInput & { period: string; quality?: string }) =>

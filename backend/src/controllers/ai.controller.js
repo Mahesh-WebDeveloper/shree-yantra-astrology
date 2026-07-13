@@ -5,6 +5,7 @@ const GitaChapter = require('../models/GitaChapter');
 const RamayanSarga = require('../models/RamayanSarga');
 const RigVeda = require('../models/RigVeda');
 const VedaText = require('../models/VedaText');
+const ChatMessage = require('../models/ChatMessage');
 const daily = require('./daily.controller');
 
 const needBirth = (b) => b && b.dob && b.tob && b.tz && (b.place != null || (b.lat != null && b.lng != null));
@@ -49,10 +50,48 @@ exports.nameAsk = asyncHandler(async (req, res) => {
 });
 
 // POST /api/ai/ask-astrologer  { dob, tob, tz, place|lat+lng, name?, question }
+// optionalAuth lagta hai: jawab sabko milta hai, par logged-in user ka turn
+// history me permanently save ho jaata hai.
 exports.askAstrologer = asyncHandler(async (req, res) => {
   if (!needBirth(req.body)) return res.status(400).json({ error: 'Chahiye: dob, tob, tz, aur (place YA lat+lng)' });
-  if (!String(req.body.question || '').trim()) return res.status(400).json({ error: 'Question chahiye' });
-  res.json(await ai.askAstrologer(req.body));
+  const question = String(req.body.question || '').trim();
+  if (!question) return res.status(400).json({ error: 'Question chahiye' });
+
+  const response = await ai.askAstrologer(req.body);
+
+  // save history — best-effort, jawab kabhi block/fail na ho
+  if (req.user) {
+    ChatMessage.create({ user: req.user._id, question, response, lang: req.body.lang || 'en' }).catch(() => {});
+  }
+  res.json(response);
+});
+
+/* ── Astrologer chat history (protected) ──────────────────────────────────
+ * DB me poora all-time record. App pichle 2 din local cache karta hai (turant
+ * dikhne ke liye); usse purana yahan se `before` cursor se load hota hai.
+ */
+// GET /api/chat/history?before=<ISO>&limit=  → newest-first
+exports.chatHistory = asyncHandler(async (req, res) => {
+  const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 30));
+  const before = req.query.before ? new Date(String(req.query.before)) : null;
+  const q = { user: req.user._id };
+  if (before && !isNaN(before.getTime())) q.createdAt = { $lt: before };
+
+  const rows = await ChatMessage.find(q).sort({ createdAt: -1 }).limit(limit + 1).lean();
+  const hasMore = rows.length > limit;
+  const turns = (hasMore ? rows.slice(0, limit) : rows).map((r) => ({
+    id: String(r._id),
+    question: r.question,
+    response: r.response || null,
+    createdAt: r.createdAt,
+  }));
+  res.json({ turns, hasMore });
+});
+
+// DELETE /api/chat/history  → user apni poori chat history mita sakta hai
+exports.clearChatHistory = asyncHandler(async (req, res) => {
+  const r = await ChatMessage.deleteMany({ user: req.user._id });
+  res.json({ ok: true, deleted: r.deletedCount || 0 });
 });
 
 // POST /api/ai/insights  { dob, tob, tz, place|lat+lng }

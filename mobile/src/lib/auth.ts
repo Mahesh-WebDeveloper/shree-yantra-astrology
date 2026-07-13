@@ -34,8 +34,12 @@ export async function saveAuth(token: string, user: AuthUser) {
 }
 
 export async function clearAuth() {
+  // logout par is user ka local chat cache bhi hata do — agle user ko kabhi
+  // pichle user ki chat na dikhe (DB me uski history surakshit rehti hai).
+  const prev = await getStoredUser().catch(() => null);
   setAuthToken(null);
   await AsyncStorage.multiRemove([TOKEN_KEY, USER_KEY]);
+  if (prev?.id) await AsyncStorage.removeItem(`sy.chat.${prev.id}`).catch(() => {});
 }
 
 export async function getStoredUser(): Promise<AuthUser | null> {

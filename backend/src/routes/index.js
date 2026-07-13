@@ -42,6 +42,7 @@ const vedaCtrl = require('../controllers/veda.controller');
 const dailyCtrl = require('../controllers/daily.controller');
 const vastuCtrl = require('../controllers/vastu.controller');
 const requireAuth = require('../middleware/auth');
+const optionalAuth = require('../middleware/optionalAuth');
 const requireAdmin = require('../middleware/admin');
 const { avatarUpload, contentImageUpload } = require('../middleware/upload');
 
@@ -247,7 +248,11 @@ router.post('/ai/period-prediction', aiCtrl.periodPrediction);
 router.post('/ai/sign-rashifal', aiCtrl.signRashifal);
 router.post('/baby-names', aiCtrl.babyNames);
 router.post('/name-ask', aiCtrl.nameAsk);
-router.post('/ai/ask-astrologer', aiCtrl.askAstrologer);
+// optionalAuth: answer sabko milta hai; logged-in user ka turn history me save hota hai
+router.post('/ai/ask-astrologer', optionalAuth, aiCtrl.askAstrologer);
+// astrologer chat history (protected) — DB me all-time; app 2 din local cache karta hai
+router.get('/chat/history', requireAuth, aiCtrl.chatHistory);
+router.delete('/chat/history', requireAuth, aiCtrl.clearChatHistory);
 router.post('/ai/insights', aiCtrl.insights);
 router.post('/ai/choghadiya-message', aiCtrl.choghadiyaMessage);
 router.post('/ai/muhurat', aiCtrl.muhurat);
