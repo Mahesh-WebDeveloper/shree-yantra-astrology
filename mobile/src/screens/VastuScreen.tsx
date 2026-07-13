@@ -374,8 +374,8 @@ export function VastuScreen({ navigation }: any) {
         <GradientText style={styles.heroTitle}>{hi ? 'घर, दुकान और ऑफिस का वास्तु ऑडिट' : 'Home, Shop and Office Vastu Audit'}</GradientText>
         <Text style={[styles.heroSub, { color: theme.textSoft }]}>
           {hi
-            ? 'दिशा, कमरे और प्लॉट साइज से स्रोत-आधारित जांच, सुधार और सुझाया गया सुंदर नक्शा। AI केवल rule-engine result को सरल भाषा में समझाता है।'
-            : 'Source-cited checking from directions, rooms and plot size, with corrections and a suggested zoning map. AI explains only the rule-engine result.'}
+            ? 'दिशा, कमरे और प्लॉट साइज से स्रोत-आधारित जांच, सुधार और सुझाया गया सुंदर नक्शा। व्याख्या केवल rule-engine result पर आधारित है।'
+            : 'Source-cited checking from directions, rooms and plot size, with corrections and a suggested zoning map. Explanations are based only on the rule-engine result.'}
         </Text>
       </LinearGradient>
 
@@ -533,9 +533,9 @@ export function VastuScreen({ navigation }: any) {
           )}
 
           <View style={[styles.card, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : '#fffdf8' }]}>
-            <Text style={[styles.section, { color: theme.goldText, marginTop: 0 }]}>{hi ? 'AI वास्तु गाइड' : 'AI Vastu Guide'}</Text>
+            <Text style={[styles.section, { color: theme.goldText, marginTop: 0 }]}>{hi ? 'वास्तु मार्गदर्शन' : 'Vastu Guide'}</Text>
             <Text style={[styles.helper, { color: theme.textMuted }]}>
-              {hi ? 'AI आपके audit result, map और source data के आधार पर ही जवाब देगा।' : 'AI answers only from your audit result, map and source data.'}
+              {hi ? 'उत्तर केवल आपके audit result, map और source data के आधार पर दिए जाते हैं।' : 'Answers come only from your audit result, map and source data.'}
             </Text>
             <View style={styles.quickRow}>
               {quickQuestions.map((q) => (
@@ -554,7 +554,7 @@ export function VastuScreen({ navigation }: any) {
               multiline
               style={[styles.askInput, { color: theme.text, borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.45)' : '#fff' }]}
             />
-            <GoldButton label={asking ? (hi ? 'उत्तर बन रहा है...' : 'Preparing...') : (hi ? 'AI से पूछें' : 'Ask AI Guide')} onPress={() => sendAsk()} variant="ghost" />
+            <GoldButton label={asking ? (hi ? 'उत्तर बन रहा है...' : 'Preparing...') : (hi ? 'मार्गदर्शन से पूछें' : 'Ask the Guide')} onPress={() => sendAsk()} variant="ghost" />
             {asking && <ActivityIndicator color={theme.gold1} style={{ marginTop: 12 }} />}
             {ai && (
               <View style={[styles.aiBox, { borderColor: theme.gold2 + '55', backgroundColor: theme.isDark ? 'rgba(233,184,80,0.05)' : 'rgba(255,247,224,0.75)' }]}>

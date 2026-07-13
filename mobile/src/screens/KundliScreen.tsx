@@ -993,7 +993,7 @@ export function KundliScreen({ navigation }: any) {
               <Path d="M9.94 14.06A2 2 0 0 0 8.5 12.6L2.4 11a.5.5 0 0 1 0-.96l6.1-1.58A2 2 0 0 0 9.94 7L11.5.9a.5.5 0 0 1 .96 0L14.06 7a2 2 0 0 0 1.44 1.44l6.1 1.58a.5.5 0 0 1 0 .96l-6.1 1.58a2 2 0 0 0-1.44 1.44L12.46 21a.5.5 0 0 1-.96 0z" />
               <Path d="M20 3v4M22 5h-4M4 17v2M5 18H3" />
             </Svg>
-            <Text style={styles.aiBtnText}>{lang === 'hi' ? 'AI से कुंडली समझें' : 'Understand Chart with AI'}</Text>
+            <Text style={styles.aiBtnText}>{lang === 'hi' ? 'कुंडली समझें' : 'Understand This Chart'}</Text>
           </LinearGradient>
           <Text style={[styles.aiBtnTag, { color: theme.textMuted }]}>
             {lang === 'hi' ? 'सरल भाषा में — स्वभाव · करियर · रिश्ते · सेहत · उपाय' : 'In simple words — nature · career · relationships · health · remedies'}

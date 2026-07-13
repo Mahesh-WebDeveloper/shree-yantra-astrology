@@ -150,7 +150,7 @@ function FestivalDetail({ detail, selected, mode, error, theme, lang }: { detail
     <View style={[styles.detailBox, { borderColor: theme.gold2 + '66', backgroundColor: theme.isDark ? 'rgba(0,0,0,0.16)' : 'rgba(255,255,255,0.55)' }]}>
       <View style={styles.detailHero}>
         <View style={[styles.detailMark, { borderColor: theme.gold2 + '66', backgroundColor: 'rgba(214,160,59,0.12)' }]}>
-          <Text style={[styles.detailMarkText, { color: theme.gold1 }]}>{mode === 'ai' && detail?.ai ? 'AI' : 'Om'}</Text>
+          <Text style={[styles.detailMarkText, { color: theme.gold1 }]}>{mode === 'ai' && detail?.ai ? '✨' : 'Om'}</Text>
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[styles.detailKicker, { color: theme.gold2 }]}>{toEng(selected.date)} · {lang === 'hi' ? (selected.weekdayHi || selected.weekday) : selected.weekday}</Text>
@@ -228,7 +228,7 @@ function FestivalDetail({ detail, selected, mode, error, theme, lang }: { detail
       )}
       {!!detail?.ai?.ritualSteps?.length && (
         <View style={styles.detailSection}>
-          <Text style={[styles.detailSub, { color: theme.gold1 }]}>{lang === 'hi' ? 'AI पूजा गाइड' : 'AI Puja Guide'}</Text>
+          <Text style={[styles.detailSub, { color: theme.gold1 }]}>{lang === 'hi' ? 'पूजा मार्गदर्शन' : 'Puja Guide'}</Text>
           {detail.ai.ritualSteps.slice(0, 5).map((x, i) => <Text key={`${safeText(x)}-${i}`} style={[styles.obsText, { color: theme.textMuted }]}>{i + 1}. {safeText(x)}</Text>)}
         </View>
       )}
@@ -395,8 +395,8 @@ export function PanchangScreen({ navigation }: any) {
       setFestivalDetail(detail);
       if (withAi && detail.aiError) {
         setDetailError(lang === 'hi'
-          ? 'AI guide abhi available nahi hai. Neeche verified panchang aur puja details dikh rahi hain.'
-          : 'AI guide is unavailable right now. Verified panchang and puja details are shown below.');
+          ? 'Guide abhi available nahi hai. Neeche verified panchang aur puja details dikh rahi hain.'
+          : 'The guide is unavailable right now. Verified panchang and puja details are shown below.');
       }
     } catch {
       if (detailRequestRef.current !== requestId) return;
@@ -602,11 +602,11 @@ export function PanchangScreen({ navigation }: any) {
                         <View style={styles.festivalActions}>
                           <Text style={[styles.obsType, { color: theme.gold2 }]}>{f.obs.importance}</Text>
                           <Pressable onPress={() => openFestival(f, true)} style={[styles.aiChip, { borderColor: theme.gold2 + '88', backgroundColor: active && detailMode === 'ai' ? 'rgba(214,160,59,0.18)' : 'transparent' }]}>
-                            <Text style={[styles.aiChipText, { color: theme.gold1 }]}>{lang === 'hi' ? 'AI मार्गदर्शन' : 'AI Guide'}</Text>
+                            <Text style={[styles.aiChipText, { color: theme.gold1 }]}>{lang === 'hi' ? 'मार्गदर्शन' : 'Guide'}</Text>
                           </Pressable>
                         </View>
                       </View>
-                      {active && detailLoading && <View style={styles.detailLoading}><ActivityIndicator color={theme.gold1} /><Text style={[styles.obsText, { color: theme.textMuted }]}>{detailMode === 'ai' ? (lang === 'hi' ? 'AI guide तैयार हो रहा है' : 'Preparing AI guide') : (lang === 'hi' ? 'विस्तार लोड हो रहा है' : 'Loading details')}</Text></View>}
+                      {active && detailLoading && <View style={styles.detailLoading}><ActivityIndicator color={theme.gold1} /><Text style={[styles.obsText, { color: theme.textMuted }]}>{detailMode === 'ai' ? (lang === 'hi' ? 'मार्गदर्शन तैयार हो रहा है' : 'Preparing guide') : (lang === 'hi' ? 'विस्तार लोड हो रहा है' : 'Loading details')}</Text></View>}
                       {active && !detailLoading && <FestivalDetail detail={festivalDetail} selected={f} mode={detailMode} error={detailError} theme={theme} lang={lang} />}
                     </View>
                   );

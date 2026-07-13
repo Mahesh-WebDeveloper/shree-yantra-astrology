@@ -59,14 +59,14 @@ export function VerseMeaning({ fetcher }: { fetcher: () => Promise<VerseExplanat
 
       {open && (
         <View style={{ marginTop: 12 }}>
-          {loading && <View style={{ paddingVertical: 14, alignItems: 'center' }}><ActivityIndicator color={theme.gold1} /><Text style={[styles.aiNote, { color: theme.textMuted, marginTop: 8 }]}>{hi ? 'AI सरल अर्थ तैयार कर रहा है…' : 'AI is preparing a simple explanation…'}</Text></View>}
+          {loading && <View style={{ paddingVertical: 14, alignItems: 'center' }}><ActivityIndicator color={theme.gold1} /><Text style={[styles.aiNote, { color: theme.textMuted, marginTop: 8 }]}>{hi ? 'व्याख्या तैयार हो रही है…' : 'Preparing the explanation…'}</Text></View>}
           {err && <Text style={[styles.errSmall, { color: theme.textMuted }]}>{hi ? 'अर्थ लोड नहीं हो पाया — फिर प्रयास करें।' : 'Could not load — please try again.'}</Text>}
           {exp && (
             <>
               <Box label={hi ? 'अर्थ' : 'Meaning'} text={exp.anuvad} />
               <Box label={hi ? 'कथा' : 'Story'} text={exp.katha} />
               <Box label={hi ? 'जीवन की सीख' : 'Lesson for life'} text={exp.seekh} />
-              <Text style={[styles.aiNote, { color: theme.textMuted }]}>✦ {hi ? 'AI द्वारा सरल व्याख्या' : 'Simple explanation by AI'}</Text>
+              <Text style={[styles.aiNote, { color: theme.textMuted }]}>✦ {hi ? 'सरल भाषा में व्याख्या' : 'Explained in simple words'}</Text>
             </>
           )}
         </View>

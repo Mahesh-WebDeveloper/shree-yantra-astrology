@@ -38,12 +38,12 @@ export function HanumanChalisaScreen({ navigation }: any) {
     ? [
         { k: 'क्या है', v: 'हनुमान चालीसा 40 चौपाइयों का भजन है (चालीसा = चालीस), जिसे लगभग 500 वर्ष पहले संत-कवि गोस्वामी तुलसीदास ने रचा। यह बल, साहस, भक्ति और रक्षा के देव श्री हनुमान की स्तुति है।' },
         { k: 'क्यों पढ़ें', v: 'भक्त इसे साहस पाने, भय व संकट दूर करने और हनुमान जी की कृपा के लिए पढ़ते हैं — भारत की सबसे प्रिय प्रार्थनाओं में से एक।' },
-        { k: 'कैसे पढ़ें', v: 'हर चौपाई देवनागरी में पढ़ें, नीचे उच्चारण (रोमन) और अर्थ देखें। किसी भी चौपाई के नीचे “सरल अर्थ जानें” दबाएँ — AI उसे सबसे आसान भाषा में, एक जीवन-सीख के साथ समझाएगा।' },
+        { k: 'कैसे पढ़ें', v: 'हर चौपाई देवनागरी में पढ़ें, नीचे उच्चारण (रोमन) और अर्थ देखें। किसी भी चौपाई के नीचे “सरल अर्थ जानें” दबाएँ — उसे सबसे आसान भाषा में, एक जीवन-सीख के साथ समझाया जाएगा।' },
       ]
     : [
         { k: 'What it is', v: 'The Hanuman Chalisa is a 40-verse hymn (chalisa = forty), composed about 500 years ago by the poet-saint Goswami Tulsidas, praising Lord Hanuman — the deity of strength, courage, devotion and protection.' },
         { k: 'Why recite it', v: 'Devotees recite it for courage, to remove fear and troubles, and for Hanuman’s blessings — one of the most-loved prayers in India.' },
-        { k: 'How to read here', v: 'Read each verse in Devanagari, see how it sounds (Roman) and its English meaning. Tap “Understand in simple words” under any verse — our AI explains it the easiest way, with a life lesson.' },
+        { k: 'How to read here', v: 'Read each verse in Devanagari, see how it sounds (Roman) and its English meaning. Tap “Understand in simple words” under any verse — it is explained in the easiest way, with a life lesson.' },
       ];
 
   return (
@@ -61,7 +61,7 @@ export function HanumanChalisaScreen({ navigation }: any) {
         <GradientText style={styles.heroTitle}>{hi ? 'श्री हनुमान चालीसा' : 'SHRI HANUMAN CHALISA'}</GradientText>
         <Text style={[styles.heroAuthor, { color: theme.gold2 }]}>{hi ? 'रचयिता — गोस्वामी तुलसीदास' : 'by Goswami Tulsidas'}</Text>
         <View style={styles.heroTags}>
-          {[hi ? '43 पद' : '43 verses', hi ? 'हिंदी + English' : 'Hindi + English', hi ? 'AI अर्थ' : 'AI meaning'].map((tag) => (
+          {[hi ? '43 पद' : '43 verses', hi ? 'हिंदी + English' : 'Hindi + English', hi ? 'अर्थ' : 'Meaning'].map((tag) => (
             <View key={tag} style={[styles.heroTag, { borderColor: theme.gold3, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.08)' : 'rgba(233,184,80,0.06)' }]}>
               <Text style={[styles.heroTagTxt, { color: theme.gold1 }]} numberOfLines={1}>{tag}</Text>
             </View>

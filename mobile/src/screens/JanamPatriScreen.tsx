@@ -217,8 +217,8 @@ export function JanamPatriScreen({ navigation }: any) {
         </View>
         <Text style={[styles.trust, { color: theme.textMuted, marginTop: 10 }]}>
           {lang === 'hi'
-            ? 'ग्रह, दशा और गोचर की गणना वास्तविक ग्रह-स्थितियों (Lahiri अयनांश) से; AI केवल सरल व्याख्या के लिए।'
-            : 'Planet, dasha and transit calculations use real planetary positions (Lahiri ayanamsa); AI is only for plain-language explanation.'}
+            ? 'ग्रह, दशा और गोचर की गणना वास्तविक ग्रह-स्थितियों (Lahiri अयनांश) से; व्याख्या सरल भाषा में दी जाती है।'
+            : 'Planet, dasha and transit calculations use real planetary positions (Lahiri ayanamsa); explanations are written in plain language.'}
         </Text>
         {busy && <ActivityIndicator color={theme.gold1} style={{ marginTop: 14 }} />}
       </View>

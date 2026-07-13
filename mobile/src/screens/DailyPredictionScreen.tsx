@@ -302,13 +302,13 @@ export function DailyPredictionScreen({ navigation }: any) {
         <View style={[styles.dateRow, { borderTopColor: theme.line }]}>
           <CalendarIcon color={theme.gold1} size={15} />
           <Text style={[styles.dateText, { color: theme.gold1 }]}>
-            {predLoading ? t('dp.personalising', 'Personalising your day...') : pred ? `${aAstroText(t('dp.sourceTag', 'Chart Data + AI'), lang)} | ${pred.generatedFor || aAstroText('Today', lang)}` : aAstroText('Today', lang)}
+            {predLoading ? t('dp.personalising', 'Personalising your day...') : pred ? `${aAstroText(t('dp.sourceTag', 'Chart Data'), lang)} | ${pred.generatedFor || aAstroText('Today', lang)}` : aAstroText('Today', lang)}
           </Text>
         </View>
         {!!pred?.headline && <Text style={[styles.headline, { color: theme.goldText }]}>{aAstroText(pred.headline, lang)}</Text>}
         <Text style={[styles.predBody, { color: theme.text }]}>{predText}</Text>
         {!!detailText && <Text style={[styles.detailBody, { color: theme.textSoft }]}>{detailText}</Text>}
-        {!!predError && <Text style={[styles.errorText, { color: theme.red }]}>{t('dp.aiFallback', 'AI fallback active')}: {predError}</Text>}
+        {!!predError && <Text style={[styles.errorText, { color: theme.red }]}>{t('dp.aiFallback', 'Estimated guidance')}: {predError}</Text>}
 
         <View style={styles.focusRow}>
           {focus.map((item) => (

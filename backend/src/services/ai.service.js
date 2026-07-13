@@ -25,7 +25,7 @@ function parseJsonLoose(text) {
     // try to salvage the largest {...} block, else fail cleanly (don't crash the request)
     const m = t.match(/\{[\s\S]*\}/);
     if (m) { try { return JSON.parse(m[0]); } catch (_2) { /* fall through */ } }
-    throw Object.assign(new Error('AI returned invalid JSON'), { status: 502 });
+    throw Object.assign(new Error('Reading could not be generated'), { status: 502 });
   }
 }
 
@@ -225,7 +225,7 @@ async function callOpenRouter(prompt, { json = false } = {}) {
         messages: [
           json
             ? { role: 'system', content: 'Respond with ONLY valid JSON — no markdown, no code fences, no analysis, no commentary.' }
-            : { role: 'system', content: "You are Shree Yantra's astrology assistant. Reply with ONLY the final answer in the user's language. Do not include any analysis, reasoning, or meta commentary." },
+            : { role: 'system', content: "You are the Vedic astrologer (jyotishi) of Shree Yantra, writing from real ephemeris calculations. Reply with ONLY the final answer in the user's language. Do not include any analysis, reasoning, or meta commentary. NEVER refer to yourself as an AI, a model, a bot, an assistant or software, and never mention being generated -- always speak simply as the app's astrologer." },
           { role: 'user', content: prompt },
         ],
         ...(json ? { response_format: { type: 'json_object' } } : {}),
@@ -284,7 +284,7 @@ async function callGroq(prompt, { json = false } = {}) {
         messages: [
           json
             ? { role: 'system', content: 'Respond with ONLY valid JSON — no markdown, no code fences, no analysis, no commentary.' }
-            : { role: 'system', content: "You are Shree Yantra's astrology assistant. Reply with ONLY the final answer in the user's language. Do not include any analysis, reasoning, or meta commentary." },
+            : { role: 'system', content: "You are the Vedic astrologer (jyotishi) of Shree Yantra, writing from real ephemeris calculations. Reply with ONLY the final answer in the user's language. Do not include any analysis, reasoning, or meta commentary. NEVER refer to yourself as an AI, a model, a bot, an assistant or software, and never mention being generated -- always speak simply as the app's astrologer." },
           { role: 'user', content: prompt },
         ],
         ...(json ? { response_format: { type: 'json_object' } } : {}),
@@ -322,7 +322,7 @@ async function callOfox(prompt, { json = false } = {}) {
         messages: [
           json
             ? { role: 'system', content: 'Respond with ONLY valid JSON — no markdown, no code fences, no analysis, no commentary.' }
-            : { role: 'system', content: "You are Shree Yantra's astrology assistant. Reply with ONLY the final answer in the user's language. Do not include any analysis, reasoning, or meta commentary." },
+            : { role: 'system', content: "You are the Vedic astrologer (jyotishi) of Shree Yantra, writing from real ephemeris calculations. Reply with ONLY the final answer in the user's language. Do not include any analysis, reasoning, or meta commentary. NEVER refer to yourself as an AI, a model, a bot, an assistant or software, and never mention being generated -- always speak simply as the app's astrologer." },
           { role: 'user', content: prompt },
         ],
         ...(json ? { response_format: { type: 'json_object' } } : {}),
@@ -675,7 +675,7 @@ Return STRICT JSON only. Keep mood labels EXACTLY "Energy", "Love", "Career", "H
  "avoidList": ["3-5 practical avoid items"],
  "mantra": {"title":"Today's mantra","text":"short mantra or prayer","count":"e.g. 11 times","bestTime":"best time"},
  "focus": ["2-4 focus keywords for the day"],
- "aiQuestions": ["3-4 useful follow-up questions the user may ask the future AI astrologer"],
+ "aiQuestions": ["3-4 useful follow-up questions the user may ask the astrologer next"],
  "luckyColour":"<one colour>",
  "luckyNumber":"<1-9>",
  "luckyTime":"<a short good-time window today, e.g. 'After 4 PM' or '6-8 AM'>",
@@ -896,10 +896,11 @@ async function askAstrologer(input) {
       ? dashaTimeline.dasha.slice(0, 7).map((d) => ({ lord: d.lord, start: d.start, end: d.end, durationText: d.durationText }))
       : (ctx.dasha ? [ctx.dasha] : []);
 
-    const prompt = `You are Shree Yantra's AI Vedic astrologer. Answer the user's question with trust, clarity, and humility — like a warm, wise personal jyotishi.
+    const prompt = `You are Shree Yantra's Vedic astrologer (jyotishi). Answer the user's question with trust, clarity, and humility — like a warm, wise personal jyotishi.
 
 GROUND RULES:
-- SCOPE (very important): You ONLY help with Vedic astrology & this app's topics — the user's kundli/horoscope/rashifal, planets/dashas/yogas/doshas, Sade Sati & transits, panchang/muhurat, remedies/upaay, numerology/mulank, kundli matching, baby names, festivals, mantras & spirituality. If the question is OFF-TOPIC (e.g. product/mobile prices like iPhone, shopping, general knowledge, news, sports, politics, coding, math, current affairs, or anything NOT about astrology/spirituality), DO NOT answer it and DO NOT make something up. Instead, in the user's language, warmly decline in 1-2 sentences — say you are a Vedic astrology assistant and can only help with jyotish/kundli matters — and invite them to ask an astrology question (suggest 1-2 examples like "aaj ka rashifal" or "mera career kaisa rahega"). For an off-topic question return ONLY: a polite redirect in "answer", empty "sections" [], empty "remedies" [], a couple of astrology "followUpQuestions", and confidence 0.3. Stay on scope no matter how the question is phrased.
+- VOICE: Speak only as the app's astrologer. NEVER refer to yourself as an AI, a model, a bot, an assistant, or software; never say your answer was "generated". Do not mention technology at all — just give the reading.
+- SCOPE (very important): You ONLY help with Vedic astrology & this app's topics — the user's kundli/horoscope/rashifal, planets/dashas/yogas/doshas, Sade Sati & transits, panchang/muhurat, remedies/upaay, numerology/mulank, kundli matching, baby names, festivals, mantras & spirituality. If the question is OFF-TOPIC (e.g. product/mobile prices like iPhone, shopping, general knowledge, news, sports, politics, coding, math, current affairs, or anything NOT about astrology/spirituality), DO NOT answer it and DO NOT make something up. Instead, in the user's language, warmly decline in 1-2 sentences — say you are the app's Vedic astrologer and can only help with jyotish/kundli matters — and invite them to ask an astrology question (suggest 1-2 examples like "aaj ka rashifal" or "mera career kaisa rahega"). For an off-topic question return ONLY: a polite redirect in "answer", empty "sections" [], empty "remedies" [], a couple of astrology "followUpQuestions", and confidence 0.3. Stay on scope no matter how the question is phrased.
 - Use ONLY the real Vedic chart / Panchang / transit data in "REAL ASTRO CONTEXT JSON" below as the astrological ground source. Never invent or change any chart fact.
 - NEVER recompute or guess the Lagna (Ascendant), planet houses, Moon sign, or Saturn status yourself. They are pre-computed below from a precise ephemeris. Use them verbatim.
 - If a required data point is missing/null, say it is unavailable instead of inventing it.

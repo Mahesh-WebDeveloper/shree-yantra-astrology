@@ -309,7 +309,7 @@ export function NumerologyScreen({ navigation }: any) {
           {/* ── AI reading ── */}
           {!reading ? (
             <Pressable onPress={loadReading} disabled={readingBusy} style={[styles.aiBtn, { borderColor: theme.gold2 }]}>
-              {readingBusy ? <ActivityIndicator color={theme.gold1} /> : <Text style={[styles.aiBtnTxt, { color: theme.gold1 }]}>{hi ? '🔮 विस्तृत व्याख्या पढ़ें (AI)' : '🔮 Read detailed interpretation (AI)'}</Text>}
+              {readingBusy ? <ActivityIndicator color={theme.gold1} /> : <Text style={[styles.aiBtnTxt, { color: theme.gold1 }]}>{hi ? '🔮 विस्तृत व्याख्या पढ़ें' : '🔮 Read detailed interpretation'}</Text>}
             </Pressable>
           ) : (
             <View style={[styles.card, { borderColor: theme.gold2 + '55', backgroundColor: theme.isDark ? 'rgba(233,184,80,0.05)' : 'rgba(255,250,240,0.75)' }]}>

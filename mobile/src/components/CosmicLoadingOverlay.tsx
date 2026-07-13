@@ -56,8 +56,8 @@ function stepsFor(items: NetworkActivityItem[], lang: 'en' | 'hi') {
   }
   if (keys.has('ai')) {
     return lang === 'hi'
-      ? ['कुंडली संदर्भ तैयार हो रहा है', 'AI व्याख्या तैयार हो रही है', 'उत्तर को सरल भाषा में व्यवस्थित किया जा रहा है']
-      : ['Preparing chart context', 'Generating the AI explanation', 'Formatting the answer in simple language'];
+      ? ['कुंडली संदर्भ तैयार हो रहा है', 'व्याख्या तैयार हो रही है', 'उत्तर को सरल भाषा में व्यवस्थित किया जा रहा है']
+      : ['Preparing chart context', 'Preparing the explanation', 'Formatting the answer in simple language'];
   }
   if (keys.has('panchang')) {
     return lang === 'hi'

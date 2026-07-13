@@ -155,7 +155,7 @@ export function OccasionScreen({ route, navigation }: any) {
     ...(curated?.saptapadiMantras?.length ? [{ k: 'saptapadi', icon: '👣', label: hi ? 'सप्तपदी' : 'Saptapadi' }] : []),
     { k: 'samagri', icon: '🛒', label: hi ? 'सामग्री' : 'Samagri' },
     { k: 'aarti', icon: '🪔', label: hi ? 'आरती' : 'Aarti' },
-    { k: 'ai', icon: '🤖', label: hi ? 'AI गाइड' : 'AI Guide' },
+    { k: 'ai', icon: '✨', label: hi ? 'मार्गदर्शन' : 'Guide' },
   ];
 
   const done = checked.size; const total = samagriItems.length;
@@ -349,7 +349,7 @@ export function OccasionScreen({ route, navigation }: any) {
         {/* AI assistant */}
         {(curated || guide) && (
           <View onLayout={onY('ai')} style={[styles.card, { marginTop: 2, borderColor: theme.gold2 + '66', backgroundColor: theme.isDark ? 'rgba(233,184,80,0.06)' : 'rgba(255,247,224,0.7)' }]}>
-            <Text style={[styles.cardTitle, { color: theme.gold1 }]}>🤖 {hi ? 'AI पंडित जी से पूछें' : 'Ask the AI Pandit'}</Text>
+            <Text style={[styles.cardTitle, { color: theme.gold1 }]}>🕉️ {hi ? 'पंडित जी से पूछें' : 'Ask Pandit ji'}</Text>
             <View style={styles.sugRow}>{suggestions.map((s) => <Pressable key={s} onPress={() => { hSelect(); setQ(s); }} style={[styles.sug, { borderColor: theme.cardBorder }]}><Text style={[styles.sugTxt, { color: theme.gold2 }]}>{s}</Text></Pressable>)}</View>
             <View style={styles.askRow}>
               <TextInput ref={askRef} value={q} onChangeText={setQ} placeholder={hi ? 'अपना सवाल लिखें…' : 'Type your question…'} placeholderTextColor={theme.textMuted} style={[styles.input, { borderColor: theme.cardBorder, color: theme.text, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.3)' : '#fff' }]} onSubmitEditing={ask} returnKeyType="send" />
@@ -364,7 +364,7 @@ export function OccasionScreen({ route, navigation }: any) {
       {/* ── STICKY BOTTOM CTA ── */}
       {(curated || guide) && (
         <View style={[styles.sticky, { paddingBottom: insets.bottom + 8, borderTopColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.94)' : 'rgba(255,255,255,0.96)' }]}>
-          <Pressable onPress={focusAsk} style={({ pressed }) => [styles.stickyBtn, { borderColor: theme.gold2 }, pressed && { opacity: 0.7 }]}><Text style={[styles.stickyTxt, { color: theme.gold1 }]}>🤖 {hi ? 'AI से पूछें' : 'Ask AI'}</Text></Pressable>
+          <Pressable onPress={focusAsk} style={({ pressed }) => [styles.stickyBtn, { borderColor: theme.gold2 }, pressed && { opacity: 0.7 }]}><Text style={[styles.stickyTxt, { color: theme.gold1 }]}>✨ {hi ? 'पूछें' : 'Ask'}</Text></Pressable>
           <Pressable onPress={() => scrollTo('vidhi')} style={{ flex: 1, borderRadius: 12, overflow: 'hidden' }}><LinearGradient colors={theme.buttonGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.stickyMain}><Text style={[styles.stickyMainTxt, { color: theme.buttonInk }]}>▶ {hi ? 'विधि शुरू करें' : 'Start Ritual'}</Text></LinearGradient></Pressable>
         </View>
       )}

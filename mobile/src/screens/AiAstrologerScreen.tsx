@@ -124,7 +124,7 @@ export function AiAstrologerScreen({ navigation, route }: any) {
         <View style={[styles.sourceRow, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.45)' : '#f8fafc' }]}>
           <InfoIcon color={theme.gold1} />
           <Text style={[styles.sourceText, { color: theme.textSoft }]}>
-            {t('ai.sourceLead', 'The answer uses your saved birth details and precise chart/panchang data before AI writes the explanation.')}
+            {t('ai.sourceLead', 'The answer uses your saved birth details and precise chart/panchang data; the explanation is written in plain language.')}
           </Text>
         </View>
       </Card>
@@ -173,7 +173,7 @@ export function AiAstrologerScreen({ navigation, route }: any) {
 
       {history.length === 0 && (
         <Card style={{ marginTop: 14 }}>
-          <Text style={[styles.emptyTitle, { color: theme.goldText }]}>{t('ai.emptyTitle', 'Personal AI guidance starts here')}</Text>
+          <Text style={[styles.emptyTitle, { color: theme.goldText }]}>{t('ai.emptyTitle', 'Personal guidance starts here')}</Text>
           <Text style={[styles.emptyText, { color: theme.textSoft }]}>
             {t('ai.emptyText', 'For best results, complete your birth date, birth time, and birth place in profile. The app will use that context automatically.')}
           </Text>

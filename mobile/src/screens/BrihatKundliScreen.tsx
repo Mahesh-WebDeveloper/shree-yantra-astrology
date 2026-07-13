@@ -689,7 +689,7 @@ export function BrihatKundliScreen({ navigation }: any) {
           <View style={{ flex: 1 }}>
             <Text style={[styles.formTitle, { color: theme.text }]}>{hi ? 'विश्वसनीयता व सटीकता स्तर' : 'Trust & accuracy layer'}</Text>
             <Text style={[styles.formHint, { color: theme.textMuted }]}>
-              {report?.accuracy.engine || (hi ? 'वास्तविक ग्रह स्थितियाँ + Lahiri अयनांश + सटीक निर्देशांक। AI केवल गणना किए गए डेटा की व्याख्या करता है।' : 'Real planetary positions + Lahiri ayanamsa + exact coordinates. AI only explains calculated data.')}
+              {report?.accuracy.engine || (hi ? 'वास्तविक ग्रह स्थितियाँ + Lahiri अयनांश + सटीक निर्देशांक। व्याख्या केवल गणना किए गए डेटा पर आधारित है।' : 'Real planetary positions + Lahiri ayanamsa + exact coordinates. Explanations are based only on the calculated data.')}
             </Text>
           </View>
         </View>

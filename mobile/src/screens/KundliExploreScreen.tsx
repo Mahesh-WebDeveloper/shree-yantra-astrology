@@ -87,7 +87,7 @@ export function KundliExploreScreen({ navigation }: any) {
             <Block theme={theme} icon="💡" head={hi ? 'उदाहरण' : 'Example'} text={L(bhava.example)} />
             <Text style={[styles.karaka, { color: theme.textMuted }]}>{hi ? 'कारक ग्रह: ' : 'Significator: '}<Text style={{ color: theme.gold1 }}>{L(bhava.karaka)}</Text></Text>
             <Pressable onPress={() => askAi(bhava.aiPrompt)} style={[styles.aiBtn, { borderColor: theme.gold2 }]}>
-              <Text style={[styles.aiBtnTxt, { color: theme.gold1 }]}>🔮 {hi ? 'AI से सीखें — मेरी कुंडली में यह भाव' : 'Learn with AI — this house in my chart'}</Text>
+              <Text style={[styles.aiBtnTxt, { color: theme.gold1 }]}>🔮 {hi ? 'सीखें — मेरी कुंडली में यह भाव' : 'Learn — this house in my chart'}</Text>
             </Pressable>
           </View>
         </>
@@ -111,7 +111,7 @@ export function KundliExploreScreen({ navigation }: any) {
               <Text style={[styles.vEasy, { color: theme.text }]}>{L(v.easy)}</Text>
               <Text style={[styles.vTech, { color: theme.textMuted }]}>{L(v.technical)}</Text>
               <Pressable onPress={() => askAi(v.aiPrompt)} style={[styles.aiBtnSm, { borderColor: theme.gold2 + '88' }]}>
-                <Text style={[styles.aiBtnSmTxt, { color: theme.gold1 }]}>🔮 {hi ? 'AI से सीखें' : 'Learn with AI'}</Text>
+                <Text style={[styles.aiBtnSmTxt, { color: theme.gold1 }]}>🔮 {hi ? 'सीखें' : 'Learn'}</Text>
               </Pressable>
             </View>
           ))}

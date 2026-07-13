@@ -7,7 +7,7 @@ import { useLang } from '../i18n/LanguageProvider';
 import { explainSimple } from '../lib/api';
 
 /**
- * Tiny "🤖 Explain simply with AI" toggle placed under any ritual paragraph / mantra.
+ * Tiny "✨ Explain in simple words" toggle placed under any ritual paragraph / mantra.
  * Lazy-loads a very simple, example-based explanation (bilingual, backend-cached).
  */
 export function ExplainButton({ text, context }: { text: string; context?: string }) {
@@ -39,7 +39,7 @@ export function ExplainButton({ text, context }: { text: string; context?: strin
         hitSlop={6}
         style={({ pressed }) => [styles.btn, { borderColor: theme.gold3, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.08)' : 'rgba(176,115,22,0.06)' }, pressed && { opacity: 0.7 }]}
       >
-        <Text style={[styles.btnTxt, { color: theme.gold1 }]}>🤖 {open ? (hi ? 'छिपाएँ' : 'Hide') : (hi ? 'AI से सरल भाषा में समझें' : 'Explain simply with AI')}</Text>
+        <Text style={[styles.btnTxt, { color: theme.gold1 }]}>✨ {open ? (hi ? 'छिपाएँ' : 'Hide') : (hi ? 'सरल भाषा में समझें' : 'Explain in simple words')}</Text>
       </Pressable>
       {open && (
         <View style={{ marginTop: 8 }}>

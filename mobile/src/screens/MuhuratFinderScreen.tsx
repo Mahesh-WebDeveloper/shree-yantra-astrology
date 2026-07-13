@@ -547,7 +547,7 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
             <Text style={styles.askEmoji}>🙏</Text>
             <View style={{ flex: 1 }}>
               <Text style={[styles.askTitle, { color: theme.text }]}>{lang === 'hi' ? 'कोई संदेह? ज्योतिषी से पूछें' : 'Any doubt? Ask the Jyotishi'}</Text>
-              <Text style={[styles.askSub, { color: theme.textMuted }]}>{lang === 'hi' ? 'AI ज्योतिषी आपकी कुंडली + इस मुहूर्त के आधार पर जवाब देगा' : 'AI astrologer answers using your chart + this muhurat'}</Text>
+              <Text style={[styles.askSub, { color: theme.textMuted }]}>{lang === 'hi' ? 'ज्योतिषी आपकी कुंडली + इस मुहूर्त के आधार पर जवाब देगा' : 'The astrologer answers using your chart + this muhurat'}</Text>
             </View>
             <Text style={[styles.askArrow, { color: theme.gold1 }]}>›</Text>
           </Pressable>
