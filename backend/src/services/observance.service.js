@@ -505,7 +505,12 @@ const ANNUAL = [
   F('yamuna-chhath', 'Yamuna Chhath', 'यमुना छठ', 0, 'Shukla', 6, 'sunrise', { importance: 'minor', aliases: ['yamuna chhath', 'yamuna jayanti', 'यमुना छठ'] }),
   // Smarta Ram Navami is a Madhyahna observance (Rama's birth is at noon); the Vaishnava
   // (ISKCON) reckoning is sunrise-vyapini, so in 2026 the two split across 26/27 March.
-  F('ram-navami', 'Ram Navami', 'राम नवमी', 0, 'Shukla', 9, 'madhyahna', { aliases: ['ram navami', 'rama navami', 'राम नवमी'] }),
+  // 'first', not the madhyahna default of 'max'. A share comparison decides the day by which
+  // madhyahna holds MORE Navami, and shares move with longitude — in 2029 Navami runs 22 Apr
+  // 12:54 to 23 Apr 11:31, touching both middays, and 'max' picks the 22nd at Jodhpur but the
+  // 23rd at Kanpur. Drik gives the 22nd at both. Madhyahna-vyapini means the first midday the
+  // tithi reaches; verified across 2026-2030 and 2050 at both cities.
+  F('ram-navami', 'Ram Navami', 'राम नवमी', 0, 'Shukla', 9, 'madhyahna', { pick: 'first', aliases: ['ram navami', 'rama navami', 'राम नवमी'] }),
   F('ram-navami-iskcon', 'Ram Navami (Vaishnava)', 'राम नवमी (वैष्णव)', 0, 'Shukla', 9, 'sunrise', { importance: 'minor', aliases: ['ram navami iskcon', 'vaishnava ram navami', 'इस्कॉन राम नवमी'] }),
   F('swaminarayan-jayanti', 'Swaminarayan Jayanti', 'स्वामीनारायण जयंती', 0, 'Shukla', 9, 'sunrise', { importance: 'minor', aliases: ['swaminarayan jayanti', 'स्वामीनारायण जयंती'] }),
   F('mahavir-jayanti', 'Mahavir Jayanti', 'महावीर जयंती', 0, 'Shukla', 13, 'sunrise', { aliases: ['mahavir jayanti', 'mahaveer jayanti', 'महावीर जयंती'] }),
