@@ -72,7 +72,7 @@ const FESTIVAL_CATALOG = [
     aarti: { en: 'Ganesh Aarti', hi: 'गणेश आरती' },
   },
   {
-    key: 'janmashtami',
+    key: 'krishna-janmashtami',
     aliases: ['janmashtami', 'krishna janmashtami', 'जन्माष्टमी', 'कृष्ण जन्माष्टमी'],
     name: { en: 'Krishna Janmashtami', hi: 'कृष्ण जन्माष्टमी' },
     type: 'festival',
@@ -155,7 +155,7 @@ const FESTIVAL_CATALOG = [
     aarti: { en: 'Vishnu / Krishna Aarti', hi: 'विष्णु / कृष्ण आरती' },
   },
   {
-    key: 'navratri',
+    key: 'navratri-start',
     aliases: ['navratri', 'navaratri', 'sharadiya navratri', 'durga puja', 'नवरात्रि', 'दुर्गा पूजा'],
     name: { en: 'Shardiya Navratri', hi: 'शारदीय नवरात्रि' },
     type: 'festival', importance: 'major',
@@ -165,7 +165,7 @@ const FESTIVAL_CATALOG = [
     aarti: { en: 'Durga Aarti', hi: 'दुर्गा आरती' },
   },
   {
-    key: 'dussehra',
+    key: 'vijayadashami',
     aliases: ['dussehra', 'dasara', 'dashara', 'vijayadashami', 'vijaya dashami', 'दशहरा', 'विजयादशमी'],
     name: { en: 'Dussehra (Vijayadashami)', hi: 'दशहरा (विजयादशमी)' },
     type: 'festival', importance: 'major',
