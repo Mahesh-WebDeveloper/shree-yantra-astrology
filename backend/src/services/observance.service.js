@@ -636,7 +636,12 @@ const ANNUAL = [
   F('gujarati-new-year', 'Gujarati New Year', 'गुजराती नववर्ष', 7, 'Shukla', 1, 'sunrise', { importance: 'minor', aliases: ['gujarati new year', 'bestu varas', 'गुजराती नववर्ष'] }),
   F('bhai-dooj', 'Bhai Dooj', 'भाई दूज', 7, 'Shukla', 2, 'aparahna', { aliases: ['bhai dooj', 'bhaiya dooj', 'yama dwitiya', 'भाई दूज'] }),
   F('labh-chaturthi', 'Labh Chaturthi', 'लाभ चतुर्थी', 7, 'Shukla', 4, 'sunrise', { importance: 'minor', aliases: ['labh chaturthi', 'labh pancham', 'लाभ चतुर्थी'] }),
-  F('chhath-puja', 'Chhath Puja', 'छठ पूजा', 7, 'Shukla', 6, 'sayankala', { type: 'vrat', aliases: ['chhath puja', 'chhath', 'छठ पूजा'] }),
+  // Sunrise, despite the Sandhya Arghya being an evening rite — Drik dates Chhath by the
+  // udaya Shashthi. Sayankala looks right and even survives 2026, but it takes 31 Oct in 2030
+  // (Shashthi 31 Oct 10:24 → 1 Nov 08:04, so it holds that sunset but not that sunrise) where
+  // Drik gives 1 Nov. Sunrise fits 2026, 2030 and 2050 at both Jodhpur and Kanpur; sunset fits
+  // only 2026.
+  F('chhath-puja', 'Chhath Puja', 'छठ पूजा', 7, 'Shukla', 6, 'sunrise', { type: 'vrat', aliases: ['chhath puja', 'chhath', 'छठ पूजा'] }),
   F('gopashtami', 'Gopashtami', 'गोपाष्टमी', 7, 'Shukla', 8, 'sunrise', { importance: 'minor', aliases: ['gopashtami', 'गोपाष्टमी'] }),
   F('akshaya-navami', 'Akshaya Navami', 'अक्षय नवमी', 7, 'Shukla', 9, 'sunrise', { importance: 'minor', aliases: ['akshaya navami', 'amla navami', 'अक्षय नवमी'] }),
   // The wedding is held in the evening, but the DAY is the sunrise-vyapini Dwadashi (11 Nov
