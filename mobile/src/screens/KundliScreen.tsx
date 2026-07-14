@@ -53,8 +53,8 @@ const SIGN_IDX: Record<string, number> = { Aries: 0, Taurus: 1, Gemini: 2, Cance
 const SIGN_ABBR = ['Ar', 'Ta', 'Ge', 'Cn', 'Le', 'Vi', 'Li', 'Sc', 'Sg', 'Cp', 'Aq', 'Pi'];
 const SIGN_ABBR_HI = ['मे', 'वृ', 'मि', 'क', 'सिं', 'कन्', 'तु', 'वृश्', 'ध', 'मक', 'कुं', 'मी'];
 const ABBR_HI: Record<string, string> = { Sun: 'सू', Moon: 'चं', Mars: 'मं', Mercury: 'बु', Jupiter: 'गु', Venus: 'शु', Saturn: 'श', Rahu: 'रा', Ketu: 'के' };
-const DEV_DIGITS = '०१२३४५६७८९';
-const toDev = (n: number | string) => String(n).replace(/[0-9]/g, (d) => DEV_DIGITS[+d]);
+// Digits stay English (1, 2, 3) in BOTH languages — an app-wide rule. Hindi mode
+// translates month names and labels, never the numerals.
 const planetAbbr = (planet: string, lang: 'en' | 'hi') => (lang === 'hi' ? ABBR_HI[planet] : ABBR[planet]) || ABBR[planet] || planet.slice(0, 2);
 const signAbbr = (i: number, lang: 'en' | 'hi') => (lang === 'hi' ? SIGN_ABBR_HI[i] : SIGN_ABBR[i]);
 // South Indian: signs fixed in a 4x4 grid (Pisces top-left, clockwise). signIndex -> [row,col]
@@ -76,9 +76,9 @@ function planetsBySign(planets: ApiPlanet[], lang: 'en' | 'hi' = 'en'): Record<n
 const houseNum = (h?: string) => { const m = (h || '').match(/\d+/); return m ? Number(m[0]) : null; };
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const MON_HI = ['जन', 'फ़र', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुल', 'अग', 'सित', 'अक्तू', 'नव', 'दिस'];
-const fmtDob = (ddmmyyyy: string, lang: 'en' | 'hi' = 'en') => { const [d, m, y] = ddmmyyyy.split('-'); const mon = lang === 'hi' ? MON_HI[(Number(m) || 1) - 1] : MON[(Number(m) || 1) - 1]; return `${lang === 'hi' ? toDev(d) : d} ${mon} ${lang === 'hi' ? toDev(y) : y}`; }; // 15-06-1990 → 15 Jun 1990
+const fmtDob = (ddmmyyyy: string, lang: 'en' | 'hi' = 'en') => { const [d, m, y] = ddmmyyyy.split('-'); const mon = lang === 'hi' ? MON_HI[(Number(m) || 1) - 1] : MON[(Number(m) || 1) - 1]; return `${d} ${mon} ${y}`; }; // 15-06-1990 → 15 Jun 1990
 // "00:00 18/06/2026 +05:30" → "Jun 2026"
-const fmtMonYr = (std: string, lang: 'en' | 'hi' = 'en') => { const p = String(std).split(' '); const dmy = (p[1] || '').split('/'); if (dmy.length !== 3) return lang === 'hi' ? aAstroText(std, lang) : std; const mon = lang === 'hi' ? MON_HI[(Number(dmy[1]) || 1) - 1] : MON[(Number(dmy[1]) || 1) - 1]; return `${mon} ${lang === 'hi' ? toDev(dmy[2]) : dmy[2]}`; };
+const fmtMonYr = (std: string, lang: 'en' | 'hi' = 'en') => { const p = String(std).split(' '); const dmy = (p[1] || '').split('/'); if (dmy.length !== 3) return lang === 'hi' ? aAstroText(std, lang) : std; const mon = lang === 'hi' ? MON_HI[(Number(dmy[1]) || 1) - 1] : MON[(Number(dmy[1]) || 1) - 1]; return `${mon} ${dmy[2]}`; };
 function dashaToRows(dasha: { lord: string; start: string; end: string; durationText: string }[], lang: 'en' | 'hi' = 'en'): KRow[] {
   const hi = lang === 'hi';
   return dasha.map((d, i) => ({
@@ -1175,9 +1175,6 @@ export function KundliScreen({ navigation }: any) {
             : aAstroText(PROFILE.ascendant, lang)}
         </Text>
 
-        {/* at-a-glance identity — लग्न · चंद्र राशि · नक्षत्र */}
-        <GlancePanel loading={loading} items={glanceItems} />
-
         <Text style={[styles.liveStatus, { color: err ? '#c0392b' : (live ? theme.green : theme.textMuted) }]}>
           {loading ? `⟳  ${t('kundli.loading', 'Loading live chart…')}` : err ? `●  ${t('kundli.offline', 'Offline — showing demo data')}` : `●  ${t('kundli.live', 'LIVE · real planetary data')}`}
         </Text>
@@ -1229,6 +1226,9 @@ export function KundliScreen({ navigation }: any) {
             <Text style={[styles.chartHint, { color: theme.textMuted }]}>{lang === 'hi' ? '👆 चार्ट खोलने के लिए टैप करें — फिर बड़े व्यू में किसी भी खाने/ग्रह पर टैप करके समझें  ·  ← स्वाइप से चार्ट बदलें →' : '👆 Tap to open the chart — then tap any box/planet in the big view to understand it  ·  ← swipe to switch →'}</Text>
           </View>
         </GestureDetector>
+
+        {/* at-a-glance identity — लग्न · चंद्र राशि · नक्षत्र, right under the chart */}
+        <GlancePanel loading={loading} items={glanceItems} />
 
         {/* Understand this chart — gold CTA button + tagline */}
         <Pressable onPress={askAboutMainChart} style={({ pressed }) => [{ marginTop: 16 }, pressed && { transform: [{ scale: 0.98 }] }]}>
