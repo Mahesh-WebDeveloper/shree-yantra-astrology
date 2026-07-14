@@ -10,7 +10,7 @@ const { createDasha } = require('../controllers/dasha.controller');
 const { createYoga } = require('../controllers/yoga.controller');
 const { createChoghadiya } = require('../controllers/choghadiya.controller');
 const { createSunrise } = require('../controllers/sunrise.controller');
-const { createPanchang, listPanchangFestivals, searchPanchangFestivalDates, getPanchangFestivalDetail } = require('../controllers/panchang.controller');
+const { createPanchang, listPanchangFestivals, searchPanchangFestivalDates, getPanchangFestivalDetail, listObservanceCatalog } = require('../controllers/panchang.controller');
 const muhuratCtrl = require('../controllers/muhurat.controller');
 const { createMatch } = require('../controllers/match.controller');
 const { createGochar } = require('../controllers/gochar.controller');
@@ -221,6 +221,7 @@ router.post('/yoga', createYoga);
 router.post('/choghadiya', createChoghadiya);
 router.post('/sunrise', createSunrise);
 router.post('/panchang', createPanchang);
+router.get('/panchang/observances', listObservanceCatalog); // catalog only (no dates) — the app searches this locally
 router.post('/panchang/festivals', listPanchangFestivals);
 router.post('/panchang/festival-search', searchPanchangFestivalDates);
 router.post('/panchang/festival-detail', getPanchangFestivalDetail);

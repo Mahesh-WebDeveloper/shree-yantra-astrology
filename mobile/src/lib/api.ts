@@ -628,6 +628,17 @@ export const getPanchangFestivals = (input: { place?: string; lat?: number; lng?
   post<PanchangFestivalsResponse>('/api/panchang/festivals', input);
 export const searchPanchangFestivals = (input: { place?: string; lat?: number; lng?: number; date?: string; tz?: string; query: string; years?: number }) =>
   post<PanchangFestivalsResponse>('/api/panchang/festival-search', input);
+// The whole festival/vrat catalog — bilingual names + aliases, NO dates and NO location.
+// Fetched once and cached so the app can search it locally (instantly); the dates for the
+// matches still come from the engine via searchPanchangFestivals.
+export interface ObservanceCatalogItem {
+  key: string;
+  name: { en: string; hi: string };
+  type: string;
+  importance: string;
+  aliases?: string[];
+}
+export const getObservanceCatalog = () => get<{ items: ObservanceCatalogItem[] }>('/api/panchang/observances');
 export interface PanchangFestivalDetail {
   date: string;
   location: string;

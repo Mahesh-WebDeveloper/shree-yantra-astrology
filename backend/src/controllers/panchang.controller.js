@@ -2,7 +2,7 @@ const { getPanchang } = require('../services/vedastro.service');
 const asyncHandler = require('../middleware/asyncHandler');
 const { callAI } = require('../services/ai.service');
 const { curatedFor, decorateObservance, enrichFestivalDetail } = require('../services/festival.service');
-const { nextOccurrence, searchObservanceCatalog } = require('../services/observance.service');
+const { nextOccurrence, searchObservanceCatalog, observanceCatalog } = require('../services/observance.service');
 const { resolveLocation } = require('../services/location.service');
 const env = require('../config/env');
 
@@ -274,6 +274,15 @@ exports.listPanchangFestivals = asyncHandler(async (req, res) => {
   res.json({ from: toDMY(start), days, location: place || `${lat},${lng}`, items, errors });
 });
 
+// GET /api/panchang/observances — the searchable catalog, once.
+// No dates, no location: ~130 tiny bilingual rows the app caches and searches LOCALLY, so
+// typing is instant. Dates are never part of this payload — they only ever come from the
+// engine (nextOccurrence), via festival-search below.
+exports.listObservanceCatalog = asyncHandler(async (_req, res) => {
+  res.set('Cache-Control', 'public, max-age=86400');
+  res.json({ items: observanceCatalog() });
+});
+
 // POST /api/panchang/festival-search { place|lat+lng, query, date?:'DD/MM/YYYY', years?:1..3 }
 exports.searchPanchangFestivalDates = asyncHandler(async (req, res) => {
   const { lat, lng, place, date, tz, query } = req.body;
@@ -283,7 +292,10 @@ exports.searchPanchangFestivalDates = asyncHandler(async (req, res) => {
   const start = fromDMY(date);
   const years = Math.max(1, Math.min(3, Number(req.body.years || 2)));
   const coords = await resolveCoords({ lat, lng, place });
-  const catalog = searchObservanceCatalog(query).slice(0, 8);
+  // 12, not 8: the app shows its top ~10 local matches and then asks for their dates, so a
+  // smaller cap here would leave visible cards permanently date-less. Same fuzzy scorer as
+  // the app's, so the two rankings pick the same observances.
+  const catalog = searchObservanceCatalog(query, { limit: 12 }).slice(0, 12);
   const items = [];
   const errors = [];
 

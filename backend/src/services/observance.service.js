@@ -30,6 +30,7 @@
 
 const Astronomy = require('astronomy-engine');
 const eph = require('../utils/localEphemeris');
+const { rankObservances } = require('../utils/fuzzyMatch');
 
 const MS = 60000;
 const DAY_MS = 86400000;
@@ -1409,14 +1410,17 @@ function observanceCatalog() {
   return out;
 }
 
-const compact = (v) => String(v || '').toLowerCase().replace(/[^a-z0-9ऀ-ॿ]/g, '');
-
-function searchObservanceCatalog(query) {
-  const cq = compact(query);
+/**
+ * Ranked search. The scorer lives in utils/fuzzyMatch.js because the APP runs the very
+ * same algorithm locally over a cached copy of this catalog — the phone decides which
+ * cards to show, this decides which of them get a computed date, so the two rankings
+ * must agree. Substring matching used to live here, which is why "dipawali" and
+ * "divali" found nothing at all.
+ */
+function searchObservanceCatalog(query, options) {
   const catalog = observanceCatalog();
-  if (!cq) return catalog;
-  const hit = (a) => { const ca = compact(a); return !!ca && (ca.includes(cq) || cq.includes(ca)); };
-  return catalog.filter((o) => hit(o.key) || hit(o.name.en) || hit(o.name.hi) || (o.aliases || []).some(hit));
+  if (!String(query || '').trim()) return catalog;
+  return rankObservances(query, catalog, options);
 }
 
 module.exports = {
@@ -1424,6 +1428,7 @@ module.exports = {
   observancesInRange,
   masaFor,
   nextOccurrence,
+  observanceCatalog,
   searchObservanceCatalog,
   buildIndex,
 };

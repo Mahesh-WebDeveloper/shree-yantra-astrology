@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, ActivityIndicator, TextInput, AppState } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Svg, { Path } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Page } from '../components/Page';
@@ -12,10 +13,16 @@ import { useT, useLang } from '../i18n/LanguageProvider';
 import { aSign } from '../i18n/astro';
 import { birthFromProfile } from '../lib/birth';
 import { locationForPanchang } from '../lib/deviceLocation';
-import { getPanchang, getPanchangFestivals, searchPanchangFestivals, getPanchangFestivalDetail, PanchangResponse, PanchangPeriod, AngaEnd, PanchangFestivalDay, PanchangFestivalDetail } from '../lib/api';
+import { getPanchang, getPanchangFestivals, searchPanchangFestivals, getPanchangFestivalDetail, getObservanceCatalog, PanchangResponse, PanchangPeriod, AngaEnd, PanchangFestivalDay, PanchangFestivalDetail, ObservanceCatalogItem } from '../lib/api';
+import { rankObservances } from '../lib/fuzzyMatch';
 
 const DEFAULT_PLACE = 'Jaipur';
+// The catalog is bilingual in itself (every row carries {en,hi}), so one cache entry serves
+// both languages — switching language must not re-fetch or invalidate it.
+const OBS_CATALOG_KEY = 'sy.obs.catalog';
 type FestivalRow = {
+  // '' while this row's date is still being computed by the engine. The row is rendered the
+  // instant the local catalog matches; the date is the only thing we ever wait for.
   date: string;
   weekday: string;
   weekdayHi?: string;
@@ -137,7 +144,8 @@ function FestivalThumb({ row, lang }: { row: FestivalRow; lang: 'en' | 'hi' }) {
   return (
     <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.thumb}>
       <Text style={styles.thumbGlyph}>🪔</Text>
-      <Text style={styles.thumbDay}>{day}</Text>
+      {/* No date yet = the engine is still computing it. The card is already on screen. */}
+      <Text style={styles.thumbDay}>{row.date ? day : '·'}</Text>
       {!!mon && <Text style={styles.thumbMon}>{mon}</Text>}
       <Text style={styles.thumbWeek} numberOfLines={1}>{lang === 'hi' ? (row.weekdayHi || row.weekday) : row.weekday}</Text>
     </LinearGradient>
@@ -268,8 +276,11 @@ export function PanchangScreen({ navigation }: any) {
   const [data, setData] = useState<PanchangResponse | null>(null);
   const [festivals, setFestivals] = useState<PanchangFestivalDay[]>([]);
   const [festivalQuery, setFestivalQuery] = useState('');
-  const [remoteFestivals, setRemoteFestivals] = useState<PanchangFestivalDay[]>([]);
-  const [searchingFestival, setSearchingFestival] = useState(false);
+  const [obsCatalog, setObsCatalog] = useState<ObservanceCatalogItem[]>([]);
+  // Engine-computed dates, keyed by observance. Kept across keystrokes: a date is a property
+  // of the festival (+ this place & start date), so once computed it need never be re-fetched.
+  const [festivalDates, setFestivalDates] = useState<Record<string, PanchangFestivalDay>>({});
+  const [aiFestivals, setAiFestivals] = useState<PanchangFestivalDay[]>([]);
   const [selectedFestival, setSelectedFestival] = useState<FestivalRow | null>(null);
   const [festivalDetail, setFestivalDetail] = useState<PanchangFestivalDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -297,11 +308,36 @@ export function PanchangScreen({ navigation }: any) {
     return () => { on = false; };
   }, []);
 
+  // The searchable catalog: ~230 tiny bilingual rows, no dates, no location. Cache first
+  // (so search works instantly on the very first keystroke, and offline), then network.
+  useEffect(() => {
+    let on = true;
+    AsyncStorage.getItem(OBS_CATALOG_KEY)
+      .then((raw) => {
+        if (!on || !raw) return;
+        try {
+          const items = JSON.parse(raw);
+          if (Array.isArray(items) && items.length) setObsCatalog((prev) => (prev.length ? prev : items));
+        } catch {}
+      })
+      .catch(() => {});
+    getObservanceCatalog()
+      .then((r) => {
+        if (!on || !(r.items || []).length) return;
+        setObsCatalog(r.items);
+        AsyncStorage.setItem(OBS_CATALOG_KEY, JSON.stringify(r.items)).catch(() => {});
+      })
+      .catch(() => {});
+    return () => { on = false; };
+  }, []);
+
   const load = useCallback((d: Date, pl: string, c: { lat: number; lng: number } | null) => {
     let on = true;
     setLoading(true); setErr(false);
     setFestivals([]);
-    setRemoteFestivals([]);
+    // Dates are location- and start-date-specific, so the cache dies with them.
+    setFestivalDates({});
+    setAiFestivals([]);
     setSelectedFestival(null);
     setFestivalDetail(null);
     setDetailError(null);
@@ -335,23 +371,42 @@ export function PanchangScreen({ navigation }: any) {
     return () => { on = false; clearInterval(id); sub.remove(); };
   }, [date, place, coords]);
 
+  // SEARCH — pure, local, synchronous. Same fuzzy scorer the backend uses, so the matches
+  // here and the dates fetched below always agree on WHICH observances are in play.
+  const searchQ = festivalQuery.trim();
+  const searching = searchQ.length >= 2;
+  const searchMatches = useMemo(
+    () => (searching ? rankObservances(searchQ, obsCatalog, { limit: 10 }) : []),
+    [searching, searchQ, obsCatalog],
+  );
+
+  // DATES — the only thing that waits on the network. The list is already on screen; each
+  // card's date drops in when the engine returns it. A date is NEVER guessed or derived
+  // locally: it always comes from nextOccurrence() in the observance engine.
   useEffect(() => {
-    const q = festivalQuery.trim();
-    if (q.length < 2) {
-      setRemoteFestivals([]);
-      setSearchingFestival(false);
-      return;
-    }
+    if (!searching || !locReady) return;
     let on = true;
-    setSearchingFestival(true);
     const id = setTimeout(() => {
-      searchPanchangFestivals({ place, date: toDMY(date), tz: '+05:30', query: q, years: 2 })
-        .then((r) => { if (on) setRemoteFestivals(r.items || []); })
-        .catch(() => { if (on) setRemoteFestivals([]); })
-        .finally(() => { if (on) setSearchingFestival(false); });
-    }, 450);
+      const where = coords ? { lat: coords.lat, lng: coords.lng } : { place };
+      searchPanchangFestivals({ ...where, date: toDMY(date), tz: '+05:30', query: searchQ, years: 2 })
+        .then((r) => {
+          if (!on) return;
+          const items = r.items || [];
+          setFestivalDates((prev) => {
+            const next = { ...prev };
+            for (const it of items) {
+              const k = it.observances?.[0]?.key;
+              if (k) next[k] = it;
+            }
+            return next;
+          });
+          // A query no catalog row matches can still be answered by the server's AI fallback.
+          setAiFestivals(items.filter((it) => !obsCatalog.some((o) => o.key === it.observances?.[0]?.key)));
+        })
+        .catch(() => {});
+    }, 250);
     return () => { on = false; clearTimeout(id); };
-  }, [festivalQuery, place, date]);
+  }, [searchQ, searching, place, coords, date, locReady, obsCatalog]);
 
   const shift = (days: number) => { hTap(); const d = new Date(date); d.setDate(d.getDate() + days); setDate(d); };
   const today = () => { hTap(); setDate(new Date()); };
@@ -369,14 +424,26 @@ export function PanchangScreen({ navigation }: any) {
     ? `${lang === 'hi' ? 'सूर्योदय पर' : 'At sunrise'} ${sunriseTithiName}`
     : '';
   const activeTithiSub = [tithiPaksha, sunriseTithiSub].filter(Boolean).join(' · ');
+  const dayToRows = (f: PanchangFestivalDay): FestivalRow[] =>
+    (f.observances || []).map((obs) => ({ date: f.date, weekday: f.weekday, weekdayHi: f.weekdayHi, tithi: f.tithi, obs }));
+
   const festivalRows = useMemo<FestivalRow[]>(() => {
-    const q = festivalQuery.trim();
-    // When searching (q>=2) we use the backend search results AS-IS — the server
-    // already matches the query (spacing-insensitive + AI fallback), so re-filtering
-    // on the client would wrongly drop matches like "Raksha Bandhan" for "rakshabandhan".
-    const source = q.length >= 2 ? remoteFestivals : festivals;
-    return source.flatMap((f) => (f.observances || []).map((obs) => ({ date: f.date, weekday: f.weekday, weekdayHi: f.weekdayHi, tithi: f.tithi, obs })));
-  }, [festivals, remoteFestivals, festivalQuery]);
+    if (!searching) return festivals.flatMap(dayToRows);
+    // Rows come from the LOCAL match — they exist the moment the user types. The engine's
+    // date (and the richer observance it decorates) is merged in as soon as it lands.
+    const rows: FestivalRow[] = searchMatches.map((m) => {
+      const day = festivalDates[m.key];
+      const dated = day?.observances?.find((o) => o.key === m.key);
+      return {
+        date: day?.date || '',
+        weekday: day?.weekday || '',
+        weekdayHi: day?.weekdayHi,
+        tithi: day?.tithi ?? null,
+        obs: dated || { key: m.key, name: m.name, type: m.type, importance: m.importance, guidance: { en: '', hi: '' } },
+      };
+    });
+    return rows.concat(aiFestivals.flatMap(dayToRows));
+  }, [searching, festivals, searchMatches, festivalDates, aiFestivals]);
 
   // Today's observances — de-duped; Bhadra/Vishti dropped here since it has its own card above.
   const observancesClean = useMemo(() => {
@@ -403,6 +470,7 @@ export function PanchangScreen({ navigation }: any) {
     });
   }, [festivalRows]);
   const openFestival = async (row: FestivalRow, withAi = false) => {
+    if (!row.date) return; // its date is still being computed — there is nothing to detail yet
     hTap();
     const requestId = detailRequestRef.current + 1;
     detailRequestRef.current = requestId;
@@ -592,7 +660,7 @@ export function PanchangScreen({ navigation }: any) {
             </View>
           )}
 
-          {!!festivals.length && (
+          {(!!festivals.length || searching) && (
             <View style={[styles.card, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.025)' : 'rgba(255,253,247,0.78)' }]}>
               <Text style={[styles.h, { color: theme.gold1 }]}>📅 {lang === 'hi' ? 'आने वाले व्रत और उत्सव' : 'Upcoming Vrat & Festivals'}</Text>
               <TextInput
@@ -603,32 +671,39 @@ export function PanchangScreen({ navigation }: any) {
                 style={[styles.searchInput, { borderColor: theme.cardBorder, color: theme.text, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.035)' : 'rgba(255,255,255,0.62)' }]}
               />
               <View style={{ gap: 9, marginTop: 10 }}>
-                {searchingFestival && <View style={styles.detailLoading}><ActivityIndicator color={theme.gold1} /><Text style={[styles.obsText, { color: theme.textMuted }]}>{lang === 'hi' ? 'भविष्य के उत्सव खोज रहे हैं' : 'Searching future festivals'}</Text></View>}
                 {festivalRowsClean.slice(0, 10).map((f) => {
                   const active = selectedFestival?.date === f.date && selectedFestival?.obs.key === f.obs.key;
+                  const pending = !f.date; // matched locally; the engine's date is still on its way
                   const tithiText = lang === 'hi'
                     ? [f.tithi?.hi || f.tithi?.name, f.tithi?.pakshaHi || f.tithi?.paksha].filter(Boolean).join(' · ')
                     : [f.tithi?.name, f.tithi?.paksha ? `${f.tithi.paksha} Paksha` : ''].filter(Boolean).join(' · ');
+                  const metaText = pending
+                    ? (lang === 'hi' ? 'तिथि गणना हो रही है…' : 'Computing the date…')
+                    : toEng(tithiText);
                   return (
-                    <View key={`${f.date}-${f.obs.key}`}>
+                    <View key={`${f.obs.key}-${f.date}`}>
                       <View style={[styles.festivalCard, { borderColor: active ? theme.gold1 : theme.cardBorder, backgroundColor: active ? 'rgba(214,160,59,0.12)' : (theme.isDark ? 'rgba(255,255,255,0.018)' : 'rgba(255,255,255,0.42)') }]}>
                         <Pressable onPress={() => openFestival(f, false)} style={styles.festivalMain}>
                           <FestivalThumb row={f} lang={lang} />
                           <View style={styles.festivalBody}>
                             <Text style={[styles.festivalTitle, { color: theme.text }]} numberOfLines={2}>{L(f.obs.name)}</Text>
-                            {!!tithiText && <Text style={[styles.festivalMeta, { color: theme.textMuted }]} numberOfLines={2}>{toEng(tithiText)}</Text>}
+                            {!!metaText && <Text style={[styles.festivalMeta, { color: theme.textMuted }]} numberOfLines={2}>{metaText}</Text>}
                             <Text style={[styles.festivalHint, { color: theme.textMuted }]} numberOfLines={active ? undefined : 2}>{L(f.obs.guidance)}</Text>
-                            <View style={styles.festExpand}>
-                              <Text style={[styles.festExpandTxt, { color: theme.gold2 }]}>{active ? (lang === 'hi' ? 'विवरण छिपाएँ' : 'Hide details') : (lang === 'hi' ? 'विवरण देखें' : 'View details')}</Text>
-                              <Chevron open={active} c={theme.gold2} />
-                            </View>
+                            {!pending && (
+                              <View style={styles.festExpand}>
+                                <Text style={[styles.festExpandTxt, { color: theme.gold2 }]}>{active ? (lang === 'hi' ? 'विवरण छिपाएँ' : 'Hide details') : (lang === 'hi' ? 'विवरण देखें' : 'View details')}</Text>
+                                <Chevron open={active} c={theme.gold2} />
+                              </View>
+                            )}
                           </View>
                         </Pressable>
                         <View style={styles.festivalActions}>
                           <Text style={[styles.obsType, { color: theme.gold2 }]}>{f.obs.importance}</Text>
-                          <Pressable onPress={() => openFestival(f, true)} style={[styles.aiChip, { borderColor: theme.gold2 + '88', backgroundColor: active && detailMode === 'ai' ? 'rgba(214,160,59,0.18)' : 'transparent' }]}>
-                            <Text style={[styles.aiChipText, { color: theme.gold1 }]}>{lang === 'hi' ? 'मार्गदर्शन' : 'Guide'}</Text>
-                          </Pressable>
+                          {!pending && (
+                            <Pressable onPress={() => openFestival(f, true)} style={[styles.aiChip, { borderColor: theme.gold2 + '88', backgroundColor: active && detailMode === 'ai' ? 'rgba(214,160,59,0.18)' : 'transparent' }]}>
+                              <Text style={[styles.aiChipText, { color: theme.gold1 }]}>{lang === 'hi' ? 'मार्गदर्शन' : 'Guide'}</Text>
+                            </Pressable>
+                          )}
                         </View>
                       </View>
                       {active && detailLoading && <View style={styles.detailLoading}><ActivityIndicator color={theme.gold1} /><Text style={[styles.obsText, { color: theme.textMuted }]}>{detailMode === 'ai' ? (lang === 'hi' ? 'मार्गदर्शन तैयार हो रहा है' : 'Preparing guide') : (lang === 'hi' ? 'विस्तार लोड हो रहा है' : 'Loading details')}</Text></View>}
