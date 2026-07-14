@@ -1,74 +1,19 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
-import Svg, { Defs, RadialGradient, LinearGradient as SvgLinearGradient, Stop, Circle, Path, Ellipse, Rect, G } from 'react-native-svg';
+import React from 'react';
+import { View, Text, StyleSheet, Image } from 'react-native';
+// SVG is still needed for the card's background glow — only the diya itself became a GIF.
+import Svg, { Defs, RadialGradient, Stop, Circle } from 'react-native-svg';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts } from '../theme/tokens';
 import { useT } from '../i18n/LanguageProvider';
 
-/* Animate ONLY the flame group — a real SVG <G>, so it renders correctly
-   (the old version nested an RN <Animated.View>+<Svg> inside <Svg>, which
-   react-native-svg can't paint → the flame showed as a black blob). */
-const AnimatedG = Animated.createAnimatedComponent(G);
-
+/* The flame animates in the GIF itself, so nothing here drives it — the hand-rolled SVG
+   diya this replaced had to flicker its flame through a JS-driven Animated loop.
+   Animated GIFs need Fresco's animated-gif decoder on Android; it is already in the
+   Gradle config, so this plays rather than freezing on the first frame. */
 function DiyaIcon() {
-  const anim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        // SVG props can't use the native driver — JS driver is fine for one tiny group
-        Animated.timing(anim, { toValue: 1, duration: 1200, useNativeDriver: false }),
-        Animated.timing(anim, { toValue: 0, duration: 1200, useNativeDriver: false }),
-      ])
-    ).start();
-  }, [anim]);
-
-  const scale = anim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.08] });
-  const rotation = anim.interpolate({ inputRange: [0, 1], outputRange: [-2, 2] });
-
   return (
     <View style={styles.iconWrap}>
-      <Svg viewBox="0 0 64 64" width={56} height={56}>
-        <Defs>
-          <RadialGradient id="cgFlameG" cx="50%" cy="68%" r="62%">
-            <Stop offset="0%" stopColor="#fff7d6" />
-            <Stop offset="42%" stopColor="#ffcf4a" />
-            <Stop offset="100%" stopColor="#ff6a00" />
-          </RadialGradient>
-          <SvgLinearGradient id="cgBowlG" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0%" stopColor="#fce8a8" />
-            <Stop offset="45%" stopColor="#e9b850" />
-            <Stop offset="100%" stopColor="#7e5a14" />
-          </SvgLinearGradient>
-          <SvgLinearGradient id="cgOilG" x1="0" y1="0" x2="1" y2="0">
-            <Stop offset="0%" stopColor="#c69e3a" />
-            <Stop offset="50%" stopColor="#f6d585" />
-            <Stop offset="100%" stopColor="#c69e3a" />
-          </SvgLinearGradient>
-          <RadialGradient id="cgHaloG" cx="50%" cy="50%" r="50%">
-            <Stop offset="0%" stopColor="#ffb43c" stopOpacity={0.55} />
-            <Stop offset="100%" stopColor="#ffb43c" stopOpacity={0} />
-          </RadialGradient>
-        </Defs>
-        {/* warm halo behind the flame */}
-        <Circle cx={32} cy={23} r={22} fill="url(#cgHaloG)" />
-        {/* flame group — flickers gently around its base (32, 36) */}
-        <AnimatedG originX={32} originY={36} scale={scale} rotation={rotation}>
-          <Path d="M32 6C37.5 15 42 20.5 42 28a10 10 0 0 1-20 0c0-7.5 4.5-13 10-22Z" fill="url(#cgFlameG)" />
-          <Path d="M32 16c3 5.5 5.5 9 5.5 12.5a5.5 5.5 0 0 1-11 0c0-3.5 2.5-7 5.5-12.5Z" fill="#fff7d6" />
-          <Ellipse cx={32} cy={30} rx={2.3} ry={3.6} fill="#ffffff" />
-        </AnimatedG>
-        {/* wick */}
-        <Rect x={31} y={33} width={2} height={6} rx={1} fill="#5e3f10" />
-        {/* golden oil surface */}
-        <Ellipse cx={32} cy={40.5} rx={20.5} ry={4} fill="url(#cgOilG)" />
-        {/* earthen bowl */}
-        <Path d="M11.5 40.5C13 49.5 21.5 54.5 32 54.5s19-5 20.5-14c-6.5 2.9-13.3 3.9-20.5 3.9s-14-1-20.5-3.9Z" fill="url(#cgBowlG)" stroke="#6e4e12" strokeWidth={0.6} />
-        {/* rim highlight */}
-        <Path d="M13 40.6C19 43 25.4 44 32 44s13-1 19-3.4" fill="none" stroke="#fff3c8" strokeWidth={1.3} strokeLinecap="round" opacity={0.75} />
-        {/* base foot */}
-        <Path d="M27 54.2h10l-1.6 4h-6.8z" fill="url(#cgBowlG)" stroke="#6e4e12" strokeWidth={0.4} />
-      </Svg>
+      <Image source={require('../../assets/images/diya.gif')} style={styles.diya} resizeMode="contain" />
     </View>
   );
 }
@@ -137,7 +82,7 @@ const styles = StyleSheet.create({
   content: { flex: 1 },
   h4: { fontFamily: fonts.interSemi, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 },
   p: { fontFamily: fonts.inter, fontSize: 12, lineHeight: 18 },
-  /* no solid bg — the diya SVG carries its own soft halo gradient (web look) */
+  /* no solid bg — the diya art carries its own glow, and the GIF is transparent */
   iconWrap: {
     width: 64,
     height: 64,
@@ -145,4 +90,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexShrink: 0,
   },
+  diya: { width: 60, height: 60 },
 });
