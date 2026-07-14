@@ -261,6 +261,9 @@ export function PanchangScreen({ navigation }: any) {
   const t = useT();
   const [place, setPlace] = useState<string>(DEFAULT_PLACE);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null); // GPS (panchang = abhi ki jagah)
+  // Nothing loads until we know WHERE the user is. Firing on the default place first meant
+  // four requests per open and a flash of another city's panchang before GPS resolved.
+  const [locReady, setLocReady] = useState(false);
   const [date, setDate] = useState<Date>(new Date());
   const [data, setData] = useState<PanchangResponse | null>(null);
   const [festivals, setFestivals] = useState<PanchangFestivalDay[]>([]);
@@ -289,6 +292,7 @@ export function PanchangScreen({ navigation }: any) {
       if (!on) return;
       setPlace(loc.city);
       setCoords(loc.fromGps && loc.lat != null && loc.lng != null ? { lat: loc.lat, lng: loc.lng } : null);
+      setLocReady(true);
     })();
     return () => { on = false; };
   }, []);
@@ -312,14 +316,14 @@ export function PanchangScreen({ navigation }: any) {
     return () => { on = false; };
   }, []);
 
-  useEffect(() => load(date, place, coords), [date, place, coords, load]);
+  useEffect(() => { if (locReady) return load(date, place, coords); }, [date, place, coords, locReady, load]);
 
   // Auto-update the CURRENT tithi/time without a manual refresh: when viewing TODAY,
   // silently re-fetch every 60s and whenever the app returns to the foreground, so a
   // new tithi appears on its own the moment the previous one ends.
   const isTodayNow = () => toDMY(date) === toDMY(new Date());
   useEffect(() => {
-    if (!isTodayNow()) return;
+    if (!isTodayNow() || !locReady) return;
     let on = true;
     const refresh = () => {
       getPanchang({ ...(coords ? { lat: coords.lat, lng: coords.lng } : { place }), date: toDMY(date), tz: '+05:30' })
@@ -481,7 +485,10 @@ export function PanchangScreen({ navigation }: any) {
           <View style={styles.locWrap}>
             <View style={[styles.locPill, { borderColor: theme.gold2 + '55', backgroundColor: theme.isDark ? 'rgba(214,160,59,0.10)' : 'rgba(214,160,59,0.12)' }]}>
               <Text style={styles.locPin}>📍</Text>
-              <Text style={[styles.locName, { color: theme.text }]} numberOfLines={2}>{data.location}</Text>
+              {/* Show the city WE resolved, not the API's echo. The API only mirrors back what it
+                  was sent, and in GPS mode we send lat/lng — so its `location` is bare coordinates
+                  ("26.24,73.02") or nothing. `place` already holds the reverse-geocoded city. */}
+              <Text style={[styles.locName, { color: theme.text }]} numberOfLines={2}>{place || data.location}</Text>
               {/* source hint — blue = local ephemeris, green = VedAstro */}
               {!!data.provider && <View style={[styles.provDot, { backgroundColor: data.provider === 'local' ? '#6fa8dc' : '#3ec77a' }]} />}
             </View>
