@@ -177,6 +177,7 @@ function refWindow(kind, c) {
   switch (kind) {
     case 'moonrise': return c.moonrise ? { point: c.moonrise } : null;
     case 'sunset': return { point: c.sunset };
+    case 'pratahkala': return { a: new Date(sr), b: part(1) };
     case 'purvahna': return { a: new Date(sr), b: new Date(sr + dayLen / 2) };
     case 'madhyahna': return { a: part(2), b: part(3) };
     case 'aparahna': return { a: part(3), b: part(4) };
@@ -450,6 +451,42 @@ function holikaDahanDay(tStart, tEnd, ctx) {
   return resolveDay(tStart, tEnd, 'pradosh', 'max', ctx);
 }
 
+/**
+ * GOVARDHAN PUJA (Annakut) — offered on the Kartika Shukla Pratipada, in SAYANKALA if the
+ * tithi pervades it, otherwise in PRATAHKALA the next morning. The decisive word is PERVADES:
+ * the tithi must cover the whole muhurat, not merely overlap it.
+ *
+ * That distinction is not cosmetic. A "greater share of the window" tie-break compares two
+ * partial overlaps, and their ORDER flips with longitude — in 2037 it put Govardhan on 7 Nov
+ * at Jodhpur and on a different day at Kanpur, which Drik never does. Pervasion is a yes/no
+ * test against a window, so it cannot drift east to west. (Same correction already applied to
+ * Diwali and Akshaya Tritiya; `'max'` remains the default elsewhere and is worth auditing.)
+ *
+ * Verified against Drik at BOTH cities for 2026-2037, 2039, 2040, 2044 and 2050 — 15 of 16.
+ *
+ * KNOWN GAP — 2033. Drik gives 24 Oct (day B, Pratahkala); this rule gives 23 Oct (day A,
+ * Sayankala). The Pratipada runs 23 Oct 12:59 → 24 Oct 15:29, so it pervades the 23rd's
+ * Sayankala perfectly — and yet Drik walks past it. I could not derive why: 2033 is
+ * structurally IDENTICAL to 2026 (Pratipada 9 Nov 12:32 → 10 Nov 14:01), which Drik puts on
+ * day A, on every predicate I could construct — pervasion of pratahkala/sayankala/aparahna/
+ * madhyahna on either day, sunrise ownership, Hindu-day share, the Amavasya/Diwali offset.
+ * The two differ only by 26 minutes in the tithi's start and 88 in its end, with no day-part
+ * boundary between them. Rather than tune a threshold until 2033 goes green (which would cost
+ * several other years), it is left wrong and documented.
+ */
+function govardhanDay(tStart, tEnd, ctx) {
+  const base = civilOf(tStart, ctx.tzMin);
+  for (const ref of ['sayankala', 'pratahkala']) {
+    for (let i = 0; i <= 2; i += 1) {
+      const d = addDays(base, i);
+      const w = refWindow(ref, dayCtx(d, ctx));
+      if (!w) continue;
+      if (tStart.getTime() <= w.a.getTime() && tEnd.getTime() >= w.b.getTime()) return d;
+    }
+  }
+  return resolveDay(tStart, tEnd, 'sunrise', 'first', ctx);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // RULE CATALOG — masa is the AMANTA index (0=Chaitra … 11=Phalguna),
 // tithi is 1..15 within the paksha (15 = Purnima in Shukla, Amavasya in Krishna).
@@ -633,11 +670,10 @@ const ANNUAL = [
   F('diwali', 'Diwali / Lakshmi Puja', 'दीवाली / लक्ष्मी पूजा', 6, 'Krishna', 15, 'pradosh', { pick: 'full', aliases: ['diwali', 'deepawali', 'lakshmi puja', 'दीवाली', 'दिवाली'] }),
 
   // ── Kartika ──
-  // Annakut is offered on the Pratipada that follows the Diwali night. Pratipada often starts
-  // mid-morning (12:32 on 9 Nov 2026), so it never reaches that day's Pratahkala — Sayankala
-  // is the muhurat Drik then falls back to, and it identifies the day unambiguously. The
-  // Gujarati new year, by contrast, is the sunrise-vyapini Pratipada, one day later.
-  F('govardhan-puja', 'Govardhan Puja', 'गोवर्धन पूजा', 7, 'Shukla', 1, 'sayankala', { aliases: ['govardhan puja', 'annakut', 'गोवर्धन पूजा'] }),
+  // Day comes from govardhanDay() — Sayankala if the Pratipada pervades it, else the next
+  // morning's Pratahkala. See the note there, including the 2033 gap. The Gujarati new year,
+  // by contrast, is the plain sunrise-vyapini Pratipada, which is why the two can differ.
+  F('govardhan-puja', 'Govardhan Puja', 'गोवर्धन पूजा', 7, 'Shukla', 1, 'sayankala', { govardhan: true, aliases: ['govardhan puja', 'annakut', 'गोवर्धन पूजा'] }),
   F('gujarati-new-year', 'Gujarati New Year', 'गुजराती नववर्ष', 7, 'Shukla', 1, 'sunrise', { importance: 'minor', aliases: ['gujarati new year', 'bestu varas', 'गुजराती नववर्ष'] }),
   F('bhai-dooj', 'Bhai Dooj', 'भाई दूज', 7, 'Shukla', 2, 'aparahna', { aliases: ['bhai dooj', 'bhaiya dooj', 'yama dwitiya', 'भाई दूज'] }),
   F('labh-chaturthi', 'Labh Chaturthi', 'लाभ चतुर्थी', 7, 'Shukla', 4, 'sunrise', { importance: 'minor', aliases: ['labh chaturthi', 'labh pancham', 'लाभ चतुर्थी'] }),
@@ -1005,6 +1041,7 @@ function buildIndex(year, lat, lng, tz) {
       else if (rule.jayanti) day = janmashtamiDay(start, end, ctx);
       else if (rule.rakshaBandhan) day = rakshaBandhanDay(start, end, ctx);
       else if (rule.holika) day = holikaDahanDay(start, end, ctx);
+      else if (rule.govardhan) day = govardhanDay(start, end, ctx);
       else day = resolveDay(start, end, rule.ref, rule.pick, ctx);
       if (!day) return null;
       if (rule.weekday != null && day.getDay() !== rule.weekday) return null;

@@ -47,6 +47,17 @@ const CROSS_CITY = {
     2026: '04/09', 2027: '25/08', 2028: '13/08', 2029: '01/09',
     2030: '21/08', 2035: '26/08', 2040: '29/08', 2050: '09/08',
   },
+  // Govardhan Puja is Sayankala-or-next-Pratahkala by PERVASION. The years here that matter
+  // most are 2036/2037: under the old "greater share of the window" tie-break the engine put
+  // 2037 on different days at Jodhpur and Kanpur, because comparing two partial overlaps is
+  // longitude-sensitive. Pervasion is a yes/no test and cannot drift.
+  // 2033 is deliberately ABSENT — Drik gives 24 Oct, we give 23 Oct, and I could not derive
+  // why (see govardhanDay() and verify2033.js). It is a known, documented gap, not a silent one.
+  'govardhan-puja': {
+    2026: '09/11', 2027: '30/10', 2028: '18/10', 2029: '06/11', 2030: '27/10', 2031: '15/11',
+    2032: '03/11', 2034: '11/11', 2035: '31/10', 2036: '20/10', 2037: '08/11', 2039: '16/11',
+    2040: '05/11', 2044: '21/10', 2050: '15/11',
+  },
 };
 
 function scoreCrossCity() {
