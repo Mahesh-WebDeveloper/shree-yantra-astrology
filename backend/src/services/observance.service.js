@@ -333,6 +333,123 @@ function isDashamiViddha(day, tStart, tEnd, ctx) {
   return !(arunodaya >= tStart.getTime() && arunodaya < tEnd.getTime());
 }
 
+/**
+ * KRISHNA JANMASHTAMI (smarta) — the one festival Drik decides with TWO bodies, because the
+ * shastra wants Krishna's birth star as well as his birth tithi: the Ashtami-Rohini
+ * ("Jayanti") yoga.
+ *
+ *   • If the Ashtami tithi and the Rohini nakshatra OVERLAP at any moment, the yoga exists,
+ *     and the festival is the ordinary sunrise-vyapini Ashtami day.
+ *   • If they never overlap at all, there is no yoga to honour, and the day falls back to
+ *     the Nishita rule — the night whose midnight the Ashtami actually holds.
+ *
+ * That second branch is not hypothetical: in 2050 the Ashtami ends 10 Aug 09:54 and Rohini
+ * only begins 11 Aug 05:34, so the two never meet. Drik puts Janmashtami on 9 Aug — the
+ * Nishita day — even though the Ashtami owns the sunrise of the 10th. Verified against Drik
+ * for 2026, 2027, 2028, 2029, 2030, 2035, 2040 and 2050 (Jodhpur), and 2027/2029/2030 each
+ * disprove a pure Nishita rule while 2050 disproves a pure sunrise rule.
+ */
+const ROHINI = 3; // index into eph.NAKSHATRAS
+
+function nakshatraOverlaps(idx, tStart, tEnd) {
+  const step = 5 * MS;
+  for (let t = tStart.getTime(); t <= tEnd.getTime(); t += step) {
+    if (Math.floor(eph.siderealLon('Moon', new Date(t)) / (360 / 27)) === idx) return true;
+  }
+  return false;
+}
+
+function janmashtamiDay(tStart, tEnd, ctx) {
+  const jayantiYoga = nakshatraOverlaps(ROHINI, tStart, tEnd);
+  return jayantiYoga
+    ? resolveDay(tStart, tEnd, 'sunrise', 'first', ctx)
+    : resolveDay(tStart, tEnd, 'nishita', 'max', ctx);
+}
+
+/**
+ * RAKSHA BANDHAN — the rakhi wants the Aparahna of the Purnima, but BHADRA stands in the way.
+ * Bhadra is the Vishti karana, and on Shravana Purnima Vishti is always the FIRST of the
+ * tithi's two karanas — it runs from the start of the Purnima to its midpoint. (Computed that
+ * way it reproduces Drik's printed "Bhadra End Time" to the minute: 19:04 in 2029, 21:09 in
+ * 2031, 12:57 in 2033, 21:33 in 2050.) Because Bhadra begins WITH the Purnima, it always
+ * swallows the Aparahna of the day the Purnima starts. So neither day offers the textbook
+ * Aparahna slot, and the choice is between two second-best windows:
+ *
+ *   day A (Purnima starts) — tie the rakhi in the evening, once Bhadra has cleared
+ *   day B (Purnima ends)   — tie it in the morning, before the tithi runs out
+ *
+ * Drik takes day B only if the Purnima there actually LASTS into the day — specifically past
+ * PRATAHKALA, the first fifth of daylight. If the tithi is gone by mid-morning there is no
+ * real window on day B, and the ceremony stays on day A's post-Bhadra evening.
+ *
+ *   2026: Purnima ends 09:49 on day B, well past Pratahkala → day B (Drik: 28 Aug, 06:16-09:48)
+ *   2050: Purnima ends 07:50 on day B, inside Pratahkala   → day A (Drik: 2 Aug, after 21:33)
+ *
+ * Those two are structurally identical in every other respect — same Bhadra shape, same dead
+ * Aparahna on both days — so the extent of the tithi on day B is the only thing that separates
+ * them. Crucially this test is made against a DAY-PART boundary, which scales with the local
+ * day, so it gives the same answer at Jodhpur and at Kanpur — as Drik's does. An earlier
+ * version of this rule gated on the Pradosh window instead; that keys off sunset, drifts east
+ * to west, and silently disagreed with Drik at Kanpur while looking perfect at Jodhpur.
+ *
+ * Verified against Drik at BOTH cities for 2026-2035, 2040 and 2050.
+ */
+function rakshaBandhanDay(tStart, tEnd, ctx) {
+  const dayA = civilOf(tStart, ctx.tzMin);
+  const dayB = civilOf(tEnd, ctx.tzMin);
+  if (dayB.getTime() === dayA.getTime()) return dayA;
+  const c = dayCtx(dayB, ctx);
+  if (!c.sunrise || !c.sunset) return dayA;
+  const pratahkalaEnd = c.sunrise.getTime() + (c.sunset.getTime() - c.sunrise.getTime()) / 5;
+  return tEnd.getTime() > pratahkalaEnd ? dayB : dayA;
+}
+
+/**
+ * The span of a nakshatra inside a search window. A nakshatra, like a tithi, can be KSHAYA —
+ * begin after one sunrise and end before the next, owning no sunrise at all. Onam 2050 is
+ * exactly that (Shravana runs 30 Aug 08:14 → 31 Aug 05:34), so resolving the nakshatra by
+ * "which sunrise does it hold" silently produces nothing. Returning the span instead lets
+ * resolveDay apply its normal kshaya fallback.
+ */
+function nakshatraSpanIn(idx, from, to) {
+  const w = 360 / 27;
+  const step = 5 * MS;
+  let start = null;
+  let prev = Math.floor(eph.siderealLon('Moon', from) / w);
+  for (let t = from.getTime() + step; t <= to.getTime(); t += step) {
+    const cur = Math.floor(eph.siderealLon('Moon', new Date(t)) / w);
+    if (cur === prev) continue;
+    if (cur === idx) start = new Date(t);
+    else if (prev === idx && start) return { start, end: new Date(t) };
+    prev = cur;
+  }
+  return null;
+}
+
+/**
+ * HOLIKA DAHAN — the bonfire is lit in Pradosh, and like the rakhi it must avoid BHADRA (the
+ * Vishti karana, the first half of the Purnima). So the day is the first one whose Pradosh
+ * window holds a moment that is Purnima AND past Bhadra.
+ *
+ * In 2050 the Phalguna Purnima runs 7 Mar 18:34 → 8 Mar 20:54, so Bhadra covers the whole of
+ * the 7th's Pradosh — Drik lights the fire on the 8th instead, and Holi follows on the 9th.
+ * A plain Pradosh rule takes the 7th, because the Purnima pervades that window perfectly.
+ */
+function holikaDahanDay(tStart, tEnd, ctx) {
+  const bhadraEnd = new Date((tStart.getTime() + tEnd.getTime()) / 2);
+  const clearFrom = Math.max(tStart.getTime(), bhadraEnd.getTime());
+  const base = civilOf(tStart, ctx.tzMin);
+  for (let i = -1; i <= 2; i += 1) {
+    const d = addDays(base, i);
+    const c = dayCtx(d, ctx);
+    if (!c.sunset) continue;
+    const a = c.sunset.getTime();
+    const b = a + 144 * MS;
+    if (Math.min(b, tEnd.getTime()) > Math.max(a, clearFrom)) return d;
+  }
+  return resolveDay(tStart, tEnd, 'pradosh', 'max', ctx);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // RULE CATALOG — masa is the AMANTA index (0=Chaitra … 11=Phalguna),
 // tithi is 1..15 within the paksha (15 = Purnima in Shukla, Amavasya in Krishna).
@@ -361,7 +478,9 @@ const ANNUAL = [
   // Rangwali Holi is not an independent tithi rule: it is by definition the day AFTER the
   // bonfire, so it is derived from Holika Dahan rather than from Krishna Pratipada (which
   // in 2026 only reaches sunrise on 4 March, a day late).
+  // Day comes from holikaDahanDay() — Pradosh minus Bhadra. See the note there.
   F('holika-dahan', 'Holika Dahan', 'होलिका दहन', 11, 'Shukla', 15, 'pradosh', {
+    holika: true,
     aliases: ['holika dahan', 'holika', 'होलिका दहन'],
     follow: {
       key: 'holi', name: { en: 'Holi (Dhulandi)', hi: 'होली (धुलंडी)' }, offset: 1, paksha: 'Krishna', tithi: 1,
@@ -439,19 +558,13 @@ const ANNUAL = [
   // ── Shravana ──
   F('hariyali-teej', 'Hariyali Teej', 'हरियाली तीज', 4, 'Shukla', 3, 'sunrise', { type: 'vrat', aliases: ['hariyali teej', 'shravana teej', 'हरियाली तीज'] }),
   F('nag-panchami', 'Nag Panchami', 'नाग पंचमी', 4, 'Shukla', 5, 'sunrise', { importance: 'minor', aliases: ['nag panchami', 'naag panchami', 'नाग पंचमी'] }),
-  // Rakhi is always tied on Shravana Purnima itself; Aparahna is only the preferred muhurat
-  // WITHIN that day (and when Purnima ends before Aparahna, as in 2026, the muhurat simply
-  // moves to the morning) — so the day is fixed by the tithi at sunrise, not by Aparahna.
-  F('raksha-bandhan', 'Raksha Bandhan', 'रक्षाबंधन', 4, 'Shukla', 15, 'sunrise', { aliases: ['raksha bandhan', 'rakhi', 'rakshabandhan', 'रक्षाबंधन'] }),
+  // Day comes from rakshaBandhanDay() — Aparahna/Pradosh minus Bhadra. See the note there.
+  F('raksha-bandhan', 'Raksha Bandhan', 'रक्षाबंधन', 4, 'Shukla', 15, 'sunrise', { rakshaBandhan: true, aliases: ['raksha bandhan', 'rakhi', 'rakshabandhan', 'रक्षाबंधन'] }),
   F('kajri-teej', 'Kajri Teej', 'कजरी तीज', 4, 'Krishna', 3, 'sunrise', { type: 'vrat', importance: 'minor', aliases: ['kajri teej', 'kajari teej', 'कजरी तीज'] }),
-  // Krishna's birth is at midnight, but the Nishita is the PUJA muhurat inside the Ashtami
-  // day — it is not what picks the day. The day is the sunrise-vyapini Ashtami. In 2027 the
-  // Ashtami runs 24 Aug 20:26 → 25 Aug 19:22, so it does own the Nishita of the 24th, yet
-  // Drik keeps Janmashtami on the 25th (the only sunrise the Ashtami holds); a Nishita rule
-  // would wrongly say the 24th. In 2026 the Ashtami owns no Nishita at all and sunrise again
-  // gives Drik's day (4 Sep). The MONTHLY Krishna Ashtami vrat really is Nishita-selected —
-  // see masik-krishna-janmashtami — which is why the two can part company.
-  F('krishna-janmashtami', 'Krishna Janmashtami', 'कृष्ण जन्माष्टमी', 4, 'Krishna', 8, 'sunrise', {
+  // Day comes from janmashtamiDay() — the Ashtami-Rohini (Jayanti) yoga decides between the
+  // sunrise rule and the Nishita rule. See the note there. The MONTHLY Krishna Ashtami vrat is
+  // unconditionally Nishita-selected (masik-krishna-janmashtami), so the two can part company.
+  F('krishna-janmashtami', 'Krishna Janmashtami', 'कृष्ण जन्माष्टमी', 4, 'Krishna', 8, 'sunrise', { jayanti: true,
     type: 'vrat', aliases: ['janmashtami', 'krishna janmashtami', 'gokulashtami', 'जन्माष्टमी'],
     // Dahi Handi is by definition the morning after the midnight birth, never an independent tithi.
     follow: {
@@ -508,7 +621,11 @@ const ANNUAL = [
   // Chaturdashi is the pre-dawn oil bath, so it belongs to the following sunrise.
   F('kali-chaudas', 'Kali Chaudas', 'काली चौदस', 6, 'Krishna', 14, 'nishita', { importance: 'minor', aliases: ['kali chaudas', 'काली चौदस'] }),
   F('naraka-chaturdashi', 'Naraka Chaturdashi', 'नरक चतुर्दशी', 6, 'Krishna', 14, 'sunrise', { aliases: ['naraka chaturdashi', 'choti diwali', 'roop chaudas', 'नरक चतुर्दशी'] }),
-  F('diwali', 'Diwali / Lakshmi Puja', 'दीवाली / लक्ष्मी पूजा', 6, 'Krishna', 15, 'pradosh', { aliases: ['diwali', 'deepawali', 'lakshmi puja', 'दीवाली', 'दिवाली'] }),
+  // Lakshmi Puja needs the Amavasya to PERVADE the Pradosh, not merely to hold most of it. In
+  // 2050 the Amavasya (13 Nov 18:02 → 14 Nov 19:12) pervades neither day's Pradosh, so the rule
+  // falls back to the sunrise tithi and lands on the 14th — Drik's day. A "greater share"
+  // reading would take the 13th, where the Amavasya covers 131 of the 144 Pradosh minutes.
+  F('diwali', 'Diwali / Lakshmi Puja', 'दीवाली / लक्ष्मी पूजा', 6, 'Krishna', 15, 'pradosh', { pick: 'full', aliases: ['diwali', 'deepawali', 'lakshmi puja', 'दीवाली', 'दिवाली'] }),
 
   // ── Kartika ──
   // Annakut is offered on the Pratipada that follows the Diwali night. Pratipada often starts
@@ -873,9 +990,12 @@ function buildIndex(year, lat, lng, tz) {
       const { start, end } = tithiSpan(m, rule.paksha, rule.tithi);
       // Observances kept ON the Ekadashi (Gita Jayanti, Gayatri Jayanti, the Gauri Vrat's
       // opening day) inherit the Ekadashi's vedha rule rather than a plain sunrise pick.
-      const day = rule.ekadashi
-        ? ekadashiDay({ start, end }, tithiSpan(m, rule.paksha, 12), ctx)
-        : resolveDay(start, end, rule.ref, rule.pick, ctx);
+      let day;
+      if (rule.ekadashi) day = ekadashiDay({ start, end }, tithiSpan(m, rule.paksha, 12), ctx);
+      else if (rule.jayanti) day = janmashtamiDay(start, end, ctx);
+      else if (rule.rakshaBandhan) day = rakshaBandhanDay(start, end, ctx);
+      else if (rule.holika) day = holikaDahanDay(start, end, ctx);
+      else day = resolveDay(start, end, rule.ref, rule.pick, ctx);
       if (!day) return null;
       if (rule.weekday != null && day.getDay() !== rule.weekday) return null;
       let name = (extra && extra.name) || rule.name;
@@ -1135,17 +1255,15 @@ function buildIndex(year, lat, lng, tz) {
     if (sankrantis[i].sign !== 4) continue; // Simha Sankranti opens Chingam
     const a = civilOf(sankrantis[i].moment, tzMin);
     const b = civilOf(sankrantis[i + 1].moment, tzMin);
-    for (let d = a; d < b; d = addDays(d, 1)) {
-      const c = dayCtx(d, ctx);
-      if (!c.sunrise || nakshatraAt(c.sunrise) !== 'Shravana') continue;
-      push(new Date(d), {
+    const span = nakshatraSpanIn(21, eph.localMidnightUTC(a, tzMin), eph.localMidnightUTC(b, tzMin)); // 21 = Shravana
+    if (span) {
+      push(resolveDay(span.start, span.end, 'sunrise', 'first', ctx), {
         key: 'onam',
         name: { en: 'Thiru Onam', hi: 'ओणम' },
         type: 'festival',
         importance: 'major',
         note: { en: 'Shravana nakshatra with the Sun in Simha', hi: 'सूर्य सिंह राशि में, श्रवण नक्षत्र' },
       });
-      break;
     }
   }
 

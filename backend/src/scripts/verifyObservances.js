@@ -3,10 +3,11 @@
 /**
  * verifyObservances.js — acceptance test for the deterministic observance engine.
  *
- * Scores TWO years of Drik Panchang ground truth for Jodhpur:
+ * Scores THREE years of Drik Panchang ground truth for Jodhpur:
  *   2026 — the year the rules were derived against (in-sample)
- *   2027 — fetched from Drik afterwards (OUT-OF-SAMPLE; this is the year that actually
- *          tests whether the rules are rules, or just curve-fitting to 2026)
+ *   2027 — fetched from Drik afterwards (out-of-sample)
+ *   2050 — a far-future spot-check (out-of-sample). Distance is the point: rules that merely
+ *          fit the near years drift apart from Drik across a quarter of a century.
  *
  * The fixtures are the ONLY place a real date appears; the engine never reads them.
  * A failing row is a wrong RULE, never a wrong date — so each mismatch prints the
@@ -21,9 +22,70 @@ const LAT = 26.2389;
 const LNG = 73.0243;
 const TZ = '+05:30';
 
+/**
+ * CROSS-CITY INVARIANCE.
+ *
+ * Raksha Bandhan and Krishna Janmashtami are decided by tithi/nakshatra/karana geometry, which
+ * is the same instant everywhere in a timezone — Drik prints the SAME date for Jodhpur and
+ * Kanpur, and so must we. This section exists because a previous Raksha Bandhan rule gated on
+ * the Pradosh window: that keys off sunset, so it drifted with longitude and was right at
+ * Jodhpur while silently wrong at Kanpur. A single-city fixture cannot catch that. This can.
+ *
+ * Ground truth fetched from Drik's dedicated festival pages with explicit geoname-ids
+ * (Jodhpur 1268865, Kanpur 1267995).
+ */
+const CITIES = {
+  Jodhpur: [26.2389, 73.0243],
+  Kanpur: [26.4499, 80.3319],
+};
+const CROSS_CITY = {
+  'raksha-bandhan': {
+    2026: '28/08', 2027: '17/08', 2028: '05/08', 2029: '23/08', 2030: '13/08', 2031: '02/08',
+    2032: '20/08', 2033: '10/08', 2034: '29/08', 2035: '18/08', 2040: '22/08', 2050: '02/08',
+  },
+  'krishna-janmashtami': {
+    2026: '04/09', 2027: '25/08', 2028: '13/08', 2029: '01/09',
+    2030: '21/08', 2035: '26/08', 2040: '29/08', 2050: '09/08',
+  },
+};
+
+function scoreCrossCity() {
+  console.log(`
+${'='.repeat(96)}`);
+  console.log('CROSS-CITY INVARIANCE — the same festival must land on the same day at every longitude');
+  console.log('='.repeat(96));
+  console.log('KEY                   YEAR  DRIK    JODHPUR   KANPUR    RESULT');
+  console.log('-'.repeat(96));
+  let pass = 0;
+  let total = 0;
+  for (const [key, years] of Object.entries(CROSS_CITY)) {
+    for (const [year, expected] of Object.entries(years)) {
+      const got = {};
+      for (const [city, [lat, lng]] of Object.entries(CITIES)) {
+        const idx = buildIndex(Number(year), lat, lng, TZ);
+        got[city] = '—';
+        for (const [dmy, list] of idx) {
+          if (dmy.endsWith(`/${year}`) && list.some((o) => o.key === key)) got[city] = dmy.slice(0, 5);
+        }
+      }
+      const ok = got.Jodhpur === expected && got.Kanpur === expected;
+      total += 1;
+      if (ok) pass += 1;
+      console.log(`${key.padEnd(21)} ${year}  ${expected}   ${got.Jodhpur.padEnd(9)} ${got.Kanpur.padEnd(9)} ${ok ? 'PASS' : 'FAIL'}`);
+    }
+  }
+  console.log('-'.repeat(96));
+  console.log(`cross-city: ${pass}/${total} matched (${((pass / total) * 100).toFixed(1)}%)`);
+  return { year: 'cross-city', pass, total, mismatches: total - pass, skipped: 0 };
+}
+
 const YEARS = [
   { year: 2026, fixture: require('./drik2026.fixture') },
   { year: 2027, fixture: require('./drik2027.fixture') },
+  // A far-future spot-check. Near years let several different rules agree by accident; a
+  // quarter-century out they stop agreeing, which is how Raksha Bandhan and Janmashtami were
+  // caught. Major festivals only — Drik's 2050 page does not print the monthly vrats.
+  { year: 2050, fixture: require('./drik2050.fixture') },
 ];
 
 function scoreYear({ year, fixture }) {
@@ -87,6 +149,7 @@ function scoreYear({ year, fixture }) {
 
 function run() {
   const results = YEARS.map(scoreYear);
+  results.push(scoreCrossCity());
 
   const pass = results.reduce((a, r) => a + r.pass, 0);
   const total = results.reduce((a, r) => a + r.total, 0);
@@ -96,7 +159,7 @@ function run() {
   console.log('SUMMARY');
   console.log('='.repeat(96));
   for (const r of results) {
-    console.log(`  ${r.year}: ${String(r.pass).padStart(3)}/${String(r.total).padEnd(3)} (${((r.pass / r.total) * 100).toFixed(1)}%)  ${r.mismatches ? `${r.mismatches} FAILED` : 'all passed'}`);
+    console.log(`  ${String(r.year).padEnd(10)}: ${String(r.pass).padStart(3)}/${String(r.total).padEnd(3)} (${((r.pass / r.total) * 100).toFixed(1)}%)  ${r.mismatches ? `${r.mismatches} FAILED` : 'all passed'}`);
   }
   console.log(`\n  ${pass}/${total} matched (${((pass / total) * 100).toFixed(1)}%)  —  ${skipped} rows recorded but not scored\n`);
 
