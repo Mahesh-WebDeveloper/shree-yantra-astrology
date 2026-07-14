@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View, ViewStyle, StyleProp } from 'react-native';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { Animated as RNAnimated, Easing, Modal, Pressable, ScrollView, StyleSheet, Text, View, ViewStyle, StyleProp } from 'react-native';
 import Svg, { Defs, LinearGradient as SvgGradient, Stop, Rect, Line, G, Text as SvgText, Path } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -34,7 +34,19 @@ type KundliTab = typeof TABS[number]['key'];
 const DEFAULT_BIRTH = { lat: 26.9124, lng: 75.7873, dob: '01-01-2000', tob: '06:42', tz: '+05:30', place: 'Jaipur' };
 const ABBR: Record<string, string> = { Sun: 'Su', Moon: 'Mo', Mars: 'Ma', Mercury: 'Me', Jupiter: 'Ju', Venus: 'Ve', Saturn: 'Sa', Rahu: 'Ra', Ketu: 'Ke' };
 const GLYPH: Record<string, string> = { Sun: '☉', Moon: '☽', Mars: '♂', Mercury: '☿', Jupiter: '♃', Venus: '♀', Saturn: '♄', Rahu: '☊', Ketu: '☋' };
+const SIGN_GLYPH: Record<string, string> = { Aries: '♈', Taurus: '♉', Gemini: '♊', Cancer: '♋', Leo: '♌', Virgo: '♍', Libra: '♎', Scorpio: '♏', Sagittarius: '♐', Capricorn: '♑', Aquarius: '♒', Pisces: '♓' };
 const HOUSE_OFF = [0, -13, 13, -25, 25, -36, 36];
+// row model used by the tables — PlanetRow plus optional zebra/highlight decorations
+type KRow = PlanetRow & { signGlyph?: string; highlight?: boolean };
+// "00:00 18/06/2026 +05:30" → epoch ms (local); null if unparseable
+function parseStd(std: string): number | null {
+  const p = String(std).trim().split(/\s+/);
+  const dmy = (p[1] || '').split('/');
+  if (dmy.length !== 3) return null;
+  const [hh, mm] = (p[0] || '00:00').split(':').map(Number);
+  const t = new Date(Number(dmy[2]), (Number(dmy[1]) || 1) - 1, Number(dmy[0]) || 1, hh || 0, mm || 0).getTime();
+  return Number.isFinite(t) ? t : null;
+}
 
 // ── chart-style support (sign-based for South/East Indian) ──
 const SIGN_IDX: Record<string, number> = { Aries: 0, Taurus: 1, Gemini: 2, Cancer: 3, Leo: 4, Virgo: 5, Libra: 6, Scorpio: 7, Sagittarius: 8, Capricorn: 9, Aquarius: 10, Pisces: 11 };
@@ -67,14 +79,15 @@ const MON_HI = ['जन', 'फ़र', 'मार्च', 'अप्रैल', 
 const fmtDob = (ddmmyyyy: string, lang: 'en' | 'hi' = 'en') => { const [d, m, y] = ddmmyyyy.split('-'); const mon = lang === 'hi' ? MON_HI[(Number(m) || 1) - 1] : MON[(Number(m) || 1) - 1]; return `${lang === 'hi' ? toDev(d) : d} ${mon} ${lang === 'hi' ? toDev(y) : y}`; }; // 15-06-1990 → 15 Jun 1990
 // "00:00 18/06/2026 +05:30" → "Jun 2026"
 const fmtMonYr = (std: string, lang: 'en' | 'hi' = 'en') => { const p = String(std).split(' '); const dmy = (p[1] || '').split('/'); if (dmy.length !== 3) return lang === 'hi' ? aAstroText(std, lang) : std; const mon = lang === 'hi' ? MON_HI[(Number(dmy[1]) || 1) - 1] : MON[(Number(dmy[1]) || 1) - 1]; return `${mon} ${lang === 'hi' ? toDev(dmy[2]) : dmy[2]}`; };
-function dashaToRows(dasha: { lord: string; start: string; end: string; durationText: string }[], lang: 'en' | 'hi' = 'en'): PlanetRow[] {
+function dashaToRows(dasha: { lord: string; start: string; end: string; durationText: string }[], lang: 'en' | 'hi' = 'en'): KRow[] {
   const hi = lang === 'hi';
   return dasha.map((d, i) => ({
     glyph: GLYPH[d.lord] || '✦',
     name: hi ? aPlanet(d.lord, lang) : d.lord.toUpperCase(),
-    detail: `${fmtMonYr(d.start, lang)} – ${fmtMonYr(d.end, lang)} · ${hi ? aAstroText(d.durationText.replace(/years?/i, 'वर्ष').replace(/months?/i, 'माह'), lang) : d.durationText}${i === 0 ? ` · ${hi ? 'अभी चल रही है' : 'running now'}` : ''}`,
-    tag: aTag(i === 0 ? 'Active' : 'Upcoming', lang),
+    detail: `${fmtMonYr(d.start, lang)} – ${fmtMonYr(d.end, lang)} · ${hi ? aAstroText(d.durationText.replace(/years?/i, 'वर्ष').replace(/months?/i, 'माह'), lang) : d.durationText}`,
+    tag: i === 0 ? (hi ? 'अभी' : 'Now') : aTag('Upcoming', lang),
     strength: (i === 0 ? 'solid' : 'plain') as PlanetRow['strength'],
+    highlight: i === 0,
   }));
 }
 // "SunaphaYoga" → "Sunapha Yoga" (trailing digits hata ke)
@@ -104,7 +117,7 @@ function doshaToRows(doshas: { name: string; present: boolean; detail: string; t
   });
 }
 
-function toPlanetRows(planets: ApiPlanet[], lang: 'en' | 'hi' = 'en'): PlanetRow[] {
+function toPlanetRows(planets: ApiPlanet[], lang: 'en' | 'hi' = 'en'): KRow[] {
   const hi = lang === 'hi';
   return planets
     .filter((p) => p.sign)
@@ -112,6 +125,7 @@ function toPlanetRows(planets: ApiPlanet[], lang: 'en' | 'hi' = 'en'): PlanetRow
       const rawNakshatra = (p.nakshatra || '').split(' - ')[0];
       const house = hi ? aAstroText((p.house || '').replace(/House/i, 'House '), lang) : (p.house || '').replace('House', 'House ');
       return {
+        signGlyph: p.sign ? SIGN_GLYPH[p.sign] : undefined,
         glyph: GLYPH[p.planet] || '✦',
         name: hi ? aPlanet(p.planet, lang) : p.planet.toUpperCase(),
         detail: `${house} · ${hi ? aSign(p.sign, lang) : p.sign} · ${(p.degreeInSign || '').split("'")[0]}`,
@@ -281,7 +295,9 @@ function Pill({ label, solid }: { label: string; solid?: boolean }) {
         {
           borderWidth: 1,
           borderColor: theme.isDark ? 'rgba(201,150,46,0.5)' : 'rgba(176,115,22,0.26)',
-          backgroundColor: theme.isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,235,181,0.72)',
+          // opaque equivalents of the old translucent fills — pills render inside the
+          // transform-animated hero, where translucent surfaces composite white on Android
+          backgroundColor: theme.isDark ? '#000000' : '#ffeecb',
         },
       ]}
     >
@@ -294,9 +310,17 @@ function CardHead({ children }: { children: React.ReactNode }) {
   return <GradientText style={styles.cardHead}>{children}</GradientText>;
 }
 
-function Row({ row, theme, last }: { row: PlanetRow; theme: Theme; last?: boolean }) {
+const Row = React.memo(function Row({ row, theme, last, alt }: { row: KRow; theme: Theme; last?: boolean; alt?: boolean }) {
   return (
-    <View style={[styles.planetRow, { borderBottomColor: theme.isDark ? 'rgba(201,150,46,0.18)' : 'rgba(176,115,22,0.14)' }, last && styles.noBorder]}>
+    <View
+      style={[
+        styles.planetRow,
+        { borderBottomColor: theme.isDark ? 'rgba(201,150,46,0.18)' : 'rgba(176,115,22,0.14)' },
+        alt && { backgroundColor: theme.isDark ? 'rgba(233,184,80,0.05)' : 'rgba(176,115,22,0.045)', borderRadius: 10, marginHorizontal: -8, paddingHorizontal: 8 },
+        row.highlight && { backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(176,115,22,0.08)', borderRadius: 12, marginHorizontal: -8, paddingHorizontal: 8, borderBottomWidth: 0 },
+        last && styles.noBorder,
+      ]}
+    >
       <View style={[styles.glyph, { backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : 'rgba(176,115,22,0.10)', borderColor: theme.isDark ? 'rgba(201,150,46,0.4)' : 'rgba(176,115,22,0.28)' }]}>
         <Text style={[styles.glyphText, { color: theme.gold1 }]}>{row.glyph}</Text>
       </View>
@@ -304,21 +328,185 @@ function Row({ row, theme, last }: { row: PlanetRow; theme: Theme; last?: boolea
         <Text style={[styles.planetName, { color: theme.gold1 }]} numberOfLines={1}>{row.name}</Text>
         <Text style={[styles.planetDetail, { color: theme.isDark ? 'rgba(216,203,168,0.82)' : '#6d5b38' }]} numberOfLines={1}>{row.detail}</Text>
       </View>
+      {!!row.signGlyph && <Text style={[styles.signGlyphCol, { color: theme.goldText }]}>{row.signGlyph}</Text>}
       <Pill label={row.tag} solid={row.strength === 'solid'} />
     </View>
   );
-}
+});
 
-function RowList({ rows }: { rows: PlanetRow[] }) {
+function RowList({ rows, zebra }: { rows: KRow[]; zebra?: boolean }) {
   const { theme } = useTheme();
   return (
     <View>
       {rows.map((r, i) => (
-        <Row key={`${r.name}-${r.tag}`} row={r} theme={theme} last={i === rows.length - 1} />
+        <Row key={`${r.name}-${r.tag}`} row={r} theme={theme} last={i === rows.length - 1} alt={!!zebra && i % 2 === 1} />
       ))}
     </View>
   );
 }
+
+/* Defers mounting of below-the-fold sections so the first paint is instant.
+   Children stay unmounted until `delay` ms after this component appears. */
+function Deferred({ delay = 60, children }: { delay?: number; children: React.ReactNode }) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setReady(true), delay);
+    return () => clearTimeout(t);
+  }, [delay]);
+  if (!ready) return null;
+  return <>{children}</>;
+}
+
+/* Consistent gold section header between blocks — label + thin gradient divider. */
+function SectionTitle({ label }: { label: string }) {
+  const { theme } = useTheme();
+  return (
+    <View style={styles.secTitleWrap}>
+      <GradientText style={styles.secTitleText}>{label}</GradientText>
+      <LinearGradient
+        colors={theme.isDark ? ['rgba(233,184,80,0.55)', 'rgba(233,184,80,0.14)', 'rgba(0,0,0,0)'] : ['rgba(176,115,22,0.45)', 'rgba(176,115,22,0.12)', 'rgba(255,255,255,0)']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.secTitleRule}
+        pointerEvents="none"
+      />
+    </View>
+  );
+}
+
+/* At-a-glance identity panel — लग्न · राशि · नक्षत्र as three gold chips.
+   Shows a soft shimmer skeleton (not a spinner) while the kundli loads. */
+function GlancePanel({ loading, items }: { loading: boolean; items: { glyph: string; label: string; value: string }[] }) {
+  const { theme } = useTheme();
+  const shimmer = useRef(new RNAnimated.Value(0)).current;
+  useEffect(() => {
+    if (!loading) return;
+    const loop = RNAnimated.loop(RNAnimated.sequence([
+      RNAnimated.timing(shimmer, { toValue: 1, duration: 700, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      RNAnimated.timing(shimmer, { toValue: 0, duration: 700, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+    ]));
+    loop.start();
+    return () => loop.stop();
+  }, [loading, shimmer]);
+  const shimmerOpacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.3, 0.85] });
+  return (
+    <View style={styles.glanceRow}>
+      {items.map((it) => (
+        <View
+          key={it.label}
+          style={[
+            styles.glanceCell,
+            { borderColor: theme.isDark ? 'rgba(201,150,46,0.42)' : 'rgba(176,115,22,0.30)', backgroundColor: theme.cardBg },
+          ]}
+        >
+          <View style={[styles.glanceGlyph, { backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : 'rgba(176,115,22,0.10)', borderColor: theme.isDark ? 'rgba(201,150,46,0.4)' : 'rgba(176,115,22,0.28)' }]}>
+            <Text style={[styles.glanceGlyphText, { color: theme.goldText }]}>{it.glyph}</Text>
+          </View>
+          <Text style={[styles.glanceLabel, { color: theme.textMuted }]} numberOfLines={1}>{it.label}</Text>
+          {loading ? (
+            <RNAnimated.View style={[styles.glanceSkel, { opacity: shimmerOpacity, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.4)' : 'rgba(176,115,22,0.28)' }]} />
+          ) : (
+            <Text style={[styles.glanceValue, { color: theme.text }]} numberOfLines={1}>{it.value}</Text>
+          )}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/* Current Mahadasha strip — planet glyph, eyebrow, lord + range and a thin gold
+   progress bar showing how far through the mahadasha we are right now. */
+function DashaStrip({ lord, title, range, progress }: { lord: string; title: string; range: string; progress: number | null }) {
+  const { theme } = useTheme();
+  const hi = useLang().lang === 'hi';
+  const pct = progress != null ? Math.round(progress * 100) : null;
+  return (
+    <View style={[styles.dashaStrip, { borderColor: theme.isDark ? 'rgba(201,150,46,0.42)' : 'rgba(176,115,22,0.30)', backgroundColor: theme.cardBg }]}>
+      <View style={styles.dashaStripTop}>
+        <View style={[styles.dashaStripGlyph, { backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : 'rgba(176,115,22,0.10)', borderColor: theme.isDark ? 'rgba(201,150,46,0.45)' : 'rgba(176,115,22,0.30)' }]}>
+          <Text style={[styles.dashaStripGlyphText, { color: theme.gold1 }]}>{GLYPH[lord] || '✦'}</Text>
+        </View>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={[styles.dashaEyebrow, { color: theme.goldText }]} numberOfLines={1}>{hi ? 'वर्तमान महादशा' : 'CURRENT MAHADASHA'}</Text>
+          <Text style={[styles.dashaStripTitle, { color: theme.text }]} numberOfLines={1}>{title}</Text>
+          <Text style={[styles.dashaStripRange, { color: theme.textMuted }]} numberOfLines={1}>{range}</Text>
+        </View>
+        {pct != null && (
+          <View style={styles.dashaPctWrap}>
+            <Text style={[styles.dashaPct, { color: theme.goldText }]}>{pct}%</Text>
+            <Text style={[styles.dashaPctSub, { color: theme.textMuted }]}>{hi ? 'पूर्ण' : 'done'}</Text>
+          </View>
+        )}
+      </View>
+      {pct != null && (
+        <View style={[styles.dashaTrack, { backgroundColor: theme.isDark ? 'rgba(233,184,80,0.14)' : 'rgba(176,115,22,0.12)' }]}>
+          <LinearGradient colors={theme.buttonGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={[styles.dashaFill, { flex: Math.max(2, pct) }]} />
+          <View style={{ flex: 100 - Math.max(2, pct) }} />
+        </View>
+      )}
+    </View>
+  );
+}
+
+/* Feature grid glyphs — same motifs as the old row entries, per-feature accent. */
+function FeatIcon({ kind, color }: { kind: string; color: string }) {
+  switch (kind) {
+    case 'milan':
+      return <Svg width={22} height={22} viewBox="0 0 24 24" fill={color}><Path d="M12 21s-7.5-4.8-10-9.2C.6 9 1.6 5.5 4.8 4.7 7 4.1 9 5.3 12 8c3-2.7 5-3.9 7.2-3.3C22.4 5.5 23.4 9 22 11.8 19.5 16.2 12 21 12 21z" /></Svg>;
+    case 'gochar':
+      return <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2}><Path d="M12 2v4M12 18v4M2 12h4M18 12h4" strokeLinecap="round" /><Path d="M12 8a4 4 0 100 8 4 4 0 000-8z" /></Svg>;
+    case 'remedies':
+      return <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 21.6 7.1 18.2l.9-5.5-4-3.9L9.5 8z" /></Svg>;
+    case 'reading':
+      return <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M12 2l2.4 7.4H22l-6 4.5 2.3 7.1L12 16.9 5.7 21l2.3-7.1-6-4.5h7.6z" /></Svg>;
+    case 'timeline':
+      return <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M12 7v5l3 2" /><Path d="M12 3a9 9 0 100 18 9 9 0 000-18z" /></Svg>;
+    default:
+      return <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M3 17l5-5 4 4 8-8" /><Path d="M17 8h4v4" /></Svg>;
+  }
+}
+
+/* One feature card in the 2-column grid — glyph in a soft gold circle, title, sub,
+   spring-press scale. Opaque theme.cardBg (translucent surfaces composite white on
+   Android inside transform-animated views). */
+const FeatureCard = React.memo(function FeatureCard({ kind, tint, title, sub, nav, theme, onNav }: {
+  kind: string; tint: string; title: string; sub: string; nav: string; theme: Theme; onNav: (nav: string) => void;
+}) {
+  const sc = useRef(new RNAnimated.Value(1)).current;
+  const pressIn = () => RNAnimated.spring(sc, { toValue: 0.95, speed: 40, bounciness: 5, useNativeDriver: true }).start();
+  const pressOut = () => RNAnimated.spring(sc, { toValue: 1, speed: 22, bounciness: 9, useNativeDriver: true }).start();
+  return (
+    <RNAnimated.View style={[styles.featWrap, { transform: [{ scale: sc }] }]}>
+      <Pressable
+        onPress={() => onNav(nav)}
+        onPressIn={pressIn}
+        onPressOut={pressOut}
+        style={[styles.featCard, { borderColor: theme.isDark ? 'rgba(201,150,46,0.38)' : 'rgba(176,115,22,0.26)', backgroundColor: theme.cardBg }]}
+      >
+        <View style={[styles.featIcon, { backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(176,115,22,0.08)', borderColor: theme.isDark ? 'rgba(201,150,46,0.42)' : 'rgba(176,115,22,0.26)' }]}>
+          <FeatIcon kind={kind} color={tint} />
+        </View>
+        <Text style={[styles.featTitle, { color: theme.text }]} numberOfLines={1}>{title}</Text>
+        <Text style={[styles.featSub, { color: theme.textMuted }]} numberOfLines={2}>{sub}</Text>
+      </Pressable>
+    </RNAnimated.View>
+  );
+});
+
+/* Gold-gradient segmented control button (North/South/East) with spring press. */
+const SegButton = React.memo(function SegButton({ label, on, theme, onPress }: { label: string; on: boolean; theme: Theme; onPress: () => void }) {
+  const sc = useRef(new RNAnimated.Value(1)).current;
+  const pressIn = () => RNAnimated.spring(sc, { toValue: 0.94, speed: 40, bounciness: 5, useNativeDriver: true }).start();
+  const pressOut = () => RNAnimated.spring(sc, { toValue: 1, speed: 22, bounciness: 9, useNativeDriver: true }).start();
+  return (
+    <RNAnimated.View style={{ flex: 1, transform: [{ scale: sc }], borderRadius: radii.pill }}>
+      <Pressable onPress={onPress} onPressIn={pressIn} onPressOut={pressOut} style={[styles.segBtn, on && { backgroundColor: theme.gold1 }]}>
+        {on && <LinearGradient colors={theme.buttonGradient} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={[StyleSheet.absoluteFill, { borderRadius: radii.pill }]} />}
+        <Text style={[styles.segText, { color: on ? theme.goldInk : theme.goldText }]} numberOfLines={1}>{label}</Text>
+      </Pressable>
+    </RNAnimated.View>
+  );
+});
 
 
 function VargaChartCard({ chart, onAsk, onOpen }: { chart: VargaChart; onAsk: (chart: VargaChart) => void; onOpen: (chart: VargaChart) => void }) {
@@ -760,6 +948,7 @@ export function KundliScreen({ navigation }: any) {
   const { theme } = useTheme();
   const t = useT();
   const { lang } = useLang();
+  const hi = lang === 'hi';
   const [tab, setTab] = useState<KundliTab>('charts');
   const openMenu = () => openAppDrawer();
 
@@ -789,8 +978,8 @@ export function KundliScreen({ navigation }: any) {
   const chartTap = Gesture.Tap().maxDuration(250).onEnd(() => { runOnJS(setShowFull)(true); });
   const chartGesture = Gesture.Exclusive(chartPan, chartTap);
   const [moonSign, setMoonSign] = useState<string | null>(null);
-  const [dashaRows, setDashaRows] = useState<PlanetRow[] | null>(null);
-  const [currentDasha, setCurrentDasha] = useState<{ title: string; range: string } | null>(null);
+  const [dashaRows, setDashaRows] = useState<KRow[] | null>(null);
+  const [currentDasha, setCurrentDasha] = useState<{ title: string; range: string; lord: string; progress: number | null } | null>(null);
   const [yogaRows, setYogaRows] = useState<PlanetRow[] | null>(null);
   const [doshaRowsLive, setDoshaRowsLive] = useState<PlanetRow[] | null>(null);
   const [insightsLive, setInsightsLive] = useState<KundliInsight[] | null>(null);
@@ -844,7 +1033,14 @@ export function KundliScreen({ navigation }: any) {
         if (on && dr.dasha && dr.dasha.length) {
           setDashaRows(dashaToRows(dr.dasha, lang));
           const d0 = dr.dasha[0];
-          setCurrentDasha({ title: `${lang === 'hi' ? aPlanet(d0.lord, lang) : d0.lord} ${lang === 'hi' ? 'महादशा' : 'Mahadasha'}`, range: `${fmtMonYr(d0.start, lang)} – ${fmtMonYr(d0.end, lang)}` });
+          const s0 = parseStd(d0.start); const e0 = parseStd(d0.end);
+          const progress = s0 != null && e0 != null && e0 > s0 ? Math.min(1, Math.max(0, (Date.now() - s0) / (e0 - s0))) : null;
+          setCurrentDasha({
+            title: `${lang === 'hi' ? aPlanet(d0.lord, lang) : d0.lord} ${lang === 'hi' ? 'महादशा' : 'Mahadasha'}`,
+            range: `${fmtMonYr(d0.start, lang)} – ${fmtMonYr(d0.end, lang)}`,
+            lord: d0.lord,
+            progress,
+          });
         }
       } catch (_) { /* dasha optional — demo dikhega */ }
       // AI insights (richer prose) — computed insights ko override karta hai
@@ -873,11 +1069,12 @@ export function KundliScreen({ navigation }: any) {
     detail: aAstroText(r.detail, lang),
     tag: aAstroText(aTag(r.tag, lang), lang),
   })), [lang]);
-  const fallbackDashaRows = useMemo(() => DASHA_TIMELINE.map((r) => ({
+  const fallbackDashaRows = useMemo<KRow[]>(() => DASHA_TIMELINE.map((r) => ({
     ...r,
     name: lang === 'hi' ? aPlanet(r.name, lang) : r.name,
     detail: aAstroText(r.detail, lang),
-    tag: aAstroText(aTag(r.tag, lang), lang),
+    tag: r.strength === 'solid' ? (lang === 'hi' ? 'अभी' : 'Now') : aAstroText(aTag(r.tag, lang), lang),
+    highlight: r.strength === 'solid',
   })), [lang]);
   const fallbackDoshas = useMemo(() => DOSHAS.map((r) => ({
     ...r,
@@ -893,6 +1090,52 @@ export function KundliScreen({ navigation }: any) {
     tag: aTag(y.tag, lang),
   })), [lang]);
   const chartPlanets = live ? toChartPlanets(live, lang) : CHART_PLANETS;
+
+  // Moon's nakshatra → at-a-glance panel (third chip)
+  const moonNakshatra = useMemo(() => {
+    const m = live?.find((p) => p.planet === 'Moon');
+    return m?.nakshatra ? m.nakshatra.split(' - ')[0] : null;
+  }, [live]);
+  const glanceItems = useMemo(() => ([
+    { glyph: '↑', label: hi ? 'लग्न' : 'Lagna', value: ascendant ? aSign(ascendant, lang) : '—' },
+    { glyph: '☽', label: hi ? 'चंद्र राशि' : 'Moon Sign', value: moonSign ? aSign(moonSign, lang) : '—' },
+    { glyph: '✦', label: hi ? 'नक्षत्र' : 'Nakshatra', value: moonNakshatra ? aNakshatra(moonNakshatra, lang) : '—' },
+  ]), [hi, lang, ascendant, moonSign, moonNakshatra]);
+
+  // entrance — light fade+rise on the hero + chart card only (first paint stays instant)
+  const enter = useRef(new RNAnimated.Value(0)).current;
+  useEffect(() => {
+    RNAnimated.timing(enter, { toValue: 1, duration: 620, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+  }, [enter]);
+  const rise = (start: number) => ({
+    opacity: enter.interpolate({ inputRange: [start, Math.min(1, start + 0.45)], outputRange: [0, 1], extrapolate: 'clamp' as const }),
+    transform: [{ translateY: enter.interpolate({ inputRange: [start, Math.min(1, start + 0.45)], outputRange: [18, 0], extrapolate: 'clamp' as const }) }],
+  });
+
+  // very subtle breathing glow behind the chart (opacity only, 4s loop)
+  const glow = useRef(new RNAnimated.Value(0)).current;
+  useEffect(() => {
+    const loop = RNAnimated.loop(RNAnimated.sequence([
+      RNAnimated.timing(glow, { toValue: 1, duration: 4000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      RNAnimated.timing(glow, { toValue: 0, duration: 4000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+    ]));
+    loop.start();
+    return () => loop.stop();
+  }, [glow]);
+  const glowOpacity = glow.interpolate({ inputRange: [0, 1], outputRange: [0.12, 0.22] });
+  const glowColor = theme.isDark ? '#e9b850' : '#f0b429';
+
+  // feature grid — same six destinations, same order, same nav targets
+  const goNav = useCallback((nav: string) => { hTap(); navigation.navigate(nav); }, [navigation]);
+  const features = useMemo(() => ([
+    { kind: 'milan', nav: 'KundliMatch', tint: '#e07aa9', title: t('match.title', 'Kundli Milan'), sub: t('match.entrySub', hi ? '36 गुण मिलान — शादी की अनुकूलता जानें' : '36-guna matching — check marriage compatibility') },
+    { kind: 'gochar', nav: 'Gochar', tint: '#5aa9e0', title: t('gochar.title', 'Gochar · Transits'), sub: t('gochar.entrySub', hi ? 'अभी ग्रह कहाँ — साढ़े साती व मुख्य गोचर' : 'Where planets are now — Sade Sati & key transits') },
+    { kind: 'remedies', nav: 'Remedies', tint: '#3ec77a', title: t('rem.title', 'Remedies · Upaay'), sub: t('rem.entrySub', hi ? 'भाग्य रत्न, दोष उपाय व नवग्रह मंत्र' : 'Lucky gemstone, dosha remedies & graha mantras') },
+    { kind: 'reading', nav: 'VedicReading', tint: '#9b8cff', title: t('reading.title', 'Vedic Reading'), sub: t('reading.entrySub', hi ? 'गण-योनि-नाड़ी, गण्डमूल, राजयोग व शास्त्रीय फलादेश' : 'Gana-Yoni-Nadi, Gandmool, Rajyogas & classical readings') },
+    { kind: 'timeline', nav: 'LifeTimeline', tint: '#6ec8e0', title: t('timeline.title', 'Life Timeline'), sub: t('timeline.entrySub', hi ? 'किस उम्र में कौन सी दशा — कारण, लाभ, सावधानी' : 'Which dasha at which age — why, benefits & cautions') },
+    { kind: 'forecast', nav: 'TransitForecast', tint: '#e0a92e', title: t('forecast.title', 'Year Forecast'), sub: t('forecast.entrySub', hi ? 'साल-दर-साल साढ़े साती व गुरु गोचर का फल' : 'Year-by-year Sade Sati & Jupiter transit effects') },
+  ]), [t, hi]);
+
   const askAboutChart = (chart: VargaChart) => {
     hTap();
     navigation.navigate('AiAstrologer', {
@@ -916,8 +1159,11 @@ export function KundliScreen({ navigation }: any) {
 
   return (
     <Screen header={<BrandHeader onMenu={openMenu} onBell={() => navigation.navigate('Notifications')} />}>
-      <PageHero />
+      <RNAnimated.View style={rise(0)}>
+        <PageHero />
+      </RNAnimated.View>
 
+      <RNAnimated.View style={rise(0.12)}>
       <KundliCard hero bodyStyle={styles.hero}>
         <View style={styles.heroPill}>
           <Pill label={t('kundli.birthChart', 'YOUR BIRTH CHART')} />
@@ -928,6 +1174,9 @@ export function KundliScreen({ navigation }: any) {
             ? `${aSign(ascendant, lang)} ${aAstroText(t('kundli.ascendant', 'Ascendant'), lang)} · ${aAstroText(t('kundli.moonIn', 'Moon in'), lang)} ${aSign(moonSign, lang)}`
             : aAstroText(PROFILE.ascendant, lang)}
         </Text>
+
+        {/* at-a-glance identity — लग्न · चंद्र राशि · नक्षत्र */}
+        <GlancePanel loading={loading} items={glanceItems} />
 
         <Text style={[styles.liveStatus, { color: err ? '#c0392b' : (live ? theme.green : theme.textMuted) }]}>
           {loading ? `⟳  ${t('kundli.loading', 'Loading live chart…')}` : err ? `●  ${t('kundli.offline', 'Offline — showing demo data')}` : `●  ${t('kundli.live', 'LIVE · real planetary data')}`}
@@ -945,7 +1194,9 @@ export function KundliScreen({ navigation }: any) {
                 styles.metaCell,
                 {
                   borderColor: theme.isDark ? 'rgba(201,150,46,0.25)' : 'rgba(176,115,22,0.22)',
-                  backgroundColor: theme.isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.7)',
+                  // opaque — the hero is transform-animated on entrance; translucent
+                  // surfaces inside a transformed view composite white on Android
+                  backgroundColor: theme.cardBg,
                 },
               ]}
             >
@@ -955,28 +1206,21 @@ export function KundliScreen({ navigation }: any) {
           ))}
         </View>
 
-        {/* chart-style toggle — North / South Indian */}
-        <View style={styles.chartToggle}>
-          {([['north', t('kundli.north', 'North')], ['south', t('kundli.south', 'South')], ['east', t('kundli.east', 'East')]] as [ChartStyle, string][]).map(([key, label]) => {
-            const on = chartStyle === key;
-            return (
-              <Pressable key={key} onPress={() => { hTap(); setChartStyle(key); }} style={styles.chartToggleBtnWrap}>
-                {on ? (
-                  <LinearGradient colors={['#fce8a8', '#e9b850', '#b87f1a']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.chartToggleBtn}>
-                    <Text style={[styles.chartToggleText, { color: theme.buttonInk }]}>{label}</Text>
-                  </LinearGradient>
-                ) : (
-                  <View style={[styles.chartToggleBtn, { borderWidth: 1, borderColor: theme.cardBorder }]}>
-                    <Text style={[styles.chartToggleText, { color: theme.gold2 }]}>{label}</Text>
-                  </View>
-                )}
-              </Pressable>
-            );
-          })}
+        {/* chart-style toggle — gold segmented control (same North/South/East behaviour) */}
+        <View style={[styles.segWrap, { borderColor: theme.cardBorder, backgroundColor: theme.cardBg }]}>
+          {([['north', t('kundli.north', 'North')], ['south', t('kundli.south', 'South')], ['east', t('kundli.east', 'East')]] as [ChartStyle, string][]).map(([key, label]) => (
+            <SegButton key={key} label={label} on={chartStyle === key} theme={theme} onPress={() => { hTap(); setChartStyle(key); }} />
+          ))}
         </View>
         <GestureDetector gesture={chartGesture}>
           <View collapsable={false} style={{ alignItems: 'center', alignSelf: 'stretch' }}>
             <View style={{ position: 'relative' }}>
+              {/* subtle breathing glow behind the chart — opacity-only 4s loop */}
+              <RNAnimated.View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.chartGlowWrap, { opacity: glowOpacity }]}>
+                <View style={[styles.chartGlowRing, { width: 290, height: 290, borderRadius: 145, backgroundColor: glowColor, opacity: 0.35 }]} />
+                <View style={[styles.chartGlowRing, { width: 226, height: 226, borderRadius: 113, backgroundColor: glowColor, opacity: 0.5 }]} />
+                <View style={[styles.chartGlowRing, { width: 160, height: 160, borderRadius: 80, backgroundColor: glowColor, opacity: 0.6 }]} />
+              </RNAnimated.View>
               <BirthChart style={chartStyle} rawPlanets={live} ascendant={ascendant} northPlanets={chartPlanets} lang={lang} />
               <Pressable onPress={() => { hTap(); setShowFull(true); }} hitSlop={10} style={[styles.expandBtn, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(10,9,18,0.85)' : 'rgba(255,249,236,0.92)' }]}>
                 <ExpandIcon color={theme.gold1} />
@@ -986,7 +1230,7 @@ export function KundliScreen({ navigation }: any) {
           </View>
         </GestureDetector>
 
-        {/* Understand this chart with AI — gold CTA button + tagline */}
+        {/* Understand this chart — gold CTA button + tagline */}
         <Pressable onPress={askAboutMainChart} style={({ pressed }) => [{ marginTop: 16 }, pressed && { transform: [{ scale: 0.98 }] }]}>
           <LinearGradient colors={['#fce8a8', '#e9b850', '#b87f1a']} locations={[0, 0.5, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.aiBtn}>
             <Svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="#2a1c00" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round">
@@ -1000,6 +1244,7 @@ export function KundliScreen({ navigation }: any) {
           </Text>
         </Pressable>
       </KundliCard>
+      </RNAnimated.View>
 
       {/* main birth chart viewer */}
       <ChartViewer
@@ -1025,6 +1270,12 @@ export function KundliScreen({ navigation }: any) {
         lang={lang}
         t={t}
       />
+
+      <Deferred delay={80}>
+      {/* current mahadasha strip — skipped silently until dasha loads */}
+      {!!currentDasha && (
+        <DashaStrip lord={currentDasha.lord} title={currentDasha.title} range={currentDasha.range} progress={currentDasha.progress} />
+      )}
 
       <Pressable
         onPress={() => { hTap(); navigation.navigate('KundliLearn'); }}
@@ -1066,98 +1317,24 @@ export function KundliScreen({ navigation }: any) {
         <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={theme.gold2} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M9 18l6-6-6-6" /></Svg>
       </Pressable>
 
-      {/* Kundli Milan (Gun Milan) entry */}
-      <Pressable
-        onPress={() => { hTap(); navigation.navigate('KundliMatch'); }}
-        style={({ pressed }) => [styles.milanEntry, { marginTop: 10, borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(224,122,169,0.10)' : 'rgba(224,122,169,0.10)' }, pressed && { transform: [{ scale: 0.99 }], borderColor: theme.gold2 }]}
-      >
-        <View style={styles.milanIcon}>
-          <Svg width={22} height={22} viewBox="0 0 24 24" fill="#e07aa9"><Path d="M12 21s-7.5-4.8-10-9.2C.6 9 1.6 5.5 4.8 4.7 7 4.1 9 5.3 12 8c3-2.7 5-3.9 7.2-3.3C22.4 5.5 23.4 9 22 11.8 19.5 16.2 12 21 12 21z" /></Svg>
-        </View>
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={[styles.milanTitle, { color: theme.text }]}>{t('match.title', 'Kundli Milan')}</Text>
-          <Text style={[styles.milanSub, { color: theme.textMuted }]} numberOfLines={2}>{t('match.entrySub', lang === 'hi' ? '36 गुण मिलान — शादी की अनुकूलता जानें' : '36-guna matching — check marriage compatibility')}</Text>
-        </View>
-        <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={theme.gold2} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M9 18l6-6-6-6" /></Svg>
-      </Pressable>
+      </Deferred>
 
-      {/* Gochar (Transits) entry */}
-      <Pressable
-        onPress={() => { hTap(); navigation.navigate('Gochar'); }}
-        style={({ pressed }) => [styles.milanEntry, { marginTop: 10, borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(90,169,224,0.10)' : 'rgba(90,169,224,0.10)' }, pressed && { transform: [{ scale: 0.99 }], borderColor: theme.gold2 }]}
-      >
-        <View style={[styles.milanIcon, { backgroundColor: 'rgba(90,169,224,0.16)' }]}>
-          <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="#5aa9e0" strokeWidth={2}><Path d="M12 2v4M12 18v4M2 12h4M18 12h4" strokeLinecap="round" /><Path d="M12 8a4 4 0 100 8 4 4 0 000-8z" /></Svg>
+      {/* feature grid — same six destinations, same order, premium 2-column cards */}
+      <Deferred delay={160}>
+        <SectionTitle label={hi ? 'कुंडली सेवाएँ' : 'KUNDLI TOOLS'} />
+        <View style={styles.featGrid}>
+          {features.map((f) => (
+            <FeatureCard key={f.nav} kind={f.kind} tint={f.tint} title={f.title} sub={f.sub} nav={f.nav} theme={theme} onNav={goNav} />
+          ))}
         </View>
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={[styles.milanTitle, { color: theme.text }]}>{t('gochar.title', 'Gochar · Transits')}</Text>
-          <Text style={[styles.milanSub, { color: theme.textMuted }]} numberOfLines={2}>{t('gochar.entrySub', lang === 'hi' ? 'अभी ग्रह कहाँ — साढ़े साती व मुख्य गोचर' : 'Where planets are now — Sade Sati & key transits')}</Text>
-        </View>
-        <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={theme.gold2} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M9 18l6-6-6-6" /></Svg>
-      </Pressable>
+      </Deferred>
 
-      {/* Remedies (Upaay) entry */}
-      <Pressable
-        onPress={() => { hTap(); navigation.navigate('Remedies'); }}
-        style={({ pressed }) => [styles.milanEntry, { marginTop: 10, borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(110,200,140,0.10)' : 'rgba(110,200,140,0.10)' }, pressed && { transform: [{ scale: 0.99 }], borderColor: theme.gold2 }]}
-      >
-        <View style={[styles.milanIcon, { backgroundColor: 'rgba(110,200,140,0.16)' }]}>
-          <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="#3ec77a" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 21.6 7.1 18.2l.9-5.5-4-3.9L9.5 8z" /></Svg>
-        </View>
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={[styles.milanTitle, { color: theme.text }]}>{t('rem.title', 'Remedies · Upaay')}</Text>
-          <Text style={[styles.milanSub, { color: theme.textMuted }]} numberOfLines={2}>{t('rem.entrySub', lang === 'hi' ? 'भाग्य रत्न, दोष उपाय व नवग्रह मंत्र' : 'Lucky gemstone, dosha remedies & graha mantras')}</Text>
-        </View>
-        <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={theme.gold2} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M9 18l6-6-6-6" /></Svg>
-      </Pressable>
+      <Deferred delay={240}>
+        <SectionTitle label={hi ? 'विस्तृत विश्लेषण' : 'DETAILED ANALYSIS'} />
+        <KundliTabs tab={tab} onChange={switchTab} />
+      </Deferred>
 
-      {/* Vedic Reading (classical phala-kathan) entry */}
-      <Pressable
-        onPress={() => { hTap(); navigation.navigate('VedicReading'); }}
-        style={({ pressed }) => [styles.milanEntry, { marginTop: 10, borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(155,140,255,0.10)' : 'rgba(155,140,255,0.10)' }, pressed && { transform: [{ scale: 0.99 }], borderColor: theme.gold2 }]}
-      >
-        <View style={[styles.milanIcon, { backgroundColor: 'rgba(155,140,255,0.16)' }]}>
-          <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="#9b8cff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M12 2l2.4 7.4H22l-6 4.5 2.3 7.1L12 16.9 5.7 21l2.3-7.1-6-4.5h7.6z" /></Svg>
-        </View>
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={[styles.milanTitle, { color: theme.text }]}>{t('reading.title', 'Vedic Reading')}</Text>
-          <Text style={[styles.milanSub, { color: theme.textMuted }]} numberOfLines={2}>{t('reading.entrySub', lang === 'hi' ? 'गण-योनि-नाड़ी, गण्डमूल, राजयोग व शास्त्रीय फलादेश' : 'Gana-Yoni-Nadi, Gandmool, Rajyogas & classical readings')}</Text>
-        </View>
-        <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={theme.gold2} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M9 18l6-6-6-6" /></Svg>
-      </Pressable>
-
-      {/* Life Timeline (Vimshottari Dasha — age-wise) entry */}
-      <Pressable
-        onPress={() => { hTap(); navigation.navigate('LifeTimeline'); }}
-        style={({ pressed }) => [styles.milanEntry, { marginTop: 10, borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(110,200,224,0.10)' : 'rgba(110,200,224,0.10)' }, pressed && { transform: [{ scale: 0.99 }], borderColor: theme.gold2 }]}
-      >
-        <View style={[styles.milanIcon, { backgroundColor: 'rgba(110,200,224,0.16)' }]}>
-          <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="#6ec8e0" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M12 7v5l3 2" /><Path d="M12 3a9 9 0 100 18 9 9 0 000-18z" /></Svg>
-        </View>
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={[styles.milanTitle, { color: theme.text }]}>{t('timeline.title', 'Life Timeline')}</Text>
-          <Text style={[styles.milanSub, { color: theme.textMuted }]} numberOfLines={2}>{t('timeline.entrySub', lang === 'hi' ? 'किस उम्र में कौन सी दशा — कारण, लाभ, सावधानी' : 'Which dasha at which age — why, benefits & cautions')}</Text>
-        </View>
-        <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={theme.gold2} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M9 18l6-6-6-6" /></Svg>
-      </Pressable>
-
-      {/* Year-by-Year Forecast (gochar) entry */}
-      <Pressable
-        onPress={() => { hTap(); navigation.navigate('TransitForecast'); }}
-        style={({ pressed }) => [styles.milanEntry, { marginTop: 10, borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(224,169,46,0.10)' : 'rgba(224,169,46,0.10)' }, pressed && { transform: [{ scale: 0.99 }], borderColor: theme.gold2 }]}
-      >
-        <View style={[styles.milanIcon, { backgroundColor: 'rgba(224,169,46,0.16)' }]}>
-          <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="#e0a92e" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M3 17l5-5 4 4 8-8" /><Path d="M17 8h4v4" /></Svg>
-        </View>
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={[styles.milanTitle, { color: theme.text }]}>{t('forecast.title', 'Year Forecast')}</Text>
-          <Text style={[styles.milanSub, { color: theme.textMuted }]} numberOfLines={2}>{t('forecast.entrySub', lang === 'hi' ? 'साल-दर-साल साढ़े साती व गुरु गोचर का फल' : 'Year-by-year Sade Sati & Jupiter transit effects')}</Text>
-        </View>
-        <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={theme.gold2} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M9 18l6-6-6-6" /></Svg>
-      </Pressable>
-
-      <KundliTabs tab={tab} onChange={switchTab} />
-
+      <Deferred delay={320}>
       <View style={styles.tabContent} collapsable={false}>
         {tab === 'overview' && (
           <View style={styles.cardStack}>
@@ -1181,7 +1358,7 @@ export function KundliScreen({ navigation }: any) {
             </KundliCard>
             <KundliCard>
               <CardHead>{t('kundli.planetaryPositions', 'PLANETARY POSITIONS')}</CardHead>
-              <RowList rows={planetRows} />
+              <RowList rows={planetRows} zebra />
             </KundliCard>
             <KundliCard>
               <CardHead>{t('kundli.currentDasha', 'CURRENT DASHA')}</CardHead>
@@ -1219,7 +1396,7 @@ export function KundliScreen({ navigation }: any) {
         {tab === 'planets' && (
           <KundliCard>
             <CardHead>{t('kundli.planetaryPositions', 'PLANETARY POSITIONS')}</CardHead>
-            <RowList rows={planetRows} />
+            <RowList rows={planetRows} zebra />
           </KundliCard>
         )}
 
@@ -1244,6 +1421,7 @@ export function KundliScreen({ navigation }: any) {
           </KundliCard>
         )}
       </View>
+      </Deferred>
     </Screen>
   );
 }
@@ -1354,11 +1532,55 @@ const styles = StyleSheet.create({
   milanTitle: { fontFamily: fonts.cinzelSemi, fontSize: 15, letterSpacing: 0.3 },
   milanSub: { fontFamily: fonts.inter, fontSize: 12, marginTop: 2, lineHeight: 16 },
   expandBtn: { position: 'absolute', top: 14, right: 6, width: 30, height: 30, borderRadius: 9, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  chartToggle: { flexDirection: 'row', gap: 6, marginTop: 16, alignSelf: 'center' },
-  chartToggleBtnWrap: { borderRadius: radii.pill, overflow: 'hidden' },
-  chartToggleBtn: { paddingVertical: 7, paddingHorizontal: 16, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  chartToggleText: { fontFamily: fonts.interSemi, fontSize: 12, letterSpacing: 0.3 },
   chartHint: { fontFamily: fonts.inter, fontSize: 10.5, marginTop: 10, opacity: 0.8 },
+
+  // gold segmented control (North / South / East)
+  segWrap: { flexDirection: 'row', gap: 4, marginTop: 16, alignSelf: 'center', borderWidth: 1, borderRadius: radii.pill, padding: 4, minWidth: 232 },
+  segBtn: { minHeight: 34, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14, overflow: 'hidden' },
+  segText: { fontFamily: fonts.interSemi, fontSize: 12, letterSpacing: 0.4 },
+
+  // breathing glow behind the chart
+  chartGlowWrap: { alignItems: 'center', justifyContent: 'center' },
+  chartGlowRing: { position: 'absolute' },
+
+  // at-a-glance identity chips (लग्न · राशि · नक्षत्र)
+  glanceRow: { flexDirection: 'row', gap: 7, marginTop: 12, alignSelf: 'stretch' },
+  glanceCell: { flex: 1, minWidth: 0, borderWidth: 1, borderRadius: 14, paddingVertical: 10, paddingHorizontal: 6, alignItems: 'center' },
+  glanceGlyph: { width: 28, height: 28, borderRadius: 14, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  glanceGlyphText: { fontSize: 14, lineHeight: 18 },
+  glanceLabel: { fontFamily: fonts.interSemi, fontSize: 9.5, letterSpacing: 0.8, textTransform: 'uppercase', marginTop: 6 },
+  glanceValue: { fontFamily: fonts.playfair, fontSize: 13.5, marginTop: 2, textAlign: 'center' },
+  glanceSkel: { height: 12, width: '72%', borderRadius: 6, marginTop: 5 },
+
+  // current mahadasha strip
+  dashaStrip: { borderWidth: 1, borderRadius: radii.lg, padding: 14, marginTop: 18 },
+  dashaStripTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  dashaStripGlyph: { width: 42, height: 42, borderRadius: 21, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  dashaStripGlyphText: { fontSize: 21, lineHeight: 26 },
+  dashaEyebrow: { fontFamily: fonts.interBold, fontSize: 9.5, letterSpacing: 1.4, textTransform: 'uppercase' },
+  dashaStripTitle: { fontFamily: fonts.playfairBold, fontSize: 17, marginTop: 2 },
+  dashaStripRange: { fontFamily: fonts.inter, fontSize: 11.5, marginTop: 1 },
+  dashaPctWrap: { alignItems: 'flex-end' },
+  dashaPct: { fontFamily: fonts.interBold, fontSize: 15 },
+  dashaPctSub: { fontFamily: fonts.inter, fontSize: 9.5, marginTop: 1 },
+  dashaTrack: { flexDirection: 'row', height: 5, borderRadius: 3, marginTop: 12, overflow: 'hidden' },
+  dashaFill: { borderRadius: 3 },
+
+  // feature 2-column grid
+  featGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  featWrap: { flexBasis: '47%', flexGrow: 1, borderRadius: radii.lg },
+  featCard: { flexGrow: 1, borderWidth: 1, borderRadius: radii.lg, padding: 14, minHeight: 124 },
+  featIcon: { width: 42, height: 42, borderRadius: 21, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  featTitle: { fontFamily: fonts.cinzelSemi, fontSize: 13, letterSpacing: 0.3, marginTop: 10 },
+  featSub: { fontFamily: fonts.inter, fontSize: 10.8, lineHeight: 14.5, marginTop: 3 },
+
+  // section header with gradient divider
+  secTitleWrap: { marginTop: 22, marginBottom: 12 },
+  secTitleText: { fontFamily: fonts.cinzel, fontSize: 13, letterSpacing: 1.8, textTransform: 'uppercase' },
+  secTitleRule: { height: 1, marginTop: 7 },
+
+  // sign glyph column in the planet table
+  signGlyphCol: { fontSize: 14, lineHeight: 18, marginRight: 8, flexShrink: 0 },
 
   tabsShell: {
     height: 54,
