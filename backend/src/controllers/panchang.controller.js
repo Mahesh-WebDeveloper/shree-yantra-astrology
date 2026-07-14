@@ -1,13 +1,26 @@
 const { getPanchang } = require('../services/vedastro.service');
 const asyncHandler = require('../middleware/asyncHandler');
 const { callAI } = require('../services/ai.service');
-const {
-  searchFestivalCatalog,
-  catalogToObservance,
-  matchFestivalRule,
-  candidateWindows,
-  enrichFestivalDetail,
-} = require('../services/festival.service');
+const { curatedFor, decorateObservance, enrichFestivalDetail } = require('../services/festival.service');
+const { nextOccurrence, searchObservanceCatalog } = require('../services/observance.service');
+const { resolveLocation } = require('../services/location.service');
+const env = require('../config/env');
+
+// The observance engine works in coordinates, so a `place`-only request is geocoded once
+// for the whole request instead of per day.
+const COORD_CACHE = new Map();
+async function resolveCoords({ lat, lng, place }) {
+  if (lat != null && lng != null) return { lat: Number(lat), lng: Number(lng) };
+  const key = String(place).trim().toLowerCase();
+  if (COORD_CACHE.has(key)) return COORD_CACHE.get(key);
+  const item = await resolveLocation({ query: place, description: place, country: env.maps.defaultCountry });
+  if (item == null || item.lat == null || item.lng == null) {
+    throw Object.assign(new Error(`Place nahi mila: ${place}`), { status: 404 });
+  }
+  const geo = { lat: Number(item.lat), lng: Number(item.lng) };
+  COORD_CACHE.set(key, geo);
+  return geo;
+}
 
 // POST /api/panchang  { place, date?:'DD/MM/YYYY' } ya { lat, lng, date? }
 exports.createPanchang = asyncHandler(async (req, res) => {
@@ -37,18 +50,21 @@ const itemTime = (s) => {
 };
 const weekdayName = (dateObj) => ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dateObj.getDay()];
 const weekdayNameHi = (dateObj) => ['रविवार', 'सोमवार', 'मंगलवार', 'बुधवार', 'गुरुवार', 'शुक्रवार', 'शनिवार'][dateObj.getDay()];
-const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-async function festivalItemFromDate({ festival, dmy, lat, lng, place, tz }) {
-  const fallbackDate = fromDMY(dmy);
+// One day of the festival list / search result. The observance itself is already computed;
+// this only attaches the Panchang of that day and any curated ritual content.
+async function festivalItemFromDate({ observance, dmy, lat, lng, place, tz }) {
+  const curated = curatedFor(observance.key);
+  const obs = decorateObservance(observance);
+  const catalog = {
+    key: observance.key,
+    name: observance.name,
+    guidance: obs.guidance,
+    why: curated && curated.why,
+    aarti: curated && curated.aarti,
+  };
   try {
     const panchang = await getPanchang({
-      lat,
-      lng,
-      place,
-      date: dmy,
-      tz,
-      includeTransitions: false,
-      includeMoonTimes: false,
+      lat, lng, place, date: dmy, tz, includeTransitions: false, includeMoonTimes: false,
     });
     return {
       date: panchang.date,
@@ -59,34 +75,22 @@ async function festivalItemFromDate({ festival, dmy, lat, lng, place, tz }) {
       masa: panchang.masa,
       sunrise: panchang.sunrise,
       sunset: panchang.sunset,
-      observances: [catalogToObservance(festival)],
-      catalog: {
-        key: festival.key,
-        name: festival.name,
-        guidance: festival.guidance,
-        why: festival.why,
-        aarti: festival.aarti,
-      },
+      observances: [obs],
+      catalog,
     };
   } catch (_) {
+    const d = fromDMY(dmy);
     return {
       date: dmy,
-      weekday: weekdayName(fallbackDate),
-      weekdayHi: weekdayNameHi(fallbackDate),
+      weekday: weekdayName(d),
+      weekdayHi: weekdayNameHi(d),
       tithi: null,
       nakshatra: null,
       masa: null,
       sunrise: null,
       sunset: null,
-      observances: [catalogToObservance(festival)],
-      catalog: {
-        key: festival.key,
-        name: festival.name,
-        guidance: festival.guidance,
-        why: festival.why,
-        aarti: festival.aarti,
-        dateConfidence: 'catalog-date',
-      },
+      observances: [obs],
+      catalog,
     };
   }
 }
@@ -241,18 +245,13 @@ exports.listPanchangFestivals = asyncHandler(async (req, res) => {
   const items = [];
   const errors = [];
 
+  // getPanchang now sources its observances from the deterministic engine, so a day is
+  // listed exactly when the engine places at least one festival/vrat/sankranti on it.
   for (let i = 0; i < days; i += 1) {
-    const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
-    const dmy = toDMY(d);
+    const dmy = toDMY(new Date(start.getFullYear(), start.getMonth(), start.getDate() + i));
     try {
       const panchang = await getPanchang({
-        lat,
-        lng,
-        place,
-        date: dmy,
-        tz,
-        includeTransitions: false,
-        includeMoonTimes: false,
+        lat, lng, place, date: dmy, tz, includeTransitions: false, includeMoonTimes: false,
       });
       if ((panchang.observances || []).length) {
         items.push({
@@ -270,7 +269,6 @@ exports.listPanchangFestivals = asyncHandler(async (req, res) => {
     } catch (err) {
       errors.push({ date: dmy, error: err.message || 'Panchang unavailable' });
     }
-    if (i < days - 1) await wait(15); // local ephemeris needs no rate-limit throttle
   }
 
   res.json({ from: toDMY(start), days, location: place || `${lat},${lng}`, items, errors });
@@ -284,62 +282,20 @@ exports.searchPanchangFestivalDates = asyncHandler(async (req, res) => {
   }
   const start = fromDMY(date);
   const years = Math.max(1, Math.min(3, Number(req.body.years || 2)));
-  const catalog = searchFestivalCatalog(query).slice(0, 8);
+  const coords = await resolveCoords({ lat, lng, place });
+  const catalog = searchObservanceCatalog(query).slice(0, 8);
   const items = [];
   const errors = [];
 
-  for (const festival of catalog) {
-    let found = false;
-    const knownDates = Object.values(festival.knownDates || {})
-      .filter((dmy) => fromDMY(dmy) >= start)
-      .sort((a, b) => fromDMY(a) - fromDMY(b));
-    if (knownDates.length) {
-      items.push(await festivalItemFromDate({ festival, dmy: knownDates[0], lat, lng, place, tz }));
-      found = true;
-    }
-    const windows = candidateWindows(start, festival, years);
-    for (const w of windows) {
-      if (found) break;
-      const cur = new Date(Math.max(w.from.getTime(), start.getTime()));
-      while (cur <= w.to && !found) {
-        const dmy = toDMY(cur);
-        try {
-          const panchang = await getPanchang({
-            lat,
-            lng,
-            place,
-            date: dmy,
-            tz,
-            includeTransitions: false,
-            includeMoonTimes: false,
-          });
-          if (matchFestivalRule(festival, panchang)) {
-            items.push({
-              date: panchang.date,
-              weekday: panchang.weekday,
-              weekdayHi: panchang.weekdayHi,
-              tithi: panchang.tithi,
-              nakshatra: panchang.nakshatra,
-              masa: panchang.masa,
-              sunrise: panchang.sunrise,
-              sunset: panchang.sunset,
-              observances: [catalogToObservance(festival)],
-              catalog: {
-                key: festival.key,
-                name: festival.name,
-                guidance: festival.guidance,
-                why: festival.why,
-                aarti: festival.aarti,
-              },
-            });
-            found = true;
-          }
-        } catch (err) {
-          if (errors.length < 12) errors.push({ date: dmy, festival: festival.key, error: err.message || 'Panchang unavailable' });
-        }
-        cur.setDate(cur.getDate() + 1);
-        if (!found) await wait(10);
-      }
+  // Each matched observance is asked for its NEXT computed occurrence — no date scanning,
+  // no rule guessing, no stored dates.
+  for (const entry of catalog) {
+    try {
+      const hit = nextOccurrence({ key: entry.key, start, lat: coords.lat, lng: coords.lng, tz: tz || '+05:30', years });
+      if (!hit) continue;
+      items.push(await festivalItemFromDate({ observance: hit.obs, dmy: hit.dmy, lat, lng, place, tz }));
+    } catch (err) {
+      if (errors.length < 12) errors.push({ festival: entry.key, error: err.message || 'Observance unavailable' });
     }
   }
 
@@ -365,9 +321,9 @@ Only include dates you are reasonably confident about. If it is NOT a real Hindu
         const why = { en: ai.whyEn || '', hi: ai.whyHi || ai.whyEn || '' };
         for (const dmy of ai.dates.slice(0, 1)) {
           if (!/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(String(dmy)) || fromDMY(dmy) < start) continue;
-          const item = await festivalItemFromDate({ festival: { key: obsKey, name: observance.name, guidance: observance.guidance, why }, dmy, lat, lng, place, tz });
+          const item = await festivalItemFromDate({ observance: { ...observance, note: observance.guidance }, dmy, lat, lng, place, tz });
           item.observances = [observance];
-          item.catalog = { ...(item.catalog || {}), aiAssisted: true, dateConfidence: 'ai-estimate' };
+          item.catalog = { ...(item.catalog || {}), why, aiAssisted: true, dateConfidence: 'ai-estimate' };
           items.push(item);
         }
       }
@@ -398,12 +354,15 @@ exports.getPanchangFestivalDetail = asyncHandler(async (req, res) => {
   if (!date) return res.status(400).json({ error: 'date chahiye DD/MM/YYYY' });
 
   const q = String(query || '').trim().toLowerCase();
-  const catalogMatch = searchFestivalCatalog(key || query).find((f) => !key || f.key === key) || null;
+  // The engine decides WHICH observance this is; festival.service only supplies its content.
+  const searchHit = key ? null : searchObservanceCatalog(query)[0];
+  const catalogKey = key || (searchHit && searchHit.key);
+  const catalogMatch = curatedFor(catalogKey);
   let panchang;
   try {
     panchang = await getPanchang({ lat, lng, place, date, tz });
   } catch (err) {
-    if (!catalogMatch) throw err;
+    if (!catalogKey) throw err;
     const d = fromDMY(date);
     panchang = {
       date,
@@ -426,9 +385,9 @@ exports.getPanchangFestivalDetail = asyncHandler(async (req, res) => {
     };
   }
   const observance = (panchang.observances || []).find((o) => (
-    (key && o.key === key)
+    (catalogKey && o.key === catalogKey)
     || (q && (includesText(o.key, q) || includesText(o.name && o.name.en, q) || includesText(o.name && o.name.hi, q)))
-  )) || (catalogMatch ? catalogToObservance(catalogMatch) : null) || (panchang.observances || [])[0] || {
+  )) || (searchHit ? decorateObservance({ ...searchHit, note: null }) : null) || (panchang.observances || [])[0] || {
     key: 'daily-panchang',
     name: { en: 'Daily Panchang', hi: 'दैनिक पंचांग' },
     type: 'panchang',

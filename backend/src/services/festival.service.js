@@ -5,8 +5,6 @@ const FESTIVAL_CATALOG = [
     name: { en: 'Diwali / Lakshmi Puja', hi: 'दीवाली / लक्ष्मी पूजा' },
     type: 'festival',
     importance: 'major',
-    rule: { masa: 'Kartika', paksha: 'Krishna', tithi: 'Amavasya', gregorianMonths: [9, 10] },
-    knownDates: { 2026: '08/11/2026', 2027: '29/10/2027' },
     guidance: {
       en: 'Lakshmi Puja is traditionally performed in the evening Pradosh window after checking Amavasya overlap and local Panchang.',
       hi: 'लक्ष्मी पूजा स्थान-आधारित पंचांग में अमावस्या और प्रदोष काल देखकर सायंकाल की जाती है।',
@@ -43,8 +41,6 @@ const FESTIVAL_CATALOG = [
     name: { en: 'Holika Dahan', hi: 'होलिका दहन' },
     type: 'festival',
     importance: 'major',
-    rule: { masa: 'Phalguna', paksha: 'Shukla', tithi: 'Purnima', gregorianMonths: [1, 2] },
-    knownDates: { 2027: '22/03/2027' },
     guidance: {
       en: 'Holika Dahan is done after sunset only after checking Bhadra; avoid the Bhadra period.',
       hi: 'होलिका दहन सूर्यास्त के बाद भद्रा देखकर किया जाता है; भद्रा काल से बचना चाहिए।',
@@ -66,8 +62,6 @@ const FESTIVAL_CATALOG = [
     name: { en: 'Ganesh Chaturthi', hi: 'गणेश चतुर्थी' },
     type: 'festival',
     importance: 'major',
-    rule: { masa: 'Bhadrapada', paksha: 'Shukla', tithi: 'Chaturthi', gregorianMonths: [7, 8] },
-    knownDates: { 2026: '14/09/2026', 2027: '04/09/2027' },
     guidance: { en: 'Good for Ganesha sthapana, puja and obstacle removal prayers.', hi: 'गणेश स्थापना, पूजा और विघ्न निवारण के लिए शुभ।' },
     why: { en: 'It celebrates Shri Ganesha, the remover of obstacles and lord of wisdom.', hi: 'यह बुद्धि और विघ्न-विनाशक श्री गणेश का पर्व है।' },
     samagri: ['Ganesha idol', 'durva grass', 'modak', 'flowers', 'incense', 'lamp'],
@@ -83,8 +77,6 @@ const FESTIVAL_CATALOG = [
     name: { en: 'Krishna Janmashtami', hi: 'कृष्ण जन्माष्टमी' },
     type: 'festival',
     importance: 'major',
-    rule: { masa: 'Bhadrapada', paksha: 'Krishna', tithi: 'Ashtami', gregorianMonths: [7, 8] },
-    knownDates: { 2026: '04/09/2026', 2027: '25/08/2027' },
     guidance: { en: 'Traditionally observed with fasting, Krishna puja and night worship.', hi: 'व्रत, कृष्ण पूजा और रात्रि उपासना के साथ मनाया जाता है।' },
     why: { en: 'It celebrates the birth of Bhagwan Krishna.', hi: 'यह भगवान श्रीकृष्ण के जन्म का उत्सव है।' },
     samagri: ['Krishna idol', 'makhan-mishri', 'tulsi', 'flowers', 'lamp', 'panchamrit'],
@@ -100,8 +92,6 @@ const FESTIVAL_CATALOG = [
     name: { en: 'Maha Shivaratri', hi: 'महाशिवरात्रि' },
     type: 'festival',
     importance: 'major',
-    rule: { masa: 'Magha', paksha: 'Krishna', tithi: 'Chaturdashi', gregorianMonths: [1, 2] },
-    knownDates: { 2027: '06/03/2027' },
     guidance: { en: 'Best observed with night Shiva puja, japa and meditation.', hi: 'रात्रि शिव पूजा, जप और ध्यान के लिए श्रेष्ठ।' },
     why: { en: 'It is dedicated to Bhagwan Shiva and inner purification.', hi: 'यह भगवान शिव और आंतरिक शुद्धि को समर्पित पर्व है।' },
     samagri: ['Shivling', 'water', 'milk', 'belpatra', 'dhatura', 'flowers', 'lamp'],
@@ -117,8 +107,6 @@ const FESTIVAL_CATALOG = [
     name: { en: 'Guru Purnima', hi: 'गुरु पूर्णिमा' },
     type: 'festival',
     importance: 'major',
-    rule: { masa: 'Ashadha', paksha: 'Shukla', tithi: 'Purnima', gregorianMonths: [6, 7] },
-    knownDates: { 2026: '29/07/2026', 2027: '18/07/2027' },
     guidance: { en: 'Good for guru puja, study, gratitude and daan.', hi: 'गुरु पूजा, अध्ययन, कृतज्ञता और दान के लिए शुभ।' },
     why: { en: 'It honors the guru tradition and spiritual knowledge.', hi: 'यह गुरु परंपरा और आध्यात्मिक ज्ञान का सम्मान है।' },
     samagri: ['flowers', 'fruits', 'sweets', 'book/scripture', 'lamp'],
@@ -133,7 +121,6 @@ const FESTIVAL_CATALOG = [
     aliases: ['raksha bandhan', 'rakshabandhan', 'rakhi', 'raksha', 'rakhri', 'rakshabandhan', 'रक्षाबंधन', 'राखी'],
     name: { en: 'Raksha Bandhan', hi: 'रक्षाबंधन' },
     type: 'festival', importance: 'major',
-    rule: { masa: 'Shravana', paksha: 'Shukla', tithi: 'Purnima', gregorianMonths: [7] },
     guidance: { en: 'Rakhi is tied during the auspicious day window, avoiding Bhadra — tie after Bhadra ends.', hi: 'राखी भद्रा रहित शुभ समय में बाँधी जाती है — भद्रा समाप्त होने के बाद बाँधें।' },
     why: { en: 'It celebrates the bond of protection between brothers and sisters.', hi: 'यह भाई-बहन के रक्षा-स्नेह के बंधन का पर्व है।' },
     samagri: ['rakhi', 'roli', 'akshat', 'diya', 'sweets', 'thali'],
@@ -148,8 +135,6 @@ const FESTIVAL_CATALOG = [
     aliases: ['makar sankranti', 'makarsankranti', 'sankranti', 'uttarayan', 'uttarayana', 'maghi', 'मकर संक्रांति', 'संक्रांति', 'उत्तरायण'],
     name: { en: 'Makar Sankranti', hi: 'मकर संक्रांति' },
     type: 'festival', importance: 'major',
-    rule: { gregorianMonths: [] },
-    knownDates: { 2026: '14/01/2026', 2027: '14/01/2027' },
     guidance: { en: 'Observed with a holy bath, Surya worship, til-gud daan and kite flying as the Sun enters Capricorn (Uttarayana).', hi: 'सूर्य के मकर राशि में प्रवेश (उत्तरायण) पर स्नान, सूर्य पूजा, तिल-गुड़ दान के साथ मनाया जाता है।' },
     why: { en: 'It marks the Sun’s northward journey (Uttarayana) — a highly auspicious solar transition.', hi: 'यह सूर्य के उत्तरायण होने का अत्यंत शुभ संक्रांति पर्व है।' },
     samagri: ['til', 'gud (jaggery)', 'water for snan', 'khichdi items', 'donation items'],
@@ -164,7 +149,6 @@ const FESTIVAL_CATALOG = [
     aliases: ['holi', 'dhulandi', 'rangwali holi', 'rang holi', 'होली', 'धुलंडी'],
     name: { en: 'Holi (Dhulandi)', hi: 'होली (धुलंडी)' },
     type: 'festival', importance: 'major',
-    rule: { masa: 'Phalguna', paksha: 'Shukla', tithi: 'Purnima', gregorianMonths: [2] },
     guidance: { en: 'The Holi of colours is played the day after Holika Dahan (Phalguna Purnima). Celebrate with gulal, water and sweets.', hi: 'रंगों की होली होलिका दहन (फाल्गुन पूर्णिमा) के अगले दिन खेली जाती है। गुलाल, जल व मिठाई के साथ मनाएं।' },
     why: { en: 'It celebrates the arrival of spring and the triumph of good over evil.', hi: 'यह वसंत के आगमन और बुराई पर अच्छाई की विजय का उत्सव है।' },
     mantras: [{ en: 'Om Namo Bhagavate Vasudevaya', hi: 'ॐ नमो भगवते वासुदेवाय' }],
@@ -175,7 +159,6 @@ const FESTIVAL_CATALOG = [
     aliases: ['navratri', 'navaratri', 'sharadiya navratri', 'durga puja', 'नवरात्रि', 'दुर्गा पूजा'],
     name: { en: 'Shardiya Navratri', hi: 'शारदीय नवरात्रि' },
     type: 'festival', importance: 'major',
-    rule: { masa: 'Ashwina', paksha: 'Shukla', tithi: 'Pratipada', gregorianMonths: [8, 9] },
     guidance: { en: 'Nine nights of Devi worship begin on Ashwina Shukla Pratipada with Ghatasthapana.', hi: 'आश्विन शुक्ल प्रतिपदा से घटस्थापना के साथ नौ दिन देवी पूजा आरंभ होती है।' },
     why: { en: 'It honours the nine forms of Maa Durga and the victory of Shakti.', hi: 'यह माँ दुर्गा के नौ रूपों और शक्ति की विजय का पर्व है।' },
     mantras: [{ en: 'Om Aim Hreem Kleem Chamundaye Vichche', hi: 'ॐ ऐं ह्रीं क्लीं चामुण्डायै विच्चे' }],
@@ -186,7 +169,6 @@ const FESTIVAL_CATALOG = [
     aliases: ['dussehra', 'dasara', 'dashara', 'vijayadashami', 'vijaya dashami', 'दशहरा', 'विजयादशमी'],
     name: { en: 'Dussehra (Vijayadashami)', hi: 'दशहरा (विजयादशमी)' },
     type: 'festival', importance: 'major',
-    rule: { masa: 'Ashwina', paksha: 'Shukla', tithi: 'Dashami', gregorianMonths: [8, 9] },
     guidance: { en: 'Vijayadashami is highly auspicious for new beginnings, Shastra/Vahan puja and Aparajita puja.', hi: 'विजयादशमी नए कार्य, शस्त्र/वाहन पूजा और अपराजिता पूजा के लिए अत्यंत शुभ है।' },
     why: { en: 'It marks Rama’s victory over Ravana and Durga over Mahishasura.', hi: 'यह राम की रावण पर और दुर्गा की महिषासुर पर विजय का प्रतीक है।' },
     mantras: [{ en: 'Om Sri Ramaya Namah', hi: 'ॐ श्री रामाय नमः' }],
@@ -197,7 +179,6 @@ const FESTIVAL_CATALOG = [
     aliases: ['ram navami', 'rama navami', 'ramnavami', 'राम नवमी'],
     name: { en: 'Ram Navami', hi: 'राम नवमी' },
     type: 'festival', importance: 'major',
-    rule: { masa: 'Chaitra', paksha: 'Shukla', tithi: 'Navami', gregorianMonths: [2, 3] },
     guidance: { en: 'Madhyahna (midday) is the ideal window for Rama Janmotsav puja.', hi: 'राम जन्मोत्सव पूजा के लिए मध्याह्न समय श्रेष्ठ है।' },
     why: { en: 'It celebrates the birth of Bhagwan Shri Ram.', hi: 'यह भगवान श्रीराम के जन्म का उत्सव है।' },
     mantras: [{ en: 'Om Sri Ramaya Namah', hi: 'ॐ श्री रामाय नमः' }, { en: 'Sri Ram Jai Ram Jai Jai Ram', hi: 'श्री राम जय राम जय जय राम' }],
@@ -208,7 +189,6 @@ const FESTIVAL_CATALOG = [
     aliases: ['hanuman jayanti', 'hanumanjayanti', 'hanuman janmotsav', 'हनुमान जयंती'],
     name: { en: 'Hanuman Jayanti', hi: 'हनुमान जयंती' },
     type: 'festival', importance: 'major',
-    rule: { masa: 'Chaitra', paksha: 'Shukla', tithi: 'Purnima', gregorianMonths: [2, 3] },
     guidance: { en: 'Observed with sunrise Hanuman puja, Sundarkand and Hanuman Chalisa paath.', hi: 'सूर्योदय पर हनुमान पूजा, सुंदरकांड व हनुमान चालीसा पाठ के साथ मनाया जाता है।' },
     why: { en: 'It celebrates the birth of Hanuman ji, the embodiment of devotion and strength.', hi: 'यह भक्ति और बल के प्रतीक हनुमान जी के जन्म का पर्व है।' },
     mantras: [{ en: 'Om Hanumate Namah', hi: 'ॐ हनुमते नमः' }],
@@ -219,7 +199,6 @@ const FESTIVAL_CATALOG = [
     aliases: ['vasant panchami', 'basant panchami', 'saraswati puja', 'वसंत पंचमी', 'सरस्वती पूजा'],
     name: { en: 'Vasant Panchami', hi: 'वसंत पंचमी' },
     type: 'festival', importance: 'major',
-    rule: { masa: 'Magha', paksha: 'Shukla', tithi: 'Panchami', gregorianMonths: [0, 1] },
     guidance: { en: 'Auspicious for Saraswati puja, Vidyarambh (start of learning) and Abujh-muhurat work.', hi: 'सरस्वती पूजा, विद्यारंभ और अबूझ मुहूर्त कार्यों के लिए शुभ।' },
     why: { en: 'It honours Maa Saraswati and the arrival of spring.', hi: 'यह माँ सरस्वती और वसंत ऋतु के आगमन का पर्व है।' },
     mantras: [{ en: 'Om Aim Saraswatyai Namah', hi: 'ॐ ऐं सरस्वत्यै नमः' }],
@@ -230,7 +209,6 @@ const FESTIVAL_CATALOG = [
     aliases: ['akshaya tritiya', 'akshay tritiya', 'akha teej', 'अक्षय तृतीया', 'आखा तीज'],
     name: { en: 'Akshaya Tritiya', hi: 'अक्षय तृतीया' },
     type: 'festival', importance: 'major',
-    rule: { masa: 'Vaishakha', paksha: 'Shukla', tithi: 'Tritiya', gregorianMonths: [3, 4] },
     guidance: { en: 'An Abujh (self-auspicious) muhurat — good for any auspicious work, gold purchase, charity and new ventures.', hi: 'अबूझ मुहूर्त — किसी भी शुभ कार्य, स्वर्ण-क्रय, दान और नए आरंभ के लिए श्रेष्ठ।' },
     why: { en: 'Whatever is begun or donated on this day is believed to bring lasting (akshaya) results.', hi: 'इस दिन किया कार्य/दान अक्षय (अनंत) फल देने वाला माना जाता है।' },
     mantras: [{ en: 'Om Shreem Mahalakshmyai Namah', hi: 'ॐ श्रीं महालक्ष्म्यै नमः' }],
@@ -241,7 +219,6 @@ const FESTIVAL_CATALOG = [
     aliases: ['karwa chauth', 'karva chauth', 'karvachauth', 'karwachauth', 'करवा चौथ'],
     name: { en: 'Karwa Chauth', hi: 'करवा चौथ' },
     type: 'vrat', importance: 'major',
-    rule: { masa: 'Kartika', paksha: 'Krishna', tithi: 'Chaturthi', gregorianMonths: [9, 10] },
     guidance: { en: 'A day-long nirjala vrat broken after moonrise and Chandra Arghya.', hi: 'दिनभर निर्जला व्रत, चन्द्रोदय व चन्द्र अर्घ्य के बाद पारण।' },
     why: { en: 'Observed for the long life and well-being of the husband.', hi: 'पति की दीर्घायु व कल्याण हेतु रखा जाने वाला व्रत।' },
     mantras: [{ en: 'Om Shivayai Namah', hi: 'ॐ शिवायै नमः' }],
@@ -252,7 +229,6 @@ const FESTIVAL_CATALOG = [
     aliases: ['nag panchami', 'naag panchami', 'नाग पंचमी'],
     name: { en: 'Nag Panchami', hi: 'नाग पंचमी' },
     type: 'festival', importance: 'minor',
-    rule: { masa: 'Shravana', paksha: 'Shukla', tithi: 'Panchami', gregorianMonths: [6, 7] },
     guidance: { en: 'Naga (serpent) deities are worshipped with milk and prayers.', hi: 'नाग देवताओं की दूध व प्रार्थना से पूजा की जाती है।' },
     why: { en: 'It seeks the blessings and protection of the Naga devtas.', hi: 'यह नाग देवताओं के आशीर्वाद व रक्षा हेतु है।' },
     mantras: [{ en: 'Om Nagendra Haaraya Namah', hi: 'ॐ नागेन्द्र हाराय नमः' }],
@@ -260,67 +236,24 @@ const FESTIVAL_CATALOG = [
   },
 ];
 
-function normalizeQuery(value) {
-  return String(value || '').trim().toLowerCase();
-}
-// Compact form: lowercase + strip spaces/hyphens/punctuation so "rakshabandhan",
-// "raksha bandhan" and "raksha-bandhan" all compare equal.
-function compact(value) {
-  return String(value || '').toLowerCase().replace(/[^a-z0-9ऀ-ॿ]/g, '');
-}
+// Curated ritual content ONLY. Dates are NOT decided here — observance.service computes
+// every date from astronomy, and this catalog is looked up by that engine's stable key.
+const BY_KEY = new Map(FESTIVAL_CATALOG.map((f) => [f.key, f]));
 
-function searchFestivalCatalog(query) {
-  const q = normalizeQuery(query);
-  if (!q) return FESTIVAL_CATALOG;
-  const cq = compact(q);
-  const hit = (a) => { const ca = compact(a); return !!cq && !!ca && (ca.includes(cq) || cq.includes(ca)); };
-  return FESTIVAL_CATALOG.filter((f) => (
-    hit(f.key)
-    || (f.aliases || []).some((a) => hit(a))
-    || hit(f.name.en)
-    || hit(f.name.hi)
-  ));
-}
+const curatedFor = (key) => BY_KEY.get(String(key || '')) || null;
 
-function catalogToObservance(festival) {
+// The mobile app renders `observance.guidance`, so every observance must carry one:
+// the curated line when we have it, otherwise the engine's computed tithi note.
+function decorateObservance(obs) {
+  const c = BY_KEY.get(obs.key);
   return {
-    key: festival.key,
-    name: festival.name,
-    type: festival.type,
-    importance: festival.importance,
-    guidance: festival.guidance,
+    key: obs.key,
+    name: obs.name,
+    type: obs.type,
+    importance: obs.importance,
+    note: obs.note,
+    guidance: (c && c.guidance) || obs.note,
   };
-}
-
-function matchFestivalRule(festival, panchang) {
-  const rule = festival.rule || {};
-  // Festival month names may follow either tradition (e.g. Janmashtami is "Bhadrapada" in
-  // Purnimanta / "Shravana" in Amanta), so match against BOTH so it's detected regardless.
-  const amanta = panchang && panchang.masa && panchang.masa.amanta && panchang.masa.amanta.en;
-  const purnimanta = panchang && panchang.masa && panchang.masa.purnimanta && panchang.masa.purnimanta.en;
-  const tithi = panchang && panchang.tithi && panchang.tithi.name;
-  const paksha = panchang && panchang.tithi && panchang.tithi.paksha;
-  return (!rule.masa || rule.masa === amanta || rule.masa === purnimanta)
-    && (!rule.tithi || rule.tithi === tithi)
-    && (!rule.paksha || rule.paksha === paksha);
-}
-
-function candidateWindows(startDate, festival, yearsAhead = 2) {
-  const months = (festival.rule && festival.rule.gregorianMonths) || [];
-  const years = [];
-  const startYear = startDate.getFullYear();
-  for (let y = startYear; y <= startYear + yearsAhead; y += 1) years.push(y);
-  const windows = [];
-  years.forEach((year) => {
-    months.forEach((month) => {
-      const from = new Date(year, month, 1);
-      const to = new Date(year, month + 1, 0);
-      from.setDate(Math.max(1, from.getDate() - 7));
-      to.setDate(to.getDate() + 7);
-      windows.push({ from, to });
-    });
-  });
-  return windows;
 }
 
 function enrichFestivalDetail(detail, festival, lang) {
@@ -343,9 +276,7 @@ function enrichFestivalDetail(detail, festival, lang) {
 
 module.exports = {
   FESTIVAL_CATALOG,
-  searchFestivalCatalog,
-  catalogToObservance,
-  matchFestivalRule,
-  candidateWindows,
+  curatedFor,
+  decorateObservance,
   enrichFestivalDetail,
 };

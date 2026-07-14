@@ -14,6 +14,8 @@ const Kundli = require('../models/Kundli');
 const { resolveLocation } = require('./location.service');
 const eph = require('../utils/localEphemeris');
 const { computePanchak } = require('./panchak.service');
+const { observancesForDate, masaFor } = require('./observance.service');
+const { decorateObservance } = require('./festival.service');
 const { computeVimshottari } = require('../utils/vimshottari');
 const { fetchT } = require('../utils/httpFetch');
 
@@ -583,11 +585,6 @@ const TITHI_HI = ['प्रतिपदा', 'द्वितीया', 'त�
 const NAK_HI = ['अश्विनी', 'भरणी', 'कृत्तिका', 'रोहिणी', 'मृगशिरा', 'आर्द्रा', 'पुनर्वसु', 'पुष्य', 'आश्लेषा', 'मघा', 'पूर्वा फाल्गुनी', 'उत्तरा फाल्गुनी', 'हस्त', 'चित्रा', 'स्वाति', 'विशाखा', 'अनुराधा', 'ज्येष्ठा', 'मूल', 'पूर्वाषाढ़ा', 'उत्तराषाढ़ा', 'श्रवण', 'धनिष्ठा', 'शतभिषा', 'पूर्वा भाद्रपदा', 'उत्तरा भाद्रपदा', 'रेवती'];
 const YOGA_HI = ['विष्कम्भ', 'प्रीति', 'आयुष्मान', 'सौभाग्य', 'शोभन', 'अतिगण्ड', 'सुकर्मा', 'धृति', 'शूल', 'गण्ड', 'वृद्धि', 'ध्रुव', 'व्याघात', 'हर्षण', 'वज्र', 'सिद्धि', 'व्यतीपात', 'वरीयान', 'परिघ', 'शिव', 'सिद्ध', 'साध्य', 'शुभ', 'शुक्ल', 'ब्रह्म', 'इन्द्र', 'वैधृति'];
 const KARANA_HI = { Bava: 'बव', Balava: 'बालव', Kaulava: 'कौलव', Taitila: 'तैतिल', Gara: 'गर', Vanija: 'वणिज', Vishti: 'विष्टि (भद्रा)', Kimstughna: 'किंस्तुघ्न', Shakuni: 'शकुनि', Chatushpada: 'चतुष्पाद', Naga: 'नाग' };
-const MASA = [
-  { en: 'Chaitra', hi: 'चैत्र' }, { en: 'Vaishakha', hi: 'वैशाख' }, { en: 'Jyeshtha', hi: 'ज्येष्ठ' }, { en: 'Ashadha', hi: 'आषाढ़' },
-  { en: 'Shravana', hi: 'श्रावण' }, { en: 'Bhadrapada', hi: 'भाद्रपद' }, { en: 'Ashwina', hi: 'आश्विन' }, { en: 'Kartika', hi: 'कार्तिक' },
-  { en: 'Margashirsha', hi: 'मार्गशीर्ष' }, { en: 'Pausha', hi: 'पौष' }, { en: 'Magha', hi: 'माघ' }, { en: 'Phalguna', hi: 'फाल्गुन' },
-];
 const SAMVATSARA = ['Prabhava', 'Vibhava', 'Shukla', 'Pramoda', 'Prajapati', 'Angirasa', 'Shrimukha', 'Bhava', 'Yuva', 'Dhata', 'Ishvara', 'Bahudhanya', 'Pramathi', 'Vikrama', 'Vrisha', 'Chitrabhanu', 'Svabhanu', 'Tarana', 'Parthiva', 'Vyaya', 'Sarvajit', 'Sarvadhari', 'Virodhi', 'Vikriti', 'Khara', 'Nandana', 'Vijaya', 'Jaya', 'Manmatha', 'Durmukhi', 'Hevilambi', 'Vilambi', 'Vikari', 'Sharvari', 'Plava', 'Shubhakrit', 'Shobhakrit', 'Krodhi', 'Vishvavasu', 'Parabhava', 'Plavanga', 'Kilaka', 'Saumya', 'Sadharana', 'Virodhikrit', 'Paridhavi', 'Pramadi', 'Ananda', 'Rakshasa', 'Nala', 'Pingala', 'Kalayukti', 'Siddharthi', 'Raudra', 'Durmati', 'Dundubhi', 'Rudhirodgari', 'Raktakshi', 'Krodhana', 'Akshaya'];
 
 const norm360 = (x) => ((x % 360) + 360) % 360;
@@ -647,70 +644,20 @@ function computePanchangElements(sunLon, moonLon) {
   };
 }
 
-function buildPanchangObservances(elements, masa) {
-  if (!elements || !elements.tithi) return [];
-  const out = [];
-  const tithi = elements.tithi.name;
-  const paksha = elements.tithi.paksha;
-  const month = masa && masa.amanta && masa.amanta.en;
-  const add = (key, en, hi, type, guidanceEn, guidanceHi, importance = 'regular') => {
-    if (out.some((o) => o.key === key)) return;
-    out.push({ key, name: { en, hi }, type, importance, guidance: { en: guidanceEn, hi: guidanceHi } });
+// Bhadra (Vishti karana) is a same-day caution flag, not a dated observance, so it is
+// the one entry the deterministic festival engine does not own.
+function bhadraObservance(elements) {
+  if (!elements || !elements.karana || !elements.karana.isBhadra) return null;
+  return {
+    key: 'bhadra',
+    name: { en: 'Bhadra / Vishti Karana', hi: 'भद्रा / विष्टि करण' },
+    type: 'caution',
+    importance: 'minor',
+    guidance: {
+      en: 'Avoid marriage, housewarming, travel starts and major auspicious work.',
+      hi: 'विवाह, गृह-प्रवेश, यात्रा आरम्भ और बड़े शुभ कार्य से बचें।',
+    },
   };
-
-  if (tithi === 'Ekadashi') {
-    add('ekadashi', `${paksha} Ekadashi`, `${paksha === 'Shukla' ? 'शुक्ल' : 'कृष्ण'} एकादशी`, 'vrat', 'Good for Vishnu puja, fasting, mantra japa and sattvic food.', 'विष्णु पूजा, व्रत, मंत्र-जप और सात्त्विक भोजन के लिए शुभ।', 'high');
-  }
-  if (tithi === 'Trayodashi') {
-    add('pradosh', `Pradosh Vrat (${paksha === 'Shukla' ? 'S' : 'K'})`, `प्रदोष व्रत (${paksha === 'Shukla' ? 'शु' : 'कृ'})`, 'vrat', 'Evening Shiva puja is traditionally preferred.', 'सायंकाल शिव पूजा परंपरागत रूप से श्रेष्ठ मानी जाती है।', 'high');
-  }
-  if (tithi === 'Purnima') {
-    add('purnima', 'Purnima Vrat', 'पूर्णिमा व्रत', 'vrat', 'Good for Satyanarayan puja, daan, mantra and moon-related worship.', 'सत्यनारायण पूजा, दान, मंत्र और चन्द्र पूजा के लिए शुभ।', 'high');
-  }
-  if (tithi === 'Amavasya') {
-    add('amavasya', 'Amavasya', 'अमावस्या', 'vrat', 'Good for pitru tarpan, daan and quiet spiritual practice; avoid major auspicious starts.', 'पितृ तर्पण, दान और शांत साधना के लिए अच्छा; बड़े शुभ आरम्भ से बचें।', 'high');
-  }
-  if (tithi === 'Chaturthi' && paksha === 'Krishna') {
-    add('sankashti', 'Sankashti Chaturthi', 'संकष्टी चतुर्थी', 'vrat', 'Ganesha worship and moonrise-related vrat observance.', 'गणेश पूजा और चन्द्रोदय से जुड़ी व्रत परंपरा।', 'high');
-  }
-  if (tithi === 'Chaturthi' && paksha === 'Shukla') {
-    add('vinayaka-chaturthi', 'Vinayaka Chaturthi', 'विनायक चतुर्थी', 'vrat', 'Good for Ganesha puja and removing obstacles.', 'गणेश पूजा और विघ्न निवारण के लिए शुभ।');
-  }
-  if (tithi === 'Ashtami' && paksha === 'Shukla') {
-    add('durgashtami', 'Masik Durgashtami', 'मासिक दुर्गाष्टमी', 'vrat', 'Good for Durga puja, protection prayers and discipline.', 'दुर्गा पूजा, रक्षा प्रार्थना और अनुशासन के लिए शुभ।');
-  }
-  if (tithi === 'Chaturdashi' && paksha === 'Krishna') {
-    add('masik-shivaratri', 'Masik Shivaratri', 'मासिक शिवरात्रि', 'vrat', 'Night Shiva puja, japa and meditation are preferred.', 'रात्रि शिव पूजा, जप और ध्यान श्रेष्ठ माने जाते हैं।', 'high');
-  }
-  if (elements.karana && elements.karana.isBhadra) {
-    add('bhadra', 'Bhadra / Vishti Karana', 'भद्रा / विष्टि करण', 'caution', 'Avoid marriage, housewarming, travel starts and major auspicious work.', 'विवाह, गृह-प्रवेश, यात्रा आरम्भ और बड़े शुभ कार्य से बचें।', 'high');
-  }
-
-  if (month === 'Jyeshtha' && paksha === 'Shukla' && tithi === 'Ekadashi') {
-    add('nirjala-ekadashi', 'Nirjala Ekadashi', 'निर्जला एकादशी', 'festival', 'One of the most significant Ekadashi vrats; follow health-safe fasting only.', 'सबसे महत्वपूर्ण एकादशी व्रतों में से एक; स्वास्थ्य के अनुसार ही व्रत रखें।', 'major');
-  }
-  if (month === 'Ashadha' && paksha === 'Shukla' && tithi === 'Ekadashi') {
-    add('devshayani-ekadashi', 'Dev Shayani Ekadashi', 'देवशयनी एकादशी', 'festival', 'Important Vishnu vrat and beginning of Chaturmas tradition.', 'महत्वपूर्ण विष्णु व्रत और चातुर्मास परंपरा का आरम्भ।', 'major');
-  }
-  if (month === 'Ashadha' && tithi === 'Purnima') {
-    add('guru-purnima', 'Guru Purnima', 'गुरु पूर्णिमा', 'festival', 'Good for guru puja, study, daan and gratitude rituals.', 'गुरु पूजा, अध्ययन, दान और कृतज्ञता के लिए शुभ।', 'major');
-  }
-  if (month === 'Bhadrapada' && paksha === 'Shukla' && tithi === 'Chaturthi') {
-    add('ganesh-chaturthi', 'Ganesh Chaturthi', 'गणेश चतुर्थी', 'festival', 'Ganesha sthapana and puja are performed according to local muhurat.', 'गणेश स्थापना और पूजा स्थानीय मुहूर्त के अनुसार की जाती है।', 'major');
-  }
-  if (month === 'Ashwina' && paksha === 'Shukla' && tithi === 'Dashami') {
-    add('vijayadashami', 'Vijayadashami / Dussehra', 'विजयादशमी / दशहरा', 'festival', 'Good for shastra puja, new learning and victory-related sankalpa.', 'शस्त्र पूजा, नई शिक्षा और विजय-संकल्प के लिए शुभ।', 'major');
-  }
-  if (month === 'Kartika' && paksha === 'Krishna' && tithi === 'Amavasya') {
-    add('diwali', 'Diwali / Lakshmi Puja', 'दीवाली / लक्ष्मी पूजा', 'festival', 'Lakshmi puja should use the evening pradosh-specific muhurat for the location.', 'लक्ष्मी पूजा के लिए स्थान-आधारित सायंकाल प्रदोष मुहूर्त देखें।', 'major');
-  }
-  if (month === 'Phalguna' && tithi === 'Purnima') {
-    add('holika-dahan', 'Holika Dahan', 'होलिका दहन', 'festival', 'Holika Dahan needs evening muhurat after checking Bhadra carefully.', 'भद्रा देखकर सायंकालीन मुहूर्त में होलिका दहन किया जाता है।', 'major');
-  }
-  if (month === 'Chaitra' && paksha === 'Shukla' && tithi === 'Navami') {
-    add('ram-navami', 'Ram Navami', 'राम नवमी', 'festival', 'Midday Rama puja is traditionally preferred.', 'मध्याह्न राम पूजा परंपरागत रूप से श्रेष्ठ मानी जाती है।', 'major');
-  }
-  return out;
 }
 
 // single planet ka nirayana longitude + sign
@@ -1003,7 +950,6 @@ async function getPanchang(input) {
 
   // Ritu (season) + Ayana from Sun's sidereal sign; Samvat from Gregorian (approx around Chaitra new-year)
   const sIdx = displaySun && displaySun.sign != null ? SIGN_INDEX[displaySun.sign] : null;
-  const sunriseSIdx = sunriseSun && sunriseSun.sign != null ? SIGN_INDEX[sunriseSun.sign] : sIdx;
   const RITU = [
     { en: 'Vasanta', hi: 'वसंत' }, { en: 'Grishma', hi: 'ग्रीष्म' }, { en: 'Grishma', hi: 'ग्रीष्म' },
     { en: 'Varsha', hi: 'वर्षा' }, { en: 'Varsha', hi: 'वर्षा' }, { en: 'Sharad', hi: 'शरद' },
@@ -1016,25 +962,24 @@ async function getPanchang(input) {
   const samvat = { vikram: gy + (gm >= 3 ? 57 : 56), shaka: gy - (gm >= 3 ? 78 : 79) };
   const samvatsara = SAMVATSARA[((samvat.shaka + 11) % 60 + 60) % 60];
 
-  // Lunar month (Masa), Drik-compatible:
-  //  • Amanta (South/West India): month = the Sun's sidereal sign (Sun in Mithuna → Jyeshtha).
-  //  • Purnimanta (North India, incl. Rajasthan): same as amanta in Shukla paksha, one AHEAD in
-  //    Krishna paksha (so 11 Jul 2026 Krishna → amanta Jyeshtha, purnimanta Ashadha).
-  const isKrishna = elements && elements.tithi && elements.tithi.paksha === 'Krishna';
+  // Lunar month (Masa) — taken from the observance engine's amavasya→amavasya model, which
+  // names a month after the sign the Sun ENTERS during it and flags adhika (leap) months.
+  // The Sun's current sign is not enough: before that month's sankranti it still reads as
+  // the previous month (14 Sep 2026 would come out "Shravana" instead of "Bhadrapada").
   const sunriseIsKrishna = sunriseElements && sunriseElements.tithi && sunriseElements.tithi.paksha === 'Krishna';
-  const masa = sIdx == null ? null : {
-    amanta: MASA[sIdx],
-    purnimanta: MASA[(sIdx + (isKrishna ? 1 : 0)) % 12],
+  const sunriseUTC = new Date(eph.localMidnightUTC(dateObj, tzMin).getTime() + srMin * 60000);
+  const lunar = masaFor(sunriseUTC, sunriseIsKrishna ? 'Krishna' : 'Shukla');
+  const masa = !lunar ? null : {
+    amanta: lunar.amanta,
+    purnimanta: lunar.purnimanta,
+    adhika: lunar.adhika,
     system: monthSystem, // 'amanta' | 'purnimanta' — which one to show for this region
   };
-  const sunriseMasa = sunriseSIdx == null ? masa : {
-    amanta: MASA[sunriseSIdx],
-    purnimanta: MASA[(sunriseSIdx + (sunriseIsKrishna ? 1 : 0)) % 12],
-  };
-  const observances = buildPanchangObservances(sunriseElements, sunriseMasa);
-  if (elements && elements.karana && elements.karana.isBhadra && !observances.some((o) => o.key === 'bhadra')) {
-    observances.push(...buildPanchangObservances({ ...sunriseElements, karana: elements.karana }, sunriseMasa).filter((o) => o.key === 'bhadra'));
-  }
+  // Festivals/vrats come from the deterministic observance engine (exact tithi boundaries +
+  // per-festival reference moment), not from a same-day tithi/masa string match.
+  const observances = observancesForDate({ dateObj, lat, lng, tz }).map(decorateObservance);
+  const bhadra = bhadraObservance(elements);
+  if (bhadra) observances.push(bhadra);
 
   // Panchak (Bichhuda / Vinchhudo): computed at the selected instant (now if today, else local
   // noon of the date) from the Moon's sidereal longitude — fully deterministic.
