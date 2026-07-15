@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, Animated, Easing, Image, ScrollView } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { View, Text, StyleSheet, Pressable, Animated, Easing, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Svg, { Path, Circle, Rect, Line, Polyline, Defs, RadialGradient, Stop, LinearGradient as SvgGrad, Text as SvgText } from 'react-native-svg';
 import { useTheme } from '../theme/ThemeProvider';
 import { Theme, fonts, radii } from '../theme/tokens';
@@ -12,6 +13,7 @@ import { hTap } from '../lib/haptics';
 import { useCurrentUser } from '../lib/auth';
 import { getDailyPrediction, getPanchang, DailyPrediction, PanchangResponse, avatarUrl } from '../lib/api';
 import { birthFromProfile } from '../lib/birth';
+import { locationForPanchang } from '../lib/deviceLocation';
 import { useAppConfig, useScreen, useBranding } from '../context/AppConfigProvider';
 import { useT, useLang } from '../i18n/LanguageProvider';
 
@@ -65,6 +67,23 @@ const STARS = [
   { top: '26%', left: '48%' }, { top: '44%', left: '92%' }, { top: '52%', left: '6%' },
   { top: '62%', left: '70%' }, { top: '72%', left: '22%' },
 ] as const;
+
+/* One twinkling star — a gentle opacity-only loop (native driver, no layout work).
+   Each star gets its own phase so the sky shimmers instead of blinking in unison. */
+const TwinkleStar = React.memo(function TwinkleStar({ top, left, delay }: { top: string; left: string; delay: number }) {
+  const a = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = Animated.loop(Animated.sequence([
+      Animated.delay(delay),
+      Animated.timing(a, { toValue: 1, duration: 1500, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      Animated.timing(a, { toValue: 0, duration: 1500, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+    ]));
+    loop.start();
+    return () => loop.stop();
+  }, [a, delay]);
+  const opacity = a.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] });
+  return <Animated.View style={[styles.twinkle, { top: top as any, left: left as any, opacity }]} />;
+});
 
 const ZODIAC = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'];
 
@@ -210,20 +229,168 @@ const Chevron = ({ c, size = 16 }: { c: string; size?: number }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Polyline points="9 18 15 12 9 6" /></Svg>
 );
 
+/* Small sun/moon glyph next to the time-of-day greeting. */
+function GreetGlyph({ kind, color, size = 15 }: { kind: 'sun' | 'moon'; color: string; size?: number }) {
+  if (kind === 'moon') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+        <Path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
+      </Svg>
+    );
+  }
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <Circle cx={12} cy={12} r={4.4} />
+      <Line x1={12} y1={2} x2={12} y2={4.4} /><Line x1={12} y1={19.6} x2={12} y2={22} />
+      <Line x1={2} y1={12} x2={4.4} y2={12} /><Line x1={19.6} y1={12} x2={22} y2={12} />
+      <Line x1={4.9} y1={4.9} x2={6.6} y2={6.6} /><Line x1={17.4} y1={17.4} x2={19.1} y2={19.1} />
+      <Line x1={4.9} y1={19.1} x2={6.6} y2={17.4} /><Line x1={17.4} y1={6.6} x2={19.1} y2={4.9} />
+    </Svg>
+  );
+}
+
+/* Defers mounting of below-the-fold sections so the first paint is instant.
+   Children stay unmounted until `delay` ms after this component appears. */
+function Deferred({ delay = 60, children }: { delay?: number; children: React.ReactNode }) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setReady(true), delay);
+    return () => clearTimeout(t);
+  }, [delay]);
+  if (!ready) return null;
+  return <>{children}</>;
+}
+
+/* Consistent gold section header between blocks — label + thin gradient divider
+   (same treatment as the Kundli screen's SectionTitle). */
+function SectionTitle({ label }: { label: string }) {
+  const { theme } = useTheme();
+  return (
+    <View style={styles.secTitleWrap}>
+      <GradientText style={styles.secTitleText}>{label}</GradientText>
+      <LinearGradient
+        colors={theme.isDark ? ['rgba(233,184,80,0.55)', 'rgba(233,184,80,0.14)', 'rgba(0,0,0,0)'] : ['rgba(176,115,22,0.45)', 'rgba(176,115,22,0.12)', 'rgba(255,255,255,0)']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.secTitleRule}
+        pointerEvents="none"
+      />
+    </View>
+  );
+}
+
+/* Soft shimmer line — the loading state for the Panchang/horoscope cards
+   (no spinners). Colors are OPAQUE: this can sit inside transform-animated
+   views where translucent rgba surfaces composite white on Android. */
+function SkelLine({ theme, width, height = 12, style }: { theme: Theme; width: number | `${number}%`; height?: number; style?: any }) {
+  const a = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = Animated.loop(Animated.sequence([
+      Animated.timing(a, { toValue: 1, duration: 700, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      Animated.timing(a, { toValue: 0, duration: 700, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+    ]));
+    loop.start();
+    return () => loop.stop();
+  }, [a]);
+  const opacity = a.interpolate({ inputRange: [0, 1], outputRange: [0.35, 0.9] });
+  return (
+    <Animated.View
+      style={[{ width, height, borderRadius: 6, backgroundColor: theme.isDark ? '#52401c' : '#ebdcc5', opacity }, style]}
+    />
+  );
+}
+
+/* The services rail scrolls horizontally, but a first-time user has no way to know
+   that. Three affordances, no arrows and no dots (same recipe as the Library rail):
+     1. PEEK      — the rail bleeds past the right gutter so a card is always cut in half.
+     2. EDGE FADE — content dissolves into the page background at whichever edge still
+                    has more to scroll (fades ride a native-driver Animated.Value).
+     3. NUDGE     — on the very first visit the rail slides a little and springs back. */
+const RAIL_HINT_KEY = 'sy.home.railHinted';
+
+function HomeRail({ theme, snap, children }: { theme: Theme; snap: number; children: React.ReactNode }) {
+  const ref = useRef<any>(null);          // Animated.ScrollView — required for native-driven onScroll
+  const x = useRef(new Animated.Value(0)).current;
+  const [maxX, setMaxX] = useState(0);   // contentWidth - viewportWidth
+  const viewW = useRef(0);
+
+  const measure = (content: number) => setMaxX(Math.max(0, content - viewW.current));
+
+  // First visit ever: slide out and spring back so the rail visibly moves.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (await AsyncStorage.getItem(RAIL_HINT_KEY)) return;      // already hinted once
+      await new Promise((r) => setTimeout(r, 1100));               // let the screen settle
+      if (cancelled || !ref.current) return;
+      ref.current.scrollTo({ x: 64, animated: true });
+      setTimeout(() => ref.current?.scrollTo({ x: 0, animated: true }), 620);
+      AsyncStorage.setItem(RAIL_HINT_KEY, '1').catch(() => {});
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const fade = (side: 'left' | 'right') => {
+    // Right fade is on until you reach the end; left fade turns on once you scroll away.
+    const opacity = maxX <= 0 ? 0 : side === 'right'
+      ? x.interpolate({ inputRange: [Math.max(0, maxX - 40), maxX], outputRange: [1, 0], extrapolate: 'clamp' })
+      : x.interpolate({ inputRange: [0, 28], outputRange: [0, 1], extrapolate: 'clamp' });
+    const bg = theme.bgDeep;
+    return (
+      <Animated.View pointerEvents="none" style={[styles.railFade, side === 'right' ? { right: 0 } : { left: 0 }, { opacity }]}>
+        <LinearGradient
+          colors={side === 'right' ? ['transparent', bg] : [bg, 'transparent']}
+          start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }}
+          style={StyleSheet.absoluteFill}
+        />
+      </Animated.View>
+    );
+  };
+
+  return (
+    <View style={styles.railHost}>
+      <Animated.ScrollView
+        ref={ref}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        onLayout={(e) => { viewW.current = e.nativeEvent.layout.width; }}
+        onContentSizeChange={measure}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { x } } }], { useNativeDriver: true })}
+        scrollEventThrottle={16}
+        decelerationRate="fast"
+        snapToInterval={snap}
+        snapToAlignment="start"
+        disableIntervalMomentum
+        contentContainerStyle={styles.svcScroll}
+      >
+        {children}
+      </Animated.ScrollView>
+      {fade('left')}
+      {fade('right')}
+    </View>
+  );
+}
+
 function GoldBorderCard({ children, style, solidBlack }: { children: React.ReactNode; style?: any; solidBlack?: boolean }) {
   return <Card padded={false} radius={22} solidBlack={solidBlack} style={style}>{children}</Card>;
 }
 
 const SVC_SNAP = 156 + 13; // card width + row gap → clean snap on swipe
 
-/** A single service card with a staggered fade-rise entrance. */
-function ServiceCard({ s, index, theme, lang, onPress }: { s: typeof SERVICES[number]; index: number; theme: Theme; lang: 'en' | 'hi'; onPress: () => void }) {
+/** A single service card — staggered fade-rise entrance + spring press scale.
+    Memoized so rail re-renders are cheap. The spring wrapper carries the OPAQUE
+    theme.cardBg (translucent surfaces inside transform-animated views composite
+    white on Android). */
+const ServiceCard = React.memo(function ServiceCard({ s, index, theme, lang, onNav }: { s: typeof SERVICES[number]; index: number; theme: Theme; lang: 'en' | 'hi'; onNav: (route: string) => void }) {
   const a = React.useRef(new Animated.Value(0)).current;
+  const sc = React.useRef(new Animated.Value(1)).current;
   React.useEffect(() => {
     const anim = Animated.timing(a, { toValue: 1, duration: 430, delay: 70 + index * 72, easing: Easing.out(Easing.cubic), useNativeDriver: true });
     anim.start();
     return () => anim.stop();
   }, [a, index]);
+  const pressIn = () => Animated.spring(sc, { toValue: 0.94, speed: 40, bounciness: 5, useNativeDriver: true }).start();
+  const pressOut = () => Animated.spring(sc, { toValue: 1, speed: 22, bounciness: 9, useNativeDriver: true }).start();
   const hi = lang === 'hi';
   const ringColors = theme.isDark
     ? (['#fce8a8', '#e9b850', '#a17613', '#f6d27a'] as const)
@@ -232,21 +399,75 @@ function ServiceCard({ s, index, theme, lang, onPress }: { s: typeof SERVICES[nu
   const accent = theme.isDark ? s.accent : (SERVICE_LIGHT_ACCENT[s.key] || theme.gold1);
   return (
     <Animated.View style={{ opacity: a, transform: [{ translateY: a.interpolate({ inputRange: [0, 1], outputRange: [22, 0] }) }] }}>
-      <Pressable onPress={onPress} style={({ pressed }) => [pressed && { transform: [{ scale: 0.95 }] }]}>
-        <LinearGradient colors={ringColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.svcBorder}>
-          <LinearGradient colors={innerTint} start={{ x: 0.1, y: 0 }} end={{ x: 0.6, y: 1 }} style={styles.svcInner}>
-            <View style={styles.svcTopLine} />
-            <View style={[styles.svcIconRing, { borderColor: accent + '99', backgroundColor: theme.isDark ? 'rgba(0,0,0,0.32)' : accent + '14', shadowColor: accent }]}>
-              <ServiceIcon name={s.icon} color={accent} size={26} />
+      <Animated.View style={{ transform: [{ scale: sc }], borderRadius: 20, backgroundColor: theme.cardBg }}>
+        <Pressable onPress={() => onNav(s.route)} onPressIn={pressIn} onPressOut={pressOut}>
+          <LinearGradient colors={ringColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.svcBorder}>
+            <LinearGradient colors={innerTint} start={{ x: 0.1, y: 0 }} end={{ x: 0.6, y: 1 }} style={styles.svcInner}>
+              <View style={styles.svcTopLine} />
+              <View style={[styles.svcIconRing, { borderColor: accent + '99', backgroundColor: theme.isDark ? 'rgba(0,0,0,0.32)' : accent + '14', shadowColor: accent }]}>
+                <ServiceIcon name={s.icon} color={accent} size={26} />
+              </View>
+              <Text style={[styles.svcTitle, { color: theme.gold1 }]} numberOfLines={2}>{hi ? s.hi : s.en}</Text>
+              <Text style={[styles.svcDesc, { color: theme.isDark ? 'rgba(239,224,168,0.78)' : theme.textMuted }]} numberOfLines={3}>{hi ? s.subHi : s.subEn}</Text>
+            </LinearGradient>
+          </LinearGradient>
+        </Pressable>
+      </Animated.View>
+    </Animated.View>
+  );
+});
+
+/** One hero feature row card — icon in a soft gold circle, spring press scale.
+    Memoized; the animated wrapper carries the OPAQUE theme.cardBg. */
+const FeatureCard = React.memo(function FeatureCard({ f, title, desc, theme, rashiImg, onNav }: {
+  f: typeof FEATURES[number]; title: string; desc: string; theme: Theme; rashiImg: any; onNav: (route: string) => void;
+}) {
+  const sc = useRef(new Animated.Value(1)).current;
+  const pressIn = () => Animated.spring(sc, { toValue: 0.97, speed: 40, bounciness: 5, useNativeDriver: true }).start();
+  const pressOut = () => Animated.spring(sc, { toValue: 1, speed: 22, bounciness: 9, useNativeDriver: true }).start();
+  const tint = theme.isDark ? f.tint : LIGHT_TINT[f.key];
+  // Gold gradient border — brighter golds bracket all four corners so
+  // the ring stays visible the whole way around (no dark dead-corner).
+  const borderColors = theme.isDark
+    ? (['#fce8a8', '#e9b850', '#a17613', '#f6d27a'] as const)
+    : (['#e2e8f0', '#cbd5e1', '#d97706', '#f59e0b'] as const);
+  return (
+    <Animated.View style={{ transform: [{ scale: sc }], borderRadius: 18, backgroundColor: theme.cardBg }}>
+      <Pressable onPress={() => onNav(f.route)} onPressIn={pressIn} onPressOut={pressOut}>
+        {/* Outer LinearGradient = gradient border ring (web .ring-border).
+            1.5px padding forms the visible border on all four sides. */}
+        <LinearGradient
+          colors={borderColors}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.featureCardBorder}
+        >
+          {/* Inner = tinted content area */}
+          <LinearGradient colors={tint} start={{ x: 0.1, y: 0 }} end={{ x: 0.6, y: 1 }} style={styles.featureCardInner}>
+            <View style={styles.featureTop} />
+            <View style={[styles.featureIconOrb, {
+              borderColor: theme.isDark ? 'rgba(233,184,80,0.4)' : 'rgba(176,115,22,0.28)',
+              backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(176,115,22,0.08)',
+            }]}>
+              {f.key === 'pred' && rashiImg
+                ? <Image source={rashiImg} style={{ width: 50, height: 50, borderRadius: 10 }} resizeMode="contain" />
+                : f.key === 'pred'
+                  ? <SunArt size={50} dark={theme.isDark} />
+                  : <f.Art size={50} />}
             </View>
-            <Text style={[styles.svcTitle, { color: theme.gold1 }]} numberOfLines={2}>{hi ? s.hi : s.en}</Text>
-            <Text style={[styles.svcDesc, { color: theme.isDark ? 'rgba(239,224,168,0.78)' : theme.textMuted }]} numberOfLines={3}>{hi ? s.subHi : s.subEn}</Text>
+            <View style={styles.featureTextCol}>
+              <Text style={[styles.featureTitle, { color: theme.gold1 }]}>{title}</Text>
+              <Text style={[styles.featureDesc, { color: theme.isDark ? 'rgba(216,203,168,0.75)' : theme.textMuted }]}>{desc}</Text>
+            </View>
+            <View style={[styles.chevronCircle, { borderColor: theme.isDark ? 'rgba(246,210,122,0.5)' : theme.cardBorder }]}>
+              <Chevron c={theme.gold1} size={14} />
+            </View>
           </LinearGradient>
         </LinearGradient>
       </Pressable>
     </Animated.View>
   );
-}
+});
 
 export function WelcomeScreen({ navigation }: any) {
   const { theme } = useTheme();
@@ -262,6 +483,7 @@ export function WelcomeScreen({ navigation }: any) {
   const brand = useBranding();           // logo / app name / tagline
   const t = useT();
   const { lang } = useLang();
+  const hi = lang === 'hi';
   // CMS field naam (admin override); fallback i18n translation (language ke hisaab se)
   const featTitle: Record<string, string> = { pred: 'featurePredTitle', horoscope: 'featureHoroscopeTitle', ai: 'featureAiTitle', kundli: 'featureKundliTitle', chog: 'featureChogTitle' };
   const featDesc: Record<string, string> = { pred: 'featurePredDesc', horoscope: 'featureHoroscopeDesc', ai: 'featureAiDesc', kundli: 'featureKundliDesc', chog: 'featureChogDesc' };
@@ -270,35 +492,64 @@ export function WelcomeScreen({ navigation }: any) {
     .sort((a, b) => (a.order || 0) - (b.order || 0))[0];
   const bannerImage = home.img('bannerImage') || activeHomeBanner?.imageUrl || '';
 
-  // AI daily prediction — Daily Prediction page jaisa hi (same cache, consistent)
+  // Daily prediction + today's panchang — fetched IN PARALLEL so each card
+  // renders the moment its own data lands (shimmer skeletons meanwhile).
   const [pred, setPred] = useState<DailyPrediction | null>(null);
+  const [predLoading, setPredLoading] = useState(true);
   const [panch, setPanch] = useState<PanchangResponse | null>(null);
+  const [panchLoading, setPanchLoading] = useState(true);
+  const [panchCity, setPanchCity] = useState<string | null>(null);
   useEffect(() => {
     let on = true;
+    setPredLoading(true);
+    setPanchLoading(true);
     (async () => {
       const b = await birthFromProfile().catch(() => null);
       const birth = b || WELCOME_DEFAULT_BIRTH;
-      try {
-        const p = await getDailyPrediction({ ...birth, name: (b as any)?.name });
-        if (on) setPred(p);
-      } catch (_) { /* offline → static dikhega */ }
-      // today's panchang (local ephemeris → fast + reliable) for the home glance card
-      try {
-        const pc = await getPanchang({ place: (b as any)?.place || birth.place || 'Jaipur', tz: '+05:30' });
+      // both requests fire together — neither waits for the other
+      const predTask = getDailyPrediction({ ...birth, name: (b as any)?.name })
+        .then((p) => { if (on) setPred(p); })
+        .catch(() => { /* offline → static dikhega */ })
+        .finally(() => { if (on) setPredLoading(false); });
+      const panchTask = (async () => {
+        // GPS city + coords (exactly like the Panchang screen) —
+        // silent fallback to the profile place when permission is missing.
+        const loc = await locationForPanchang((b as any)?.place || birth.place || 'Jaipur');
+        if (!on) return;
+        setPanchCity(loc.city);
+        const where = loc.fromGps && loc.lat != null && loc.lng != null
+          ? { lat: loc.lat, lng: loc.lng }
+          : { place: loc.place || loc.city };
+        const pc = await getPanchang({ ...where, tz: '+05:30' });
         if (on) setPanch(pc);
-      } catch (_) { /* card stays compact */ }
+      })()
+        .catch(() => { /* card stays compact */ })
+        .finally(() => { if (on) setPanchLoading(false); });
+      await Promise.allSettled([predTask, panchTask]);
     })();
     return () => { on = false; };
-    // refetch when language switches so the AI rashifal text re-renders in the new language
+    // refetch when language switches so the rashifal text re-renders in the new language
   }, [lang]);
+
   const d = new Date();
-  const todayLabel = `${t('home.today', 'Today')}, ${d.getDate()} ${(lang === 'hi' ? MON_HI : MON3)[d.getMonth()]} ${d.getFullYear()}`;
+  const todayLabel = `${t('home.today', 'Today')}, ${d.getDate()} ${(hi ? MON_HI : MON3)[d.getMonth()]} ${d.getFullYear()}`;
+  const dateShort = `${d.getDate()} ${(hi ? MON_HI : MON3)[d.getMonth()]}`;
+
+  // Time-of-day greeting — सुप्रभात / Good morning, with a matching sun/moon glyph.
+  const hour = d.getHours();
+  const greeting = hour < 5 ? (hi ? 'शुभ रात्रि' : 'Good night')
+    : hour < 12 ? (hi ? 'सुप्रभात' : 'Good morning')
+      : hour < 17 ? (hi ? 'शुभ अपराह्न' : 'Good afternoon')
+        : hour < 21 ? (hi ? 'शुभ संध्या' : 'Good evening')
+          : (hi ? 'शुभ रात्रि' : 'Good night');
+  const greetKind: 'sun' | 'moon' = hour >= 5 && hour < 17 ? 'sun' : 'moon';
+
   // "till 3:30 PM" / "3:30 PM तक" — when this tithi/anga ends (nextDay marked)
   const angaEnd = (e?: { hm: string; nextDay: boolean }) =>
-    !e ? '' : (lang === 'hi'
+    !e ? '' : (hi
       ? `${e.hm}${e.nextDay ? ' (अगले दिन)' : ''} तक`
       : `till ${e.hm}${e.nextDay ? ' (next day)' : ''}`);
-  // hasPred = real AI rashifal loaded. _fallback / null → show honest state, NOT fabricated lucky numbers.
+  // hasPred = real rashifal loaded. _fallback / null → show honest state, NOT fabricated lucky numbers.
   const hasPred = !!(pred && !pred._fallback);
   // user's moon-sign (rashi) → dynamic rashi PNG icon used across the home cards
   // Rashi shown to the user = naam-rashi (from the name's first syllable, the Dainik-Bhaskar
@@ -315,15 +566,32 @@ export function WelcomeScreen({ navigation }: any) {
       ].filter(Boolean)
     : [];
 
+  // entrance — light fade+rise on the hero only (logo + welcome + panchang);
+  // everything below mounts staggered via <Deferred> so first paint stays instant.
+  const enter = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(enter, { toValue: 1, duration: 620, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+  }, [enter]);
+  const rise = (start: number) => ({
+    opacity: enter.interpolate({ inputRange: [start, Math.min(1, start + 0.45)], outputRange: [0, 1], extrapolate: 'clamp' as const }),
+    transform: [{ translateY: enter.interpolate({ inputRange: [start, Math.min(1, start + 0.45)], outputRange: [18, 0], extrapolate: 'clamp' as const }) }],
+  });
+
+  const goNav = useCallback((route: string) => { hTap(); navigation.navigate(route); }, [navigation]);
+
+  const panchLoadingNow = panchLoading && !panch;
+  const predLoadingNow = predLoading && !pred;
+
   return (
     <Screen header={<BrandHeader showEmblem={false} onMenu={openMenu} onBell={() => navigation.navigate('Notifications')} />}>
 
       {/* deep-black cosmic backdrop: twinkle stars only (planet blobs removed so the
-          background stays pure black and the spinning zodiac wheel reads clearly) */}
+          background stays pure black and the spinning zodiac wheel reads clearly).
+          Each star breathes on an opacity-only native-driver loop. */}
       {theme.isDark && (
         <View style={StyleSheet.absoluteFill} pointerEvents="none">
           {STARS.map((s, i) => (
-            <View key={i} style={[styles.twinkle, { top: s.top as any, left: s.left as any }]} />
+            <TwinkleStar key={i} top={s.top} left={s.left} delay={(i % 4) * 420} />
           ))}
         </View>
       )}
@@ -340,7 +608,7 @@ export function WelcomeScreen({ navigation }: any) {
       )}
 
       {/* Logo block */}
-      <View style={styles.logoBlock}>
+      <Animated.View style={[styles.logoBlock, rise(0)]}>
         {brand.logoImage ? (
           <Image source={{ uri: avatarUrl(brand.logoImage) || undefined }} style={styles.logoImg} resizeMode="contain" />
         ) : (
@@ -352,11 +620,18 @@ export function WelcomeScreen({ navigation }: any) {
           <GradientText style={styles.astrology}>{(brand.tagline || 'Astrology').toUpperCase()}</GradientText>
           <Ornament flip />
         </View>
-      </View>
+      </Animated.View>
 
-      {/* Welcome block */}
-      <View style={[styles.welcomeBlock, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.025)' : '#ffffff', borderColor: theme.isDark ? 'rgba(201,150,46,0.12)' : theme.cardBorder }]}>
+      {/* Welcome block — personal time-of-day greeting + admin-managed welcome line.
+          Surface is OPAQUE (this block rides the entrance transform). */}
+      <Animated.View style={[styles.welcomeBlock, { backgroundColor: theme.isDark ? '#060606' : '#ffffff', borderColor: theme.isDark ? 'rgba(201,150,46,0.12)' : theme.cardBorder }, rise(0.14)]}>
         <View style={{ flex: 1, minWidth: 0 }}>
+          <View style={styles.greetRow}>
+            <GreetGlyph kind={greetKind} color={theme.isDark ? theme.gold2 : theme.gold3} />
+            <Text style={[styles.greetText, { color: theme.isDark ? theme.gold2 : theme.gold3 }]} numberOfLines={1}>
+              {greeting}, {firstName}
+            </Text>
+          </View>
           <View style={styles.welcomeTitleRow}>
             <GradientText style={styles.welcomeTitle}>{home.t('greeting', t('home.greeting', 'Welcome'))}, {firstName} </GradientText>
             <Text style={{ fontSize: 20 }}>🙏</Text>
@@ -371,44 +646,63 @@ export function WelcomeScreen({ navigation }: any) {
           </View>
           {!!rashiLabel && <Text style={[styles.wzLabel, { color: theme.gold2 }]}>{rashiLabel}</Text>}
         </View>
-      </View>
+      </Animated.View>
 
-      {/* Today's Panchang — daily glance card (tap → full Panchang) */}
-      <Pressable
-        onPress={() => { hTap(); navigation.navigate('Panchang'); }}
-        style={({ pressed }) => [pressed && { transform: [{ scale: 0.99 }] }]}
-      >
-        <LinearGradient
-          colors={theme.isDark ? ['rgba(122,82,20,0.34)', 'rgba(28,20,10,0.5)'] : ['#ffffff', '#f8fafc']}
-          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          style={[styles.panchCard, { borderColor: theme.isDark ? 'rgba(201,150,46,0.3)' : theme.cardBorder }]}
+      {/* Today's Panchang — GPS-correct daily glance card (tap → full Panchang).
+          Surface colors are OPAQUE — the card rides the entrance transform. */}
+      <Animated.View style={rise(0.28)}>
+        <Pressable
+          onPress={() => { hTap(); navigation.navigate('Panchang'); }}
+          style={({ pressed }) => [pressed && { transform: [{ scale: 0.985 }] }]}
         >
-          <View style={[styles.panchIcon, { borderColor: theme.isDark ? 'rgba(243,205,126,0.55)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.4)' : '#f8fafc' }]}>
-            <ServiceIcon name="calendar" color={theme.gold1} size={26} />
-          </View>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={[styles.panchKicker, { color: theme.gold2 }]}>{lang === 'hi' ? 'आज का पंचांग' : "TODAY'S PANCHANG"} · {todayLabel.replace(/^.*?,\s*/, '')}</Text>
-            <Text style={[styles.panchMain, { color: theme.isDark ? '#f3e7c8' : theme.text }]} numberOfLines={1}>
-              {panch
-                ? `${lang === 'hi' ? (panch.tithi.hi || panch.tithi.name) : panch.tithi.name} · ${lang === 'hi' ? (panch.nakshatra.hi || panch.nakshatra.name) : panch.nakshatra.name}`
-                : (lang === 'hi' ? 'तिथि व नक्षत्र देखें' : 'View tithi & nakshatra')}
-            </Text>
-            <Text style={[styles.panchSub, { color: theme.isDark ? 'rgba(239,224,168,0.7)' : theme.textMuted }]} numberOfLines={1}>
-              {panch ? (
+          <LinearGradient
+            colors={theme.isDark ? ['#291c07', '#0e0a05'] : ['#ffffff', '#f8fafc']}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+            style={[styles.panchCard, { borderColor: theme.isDark ? 'rgba(201,150,46,0.3)' : theme.cardBorder }]}
+          >
+            {/* thin gold gradient top-border */}
+            <LinearGradient
+              colors={theme.isDark ? ['rgba(246,210,122,0)', '#f6d27a', 'rgba(246,210,122,0)'] : ['rgba(217,119,6,0)', '#d97706', 'rgba(217,119,6,0)']}
+              start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }}
+              style={styles.panchTopLine}
+              pointerEvents="none"
+            />
+            <View style={[styles.panchIcon, { borderColor: theme.isDark ? 'rgba(243,205,126,0.55)' : theme.cardBorder, backgroundColor: theme.isDark ? '#1a1206' : '#f8fafc' }]}>
+              <ServiceIcon name="calendar" color={theme.gold1} size={26} />
+            </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={[styles.panchKicker, { color: theme.gold2 }]} numberOfLines={1}>
+                {hi ? 'आज का पंचांग' : "TODAY'S PANCHANG"} · {dateShort}{panchCity ? ` · 📍 ${panchCity}` : ''}
+              </Text>
+              {panchLoadingNow ? (
                 <>
-                  <Text style={{ color: theme.gold1, fontFamily: fonts.interSemi }}>
-                    {panch.tithi?.endsAt
-                      ? `⏳ ${lang === 'hi' ? 'तिथि' : 'Tithi'} ${angaEnd(panch.tithi.endsAt)}`
-                      : (lang === 'hi' ? 'तिथि व नक्षत्र' : 'Tithi & Nakshatra')}
-                  </Text>
-                  {panch.masa ? `   ·   ${lang === 'hi' ? panch.masa.amanta.hi : panch.masa.amanta.en}` : ''}
+                  <SkelLine theme={theme} width={'72%'} height={14} style={{ marginTop: 6 }} />
+                  <SkelLine theme={theme} width={'52%'} height={10} style={{ marginTop: 7 }} />
                 </>
-              ) : (lang === 'hi' ? 'शुभ मुहूर्त · राहु काल · व्रत-त्योहार' : 'Shubh muhurat · Rahu Kaal · vrat & festivals')}
-            </Text>
-          </View>
-          <Chevron c={theme.gold1} size={18} />
-        </LinearGradient>
-      </Pressable>
+              ) : (
+                <>
+                  <Text style={[styles.panchMain, { color: theme.isDark ? '#f3e7c8' : theme.text }]} numberOfLines={1}>
+                    {panch
+                      ? `${hi ? (panch.tithi.hi || panch.tithi.name) : panch.tithi.name} · ${hi ? (panch.nakshatra.hi || panch.nakshatra.name) : panch.nakshatra.name}`
+                      : (hi ? 'तिथि व नक्षत्र देखें' : 'View tithi & nakshatra')}
+                  </Text>
+                  <Text style={[styles.panchSub, { color: theme.isDark ? 'rgba(239,224,168,0.7)' : theme.textMuted }]} numberOfLines={1}>
+                    {panch ? (
+                      <>
+                        <Text style={{ color: theme.gold1, fontFamily: fonts.interSemi }}>
+                          {`🌅 ${panch.sunrise}  🌇 ${panch.sunset}`}
+                        </Text>
+                        {panch.tithi?.endsAt ? `  ·  ⏳ ${hi ? 'तिथि' : 'Tithi'} ${angaEnd(panch.tithi.endsAt)}` : (panch.masa ? `  ·  ${hi ? panch.masa.amanta.hi : panch.masa.amanta.en}` : '')}
+                      </>
+                    ) : (hi ? 'शुभ मुहूर्त · राहु काल · व्रत-त्योहार' : 'Shubh muhurat · Rahu Kaal · vrat & festivals')}
+                  </Text>
+                </>
+              )}
+            </View>
+            <Chevron c={theme.gold1} size={18} />
+          </LinearGradient>
+        </Pressable>
+      </Animated.View>
 
       {/* admin-managed home banner (image set ho to dikhega) */}
       {bannerImage ? (
@@ -416,142 +710,110 @@ export function WelcomeScreen({ navigation }: any) {
       ) : null}
 
       {/* Horoscope card — fully black background */}
-      <GoldBorderCard solidBlack style={{ marginTop: 14, overflow: 'hidden' }}>
-        <View style={styles.horoInner}>
-          <View style={styles.horoRow}>
-            {rashiImg
-              ? <ZodiacIcon sign={rashiSign} size={112} theme={theme} />
-              : <ZodiacWheel size={120} dark={theme.isDark} />}
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <View style={styles.dateRow}>
-                <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={theme.gold2} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
-                  <Rect x={3} y={4} width={18} height={18} rx={2} /><Line x1={16} y1={2} x2={16} y2={6} /><Line x1={8} y1={2} x2={8} y2={6} /><Line x1={3} y1={10} x2={21} y2={10} />
-                </Svg>
-                <Text style={[styles.dateText, { color: theme.textSoft }]}>{todayLabel}</Text>
-              </View>
-              <Text style={[styles.horoDesc, { color: theme.isDark ? 'rgba(239,224,168,0.9)' : theme.text }]}>
-                {hasPred
-                  ? pred!.overall
-                  : (lang === 'hi'
-                    ? 'आज का राशिफल तैयार हो रहा है — पूरा व्यक्तिगत फलादेश पढ़ने के लिए नीचे टैप करें।'
-                    : "Your rashifal is being prepared — tap below to read today's full personal reading.")}
-              </Text>
-            </View>
-          </View>
-        </View>
-        <View style={styles.horoBtnRow}>
-          <Pressable
-            onPress={() => { hTap(); navigation.navigate('DailyPrediction'); }}
-            android_ripple={{ color: theme.ripple }}
-            style={({ pressed }) => [styles.horoBtn, { borderColor: theme.isDark ? 'rgba(246,210,122,0.5)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : '#f8fafc' }, pressed && { transform: [{ scale: 0.98 }] }]}
-          >
-            <Text style={[styles.horoBtnText, { color: theme.gold1 }]}>{t('home.readFull', 'Read Full Prediction')}</Text>
-            <Chevron c={theme.gold1} size={15} />
-          </Pressable>
-        </View>
-      </GoldBorderCard>
-
-      {/* Section title */}
-      <View style={styles.sectionTitle}>
-        <GradientText style={styles.sectionHeading}>{home.t('sectionTitle', t('home.exploreFeatures', 'Explore Premium Features'))}</GradientText>
-        <LinearGradient colors={['transparent', theme.gold2, 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.sectionRule} />
-      </View>
-
-      {/* Features — vertical stack of row cards (icon | title+desc | chevron), like the web */}
-      <View style={styles.featuresGrid}>
-        {FEATURES.map((f) => {
-          const tint = theme.isDark ? f.tint : LIGHT_TINT[f.key];
-          // Gold gradient border — brighter golds bracket all four corners so
-          // the ring stays visible the whole way around (no dark dead-corner).
-          const borderColors = theme.isDark
-            ? (['#fce8a8', '#e9b850', '#a17613', '#f6d27a'] as const)
-            : (['#e2e8f0', '#cbd5e1', '#d97706', '#f59e0b'] as const);
-          return (
-            <Pressable
-              key={f.key}
-              style={({ pressed }) => [pressed && { transform: [{ scale: 0.98 }] }]}
-              onPress={() => { hTap(); navigation.navigate(f.route); }}
-            >
-              {/* Outer LinearGradient = gradient border ring (web .ring-border).
-                  1.5px padding forms the visible border on all four sides. */}
-              <LinearGradient
-                colors={borderColors}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.featureCardBorder}
-              >
-                {/* Inner = tinted content area */}
-                <LinearGradient colors={tint} start={{ x: 0.1, y: 0 }} end={{ x: 0.6, y: 1 }} style={styles.featureCardInner}>
-                  <View style={styles.featureTop} />
-                  <View style={styles.featureIconBox}>
-                    {f.key === 'pred' && rashiImg
-                      ? <Image source={rashiImg} style={{ width: 60, height: 60, borderRadius: 10 }} resizeMode="contain" />
-                      : f.key === 'pred'
-                        ? <SunArt size={60} dark={theme.isDark} />
-                        : <f.Art size={60} />}
-                  </View>
-                  <View style={styles.featureTextCol}>
-                    <Text style={[styles.featureTitle, { color: theme.gold1 }]}>{home.t(featTitle[f.key], t(`home.feat.${f.key}.title`, f.title))}</Text>
-                    <Text style={[styles.featureDesc, { color: theme.isDark ? 'rgba(216,203,168,0.75)' : theme.textMuted }]}>{home.t(featDesc[f.key], t(`home.feat.${f.key}.desc`, f.desc))}</Text>
-                  </View>
-                  <View style={[styles.chevronCircle, { borderColor: theme.isDark ? 'rgba(246,210,122,0.5)' : theme.cardBorder }]}>
-                    <Chevron c={theme.gold1} size={14} />
-                  </View>
-                </LinearGradient>
-              </LinearGradient>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      {/* All Services — horizontal slider (swipe; no dots/arrows) */}
-      <View style={[styles.sectionTitle, { marginTop: 22, marginBottom: 14 }]}>
-        <GradientText style={styles.sectionHeading}>{lang === 'hi' ? 'सभी सेवाएँ' : 'All Services'}</GradientText>
-        <LinearGradient colors={['transparent', theme.gold2, 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.sectionRule} />
-      </View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.svcScroll}
-        decelerationRate="fast"
-        snapToInterval={SVC_SNAP}
-        snapToAlignment="start"
-        disableIntervalMomentum
-      >
-        {SERVICES.map((s, i) => (
-          <ServiceCard key={s.key} s={s} index={i} theme={theme} lang={lang} onPress={() => { hTap(); navigation.navigate(s.route); }} />
-        ))}
-      </ScrollView>
-
-      {/* Prediction banner */}
-      <GoldBorderCard style={{ marginTop: 20, overflow: 'hidden' }}>
-        <View style={styles.predBanner}>
-          <View style={[styles.predOrb, { borderColor: theme.isDark ? 'rgba(201,150,46,0.45)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.7)' : '#ffffff' }]}>
-            <StarOrb size={46} dark={theme.isDark} />
-          </View>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={[styles.predKicker, { color: theme.isDark ? 'rgba(233,184,80,0.72)' : theme.gold3 }]}>{t('home.todaysPrediction', "TODAY'S PREDICTION")}</Text>
-            <GradientText style={styles.predTitle}>{hasPred ? (pred!.headline || pred!.overall) : (lang === 'hi' ? 'आज का फलादेश देखें' : "See today's reading")}</GradientText>
-            <View style={styles.predMeta}>
-              {bannerChips.map((m) => (
-                <View key={m} style={[styles.predChip, { borderColor: theme.isDark ? 'rgba(201,150,46,0.25)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.07)' : '#f8fafc' }]}>
-                  <Text style={[styles.predChipText, { color: theme.gold2 }]}>{m}</Text>
+      <Deferred delay={80}>
+        <GoldBorderCard solidBlack style={{ marginTop: 14, overflow: 'hidden' }}>
+          <View style={styles.horoInner}>
+            <View style={styles.horoRow}>
+              {rashiImg
+                ? <ZodiacIcon sign={rashiSign} size={112} theme={theme} />
+                : <ZodiacWheel size={120} dark={theme.isDark} />}
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <View style={styles.dateRow}>
+                  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={theme.gold2} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+                    <Rect x={3} y={4} width={18} height={18} rx={2} /><Line x1={16} y1={2} x2={16} y2={6} /><Line x1={8} y1={2} x2={8} y2={6} /><Line x1={3} y1={10} x2={21} y2={10} />
+                  </Svg>
+                  <Text style={[styles.dateText, { color: theme.textSoft }]}>{todayLabel}</Text>
                 </View>
-              ))}
+                {predLoadingNow ? (
+                  <>
+                    <SkelLine theme={theme} width={'96%'} height={11} style={{ marginTop: 14 }} />
+                    <SkelLine theme={theme} width={'88%'} height={11} style={{ marginTop: 8 }} />
+                    <SkelLine theme={theme} width={'62%'} height={11} style={{ marginTop: 8 }} />
+                  </>
+                ) : (
+                  <Text style={[styles.horoDesc, { color: theme.isDark ? 'rgba(239,224,168,0.9)' : theme.text }]}>
+                    {hasPred
+                      ? pred!.overall
+                      : (hi
+                        ? 'आज का राशिफल तैयार हो रहा है — पूरा व्यक्तिगत फलादेश पढ़ने के लिए नीचे टैप करें।'
+                        : "Your rashifal is being prepared — tap below to read today's full personal reading.")}
+                  </Text>
+                )}
+              </View>
             </View>
-            <Text style={[styles.predDesc, { color: theme.isDark ? 'rgba(239,224,168,0.75)' : theme.textMuted }]}>
-              {hasPred ? pred!.advice : (lang === 'hi' ? 'अपनी कुंडली पर आधारित आज का विस्तृत मार्गदर्शन यहाँ से खोलें।' : 'Open your detailed, chart-based guidance for today here.')}
-            </Text>
+          </View>
+          <View style={styles.horoBtnRow}>
             <Pressable
               onPress={() => { hTap(); navigation.navigate('DailyPrediction'); }}
-              style={[styles.predBtn, { borderColor: theme.isDark ? 'rgba(246,210,122,0.5)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.7)' : '#f8fafc' }]}
+              android_ripple={{ color: theme.ripple }}
+              style={({ pressed }) => [styles.horoBtn, { borderColor: theme.isDark ? 'rgba(246,210,122,0.5)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : '#f8fafc' }, pressed && { transform: [{ scale: 0.98 }] }]}
             >
-              <Text style={[styles.predBtnText, { color: theme.gold1 }]}>{t('home.viewDetails', 'View Details')}</Text>
-              <Chevron c={theme.gold1} size={13} />
+              <Text style={[styles.horoBtnText, { color: theme.gold1 }]}>{t('home.readFull', 'Read Full Prediction')}</Text>
+              <Chevron c={theme.gold1} size={15} />
             </Pressable>
           </View>
+        </GoldBorderCard>
+      </Deferred>
+
+      {/* Features — vertical stack of row cards (icon | title+desc | chevron), like the web */}
+      <Deferred delay={160}>
+        <SectionTitle label={home.t('sectionTitle', t('home.exploreFeatures', 'Explore Premium Features'))} />
+        <View style={styles.featuresGrid}>
+          {FEATURES.map((f) => (
+            <FeatureCard
+              key={f.key}
+              f={f}
+              theme={theme}
+              rashiImg={rashiImg}
+              title={home.t(featTitle[f.key], t(`home.feat.${f.key}.title`, f.title))}
+              desc={home.t(featDesc[f.key], t(`home.feat.${f.key}.desc`, f.desc))}
+              onNav={goNav}
+            />
+          ))}
         </View>
-      </GoldBorderCard>
+      </Deferred>
+
+      {/* All Services — horizontal rail (peek + edge fades + one-time nudge; no dots/arrows) */}
+      <Deferred delay={240}>
+        <SectionTitle label={hi ? 'सभी सेवाएँ' : 'All Services'} />
+        <HomeRail theme={theme} snap={SVC_SNAP}>
+          {SERVICES.map((s, i) => (
+            <ServiceCard key={s.key} s={s} index={i} theme={theme} lang={lang} onNav={goNav} />
+          ))}
+        </HomeRail>
+      </Deferred>
+
+      {/* Prediction banner */}
+      <Deferred delay={320}>
+        <GoldBorderCard style={{ marginTop: 20, overflow: 'hidden' }}>
+          <View style={styles.predBanner}>
+            <View style={[styles.predOrb, { borderColor: theme.isDark ? 'rgba(201,150,46,0.45)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.7)' : '#ffffff' }]}>
+              <StarOrb size={46} dark={theme.isDark} />
+            </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={[styles.predKicker, { color: theme.isDark ? 'rgba(233,184,80,0.72)' : theme.gold3 }]}>{t('home.todaysPrediction', "TODAY'S PREDICTION")}</Text>
+              <GradientText style={styles.predTitle}>{hasPred ? (pred!.headline || pred!.overall) : (hi ? 'आज का फलादेश देखें' : "See today's reading")}</GradientText>
+              <View style={styles.predMeta}>
+                {bannerChips.map((m) => (
+                  <View key={m} style={[styles.predChip, { borderColor: theme.isDark ? 'rgba(201,150,46,0.25)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.07)' : '#f8fafc' }]}>
+                    <Text style={[styles.predChipText, { color: theme.gold2 }]}>{m}</Text>
+                  </View>
+                ))}
+              </View>
+              <Text style={[styles.predDesc, { color: theme.isDark ? 'rgba(239,224,168,0.75)' : theme.textMuted }]}>
+                {hasPred ? pred!.advice : (hi ? 'अपनी कुंडली पर आधारित आज का विस्तृत मार्गदर्शन यहाँ से खोलें।' : 'Open your detailed, chart-based guidance for today here.')}
+              </Text>
+              <Pressable
+                onPress={() => { hTap(); navigation.navigate('DailyPrediction'); }}
+                style={({ pressed }) => [styles.predBtn, { borderColor: theme.isDark ? 'rgba(246,210,122,0.5)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.7)' : '#f8fafc' }, pressed && { transform: [{ scale: 0.97 }] }]}
+              >
+                <Text style={[styles.predBtnText, { color: theme.gold1 }]}>{t('home.viewDetails', 'View Details')}</Text>
+                <Chevron c={theme.gold1} size={13} />
+              </Pressable>
+            </View>
+          </View>
+        </GoldBorderCard>
+      </Deferred>
 
     </Screen>
   );
@@ -569,6 +831,8 @@ const styles = StyleSheet.create({
   astrology: { fontFamily: fonts.cinzelSemi, fontSize: 11.5, letterSpacing: 4.6 },
 
   welcomeBlock: { marginTop: 20, padding: 16, borderRadius: 18, borderWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  greetRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
+  greetText: { fontFamily: fonts.interSemi, fontSize: 12, letterSpacing: 0.4 },
   welcomeTitleRow: { flexDirection: 'row', alignItems: 'center' },
   welcomeTitle: { fontFamily: fonts.playfairBold, fontSize: 20 },
   welcomeSub: { fontFamily: fonts.inter, fontSize: 13, marginTop: 3 },
@@ -585,29 +849,33 @@ const styles = StyleSheet.create({
   horoBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderRadius: 999, paddingVertical: 13, paddingHorizontal: 28 },
   horoBtnText: { fontFamily: fonts.cinzel, fontSize: 12.5, letterSpacing: 1.6 },
 
-  sectionTitle: { alignItems: 'center', gap: 8, marginTop: 28, marginBottom: 4 },
-  sectionHeading: { fontFamily: fonts.playfairBold, fontSize: 16, textAlign: 'center' },
-  sectionRule: { width: 56, height: 2, borderRadius: 999 },
+  // gold section header — label + thin gradient divider (Kundli SectionTitle treatment)
+  secTitleWrap: { marginTop: 26, marginBottom: 14 },
+  secTitleText: { fontFamily: fonts.cinzel, fontSize: 13, letterSpacing: 1.8, textTransform: 'uppercase' },
+  secTitleRule: { height: 1, marginTop: 7 },
 
-  featuresGrid: { gap: 12, marginTop: 24 },
+  featuresGrid: { gap: 12 },
   featureCardBorder: { borderRadius: 18, padding: 1 },
   featureCardInner: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 17, paddingVertical: 14, paddingHorizontal: 16, minHeight: 96, overflow: 'hidden' },
   featureTop: { position: 'absolute', top: 0, left: '18%', right: '18%', height: 1, backgroundColor: 'rgba(252,232,168,0.55)' },
-  featureIconBox: { width: 64, height: 64, alignItems: 'center', justifyContent: 'center' },
+  featureIconOrb: { width: 64, height: 64, borderRadius: 32, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   featureTextCol: { flex: 1, minWidth: 0 },
   featureTitle: { fontFamily: fonts.playfairBold, fontSize: 16, lineHeight: 19 },
   featureDesc: { fontFamily: fonts.inter, fontSize: 12, lineHeight: 16.8, marginTop: 2 },
   chevronCircle: { width: 32, height: 32, borderRadius: 16, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
 
   // Today's Panchang glance card
-  panchCard: { flexDirection: 'row', alignItems: 'center', gap: 13, marginTop: 14, borderWidth: 1, borderRadius: 16, paddingVertical: 13, paddingHorizontal: 15 },
+  panchCard: { flexDirection: 'row', alignItems: 'center', gap: 13, marginTop: 14, borderWidth: 1, borderRadius: 16, paddingVertical: 13, paddingHorizontal: 15, overflow: 'hidden' },
+  panchTopLine: { position: 'absolute', top: 0, left: 14, right: 14, height: 2, borderRadius: 999 },
   panchIcon: { width: 46, height: 46, borderRadius: 23, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   panchKicker: { fontFamily: fonts.interSemi, fontSize: 10, letterSpacing: 1.1, textTransform: 'uppercase' },
   panchMain: { fontFamily: fonts.playfairBold, fontSize: 16, marginTop: 3 },
   panchSub: { fontFamily: fonts.inter, fontSize: 11.5, marginTop: 3 },
 
-  // All-services horizontal slider — gold-ring tinted cards (matches hero feel)
-  svcScroll: { gap: 13, paddingVertical: 8, paddingHorizontal: 2, paddingRight: 16 },
+  // All-services rail — bleeds past the screen gutter so a card is always half-cut (peek)
+  railHost: { marginHorizontal: -18 },
+  railFade: { position: 'absolute', top: 0, bottom: 0, width: 34 },
+  svcScroll: { gap: 13, paddingVertical: 8, paddingLeft: 18, paddingRight: 44 },
   svcBorder: { width: 156, borderRadius: 20, padding: 1.5 },
   svcInner: { flex: 1, borderRadius: 18.5, alignItems: 'center', paddingVertical: 15, paddingHorizontal: 13, gap: 8, minHeight: 172, overflow: 'hidden' },
   svcTopLine: { position: 'absolute', top: 0, left: '22%', right: '22%', height: 1, backgroundColor: 'rgba(252,232,168,0.5)' },
