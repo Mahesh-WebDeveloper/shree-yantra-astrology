@@ -57,7 +57,7 @@ export const VEDA_CONFIG: Record<string, VedaConfig> = {
     hasSections: true,
   },
   "puran-brahma": { key: "puran-brahma", title: { en: "Brahma Purana", hi: "ब्रह्म पुराण" }, subtitle: { en: "Sanskrit · 246 chapters", hi: "संस्कृत · 246 अध्याय" }, bookLabel: { en: "Purana", hi: "पुराण" }, sectionLabel: { en: "Adhyaya", hi: "अध्याय" }, verseLabel: { en: "Verse", hi: "श्लोक" }, hasSections: true },
-  "puran-padma": { key: "puran-padma", title: { en: "Padma Purana", hi: "पद्म पुराण" }, subtitle: { en: "Sanskrit & English · 6 chapters", hi: "संस्कृत व हिन्दी · 6 अध्याय" }, bookLabel: { en: "Chapter", hi: "अध्याय" }, sectionLabel: { en: "Chapter", hi: "अध्याय" }, verseLabel: { en: "Verse", hi: "श्लोक" }, hasSections: false },
+  "puran-padma": { key: "puran-padma", title: { en: "Padma Purana", hi: "पद्म पुराण" }, subtitle: { en: "Sanskrit · 7 Khanda · 693 chapters", hi: "संस्कृत · 7 खण्ड · 693 अध्याय" }, bookLabel: { en: "Khanda", hi: "खण्ड" }, sectionLabel: { en: "Adhyaya", hi: "अध्याय" }, verseLabel: { en: "Shloka", hi: "श्लोक" }, hasSections: true },
   // Complete text (Sanskrit Wikisource): 6 amshas, 126 adhyayas — the canonical count.
   "puran-vishnu": { key: "puran-vishnu", title: { en: "Vishnu Purana", hi: "विष्णु पुराण" }, subtitle: { en: "Sanskrit · 6 Amsha · 126 chapters", hi: "संस्कृत · 6 अंश · 126 अध्याय" }, bookLabel: { en: "Amsha", hi: "अंश" }, sectionLabel: { en: "Adhyaya", hi: "अध्याय" }, verseLabel: { en: "Shloka", hi: "श्लोक" }, hasSections: true },
   // Complete text (Sanskrit Wikisource): 12 skandhas, 335 adhyayas — the canonical count.
