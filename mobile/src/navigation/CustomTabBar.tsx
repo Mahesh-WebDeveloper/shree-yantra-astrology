@@ -1,5 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Animated, Easing } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
+import Animated, {
+  useSharedValue, useAnimatedStyle, withSpring, withTiming, interpolate,
+} from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Defs, RadialGradient, Stop, Ellipse } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,23 +24,25 @@ const ICONS: Record<string, (p: IconProps) => React.ReactElement> = {
   Profile: ProfileIcon,
 };
 
-/** Soft radial glow that rides INSIDE the travelling indicator. */
+/** Soft radial glow halo behind the active icon. */
 function GlowPill({ dark }: { dark: boolean }) {
   return (
-    <Svg width={56} height={44} viewBox="0 0 56 44">
+    <Svg width={52} height={40} viewBox="0 0 52 40">
       <Defs>
-        <RadialGradient id="navGlow" cx="50%" cy="46%" rx="50%" ry="50%">
-          <Stop offset="0%" stopColor={dark ? '#fce8a8' : '#e0a52e'} stopOpacity={dark ? 0.4 : 0.42} />
-          <Stop offset="55%" stopColor="#e9b850" stopOpacity={0.12} />
+        <RadialGradient id="navGlow" cx="50%" cy="48%" rx="50%" ry="50%">
+          <Stop offset="0%" stopColor={dark ? '#fce8a8' : '#e0a52e'} stopOpacity={dark ? 0.38 : 0.42} />
+          <Stop offset="55%" stopColor="#e9b850" stopOpacity={0.11} />
           <Stop offset="80%" stopColor="#e9b850" stopOpacity={0} />
         </RadialGradient>
       </Defs>
-      <Ellipse cx={28} cy={20} rx={28} ry={20} fill="url(#navGlow)" />
+      <Ellipse cx={26} cy={19} rx={26} ry={19} fill="url(#navGlow)" />
     </Svg>
   );
 }
 
-/** One tab — icon springs up/scales when focused; the shared indicator slides in behind it. */
+/** One tab. All motion lives in Reanimated worklets on the UI THREAD, so the glow and
+    icon spring stay perfectly smooth even while the tab press mounts a heavy screen and
+    blocks JS — which is exactly when the old JS-driven traveling indicator stuttered. */
 function TabItem({
   focused, label, Icon, onPress, isDark, activeColor, inactiveColor,
 }: {
@@ -49,80 +54,76 @@ function TabItem({
   activeColor: string;
   inactiveColor: string;
 }) {
-  const anim = useRef(new Animated.Value(focused ? 1 : 0)).current;
+  const focus = useSharedValue(focused ? 1 : 0);
+  const press = useSharedValue(0);
 
   useEffect(() => {
-    // spring, not timing — the icon should feel like it lands, not arrives on schedule
-    Animated.spring(anim, {
-      toValue: focused ? 1 : 0,
-      speed: 16,
-      bounciness: 7,
-      useNativeDriver: true,
-    }).start();
-  }, [focused, anim]);
+    focus.value = withSpring(focused ? 1 : 0, { damping: 14, stiffness: 180, mass: 0.6 });
+  }, [focused, focus]);
 
-  const lift = anim.interpolate({ inputRange: [0, 1], outputRange: [0, -3] });
-  const scale = anim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.12] });
-  const labelLift = anim.interpolate({ inputRange: [0, 1], outputRange: [1, -1] });
+  const glowStyle = useAnimatedStyle(() => ({ opacity: focus.value }));
+  const iconStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: interpolate(focus.value, [0, 1], [0, -3]) },
+      { scale: interpolate(focus.value, [0, 1], [1, 1.12]) * interpolate(press.value, [0, 1], [1, 0.86]) },
+    ],
+  }));
+  const labelStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: interpolate(focus.value, [0, 1], [1, -1]) }],
+  }));
 
   return (
     <Pressable
       onPress={onPress}
+      onPressIn={() => { press.value = withTiming(1, { duration: 80 }); }}
+      onPressOut={() => { press.value = withSpring(0, { damping: 12, stiffness: 240 }); }}
       hitSlop={4}
       accessibilityRole="tab"
       accessibilityState={{ selected: focused }}
       accessibilityLabel={label}
       style={styles.item}
     >
-      {({ pressed }) => (
-        <>
-          <View style={styles.iconZone}>
-            <Animated.View style={{ transform: [{ translateY: lift }, { scale }] }}>
-              <View style={{ transform: [{ scale: pressed ? 0.86 : 1 }] }}>
-                <Icon
-                  color={focused ? activeColor : inactiveColor}
-                  size={26}
-                  fillOpacity={focused ? 0.2 : 0.1}
-                />
-              </View>
-            </Animated.View>
-          </View>
+      <View style={styles.iconZone}>
+        <Animated.View style={[styles.glowWrap, glowStyle]} pointerEvents="none">
+          <GlowPill dark={isDark} />
+        </Animated.View>
+        <Animated.View style={iconStyle}>
+          <Icon
+            color={focused ? activeColor : inactiveColor}
+            size={26}
+            fillOpacity={focused ? 0.2 : 0.1}
+          />
+        </Animated.View>
+      </View>
 
-          <Animated.View style={{ transform: [{ translateY: labelLift }] }}>
-            {focused ? (
-              <GradientText style={styles.label}>{label}</GradientText>
-            ) : (
-              <Text style={[styles.label, { color: inactiveColor }]} numberOfLines={1}>{label}</Text>
-            )}
-          </Animated.View>
-        </>
-      )}
+      <Animated.View style={labelStyle}>
+        {focused ? (
+          <GradientText style={styles.label}>{label}</GradientText>
+        ) : (
+          <Text style={[styles.label, { color: inactiveColor }]} numberOfLines={1}>{label}</Text>
+        )}
+      </Animated.View>
+
+      {/* baseline tick under the active tab — fades with the glow, no travel */}
+      <Animated.View style={[styles.tickWrap, glowStyle]} pointerEvents="none">
+        <LinearGradient
+          colors={['rgba(233,184,80,0)', isDark ? '#f6d27a' : '#c9962e', 'rgba(233,184,80,0)']}
+          start={{ x: 0, y: 0.5 }}
+          end={{ x: 1, y: 0.5 }}
+          style={styles.tick}
+        />
+      </Animated.View>
     </Pressable>
   );
 }
 
-/** Bottom nav — floating dark-glass pill with a gold-gradient hairline ring and a
-    SLIDING indicator: one soft gold glow + baseline tick that physically travels
-    between tabs on a spring, instead of five glows fading independently. */
+/** Bottom nav — floating dark-glass pill with a gold-gradient hairline ring.
+    No traveling background: each tab's glow/tick fades in place on the UI thread. */
 export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const isDark = theme.isDark;
   const t = useT();
-
-  const count = state.routes.length;
-  const [innerW, setInnerW] = useState(0);          // bar width minus horizontal padding
-  const itemW = innerW > 0 ? innerW / count : 0;
-
-  // travelling indicator — springs to the active tab's slot
-  const slide = useRef(new Animated.Value(state.index)).current;
-  useEffect(() => {
-    Animated.spring(slide, { toValue: state.index, speed: 14, bounciness: 8, useNativeDriver: true }).start();
-  }, [state.index, slide]);
-  const translateX = slide.interpolate({
-    inputRange: [0, Math.max(count - 1, 1)],
-    outputRange: [0, Math.max(itemW * (count - 1), 1)],
-  });
 
   /* scrim colours — fade scrolling content into a solid base so nothing shows
      through the gaps around/below the floating pill */
@@ -149,28 +150,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
         end={{ x: 0.9, y: 1 }}
         style={[styles.ring, { bottom: insets.bottom + 10 }]}
       >
-        <View
-          style={[styles.bar, { backgroundColor: isDark ? 'rgba(8,7,15,0.98)' : '#ffffff' }]}
-          onLayout={(e) => setInnerW(e.nativeEvent.layout.width - styles.bar.paddingHorizontal * 2)}
-        >
-          {/* the travelling glow + baseline tick (behind the items) */}
-          {itemW > 0 && (
-            <Animated.View
-              pointerEvents="none"
-              style={[styles.indicator, { width: itemW, transform: [{ translateX }] }]}
-            >
-              <View style={styles.indicatorGlow}>
-                <GlowPill dark={isDark} />
-              </View>
-              <LinearGradient
-                colors={['rgba(233,184,80,0)', isDark ? '#f6d27a' : theme.gold1, 'rgba(233,184,80,0)']}
-                start={{ x: 0, y: 0.5 }}
-                end={{ x: 1, y: 0.5 }}
-                style={styles.indicatorTick}
-              />
-            </Animated.View>
-          )}
-
+        <View style={[styles.bar, { backgroundColor: isDark ? 'rgba(8,7,15,0.98)' : '#ffffff' }]}>
           {state.routes.map((route, index) => {
             const focused = state.index === index;
             const { options } = descriptors[route.key];
@@ -227,14 +207,12 @@ const styles = StyleSheet.create({
     borderRadius: 27,
     paddingVertical: 7,
     paddingHorizontal: 8,
-    overflow: 'hidden',        // clips the sliding indicator at the rounded ends
   },
-  /* travelling indicator — one slot wide, glow centred on the icon zone */
-  indicator: { position: 'absolute', top: 0, bottom: 0, left: 8, alignItems: 'center', justifyContent: 'flex-start' },
-  indicatorGlow: { marginTop: 2, alignItems: 'center' },
-  indicatorTick: { position: 'absolute', bottom: 2, width: 34, height: 2.5, borderRadius: 2 },
 
   item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 4, paddingTop: 5, paddingBottom: 6, borderRadius: 22 },
   iconZone: { width: 48, height: 34, alignItems: 'center', justifyContent: 'center' },
+  glowWrap: { position: 'absolute', top: -3, alignItems: 'center', justifyContent: 'center' },
+  tickWrap: { position: 'absolute', bottom: 1, left: 0, right: 0, alignItems: 'center' },
+  tick: { width: 30, height: 2.5, borderRadius: 2 },
   label: { fontSize: 9.5, letterSpacing: 0.1, fontFamily: fonts.cinzel, fontWeight: '600' },
 });
