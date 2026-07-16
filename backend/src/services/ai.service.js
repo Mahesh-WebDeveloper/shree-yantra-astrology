@@ -397,7 +397,9 @@ const birthSig = (i) => `${i.dob}|${i.tob}|${i.place || `${i.lat},${i.lng}`}`;
 // 'sx4' = Sade Sati now gets DETERMINISTIC start/end dates (no AI date hallucination).
 // 'sx5' = prompt: never confuse Sade Sati (transit) with the Shani Mahadasha (dasha).
 // 'sx8' = stronger no-Hinglish / pure-language directive in writeIn().
-const PROMPT_VERSION = 'sx8';
+// 'sx9' = daily rashifal grounded in FULL astro dossier (dasha timeline + live
+//         gochar + deterministic Sade Sati) + strict "traceable-to-a-field" contract.
+const PROMPT_VERSION = 'sx9';
 
 async function cached(key, type, producer) {
   const vkey = `${PROMPT_VERSION}|${key}`;
@@ -409,6 +411,24 @@ async function cached(key, type, producer) {
     try { await AiCache.findOneAndUpdate({ cacheKey: vkey }, { cacheKey: vkey, type, data }, { upsert: true }); } catch (_) {}
   }
   return data;
+}
+
+// Panchang response → compact "today" block (shared by buildContext + full context)
+function panchToToday(panch) {
+  if (!panch) return null;
+  return {
+    date: panch.date, weekday: panch.weekday, tithi: panch.tithi && panch.tithi.name,
+    paksha: panch.tithi && panch.tithi.paksha, nakshatra: panch.nakshatra && panch.nakshatra.name,
+    yoga: panch.yoga && panch.yoga.name,
+    karana: panch.karana && panch.karana.name,
+    transitMoon: panch.moon && panch.moon.sign,
+    transitMoonNakshatra: panch.moon && panch.moon.nakshatra,
+    sun: panch.sun && panch.sun.sign,
+    sunrise: panch.sunrise,
+    sunset: panch.sunset,
+    inauspicious: panch.inauspicious || [],
+    source: panch.source,
+  };
 }
 
 // VedAstro se real astro-context banata hai (kundli + dasha + aaj ka panchang)
@@ -447,19 +467,122 @@ async function buildContext(input) {
       isRetrograde: p.isRetrograde || null,
       isCombust: p.isCombust || null,
     })),
-    today: panch ? {
-      date: panch.date, weekday: panch.weekday, tithi: panch.tithi && panch.tithi.name,
-      paksha: panch.tithi && panch.tithi.paksha, nakshatra: panch.nakshatra && panch.nakshatra.name,
-      yoga: panch.yoga && panch.yoga.name,
-      karana: panch.karana && panch.karana.name,
-      transitMoon: panch.moon && panch.moon.sign,
-      transitMoonNakshatra: panch.moon && panch.moon.nakshatra,
-      sun: panch.sun && panch.sun.sign,
-      sunrise: panch.sunrise,
-      sunset: panch.sunset,
-      inauspicious: panch.inauspicious || [],
-      source: panch.source,
-    } : null,
+    today: panchToToday(panch),
+  };
+}
+
+// ── FULL ASTRO CONTEXT — the complete, grounded per-user dossier for AI readings ──
+// Everything the daily rashifal AI may mention MUST be present here, sourced from the
+// real engines (VedAstro / Swiss-Eph / local ephemeris) — the model NEVER computes or
+// invents chart facts itself.
+// - NATAL part (kundli + full Vimshottari mahadasha list): immutable per birth →
+//   cached forever in Mongo under `astroctx|v1|<birthSig>` (repeat generations skip VedAstro).
+// - DAILY part (panchang + gochar/transits + deterministic Sade Sati status): changes
+//   each day → cached under a date-keyed key; an incomplete day (a fetch failed) is NOT
+//   cached, so the next request retries instead of pinning nulls for the whole day.
+// NOTE: getDasha() returns MAHADASHAS only (no antardasha/sub-periods), so antardasha is
+// deliberately NOT part of this context — we never fabricate a sub-period the engine
+// didn't compute.
+const NATAL_CTX_V = 'v1';
+const DAILY_CTX_V = 'v1';
+
+// "00:00 15/08/1995 +05:30" → Date (day precision — enough to order mahadashas)
+function parseDashaDate(s) {
+  const m = String(s || '').match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  return m ? new Date(Date.UTC(Number(m[3]), Number(m[2]) - 1, Number(m[1]))) : null;
+}
+
+async function buildNatalAstroPart(input) {
+  return cached(`astroctx|${NATAL_CTX_V}|${birthSig(input)}`, 'astro-context-natal', async () => {
+    const [k, d] = await Promise.all([
+      getKundli(input),
+      getDasha(input).catch(() => null),
+    ]);
+    const data = (k && k.data) || {};
+    const natal = {
+      ascendant: data.ascendant || null,
+      moonSign: data.moonSign || null,
+      yogas: (data.yogas || []).slice(0, 6).map((y) => ({ name: y.name, description: y.description })),
+      doshas: (data.doshas || []).filter((x) => x.present).map((x) => ({ name: x.name, detail: x.detail, tag: x.tag })),
+      planets: (data.planets || []).filter((p) => p.sign).map((p) => ({
+        planet: p.planet,
+        sign: p.sign,
+        house: p.house || null,
+        nakshatra: p.nakshatra || null,
+        isRetrograde: p.isRetrograde || null,
+        isCombust: p.isCombust || null,
+      })),
+      // full remaining Vimshottari mahadasha list (current + future) — real engine output
+      dashaList: d && Array.isArray(d.dasha)
+        ? d.dasha.map((p) => ({ lord: p.lord, start: p.start, end: p.end, durationText: p.durationText }))
+        : [],
+    };
+    // incomplete chart (VedAstro + local fallback both failed) → don't pin in cache
+    if (!natal.planets.length && !natal.ascendant) natal._fallback = true;
+    return natal;
+  });
+}
+
+async function buildDailyAstroPart(input) {
+  return cached(`astroctx-day|${DAILY_CTX_V}|${birthSig(input)}|${todayStr()}`, 'astro-context-daily', async () => {
+    const [panch, gochar] = await Promise.all([
+      getPanchang({ place: input.place, lat: input.lat, lng: input.lng }).catch(() => null),
+      getGochar(input).catch(() => null),
+    ]);
+    const out = {
+      panch,
+      // all 9 planets' CURRENT signs + house-from-Moon/Lagna — straight from the gochar engine
+      gochar: gochar && Array.isArray(gochar.transits) ? {
+        date: gochar.date || null,
+        transits: gochar.transits.map((t) => ({
+          planet: t.planet,
+          sign: t.sign,
+          nakshatra: t.nakshatra || null,
+          isRetrograde: t.isRetrograde || null,
+          houseFromMoon: t.houseFromMoon != null ? t.houseFromMoon : null,
+          houseFromLagna: t.houseFromLagna != null ? t.houseFromLagna : null,
+        })),
+      } : null,
+      // deterministic Saturn/Sade Sati status + exact windows (code-computed, never AI-guessed)
+      sadeSati: (() => { try { return saturnStatusFrom(gochar); } catch (_) { return null; } })(),
+    };
+    if (!panch || !out.gochar) out._fallback = true; // incomplete day → retry on next request
+    return out;
+  });
+}
+
+async function buildFullAstroContext(input) {
+  const [natalRaw, dailyRaw] = await Promise.all([
+    buildNatalAstroPart(input),
+    buildDailyAstroPart(input).catch(() => null),
+  ]);
+  const natal = natalRaw || {};
+  const daily = dailyRaw || {};
+  // current mahadasha + next 2 (drop any period that fully ended since the natal cache was written)
+  const dashaList = Array.isArray(natal.dashaList) ? natal.dashaList : [];
+  const nowMs = Date.now();
+  const running = dashaList.filter((p) => { const e = parseDashaDate(p.end); return !e || e.getTime() >= nowMs; });
+  const dashaTimeline = (running.length ? running : dashaList).slice(0, 3);
+  const activeDasha = dashaTimeline[0] || null;
+  return {
+    name: input.name || 'User',
+    birth: {
+      dob: input.dob,
+      tob: input.tob,
+      tz: input.tz,
+      place: input.place || (input.lat != null && input.lng != null ? `${input.lat},${input.lng}` : null),
+    },
+    ascendant: natal.ascendant || null,
+    moonSign: natal.moonSign || null,
+    currentDasha: activeDasha ? activeDasha.lord : null,
+    dasha: activeDasha, // same shape buildContext exposes ({lord,start,end,durationText})
+    dashaTimeline,      // current mahadasha + next 2 — real Vimshottari periods
+    yogas: natal.yogas || [],
+    doshas: natal.doshas || [],
+    planets: natal.planets || [],
+    gochar: daily.gochar || null,     // today's transits (all 9 planets) or null if engine unreachable
+    sadeSati: daily.sadeSati || null, // deterministic status + exact current/next windows
+    today: panchToToday(daily.panch),
   };
 }
 
@@ -637,27 +760,38 @@ function ensureDailyShape(out, ctx, lang) {
 
 async function generateDailyPrediction(input) {
   const lang = langOf(input);
-  const key = `daily|v6|${birthSig(input)}|${todayStr()}|${lang}`;
+  const key = `daily|v7|${birthSig(input)}|${todayStr()}|${lang}`;
   return cached(key, 'daily', async () => {
-    const ctx = await buildContext(input);
+    const ctx = await buildFullAstroContext(input);
+    // Missing blocks are OMITTED (not sent as null) so the model is never tempted
+    // to "fill in" an empty field with invented astrology.
+    const realData = {
+      name: ctx.name,
+      birth: ctx.birth,
+      ...(ctx.ascendant ? { ascendant: ctx.ascendant } : {}),
+      ...(ctx.moonSign ? { moonSign: ctx.moonSign } : {}),
+      ...(ctx.dasha ? { dasha: ctx.dasha } : {}),
+      ...(ctx.dashaTimeline && ctx.dashaTimeline.length ? { dashaTimeline: ctx.dashaTimeline } : {}),
+      ...(ctx.yogas && ctx.yogas.length ? { yogas: ctx.yogas } : {}),
+      ...(ctx.doshas && ctx.doshas.length ? { doshas: ctx.doshas } : {}),
+      ...(ctx.planets && ctx.planets.length ? { planets: ctx.planets } : {}),
+      ...(ctx.gochar ? { gochar: ctx.gochar } : {}),
+      ...(ctx.sadeSati ? { sadeSati: ctx.sadeSati } : {}),
+      ...(ctx.today ? { today: ctx.today } : {}),
+    };
     const prompt = `You are an expert Vedic astrologer for the Shree Yantra app. Build a complete DAILY RASHIFAL for ${ctx.name}.
 
-Use ONLY the real astrological data below. Do not invent planet positions, yogas, doshas, dasha, nakshatra, tithi, sunrise, sunset, or time windows.
+Use ONLY the real astrological data below. Do not invent planet positions, transits (gochar), yogas, doshas, dasha periods or dates, Sade Sati status or dates, nakshatra, tithi, sunrise, sunset, or time windows.
+STRICT GROUNDING CONTRACT: every astrological fact you state MUST be traceable to a specific field in the REAL DATA JSON below. If a fact is NOT in that JSON, you must NOT state it — leave it out and write around it; never fill a gap from general knowledge or guesswork.
+- "dashaTimeline" lists the current mahadasha first, then the next ones — use those lords and dates verbatim.
+- "gochar.transits" are today's REAL planet positions (with house counted from the natal Moon and Lagna) — base transitSummary only on these (and "today"), never on remembered planetary positions.
+- "sadeSati" is pre-computed by a precise ephemeris: use its status and currentSadeSati/nextSadeSati window text VERBATIM if you mention Sade Sati or Dhaiya; NEVER calculate, estimate or round any Sade Sati date yourself, and never confuse Sade Sati (a Saturn transit) with the Shani mahadasha.
+- If a block (e.g. gochar, sadeSati, today) is absent from the JSON, simply do not talk about that topic.
 You may interpret the data in a practical, kind way. Avoid fear, certainty, medical diagnosis, financial guarantees, or fatalistic language.
 Mention that remedies are optional spiritual practices, not guaranteed outcomes.
 
 REAL DATA JSON (from precise Vedic chart data plus classical Panchang rules):
-${JSON.stringify({
-  name: ctx.name,
-  birth: ctx.birth,
-  ascendant: ctx.ascendant,
-  moonSign: ctx.moonSign,
-  dasha: ctx.dasha,
-  yogas: ctx.yogas,
-  doshas: ctx.doshas,
-  planets: ctx.planets,
-  today: ctx.today,
-}, null, 2)}
+${JSON.stringify(realData, null, 2)}
 
 ${writeIn(lang)}
 Return STRICT JSON only. Keep mood labels EXACTLY "Energy", "Love", "Career", "Health". Keep area titles EXACTLY "Love", "Career", "Finance", "Health".
@@ -701,6 +835,10 @@ Return STRICT JSON only. Keep mood labels EXACTLY "Energy", "Love", "Career", "H
         yogas: ctx.yogas,
         activeDoshas: ctx.doshas,
         today: ctx.today,
+        // additive (v7): full grounding dossier — mobile can ignore these safely
+        dashaTimeline: ctx.dashaTimeline,
+        gochar: ctx.gochar,
+        sadeSati: ctx.sadeSati,
         source: 'Precise Vedic chart & Panchang data',
       },
       contextForChat: {
@@ -709,6 +847,10 @@ Return STRICT JSON only. Keep mood labels EXACTLY "Energy", "Love", "Career", "H
         ascendant: ctx.ascendant,
         moonSign: ctx.moonSign,
         currentDasha: ctx.currentDasha,
+        // additive (v7): fuller real-data context for follow-up chat
+        dashaTimeline: ctx.dashaTimeline,
+        gochar: ctx.gochar,
+        sadeSati: ctx.sadeSati,
         today: ctx.today,
         focus: shaped.focus,
         latestDailyPrediction: {
@@ -1815,5 +1957,6 @@ module.exports = {
   generateRcmExplanation, generateGitaExplanation, generateRamayanExplanation, generateRigvedaExplanation,
   generateVedaExplanation, generateDailyShlokaExplain, generateMatchExplanation, generateGocharExplanation,
   generateRemediesExplanation, generateOccasionGuide, answerOccasionQuestion, generateSimpleExplain,
+  buildFullAstroContext,
   callAI,
 };

@@ -334,8 +334,19 @@ async function getKundli(input) {
   if (usedLocal) {
     return { cached: false, saved: false, source: 'local-fallback', note: 'Computed via local ephemeris fallback — not cached.', input, data };
   }
-  const saved = await Kundli.create({ cacheKey, input, data });
-  return { cached: false, saved: true, ...saved.toObject() };
+  // Pehli baar wali kundli par parallel callers (daily-prediction ka kundli+dasha+gochar
+  // Promise.all) dono create tak pahunch jaate hai → E11000. Race haarne wala cached doc
+  // utha le — data wahi hai, sirf pehle wala jeet gaya.
+  try {
+    const saved = await Kundli.create({ cacheKey, input, data });
+    return { cached: false, saved: true, ...saved.toObject() };
+  } catch (e) {
+    if (e && e.code === 11000) {
+      const winner = await Kundli.findOne({ cacheKey });
+      if (winner) return { cached: true, ...winner.toObject() };
+    }
+    throw e;
+  }
 }
 
 // ── Vimshottari Dasha (current + upcoming Mahadashas) ──
