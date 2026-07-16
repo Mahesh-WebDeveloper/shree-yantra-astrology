@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, Image } from 'react-native';
 import Svg, { Defs, RadialGradient, Stop, Circle } from 'react-native-svg';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts } from '../theme/tokens';
-import { useT } from '../i18n/LanguageProvider';
+import { useT, useLang } from '../i18n/LanguageProvider';
 
 /* The flame animates in the GIF itself, so nothing here drives it — the hand-rolled SVG
    diya this replaced had to flicker its flame through a JS-driven Animated loop.
@@ -29,7 +29,14 @@ export const ChoghadiyaSpecialMessage = React.memo(function ChoghadiyaSpecialMes
 }) {
   const { theme } = useTheme();
   const t = useT();
+  const { lang } = useLang();
+  const hi = lang === 'hi';
   const borderColor = theme.isDark ? 'rgba(238,203,122,0.36)' : theme.cardBorder;
+  const nameEl = (
+    <Text style={{ color: '#32cd32', fontFamily: fonts.interBold }}>
+      {activeName}{hi ? ' चौघड़िया' : ' Choghadiya'}
+    </Text>
+  );
   return (
     <View style={[styles.container, { backgroundColor: theme.isDark ? '#000000' : '#fffdf6', borderColor }]}>
       {/* web: radial-gradient(circle at 80% 50%, rgba(220,180,80,0.2), …) */}
@@ -47,14 +54,21 @@ export const ChoghadiyaSpecialMessage = React.memo(function ChoghadiyaSpecialMes
         </View>
       )}
       <View style={styles.content}>
-        <Text style={[styles.h4, { color: theme.goldDim }]}>{t('cg.special', "TODAY'S SPECIAL MESSAGE")}</Text>
+        <Text style={[styles.h4, { color: theme.goldDim }]}>
+          {t('cg.special', hi ? 'आज का विशेष संदेश' : "TODAY'S SPECIAL MESSAGE")}
+        </Text>
+        {/* timeRange screen se localized aata hai ("X से Y तक" / "X to Y") — numerals English hi */}
         {today ? (
           <Text style={[styles.p, { color: theme.isDark ? '#cccccc' : theme.textSoft }]}>
-            From {timeRange} is <Text style={{ color: '#32cd32', fontFamily: fonts.interBold }}>{activeName} Choghadiya</Text>. {desc}
+            {hi
+              ? <>अभी {timeRange} {nameEl} है। {desc}</>
+              : <>From {timeRange} is {nameEl}. {desc}</>}
           </Text>
         ) : (
           <Text style={[styles.p, { color: theme.isDark ? '#cccccc' : theme.textSoft }]}>
-            On this day, <Text style={{ color: '#32cd32', fontFamily: fonts.interBold }}>{activeName}</Text> runs {timeRange}. {desc}
+            {hi
+              ? <>इस दिन {nameEl} {timeRange} रहेगा। {desc}</>
+              : <>On this day, {nameEl} runs {timeRange}. {desc}</>}
           </Text>
         )}
       </View>

@@ -310,7 +310,8 @@ export function DrawerContent({ close, progress }: { close: () => void; progress
             <GlobeIcon c={theme.gold2} />
             <Text style={[styles.sectionLabel, { color: theme.gold2 }]}>LANGUAGE / भाषा</Text>
           </View>
-          <View style={styles.btnRow}>
+          {/* slide rail — future languages is array me add hongi, rail khud scroll karega */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.langRail}>
             {([['en', 'EN', 'English'], ['hi', 'हि', 'हिंदी']] as const).map(([key, glyph, lbl]) => {
               const active = lang === key;
               return (
@@ -319,6 +320,7 @@ export function DrawerContent({ close, progress }: { close: () => void; progress
                   onPress={() => { hSelect(); setLang(key); }}
                   style={({ pressed }) => [
                     styles.selBtn,
+                    styles.langChip,
                     {
                       backgroundColor: active ? (isDark ? 'rgba(238,203,122,0.20)' : '#ffe9b8') : btnBg,
                       borderColor: active ? theme.gold2 : btnBorder,
@@ -331,7 +333,7 @@ export function DrawerContent({ close, progress }: { close: () => void; progress
                 </Pressable>
               );
             })}
-          </View>
+          </ScrollView>
         </View>
 
         {/* ── Theme ── */}
@@ -450,6 +452,9 @@ const styles = StyleSheet.create({
   sectionLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
   sectionLabel: { fontSize: 10.5, letterSpacing: 2.3, fontFamily: fonts.interSemi },
   btnRow: { flexDirection: 'row', gap: 8 },
+  // language chips ride a horizontal rail — chip apni width rakhta hai, stretch nahi hota
+  langRail: { gap: 8, paddingRight: 4 },
+  langChip: { flex: 0, minWidth: 118 },
   selBtn: {
     flex: 1, minHeight: 42, borderRadius: 10, borderWidth: 1,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7,

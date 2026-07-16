@@ -15,7 +15,7 @@ import {
   CameraIcon, ChevronIcon,
 } from '../components/icons/ProfileIcons';
 import {
-  PROFILE, STATS, INFO, ACCOUNT, PREFERENCES, VERSION, InfoItem, MenuItem, RowIcon,
+  PROFILE, STATS, INFO, ACCOUNT, PREFERENCES, InfoItem, MenuItem, RowIcon,
 } from '../data/profile';
 import { openAppDrawer } from '../navigation/AppDrawerHost';
 import { useDialog } from '../components/DialogProvider';
@@ -308,8 +308,6 @@ export function ProfileScreen({ navigation }: any) {
           </Pressable>
         ))}
       </Card>
-
-      <Text style={[styles.version, { color: theme.textMuted }]}>{VERSION}</Text>
     </Screen>
   );
 }
@@ -380,5 +378,4 @@ const styles = StyleSheet.create({
   mSub: { fontFamily: fonts.inter, fontSize: 11.5, marginTop: 2 },
 
 
-  version: { fontFamily: fonts.inter, fontSize: 10.5, letterSpacing: 1.4, textAlign: 'center', marginTop: 18 },
 });

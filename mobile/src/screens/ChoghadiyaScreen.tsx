@@ -385,6 +385,21 @@ function SectionTitle({ label }: { label: string }) {
   );
 }
 
+/* ☀️/🌙 emoji ka rang badla nahi ja sakta — active gold gradient par gold emoji gayab ho
+   jaata tha (dono themes me). SVG glyphs stroke/fill lete hai, to ink color hamesha padhne
+   laayak contrast me rehta hai. */
+const SunGlyph = ({ color }: { color: string }) => (
+  <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round">
+    <Circle cx={12} cy={12} r={4.2} />
+    <Path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7" />
+  </Svg>
+);
+const MoonGlyph = ({ color }: { color: string }) => (
+  <Svg width={14} height={14} viewBox="0 0 24 24" fill={color}>
+    <Path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
+  </Svg>
+);
+
 /* ‹ › day-hop arrow with spring-press scale (matches the app's press feel).
    Opaque bg — this sits inside the rise()-animated header (Android composite bug). */
 const DateArrow = React.memo(function DateArrow({ dir, onPress, theme }: { dir: 'left' | 'right'; onPress: () => void; theme: Theme }) {
@@ -922,14 +937,16 @@ export function ChoghadiyaScreen({ navigation }: any) {
       >
         {/* ☀️ दिन | 🌙 रात — full 24-hour choghadiya, 8 periods per phase */}
         <View style={[styles.phaseWrap, { borderColor: theme.cardBorder, backgroundColor: theme.cardBg }]}>
-          {([['day', lang === 'hi' ? '☀️ दिन' : '☀️ Day'], ['night', lang === 'hi' ? '🌙 रात' : '🌙 Night']] as ['day' | 'night', string][]).map(([key, label]) => {
+          {([['day', lang === 'hi' ? 'दिन' : 'Day'], ['night', lang === 'hi' ? 'रात' : 'Night']] as ['day' | 'night', string][]).map(([key, label]) => {
             const on = phaseTab === key;
             const live = livePhase === key; // this side holds the period running RIGHT NOW
+            const ink = on ? theme.goldInk : theme.textMuted;
             return (
               <Pressable key={key} onPress={() => { hTap(); setPhaseTab(key); }} style={styles.phaseBtn}>
                 {on && <LinearGradient colors={theme.buttonGradient} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={StyleSheet.absoluteFill} />}
                 <View style={styles.phaseLabelRow}>
-                  <Text style={[styles.phaseBtnText, { color: on ? theme.goldInk : theme.textMuted }]}>{label}</Text>
+                  {key === 'day' ? <SunGlyph color={ink} /> : <MoonGlyph color={ink} />}
+                  <Text style={[styles.phaseBtnText, { color: ink }]}>{label}</Text>
                   {live && <View style={[styles.phaseLiveDot, { backgroundColor: on ? theme.goldInk : theme.green }]} />}
                 </View>
               </Pressable>
@@ -976,9 +993,11 @@ export function ChoghadiyaScreen({ navigation }: any) {
 
       <Deferred delay={160}>
         <ChoghadiyaSpecialMessage
-          activeName={highlight.name}
-          desc={aiMsg || highlight.meta.desc}
-          timeRange={`${fmtTime(highlight.start)} to ${fmtTime(highlight.end)}`}
+          activeName={aPeriod(highlight.name, lang)}
+          desc={aiMsg || aPeriodDesc(highlight.name, lang) || highlight.meta.desc}
+          timeRange={lang === 'hi'
+            ? `${fmtTime(highlight.start)} से ${fmtTime(highlight.end)} तक`
+            : `${fmtTime(highlight.start)} to ${fmtTime(highlight.end)}`}
           today={isToday && !!active}
         />
       </Deferred>
