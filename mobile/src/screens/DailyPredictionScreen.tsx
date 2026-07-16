@@ -384,7 +384,6 @@ export function DailyPredictionScreen({ navigation }: any) {
 
   // reader prefs — the Aa control (persisted; applies only to reading text)
   const { scale, weight: bold, stepScale, stepWeight } = useReadingPrefs(); // bold = weight step (0/1/2)
-  const [readerOpen, setReaderOpen] = useState(false);
   const rd = useCallback(
     (size: number, lineHeight: number) => readingStyle(scale, bold, size, lineHeight),
     [scale, bold]
@@ -567,7 +566,7 @@ export function DailyPredictionScreen({ navigation }: any) {
       onRight={() => navigation.navigate('ManageSubscription')}
     >
       {/* Header row — Daily / Weekly / Monthly / Yearly tabs + the Aa reading control */}
-      <View style={{ flexDirection: 'row', gap: 6, marginBottom: readerOpen ? 8 : 14, alignItems: 'stretch' }}>
+      <View style={{ flexDirection: 'row', gap: 6, marginBottom: 8, alignItems: 'stretch' }}>
         {(([['daily', hi ? 'दैनिक' : 'Daily'], ['week', hi ? 'साप्ताहिक' : 'Weekly'], ['month', hi ? 'मासिक' : 'Monthly'], ['year', hi ? 'वार्षिक' : 'Yearly']]) as [('daily' | PredPeriod), string][]).map(([k, lbl]) => {
           const on = tab === k;
           return (
@@ -584,25 +583,10 @@ export function DailyPredictionScreen({ navigation }: any) {
             </Pressable>
           );
         })}
-        <Pressable
-          onPress={() => { hTap(); setReaderOpen((o) => !o); }}
-          hitSlop={6}
-          style={({ pressed }) => [
-            styles.aaBtn,
-            {
-              borderColor: readerOpen ? (theme.isDark ? 'rgba(233,184,80,0.6)' : 'rgba(124,74,3,0.6)') : theme.cardBorder,
-              backgroundColor: readerOpen ? (theme.isDark ? '#241b09' : '#faf0da') : (theme.isDark ? 'rgba(0,0,0,0.4)' : '#fffdf7'),
-            },
-            pressed && { transform: [{ scale: 0.94 }] },
-          ]}
-        >
-          <Text style={[styles.aaText, { color: theme.goldText }]}>Aa</Text>
-        </Pressable>
       </View>
 
-      {readerOpen && (
-        <ReadingBar scale={scale} weight={bold} stepScale={stepScale} stepWeight={stepWeight} theme={theme} lang={lang} />
-      )}
+      {/* reading controls — hamesha dikhte hai (user ki pasand: koi Aa toggle nahi) */}
+      <ReadingBar scale={scale} weight={bold} stepScale={stepScale} stepWeight={stepWeight} theme={theme} lang={lang} />
 
       {tab !== 'daily' ? (
         <PeriodForecast period={tab as PredPeriod} />
@@ -922,8 +906,6 @@ export function DailyPredictionScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   /* header controls */
-  aaBtn: { width: 40, borderRadius: 999, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  aaText: { fontFamily: fonts.interBold, fontSize: 13 },
   readBar: { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 14 },
   readLbl: { flex: 1, fontFamily: fonts.interSemi, fontSize: 11 },
   readBtns: { flexDirection: 'row', gap: 6 },
