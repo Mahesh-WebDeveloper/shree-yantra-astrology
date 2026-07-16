@@ -18,6 +18,20 @@ import { getStoredUser } from './auth';
 const DEVICE_KEY = 'sy.deviceId';
 const GPS_TTL_MS = 30 * 60 * 1000; // refresh coords at most every 30 min
 
+// User consent (Privacy & Security → Usage Analytics). DPDP gives the right to
+// withdraw consent, and the privacy policy points at this toggle — so it must be
+// real: off = events are dropped at the source, nothing queues, nothing sends.
+const CONSENT_KEY = 'sy.privacy';
+let analyticsEnabled = true;
+AsyncStorage.getItem(CONSENT_KEY).then((raw) => {
+  if (!raw) return;
+  try { const p = JSON.parse(raw); if (p && p.analytics === false) analyticsEnabled = false; } catch (_) {}
+}).catch(() => {});
+export function setAnalyticsEnabled(v: boolean) {
+  analyticsEnabled = v;
+  if (!v) { queue = []; if (timer) { clearTimeout(timer); timer = null; } }
+}
+
 // Real app version from app.json (Expo config) — '1.0.0' fallback
 let APP_VERSION = '1.0.0';
 try {
@@ -80,6 +94,7 @@ async function flush() {
 }
 
 export function track(name: string, screen?: string, props?: any) {
+  if (!analyticsEnabled) return;    // consent withdrawn — drop at the source
   queue.push({ name, screen, props });
   if (!timer) timer = setTimeout(flush, 1500);
 }

@@ -11,6 +11,7 @@ import { useDialog } from '../components/DialogProvider';
 import { hTap, hSelect, hSuccess } from '../lib/haptics';
 import { useCurrentUser } from '../lib/auth';
 import { useLang } from '../i18n/LanguageProvider';
+import { setAnalyticsEnabled } from '../lib/analytics';
 
 const STORE_KEY = 'sy.privacy';
 
@@ -89,29 +90,27 @@ function ActionRow({ icon, title, sub, onPress, theme, last, destructive }: {
   );
 }
 
-interface Prefs { appLock: boolean; twoFA: boolean; personalized: boolean; analytics: boolean; marketing: boolean; discoverable: boolean }
-const DEFAULTS: Prefs = { appLock: false, twoFA: false, personalized: true, analytics: true, marketing: false, discoverable: false };
+// Only real, wired controls live here. The old page carried six decorative toggles
+// (App Lock, 2FA, Personalised, Marketing, Discoverable…) that were saved to storage
+// and read by nothing — controls that do nothing are worse than none.
+interface Prefs { analytics: boolean }
+const DEFAULTS: Prefs = { analytics: true };
 
 export function PrivacySecurityScreen({ navigation }: any) {
   const { theme } = useTheme();
-  const dialog = useDialog();
   const hi = useLang().lang === 'hi';
-  const user = useCurrentUser();
-  const hasPassword = !!user?.providers?.includes('password');
   const [p, setP] = useState<Prefs>(DEFAULTS);
 
   useEffect(() => {
     AsyncStorage.getItem(STORE_KEY).then((raw) => { if (raw) { try { setP({ ...DEFAULTS, ...JSON.parse(raw) }); } catch {} } });
   }, []);
 
-  const set = (k: keyof Prefs) => (v: boolean) => {
-    setP((cur) => { const next = { ...cur, [k]: v }; AsyncStorage.setItem(STORE_KEY, JSON.stringify(next)).catch(() => {}); return next; });
+  const setAnalytics = (v: boolean) => {
+    setP({ analytics: v });
+    AsyncStorage.setItem(STORE_KEY, JSON.stringify({ analytics: v })).catch(() => {});
+    setAnalyticsEnabled(v);          // takes effect immediately — the tracker drops events at the source
   };
 
-  const loginActivity = () => dialog(hi ? 'हाल की लॉगिन गतिविधि' : 'Recent Login Activity', hi ? 'अंतिम साइन-इन: आज, सुबह 9:42 · जयपुर, भारत · Android.\nकोई संदिग्ध गतिविधि नहीं मिली। ✓' : 'Last sign-in: Today, 9:42 AM · Jaipur, India · Android.\nNo suspicious activity detected. ✓');
-  const downloadData = () => dialog(hi ? 'मेरा डेटा डाउनलोड करें' : 'Download My Data', hi ? 'हम आपके डेटा की एक प्रति तैयार कर 24 घंटे के भीतर डाउनलोड लिंक ईमेल कर देंगे।' : 'We will prepare a copy of your data and email a download link within 24 hours.', [
-    { text: hi ? 'रद्द करें' : 'Cancel', style: 'cancel' }, { text: hi ? 'अनुरोध करें' : 'Request', onPress: () => { hSuccess(); dialog(hi ? 'अनुरोध प्राप्त हुआ' : 'Request received', hi ? 'आपका डेटा एक्सपोर्ट तैयार हो रहा है। 📦' : 'Your data export is being prepared. 📦'); } },
-  ]);
   return (
     <Page title={hi ? 'गोपनीयता व सुरक्षा' : 'Privacy & Security'} onBack={() => { hTap(); navigation.goBack(); }}>
       {/* intro */}
@@ -120,32 +119,23 @@ export function PrivacySecurityScreen({ navigation }: any) {
           <Svg width={30} height={30} viewBox="0 0 24 24" fill="none" stroke={theme.gold1} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"><Path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z" /><Polyline points="9 12 11 14 15 10" /></Svg>
         </View>
         <Text style={[styles.introTitle, { color: theme.text }]}>{hi ? 'आपका डेटा सुरक्षित है' : 'Your data is protected'}</Text>
-        <Text style={[styles.introSub, { color: theme.textMuted }]}>{hi ? 'आप कैसे साइन-इन करते हैं, क्या साझा करते हैं व अपना खाता डेटा — सब एक ही जगह प्रबंधित करें।' : 'Manage how you sign in, what you share, and your account data — all in one place.'}</Text>
-      </Card>
-
-      <SectionLabel text={hi ? 'सुरक्षा' : 'Security'} theme={theme} />
-      <Card padded={false} contentStyle={styles.listCard}>
-        <ToggleRow icon="finger" title={hi ? 'ऐप लॉक' : 'App Lock'} sub={hi ? 'ऐप खोलने के लिए फिंगरप्रिंट / फेस अनिवार्य करें' : 'Require fingerprint / face to open the app'} value={p.appLock} onValueChange={set('appLock')} theme={theme} />
-        <ActionRow icon="activity" title={hi ? 'लॉगिन गतिविधि' : 'Login Activity'} sub={hi ? 'अपने खाते के हाल के साइन-इन देखें' : 'See recent sign-ins to your account'} onPress={loginActivity} theme={theme} last />
+        <Text style={[styles.introSub, { color: theme.textMuted }]}>{hi ? 'सिंगल-डिवाइस लॉगिन, सुरक्षित कीस्टोर व एन्क्रिप्टेड कनेक्शन — और नीचे आपकी सहमति के नियंत्रण।' : 'Single-device login, secure keystore & encrypted connections — with your consent controls below.'}</Text>
       </Card>
 
       <SectionLabel text={hi ? 'गोपनीयता' : 'Privacy'} theme={theme} />
       <Card padded={false} contentStyle={styles.listCard}>
-        <ToggleRow icon="sparkles" title={hi ? 'व्यक्तिगत भविष्यवाणियाँ' : 'Personalised Predictions'} sub={hi ? 'रीडिंग को अनुकूल बनाने हेतु मेरे जन्म-विवरण का उपयोग करें' : 'Use my birth details to tailor readings'} value={p.personalized} onValueChange={set('personalized')} theme={theme} />
-        <ToggleRow icon="chart" title={hi ? 'उपयोग विश्लेषण' : 'Usage Analytics'} sub={hi ? 'ऐप को बेहतर बनाने हेतु अनाम उपयोग-डेटा साझा करें' : 'Share anonymous app usage to improve'} value={p.analytics} onValueChange={set('analytics')} theme={theme} />
-        <ToggleRow icon="mail" title={hi ? 'मार्केटिंग ईमेल' : 'Marketing Emails'} sub={hi ? 'ऑफ़र, त्योहार राशिफल व अपडेट' : 'Offers, festival horoscopes & updates'} value={p.marketing} onValueChange={set('marketing')} theme={theme} />
-        <ToggleRow icon="eye" title={hi ? 'खोज-योग्य प्रोफ़ाइल' : 'Discoverable Profile'} sub={hi ? 'ज्योतिषियों को परामर्श हेतु मुझे खोजने दें' : 'Let astrologers find me for consults'} value={p.discoverable} onValueChange={set('discoverable')} theme={theme} last />
+        <ToggleRow icon="chart" title={hi ? 'उपयोग विश्लेषण' : 'Usage Analytics'} sub={hi ? 'ऐप को बेहतर बनाने हेतु अनाम उपयोग-डेटा साझा करें' : 'Share anonymous app usage to improve'} value={p.analytics} onValueChange={setAnalytics} theme={theme} last />
       </Card>
 
-      <SectionLabel text={hi ? 'डेटा व नीतियाँ' : 'Data & Policies'} theme={theme} />
+      <SectionLabel text={hi ? 'नीतियाँ' : 'Policies'} theme={theme} />
       <Card padded={false} contentStyle={styles.listCard}>
-        <ActionRow icon="download" title={hi ? 'मेरा डेटा डाउनलोड करें' : 'Download My Data'} sub={hi ? 'अपने खाते के डेटा की एक प्रति प्राप्त करें' : 'Get a copy of your account data'} onPress={downloadData} theme={theme} />
         {/* full documents live in-app (LegalScreen) — no dead external URLs */}
         <ActionRow icon="doc" title={hi ? 'गोपनीयता नीति' : 'Privacy Policy'} sub={hi ? 'हम आपकी जानकारी कैसे संभालते हैं' : 'How we handle your information'} onPress={() => { hTap(); navigation.navigate('Legal', { doc: 'privacy' }); }} theme={theme} />
-        <ActionRow icon="doc" title={hi ? 'सेवा की शर्तें' : 'Terms of Service'} sub={hi ? 'हमारे नियम व शर्तें' : 'Our terms & conditions'} onPress={() => { hTap(); navigation.navigate('Legal', { doc: 'terms' }); }} theme={theme} last />
+        <ActionRow icon="doc" title={hi ? 'सेवा की शर्तें' : 'Terms of Service'} sub={hi ? 'हमारे नियम व शर्तें' : 'Our terms & conditions'} onPress={() => { hTap(); navigation.navigate('Legal', { doc: 'terms' }); }} theme={theme} />
+        <ActionRow icon="mail" title={hi ? 'डेटा अनुरोध / शिकायत' : 'Data Request / Grievance'} sub={hi ? 'डेटा की प्रति, सुधार या हटाने हेतु सहायता से संपर्क करें' : 'Contact support for a copy, correction or deletion of your data'} onPress={() => { hTap(); navigation.navigate('Help'); }} theme={theme} last />
       </Card>
 
-      <Text style={[styles.foot, { color: theme.textMuted }]}>{hi ? '🔒 आपकी रीडिंग व जन्म-डेटा हमारे सर्वर पर एन्क्रिप्टेड हैं।' : '🔒 Your readings & birth data are encrypted on our servers.'}</Text>
+      <Text style={[styles.foot, { color: theme.textMuted }]}>{hi ? '🔒 सिंगल-डिवाइस लॉगिन सक्रिय है — नए डिवाइस पर साइन-इन करते ही पुराना अपने-आप लॉगआउट हो जाता है।' : '🔒 Single-device login is active — signing in on a new device signs the old one out automatically.'}</Text>
     </Page>
   );
 }
