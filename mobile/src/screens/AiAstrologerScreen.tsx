@@ -4,7 +4,8 @@ import Svg, { Circle, Line, Path } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Page } from '../components/Page';
 import { Card } from '../components/Card';
-import { SpeakButton } from '../components/SpeakButton';
+import { AnswerView } from '../components/AnswerView';
+import { ChatHistoryModal, HistoryIcon } from '../components/ChatHistoryModal';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts, radii } from '../theme/tokens';
 import { askAiAstrologer, AiAstrologerResponse, getChatHistory, ChatTurnDto } from '../lib/api';
@@ -14,7 +15,6 @@ import { birthFromProfile } from '../lib/birth';
 import { hTap } from '../lib/haptics';
 import { track } from '../lib/analytics';
 import { useT, useLang } from '../i18n/LanguageProvider';
-import { aAstroText } from '../i18n/astro';
 
 const RETRYABLE_AI_ERROR = /timed out|Network request failed|Failed to fetch|NetworkError|temporarily unavailable|timeout|504|503|502|429|408|समय सीमा|नेटवर्क अनुरोध/i;
 
@@ -55,6 +55,7 @@ export function AiAstrologerScreen({ navigation, route }: any) {
   const [question, setQuestion] = useState('');
   const [history, setHistory] = useState<ChatTurn[]>([]);
   const [sending, setSending] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   // chat history: 2 din local cache (turant) + server par all-time (purani chat load-more se)
   const [userId, setUserId] = useState<string | null>(null);
   const [historyLoaded, setHistoryLoaded] = useState(false);
@@ -73,7 +74,6 @@ export function AiAstrologerScreen({ navigation, route }: any) {
     }
     return raw || t('ai.unavailable', 'Could not get an answer. Please try again.');
   };
-  const tx = (value?: string) => aAstroText(value || '', lang);
 
   const quickQuestions = [
     t('ai.quick.today', 'What should I focus on today?'),
@@ -179,7 +179,13 @@ export function AiAstrologerScreen({ navigation, route }: any) {
   }, [historyLoaded]);
 
   return (
-    <Page title={t('ai.title', 'Vedic Astrologer')} onBack={() => navigation.goBack()} scrollRef={scrollRef}>
+    <Page
+      title={t('ai.title', 'Vedic Astrologer')}
+      onBack={() => navigation.goBack()}
+      scrollRef={scrollRef}
+      right={<HistoryIcon color={theme.gold1} />}
+      onRight={() => setHistoryOpen(true)}
+    >
       <Card>
         <View style={styles.heroRow}>
           <View style={[styles.heroIcon, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : '#f8fafc' }]}>
@@ -287,69 +293,7 @@ export function AiAstrologerScreen({ navigation, route }: any) {
           )}
 
           {!!turn.response && (
-            <>
-              <View style={styles.answerHead}>
-                <Text style={[styles.answerTitle, { color: theme.goldText }]}>{t('ai.answer', 'Answer')}</Text>
-                <SpeakButton text={[
-                  tx(turn.response.answer),
-                  ...turn.response.sections.map((s) => `${tx(s.title)}. ${tx(s.text)}`),
-                  ...(turn.response.remedies || []).map((r) => `${tx(r.title)}. ${tx(r.body || '')}`),
-                ]} />
-              </View>
-              <Text style={[styles.answerBody, { color: theme.text }]}>{tx(turn.response.answer)}</Text>
-
-              {turn.response.sections.map((section, index) => (
-                <View key={`${section.title}-${index}`} style={[styles.sectionBox, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.42)' : '#f8fafc' }]}>
-                  <Text style={[styles.sectionTitle, { color: theme.goldText }]}>{tx(section.title)}</Text>
-                  <Text style={[styles.sectionText, { color: theme.textSoft }]}>{tx(section.text)}</Text>
-                </View>
-              ))}
-
-              {!!turn.response.vedastroBasis.length && (
-                <View style={styles.basisWrap}>
-                  <Text style={[styles.smallHeading, { color: theme.goldText }]}>{tx(t('ai.basis', 'Calculation basis'))}</Text>
-                  {turn.response.vedastroBasis.map((item) => (
-                    <Text key={item} style={[styles.basisText, { color: theme.textSoft }]}>{tx(item)}</Text>
-                  ))}
-                </View>
-              )}
-
-              {!!turn.response.remedies?.length && (
-                <View style={styles.basisWrap}>
-                  <Text style={[styles.smallHeading, { color: theme.goldText }]}>{tx(t('ai.remedies', 'Suggested remedies'))}</Text>
-                  {turn.response.remedies.map((r, index) => (
-                    <View key={`${r.title}-${index}`} style={[styles.remedyBox, { borderColor: theme.cardBorder }]}>
-                      <Text style={[styles.remedyTitle, { color: theme.text }]}>{tx(r.title)}</Text>
-                      {!!r.body && <Text style={[styles.remedyText, { color: theme.textSoft }]}>{tx(r.body)}</Text>}
-                      {!![r.timing, r.mantra].filter(Boolean).length && (
-                        <Text style={[styles.remedyMeta, { color: theme.goldText }]}>{tx([r.timing, r.mantra].filter(Boolean).join(' | '))}</Text>
-                      )}
-                    </View>
-                  ))}
-                </View>
-              )}
-
-              <Text style={[styles.sourceNote, { color: theme.textMuted }]}>
-                {tx(turn.response.sourceNote || t('ai.defaultSource', 'Based on your precise birth chart and Panchang data.'))}
-              </Text>
-
-              <View style={styles.followWrap}>
-                {turn.response.followUpQuestions.map((q) => (
-                  <Pressable
-                    key={q}
-                    disabled={sending}
-                    onPress={() => sendQuestion(q)}
-                    style={({ pressed }) => [
-                      styles.followChip,
-                      { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : '#ffffff' },
-                      pressed && { transform: [{ scale: 0.98 }] },
-                    ]}
-                  >
-                    <Text style={[styles.followText, { color: theme.text }]}>{tx(q)}</Text>
-                  </Pressable>
-                ))}
-              </View>
-            </>
+            <AnswerView response={turn.response} onAsk={(q) => sendQuestion(q)} disabled={sending} />
           )}
         </Card>
       ))}
@@ -374,6 +318,14 @@ export function AiAstrologerScreen({ navigation, route }: any) {
           )}
         </Pressable>
       )}
+
+      {/* ── chat-history browser (search + date groups + detail + ask-again) ── */}
+      <ChatHistoryModal
+        visible={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        onAskAgain={(q) => { setHistoryOpen(false); setQuestion(q); }}
+        onCleared={() => { setHistory([]); setHasMore(false); }}
+      />
     </Page>
   );
 }
@@ -404,24 +356,7 @@ const styles = StyleSheet.create({
   errorText: { fontFamily: fonts.interSemi, fontSize: 12.5, lineHeight: 18 },
   retryBtn: { borderWidth: 1, borderRadius: radii.pill, paddingHorizontal: 14, paddingVertical: 9 },
   retryText: { fontFamily: fonts.interBold, fontSize: 11, letterSpacing: 0.8 },
-  answerHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 },
   voiceHint: { fontFamily: fonts.inter, fontSize: 11, lineHeight: 16, marginTop: 8 },
-  answerTitle: { fontFamily: fonts.interBold, fontSize: 11, textTransform: 'uppercase' },
-  answerBody: { fontFamily: fonts.inter, fontSize: 14, lineHeight: 22, marginTop: 6 },
-  sectionBox: { borderWidth: 1, borderRadius: 14, padding: 12, marginTop: 10 },
-  sectionTitle: { fontFamily: fonts.playfairBold, fontSize: 15 },
-  sectionText: { fontFamily: fonts.inter, fontSize: 12.5, lineHeight: 19, marginTop: 5 },
-  basisWrap: { marginTop: 14, gap: 8 },
-  smallHeading: { fontFamily: fonts.interBold, fontSize: 11, textTransform: 'uppercase' },
-  basisText: { fontFamily: fonts.inter, fontSize: 12, lineHeight: 18 },
-  remedyBox: { borderWidth: 1, borderRadius: 12, padding: 10 },
-  remedyTitle: { fontFamily: fonts.interBold, fontSize: 12.5 },
-  remedyText: { fontFamily: fonts.inter, fontSize: 12, lineHeight: 17, marginTop: 4 },
-  remedyMeta: { fontFamily: fonts.interSemi, fontSize: 11, lineHeight: 16, marginTop: 5 },
-  sourceNote: { fontFamily: fonts.inter, fontSize: 11.5, lineHeight: 17, marginTop: 14 },
-  followWrap: { gap: 8, marginTop: 14 },
-  followChip: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10 },
-  followText: { fontFamily: fonts.interSemi, fontSize: 12, lineHeight: 17 },
   olderBtn: { marginTop: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: 14, paddingVertical: 13 },
   olderTxt: { fontFamily: fonts.interSemi, fontSize: 13 },
 });

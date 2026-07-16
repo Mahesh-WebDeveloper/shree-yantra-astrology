@@ -804,9 +804,9 @@ export interface ChatTurnDto {
   response: AiAstrologerResponse | null;
   createdAt: string;
 }
-export const getChatHistory = (before?: string, limit = 30) =>
+export const getChatHistory = (before?: string, limit = 30, q?: string) =>
   get<{ turns: ChatTurnDto[]; hasMore: boolean }>(
-    `/api/chat/history?limit=${limit}${before ? `&before=${encodeURIComponent(before)}` : ''}`
+    `/api/chat/history?limit=${limit}${before ? `&before=${encodeURIComponent(before)}` : ''}${q ? `&q=${encodeURIComponent(q)}` : ''}`
   );
 export const clearChatHistory = () => del<{ ok: boolean; deleted: number }>('/api/chat/history');
 

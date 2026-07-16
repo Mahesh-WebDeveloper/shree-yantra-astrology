@@ -70,12 +70,19 @@ exports.askAstrologer = asyncHandler(async (req, res) => {
  * DB me poora all-time record. App pichle 2 din local cache karta hai (turant
  * dikhne ke liye); usse purana yahan se `before` cursor se load hota hai.
  */
-// GET /api/chat/history?before=<ISO>&limit=  → newest-first
+// GET /api/chat/history?before=<ISO>&limit=&q=  → newest-first
+// `q` (optional) = case-insensitive text search on the question OR the stored
+// answer; same auth/user scoping + `before` cursor. q absent = old behaviour.
 exports.chatHistory = asyncHandler(async (req, res) => {
   const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 30));
   const before = req.query.before ? new Date(String(req.query.before)) : null;
   const q = { user: req.user._id };
   if (before && !isNaN(before.getTime())) q.createdAt = { $lt: before };
+  const text = String(req.query.q || '').trim();
+  if (text) {
+    const rx = new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'); // escaped → literal match, never a regex injection
+    q.$or = [{ question: rx }, { 'response.answer': rx }];
+  }
 
   const rows = await ChatMessage.find(q).sort({ createdAt: -1 }).limit(limit + 1).lean();
   const hasMore = rows.length > limit;
