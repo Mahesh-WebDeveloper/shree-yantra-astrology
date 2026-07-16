@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Animated, Easing, ScrollView } from 'react-native';
 import Svg, {
   Polygon, Path, Line, Circle, Ellipse, Rect, Polyline, Defs,
@@ -211,14 +211,31 @@ export function SubscriptionActivatedScreen({ navigation }: any) {
   // After activation: collect personal details (name/DOB/birth time/location) unless they are
   // ALREADY fully set. Uses the authoritative stored-user check (not the default-birth
   // fallback, which has a DOB and would wrongly send a fresh user straight to Home).
+  const redirected = useRef(false); // auto-timer aur Continue tap dono me se sirf EK baar chale
   const goHome = async () => {
+    if (redirected.current) return;
+    redirected.current = true;
     const u = await getStoredUser().catch(() => null);
     const target = isProfileComplete(u) ? 'Main' : 'BirthDetails';
     navigation.reset({ index: 0, routes: [{ name: target }] });
   };
 
-  // celebratory haptic + content reveal on mount (user taps Continue when ready — no
-  // confusing auto-redirect)
+  // Auto-redirect: celebration dikhane ke baad khud aage badh jao — countdown dikhta hai,
+  // aur "जारी रखें" se turant bhi ja sakte hai.
+  const AUTO_SECONDS = 6;
+  const [secsLeft, setSecsLeft] = useState(AUTO_SECONDS);
+  useEffect(() => {
+    const iv = setInterval(() => {
+      setSecsLeft((s) => {
+        if (s <= 1) { clearInterval(iv); goHome(); return 0; }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(iv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // celebratory haptic + content reveal on mount
   const enter = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     hSuccess();
@@ -318,9 +335,14 @@ export function SubscriptionActivatedScreen({ navigation }: any) {
           ))}
         </View>
 
-        {/* explicit CTA — user proceeds when ready (no auto-redirect) */}
+        {/* CTA — turant aage; warna countdown khatam hote hi khud redirect */}
         <View style={styles.ctaRow}>
           <GoldButton label={hi ? 'जारी रखें' : 'Continue'} onPress={() => { hTap(); goHome(); }} />
+          <Text style={[styles.autoNote, { color: dim }]}>
+            {secsLeft > 0
+              ? (hi ? `${secsLeft} सेकंड में अपने आप आगे बढ़ेंगे…` : `Continuing automatically in ${secsLeft}s…`)
+              : (hi ? 'आगे बढ़ रहे हैं…' : 'Continuing…')}
+          </Text>
         </View>
         </Animated.View>
       </ScrollView>
@@ -373,6 +395,7 @@ const styles = StyleSheet.create({
   perkIc: { width: 46, height: 46, borderRadius: 23, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   perkText: { fontFamily: fonts.inter, fontSize: 11, textAlign: 'center', lineHeight: 15 },
 
-  ctaRow: { marginTop: 26 },
+  ctaRow: { marginTop: 26, alignItems: 'center', gap: 10 },
+  autoNote: { fontFamily: fonts.inter, fontSize: 11.5, letterSpacing: 0.3 },
   dot: { fontSize: 8 },
 });
