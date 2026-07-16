@@ -567,25 +567,57 @@ export function ChoghadiyaScreen({ navigation }: any) {
         </View>
         <Text style={[styles.subtitle, { color: theme.isDark ? '#aaaaaa' : theme.textMuted }]}>{cg.t('subtitle', lang === 'hi' ? 'आज के शुभ व अशुभ समय जानें' : "Know Today's Auspicious & Inauspicious Timings")}</Text>
 
-        <Pressable
-          onPress={() => { hTap(); setCalOpen(true); }}
-          style={({ pressed }) => [
-            styles.datePill,
-            {
-              backgroundColor: calOpen
-                ? 'rgba(238,203,122,0.18)'
-                : theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(176,115,22,0.08)',
-              borderColor: calOpen ? 'rgba(238,203,122,0.6)' : 'rgba(238,203,122,0.25)',
-            },
-            pressed && { transform: [{ scale: 0.97 }] },
-          ]}
-        >
-          <CalendarIcon color={theme.goldText} size={14} />
-          <Text style={[styles.dateText, { color: theme.isDark ? '#eeeeee' : theme.text }]}>{lang === 'hi' ? aDateHi(selectedDate) : fmtDate(selectedDate)}</Text>
-          <View style={{ transform: [{ rotate: calOpen ? '180deg' : '0deg' }] }}>
-            <Chev color={theme.goldText} />
-          </View>
-        </Pressable>
+        {/* Drik-style date row: ‹ › hop one day (the common planning move), the pill opens
+            the calendar for far dates, and today itself needs no navigation at all. */}
+        <View style={styles.dateRow}>
+          <Pressable
+            onPress={() => { hTap(); setSelectedDate((d) => stripTime(new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1))); }}
+            hitSlop={8}
+            style={({ pressed }) => [styles.dateArrow, { borderColor: 'rgba(238,203,122,0.25)', backgroundColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(176,115,22,0.08)' }, pressed && { transform: [{ scale: 0.9 }] }]}
+          >
+            <View style={{ transform: [{ rotate: '90deg' }] }}><Chev color={theme.goldText} /></View>
+          </Pressable>
+
+          <Pressable
+            onPress={() => { hTap(); setCalOpen(true); }}
+            style={({ pressed }) => [
+              styles.datePill,
+              {
+                backgroundColor: calOpen
+                  ? 'rgba(238,203,122,0.18)'
+                  : theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(176,115,22,0.08)',
+                borderColor: calOpen ? 'rgba(238,203,122,0.6)' : 'rgba(238,203,122,0.25)',
+              },
+              pressed && { transform: [{ scale: 0.97 }] },
+            ]}
+          >
+            <CalendarIcon color={theme.goldText} size={14} />
+            <Text style={[styles.dateText, { color: theme.isDark ? '#eeeeee' : theme.text }]}>
+              {isToday ? (lang === 'hi' ? 'आज · ' : 'Today · ') : ''}{lang === 'hi' ? aDateHi(selectedDate) : fmtDate(selectedDate)}
+            </Text>
+            <View style={{ transform: [{ rotate: calOpen ? '180deg' : '0deg' }] }}>
+              <Chev color={theme.goldText} />
+            </View>
+          </Pressable>
+
+          <Pressable
+            onPress={() => { hTap(); setSelectedDate((d) => stripTime(new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1))); }}
+            hitSlop={8}
+            style={({ pressed }) => [styles.dateArrow, { borderColor: 'rgba(238,203,122,0.25)', backgroundColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(176,115,22,0.08)' }, pressed && { transform: [{ scale: 0.9 }] }]}
+          >
+            <View style={{ transform: [{ rotate: '-90deg' }] }}><Chev color={theme.goldText} /></View>
+          </Pressable>
+        </View>
+
+        {/* one tap back to the live view when browsing another date */}
+        {!isToday && (
+          <Pressable
+            onPress={() => { hTap(); setSelectedDate(stripTime(new Date())); }}
+            style={({ pressed }) => [styles.todayChip, { borderColor: theme.gold2 + '66', backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : 'rgba(233,184,80,0.15)' }, pressed && { transform: [{ scale: 0.95 }] }]}
+          >
+            <Text style={[styles.todayChipText, { color: theme.goldText }]}>{lang === 'hi' ? '↩ आज पर लौटें' : '↩ Back to Today'}</Text>
+          </Pressable>
+        )}
       </View>
 
       {/* Active card — web: black bg + subtle gold radial at 30% 50% */}
@@ -865,6 +897,10 @@ const styles = StyleSheet.create({
   cgTitle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
   cgTitleText: { fontFamily: fonts.cinzel, fontSize: 23, letterSpacing: 2.5, fontWeight: '700', lineHeight: 28 },
   subtitle: { textAlign: 'center', fontFamily: fonts.inter, fontSize: 13, marginTop: 12, marginBottom: 16 },
+  dateRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  dateArrow: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  todayChip: { marginTop: 8, borderWidth: 1, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6 },
+  todayChipText: { fontFamily: fonts.interSemi, fontSize: 11.5 },
   datePill: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 30, paddingHorizontal: 16, paddingVertical: 9 },
   dateText: { fontFamily: fonts.interMed, fontSize: 12 },
 
