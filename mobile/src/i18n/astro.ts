@@ -31,6 +31,14 @@ const YOGA_WORD_HI: Record<string, string> = {
   Kendra: 'केंद्र', Trikona: 'त्रिकोण', Panch: 'पंच',
   Mahapurush: 'महापुरुष', Mahapurusha: 'महापुरुष',
   Lakshmi: 'लक्ष्मी', Yoga: 'योग',
+  // VedAstro yoga-naam ke shabd — fallback word-by-word Hindi ke liye
+  Dhurdhura: 'दुरुधरा', Adhi: 'अधि', Chatussagara: 'चतुस्सागर', Vasumathi: 'वसुमती',
+  Rajalakshana: 'राजलक्षण', Vanchana: 'वंचन', Chora: 'चोर', Bheethi: 'भीति',
+  Sakata: 'शकट', Amala: 'अमला', Parvata: 'पर्वत', Kahala: 'काहल',
+  Vesi: 'वेशि', Vasi: 'वाशि', Obhayachari: 'उभयचरी', Mangala: 'मंगल',
+  Amara: 'अमर', Bheri: 'भेरी', Mridanga: 'मृदंग', Shrinatha: 'श्रीनाथ',
+  Matsya: 'मत्स्य', Kurma: 'कूर्म', Khadga: 'खड्ग', Kusuma: 'कुसुम',
+  Kalanidhi: 'कलानिधि', Chandala: 'चांडाल', Guru: 'गुरु',
 };
 
 const yogaFallbackHi = (name: string | undefined) => {
@@ -81,6 +89,15 @@ const NAKSHATRA: Record<string, string> = {
   Shatabhisha: 'शतभिषा', Shatabhishak: 'शतभिषा', Shathabhisha: 'शतभिषा',
   'Purva Bhadrapada': 'पूर्व भाद्रपद', 'Poorva Bhadrapada': 'पूर्व भाद्रपद',
   'Uttara Bhadrapada': 'उत्तर भाद्रपद', Revati: 'रेवती',
+  // VedAstro South-Indian spellings (ConstellationName enum) — kundli API inhi naamo se
+  // nakshatra bhejta hai; bina in aliases ke बुध(Pubba)/राहु(Chitta)/केतु(Aswini) jaise
+  // rows Hindi mode me English reh jaate the.
+  Aswini: 'अश्विनी', Mrigasira: 'मृगशीर्ष', Aridra: 'आर्द्रा', Pushyami: 'पुष्य',
+  Aslesha: 'आश्लेषा', Makha: 'मघा', Pubba: 'पूर्वा फाल्गुनी', Uttara: 'उत्तरा फाल्गुनी',
+  Chitta: 'चित्रा', Swathi: 'स्वाती', Vishhaka: 'विशाखा', Jyesta: 'ज्येष्ठा',
+  Poorvashada: 'पूर्वाषाढ़ा', Uttarashada: 'उत्तराषाढ़ा', Sravana: 'श्रवण',
+  Satabhisha: 'शतभिषा', Poorvabhadra: 'पूर्व भाद्रपद', Uttarabhadra: 'उत्तर भाद्रपद',
+  Revathi: 'रेवती',
 };
 const TITHI: Record<string, string> = {
   Pratipada: 'प्रतिपदा', Dwitiya: 'द्वितीया', Tritiya: 'तृतीया', Chaturthi: 'चतुर्थी',
@@ -168,6 +185,20 @@ const YOGA: Record<string, string> = {
   'Hamsa Yoga': 'हंस योग', 'Malavya Yoga': 'मालव्य योग', 'Sasa Yoga': 'शश योग', 'Sasha Yoga': 'शश योग',
   'Kemadruma Yoga': 'केमद्रुम योग', 'Kendra Trikona Raja Yoga': 'केंद्र त्रिकोण राज योग',
   'Panch Mahapurush Yoga': 'पंच महापुरुष योग', 'Lakshmi Yoga': 'लक्ष्मी योग',
+  // VedAstro HoroscopePredictions ke Yoga-tag naam (prettyName ke baad) — BV Raman ke
+  // classic combinations. In ke bina yoga tab Hindi mode me English titles dikhata tha.
+  'Dhurdhura Yoga': 'दुरुधरा योग', 'Adhi Yoga': 'अधि योग',
+  'Chatussagara Yoga': 'चतुस्सागर योग', 'Vasumathi Yoga': 'वसुमती योग',
+  'Rajalakshana Yoga': 'राजलक्षण योग', 'Vanchana Chora Bheethi Yoga': 'वंचन चोर भीति योग',
+  'Sakata Yoga': 'शकट योग', 'Amala Yoga': 'अमला योग', 'Parvata Yoga': 'पर्वत योग',
+  'Kahala Yoga': 'काहल योग', 'Vesi Yoga': 'वेशि योग', 'Vasi Yoga': 'वाशि योग',
+  'Obhayachari Yoga': 'उभयचरी योग', 'Chandra Mangala Yoga': 'चंद्र-मंगल योग',
+  'Budha Aditya Yoga': 'बुधादित्य योग', 'Guru Chandala Yoga': 'गुरु चांडाल योग',
+  'Guru Mangala Yoga': 'गुरु-मंगल योग', 'Amara Yoga': 'अमर योग',
+  'Bheri Yoga': 'भेरी योग', 'Mridanga Yoga': 'मृदंग योग',
+  'Shrinatha Yoga': 'श्रीनाथ योग', 'Matsya Yoga': 'मत्स्य योग',
+  'Kurma Yoga': 'कूर्म योग', 'Khadga Yoga': 'खड्ग योग',
+  'Kusuma Yoga': 'कुसुम योग', 'Kalanidhi Yoga': 'कलानिधि योग',
 };
 // short standard phrases used in dosha/yoga detail + sources
 const PHRASE: Record<string, string> = {

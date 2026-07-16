@@ -274,6 +274,10 @@ function KundliCard({
 function Pill({ label, solid }: { label: string; solid?: boolean }) {
   const { theme } = useTheme();
   const textColor = solid ? theme.buttonInk : theme.gold1;
+  // Devanagari + wide letterSpacing par Android matras ko clip/overlap kar deta hai
+  // (जैसे "पूर्वा फाल्गुनी") — Hindi labels tight spacing par hi sahi render hote hai.
+  const dev = /[ऀ-ॿ]/.test(label);
+  const fit = dev ? styles.pillTextDev : undefined;
 
   if (solid) {
     return (
@@ -283,7 +287,7 @@ function Pill({ label, solid }: { label: string; solid?: boolean }) {
         end={{ x: 0, y: 1 }}
         style={styles.pill}
       >
-        <Text style={[styles.pillText, { color: textColor }]} numberOfLines={1}>{label}</Text>
+        <Text style={[styles.pillText, fit, { color: textColor }]} numberOfLines={1}>{label}</Text>
       </LinearGradient>
     );
   }
@@ -301,7 +305,7 @@ function Pill({ label, solid }: { label: string; solid?: boolean }) {
         },
       ]}
     >
-      <Text style={[styles.pillText, { color: textColor }]} numberOfLines={1}>{label}</Text>
+      <Text style={[styles.pillText, fit, { color: textColor }]} numberOfLines={1}>{label}</Text>
     </View>
   );
 }
@@ -1881,13 +1885,18 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: radii.pill,
     alignSelf: 'flex-start',
-    maxWidth: 112,
+    maxWidth: 124,
   },
   pillText: {
     fontFamily: fonts.interSemi,
     fontSize: 10.5,
     letterSpacing: 1.0,
     textTransform: 'uppercase',
+  },
+  // Devanagari: tight spacing, koi uppercase transform nahi — matras overlap nahi karte
+  pillTextDev: {
+    letterSpacing: 0.2,
+    textTransform: 'none',
   },
   cta: {
     marginTop: 16,
