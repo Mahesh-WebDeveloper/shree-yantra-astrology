@@ -11,7 +11,7 @@ import { SpeakButton } from './SpeakButton';
  * summary with real-life examples) so a non-technical / non-astrology user understands.
  * Renders nothing when the field is empty.
  */
-export function SaralVivaran({ text }: { text?: string | null }) {
+export function SaralVivaran({ text, scale = 1, bold = false }: { text?: string | null; scale?: number; bold?: boolean }) {
   const { theme } = useTheme();
   const { lang } = useLang();
   if (!text || !String(text).trim()) return null;
@@ -34,7 +34,19 @@ export function SaralVivaran({ text }: { text?: string | null }) {
       <Text style={[styles.sub, { color: theme.textMuted }]}>
         {lang === 'hi' ? 'बिना किसी कठिन शब्द के, आसान भाषा में' : 'Easy explanation, no jargon'}
       </Text>
-      <Text style={[styles.body, { color: theme.text }]}>{text}</Text>
+      <Text
+        style={[
+          styles.body,
+          {
+            color: theme.text,
+            fontSize: 14 * scale,
+            lineHeight: 23 * scale,
+            fontFamily: bold ? fonts.interMed : fonts.inter,
+          },
+        ]}
+      >
+        {text}
+      </Text>
       <View style={{ marginTop: 10 }}>
         <SpeakButton text={[String(text)]} />
       </View>
