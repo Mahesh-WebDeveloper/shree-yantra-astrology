@@ -1,6 +1,6 @@
 // Verify the app's choghadiya engine against Drik (Jodhpur, Thu 16 Jul 2026).
 // Sun times come from OUR ephemeris; the sequencing is a 1:1 copy of mobile's choghadiya.ts.
-const eph = require('./src/utils/localEphemeris');
+const eph = require('../utils/localEphemeris');
 const tz = eph.parseTzMin('+05:30');
 const LAT = 26.2389, LNG = 73.0243;
 

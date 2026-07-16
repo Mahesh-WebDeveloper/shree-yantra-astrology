@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Modal, Animated, Easing } from 'react-native';
 import Svg, { Circle, Path, Polyline, Defs, RadialGradient, Stop, LinearGradient as SvgGrad } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,6 +22,7 @@ import { birthFromProfile } from '../lib/birth';
 import { locationForPanchang } from '../lib/deviceLocation';
 import { useScreen } from '../context/AppConfigProvider';
 import { useT, useLang } from '../i18n/LanguageProvider';
+import { Lang } from '../i18n/strings';
 import { aPeriod, aTag, aPeriodDesc, aBlurb, aDateHi } from '../i18n/astro';
 
 const pad2 = (n: number) => (n < 10 ? '0' : '') + n;
@@ -354,22 +355,186 @@ function CgCalendar({
   );
 }
 
-/** Section header — web .cg-section-header (icon + dim-gold uppercase label). */
-function SectionHeader({ icon, label, color, rule }: { icon: React.ReactNode; label: string; color: string; rule: string }) {
+/* Defers mounting of below-the-fold sections so the first paint is instant.
+   Children stay unmounted until `delay` ms after this component appears. */
+function Deferred({ delay = 60, children }: { delay?: number; children: React.ReactNode }) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setReady(true), delay);
+    return () => clearTimeout(t);
+  }, [delay]);
+  if (!ready) return null;
+  return <>{children}</>;
+}
+
+/* Consistent gold section header between blocks — label + thin gradient divider
+   (same treatment as the Kundli screen's SectionTitle). */
+function SectionTitle({ label }: { label: string }) {
+  const { theme } = useTheme();
   return (
-    <View style={styles.listHeadRow}>
-      {icon}
-      <Text style={[styles.listHead, { color }]}>{label}</Text>
-      {/* trailing hairline that fades out — premium section divider */}
+    <View style={styles.secTitleWrap}>
+      <GradientText style={styles.secTitleText}>{label}</GradientText>
       <LinearGradient
-        colors={[rule, 'transparent']}
+        colors={theme.isDark ? ['rgba(233,184,80,0.55)', 'rgba(233,184,80,0.14)', 'rgba(0,0,0,0)'] : ['rgba(176,115,22,0.45)', 'rgba(176,115,22,0.12)', 'rgba(255,255,255,0)']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
-        style={styles.headRule}
+        style={styles.secTitleRule}
+        pointerEvents="none"
       />
     </View>
   );
 }
+
+/* ‹ › day-hop arrow with spring-press scale (matches the app's press feel).
+   Opaque bg — this sits inside the rise()-animated header (Android composite bug). */
+const DateArrow = React.memo(function DateArrow({ dir, onPress, theme }: { dir: 'left' | 'right'; onPress: () => void; theme: Theme }) {
+  const sc = useRef(new Animated.Value(1)).current;
+  const pressIn = () => Animated.spring(sc, { toValue: 0.88, speed: 40, bounciness: 5, useNativeDriver: true }).start();
+  const pressOut = () => Animated.spring(sc, { toValue: 1, speed: 22, bounciness: 9, useNativeDriver: true }).start();
+  return (
+    <Animated.View style={{ transform: [{ scale: sc }] }}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={pressIn}
+        onPressOut={pressOut}
+        hitSlop={8}
+        style={[styles.dateArrow, { borderColor: 'rgba(238,203,122,0.25)', backgroundColor: theme.isDark ? '#141414' : '#f9f4ec' }]}
+      >
+        <View style={{ transform: [{ rotate: dir === 'left' ? '90deg' : '-90deg' }] }}><Chev color={theme.goldText} /></View>
+      </Pressable>
+    </Animated.View>
+  );
+});
+
+/** Very subtle breathing glow behind the yantra — opacity 0.12↔0.22 over 4s,
+    transform/opacity only (native driver), pointerEvents none. */
+function BreathGlow({ size, color }: { size: number; color: string }) {
+  const a = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(a, { toValue: 1, duration: 4000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(a, { toValue: 0, duration: 4000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [a]);
+  const opacity = a.interpolate({ inputRange: [0, 1], outputRange: [0.12, 0.22] });
+  const scale = a.interpolate({ inputRange: [0, 1], outputRange: [1, 1.06] });
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={{ position: 'absolute', left: -(size - 64) / 2, top: -(size - 64) / 2, width: size, height: size, opacity, transform: [{ scale }] }}
+    >
+      <Svg width={size} height={size}>
+        <Defs>
+          <RadialGradient id="cgBreath" cx="50%" cy="50%" r="50%">
+            <Stop offset="0%" stopColor={color} stopOpacity={1} />
+            <Stop offset="100%" stopColor={color} stopOpacity={0} />
+          </RadialGradient>
+        </Defs>
+        <Circle cx={size / 2} cy={size / 2} r={size / 2} fill="url(#cgBreath)" />
+      </Svg>
+    </Animated.View>
+  );
+}
+
+/** One row of the 8-period table — memoized with primitive/stable props so the
+    15s clock tick re-renders ONLY the active row (its `pct` prop changes).
+    Left accent strip = nature at a glance; past rows fade to 45%. */
+const PeriodRow = React.memo(function PeriodRow({
+  idx, name, time, tag, accent, isActive, isPast, pct, theme, lang,
+}: {
+  idx: number; name: string; time: string; tag: string; accent: string;
+  isActive: boolean; isPast: boolean; pct: number; theme: Theme; lang: Lang;
+}) {
+  return (
+    <View
+      style={[
+        styles.row,
+        {
+          // keep the SAME background for all rows — only the border highlights the active one (no inner fill/shadow)
+          backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(176,115,22,0.04)',
+          borderColor: isActive ? accent : (theme.isDark ? 'rgba(238,203,122,0.18)' : 'rgba(176,115,22,0.18)'),
+          borderWidth: isActive ? 1.5 : 1,
+          opacity: isPast ? 0.45 : 1,
+        },
+      ]}
+    >
+      {/* 4px left-edge strip in the period's accent — nature readable without reading */}
+      <View style={[styles.rowEdge, { backgroundColor: accent }]} pointerEvents="none" />
+      <View style={[styles.num, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.10)' : 'rgba(176,115,22,0.12)' }]}>
+        <Text style={[styles.numText, { color: theme.isDark ? '#cccccc' : theme.textMuted }]}>{idx + 1}</Text>
+      </View>
+      <View style={[styles.rowIcon, { backgroundColor: accent + '26' }]}>
+        <ChoghadiyaSymbol name={name} color={accent} />
+      </View>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text style={[styles.rowName, { color: theme.isDark ? '#ffffff' : theme.text }]} numberOfLines={1}>
+          {aPeriod(name, lang).toUpperCase()}{isActive ? (lang === 'hi' ? ' (वर्तमान)' : ' (VARTMAN)') : ''}
+        </Text>
+        <Text style={[styles.rowTime, { color: theme.isDark ? '#999999' : theme.textMuted }]}>{time}</Text>
+      </View>
+      <Text style={[styles.rowTag, { color: accent }]}>{tag}</Text>
+      {/* live progress along the bottom edge of the running period (same fraction as the hero bar) */}
+      {isActive && (
+        <View style={[styles.rowFill, { backgroundColor: accent, width: `${Math.min(100, Math.max(0, pct))}%` }]} pointerEvents="none" />
+      )}
+    </View>
+  );
+});
+
+/** Upcoming auspicious card — memoized so the 15s tick doesn't re-render the grid. */
+const UpcomingCard = React.memo(function UpcomingCard({ name, time, theme, lang }: { name: string; time: string; theme: Theme; lang: Lang }) {
+  const isAmrit = name === 'Amrit';
+  // all-side gradient border — gold by default, green-gold for the
+  // most-auspicious Amrit card. Matches the app's premium gold cards.
+  const borderColors = isAmrit
+    ? (['#bdf0bd', '#32cd32', '#1f7a35', '#7ee07e'] as const)
+    : (['#fce8a8', '#e9b850', '#a17613', '#f6d27a'] as const);
+  return (
+    <LinearGradient colors={borderColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.upBorder}>
+      <LinearGradient
+        colors={theme.isDark ? ['rgba(36,28,12,0.85)', 'rgba(8,6,3,0.96)'] : ['#fffdf7', '#fff6e6']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={styles.upInner}
+      >
+        {/* gold medallion icon */}
+        <LinearGradient
+          colors={isAmrit ? ['rgba(50,205,50,0.22)', 'rgba(50,205,50,0.05)'] : ['rgba(252,232,168,0.26)', 'rgba(238,203,122,0.06)']}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={[styles.upIcon, { borderColor: isAmrit ? 'rgba(50,205,50,0.5)' : 'rgba(238,203,122,0.5)' }]}
+        >
+          <ChoghadiyaSymbol name={name} color={isAmrit ? '#5fe07f' : theme.goldText} size={19} />
+        </LinearGradient>
+
+        <Text style={[styles.upName, { color: isAmrit ? '#7be89a' : theme.goldText }]}>{aPeriod(name, lang).toUpperCase()}</Text>
+
+        {/* tiny gold divider under the name */}
+        <LinearGradient
+          colors={['transparent', isAmrit ? 'rgba(50,205,50,0.7)' : theme.goldText, 'transparent']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.upDivider}
+        />
+
+        <Text
+          style={[styles.upTime, { color: theme.isDark ? '#e7d8b4' : theme.textMuted }]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.75}
+        >
+          {time}
+        </Text>
+
+        <Text style={[styles.upBlurb, { color: theme.green }]}>{lang === 'hi' ? (aBlurb(name, lang) || 'शुभ') : (UPCOMING_BLURB[name] || 'AUSPICIOUS')}</Text>
+      </LinearGradient>
+    </LinearGradient>
+  );
+});
 
 export function ChoghadiyaScreen({ navigation }: any) {
   const { theme } = useTheme();
@@ -491,39 +656,45 @@ export function ChoghadiyaScreen({ navigation }: any) {
   // duration (minutes) of the highlighted period — used by the timer ring
   const durMin = Math.floor((highlight.end.getTime() - highlight.start.getTime()) / 60000);
 
-  // 8-row list — memoized so the 15s clock tick doesn't re-render it (list &
-  // active are stable references until the date or active period actually changes)
+  // how far through the CURRENT period we are — rides the existing 15s clock
+  // tick (no extra timer). Rounded to whole % so the active row's memo only
+  // breaks when the value actually moves.
+  const progressPct = isToday && active
+    ? Math.min(100, Math.max(0, Math.round(((now.getTime() - active.start.getTime()) / (active.end.getTime() - active.start.getTime())) * 100)))
+    : 0;
+
+  // if RIGHT NOW is inauspicious → the very next auspicious window (answers
+  // the page's #1 question instantly). Pre-dawn the active period lives in
+  // yesterday's table, so search both pools.
+  const nextGood = useMemo(() => {
+    if (!isToday || !active || active.meta.nature !== 'bad') return null;
+    const pool = [...(yesterdayPeriods ?? []), ...periods]
+      .filter((p) => p.meta.nature === 'good' && p.start > now)
+      .sort((a, b) => a.start.getTime() - b.start.getTime());
+    return pool[0] ?? null;
+  }, [isToday, active, periods, yesterdayPeriods, now]);
+
+  // which phase table contains the period running right now (today only) —
+  // drives the tiny live dot on the day/night toggle
+  const livePhase: 'day' | 'night' | null = isToday && active ? active.phase : null;
+
+  // ‹ › one-day hops (stable refs for the memoized spring-press arrows)
+  const goPrev = useCallback(() => { hTap(); setSelectedDate((d) => stripTime(new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1))); }, []);
+  const goNext = useCallback(() => { hTap(); setSelectedDate((d) => stripTime(new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1))); }, []);
+
+  // entrance — light fade+rise on the header + active card only (first paint stays instant)
+  const enter = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(enter, { toValue: 1, duration: 620, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+  }, [enter]);
+  const rise = (start: number) => ({
+    opacity: enter.interpolate({ inputRange: [start, Math.min(1, start + 0.45)], outputRange: [0, 1], extrapolate: 'clamp' as const }),
+    transform: [{ translateY: enter.interpolate({ inputRange: [start, Math.min(1, start + 0.45)], outputRange: [18, 0], extrapolate: 'clamp' as const }) }],
+  });
+
+  // 8-row list — rows are memoized (<PeriodRow/>) with primitive props, so the
+  // 15s clock tick re-renders only the active row (its pct prop moves)
   const phaseList = phaseTab === 'night' ? nightList : dayList;
-  const listRows = useMemo(() => phaseList.map((p, i) => {
-    const ac = accentFor(theme, p.meta.color);
-    const isActive = active === p;
-    return (
-      <View
-        key={i}
-        style={[
-          styles.row,
-          {
-            // keep the SAME background for all rows — only the border highlights the active one (no inner fill/shadow)
-            backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(176,115,22,0.04)',
-            borderColor: isActive ? ac : (theme.isDark ? 'rgba(238,203,122,0.18)' : 'rgba(176,115,22,0.18)'),
-            borderWidth: isActive ? 1.5 : 1,
-          },
-        ]}
-      >
-        <View style={[styles.num, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.10)' : 'rgba(176,115,22,0.12)' }]}>
-          <Text style={[styles.numText, { color: theme.isDark ? '#cccccc' : theme.textMuted }]}>{i + 1}</Text>
-        </View>
-        <View style={[styles.rowIcon, { backgroundColor: ac + '26' }]}>
-          <ChoghadiyaSymbol name={p.name} color={ac} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.rowName, { color: theme.isDark ? '#ffffff' : theme.text }]}>{aPeriod(p.name, lang).toUpperCase()}{isActive ? (lang === 'hi' ? ' (वर्तमान)' : ' (VARTMAN)') : ''}</Text>
-          <Text style={[styles.rowTime, { color: theme.isDark ? '#999999' : theme.textMuted }]}>{fmtTime(p.start)} - {fmtTime(p.end)}</Text>
-        </View>
-        <Text style={[styles.rowTag, { color: ac }]}>{aTag(p.meta.tag, lang)}</Text>
-      </View>
-    );
-  }), [phaseList, active, theme, lang]);
 
   // ── Muhurat Finder (AI): best upcoming Choghadiya window for the user's activity ──
   const [muhuratOpen, setMuhuratOpen] = useState(false);
@@ -556,8 +727,10 @@ export function ChoghadiyaScreen({ navigation }: any) {
   return (
     <Screen header={<BrandHeader onMenu={openMenu} onBell={() => navigation.navigate('Notifications')} />}>
 
-      {/* cg-header: ornament ✦ CHOGHADIYA ✦ ornament + subtitle + date pill */}
-      <View style={styles.cgHeader}>
+      {/* cg-header: ornament ✦ CHOGHADIYA ✦ ornament + subtitle + date pill.
+          rise() entrance — every surface inside is opaque (Android hardware-layer
+          white-composite bug with translucent fills in animated wrappers). */}
+      <Animated.View style={[styles.cgHeader, rise(0)]}>
         <View style={styles.cgTitle}>
           <TitleOrnament color={theme.gold2} />
           <Sparkle color={theme.goldText} size={13} />
@@ -570,22 +743,17 @@ export function ChoghadiyaScreen({ navigation }: any) {
         {/* Drik-style date row: ‹ › hop one day (the common planning move), the pill opens
             the calendar for far dates, and today itself needs no navigation at all. */}
         <View style={styles.dateRow}>
-          <Pressable
-            onPress={() => { hTap(); setSelectedDate((d) => stripTime(new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1))); }}
-            hitSlop={8}
-            style={({ pressed }) => [styles.dateArrow, { borderColor: 'rgba(238,203,122,0.25)', backgroundColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(176,115,22,0.08)' }, pressed && { transform: [{ scale: 0.9 }] }]}
-          >
-            <View style={{ transform: [{ rotate: '90deg' }] }}><Chev color={theme.goldText} /></View>
-          </Pressable>
+          <DateArrow dir="left" onPress={goPrev} theme={theme} />
 
           <Pressable
             onPress={() => { hTap(); setCalOpen(true); }}
             style={({ pressed }) => [
               styles.datePill,
               {
+                // opaque fills — inside the rise() wrapper
                 backgroundColor: calOpen
-                  ? 'rgba(238,203,122,0.18)'
-                  : theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(176,115,22,0.08)',
+                  ? (theme.isDark ? '#2b2516' : '#fcf6e7')
+                  : theme.isDark ? '#141414' : '#f9f4ec',
                 borderColor: calOpen ? 'rgba(238,203,122,0.6)' : 'rgba(238,203,122,0.25)',
               },
               pressed && { transform: [{ scale: 0.97 }] },
@@ -600,32 +768,29 @@ export function ChoghadiyaScreen({ navigation }: any) {
             </View>
           </Pressable>
 
-          <Pressable
-            onPress={() => { hTap(); setSelectedDate((d) => stripTime(new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1))); }}
-            hitSlop={8}
-            style={({ pressed }) => [styles.dateArrow, { borderColor: 'rgba(238,203,122,0.25)', backgroundColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(176,115,22,0.08)' }, pressed && { transform: [{ scale: 0.9 }] }]}
-          >
-            <View style={{ transform: [{ rotate: '-90deg' }] }}><Chev color={theme.goldText} /></View>
-          </Pressable>
+          <DateArrow dir="right" onPress={goNext} theme={theme} />
         </View>
 
         {/* one tap back to the live view when browsing another date */}
         {!isToday && (
           <Pressable
             onPress={() => { hTap(); setSelectedDate(stripTime(new Date())); }}
-            style={({ pressed }) => [styles.todayChip, { borderColor: theme.gold2 + '66', backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : 'rgba(233,184,80,0.15)' }, pressed && { transform: [{ scale: 0.95 }] }]}
+            style={({ pressed }) => [styles.todayChip, { borderColor: theme.gold2 + '66', backgroundColor: theme.isDark ? '#1c160a' : '#fcf4e5' }, pressed && { transform: [{ scale: 0.95 }] }]}
           >
             <Text style={[styles.todayChipText, { color: theme.goldText }]}>{lang === 'hi' ? '↩ आज पर लौटें' : '↩ Back to Today'}</Text>
           </Pressable>
         )}
-      </View>
+      </Animated.View>
 
-      {/* Active card — web: black bg + subtle gold radial at 30% 50% */}
-      <View
+      {/* Active card — web: black bg + subtle gold radial at 30% 50%.
+          rise() entrance → bg must be a solid hex (translucent fills inside
+          transform-animated views composite white on Android). */}
+      <Animated.View
         style={[
           styles.activeCard,
+          rise(0.18),
           {
-            backgroundColor: theme.isDark ? 'rgba(2,2,4,0.96)' : '#ffffff',
+            backgroundColor: theme.isDark ? '#020204' : '#ffffff',
             borderColor: theme.isDark ? 'rgba(238,203,122,0.42)' : theme.cardBorder,
           },
         ]}
@@ -658,16 +823,20 @@ export function ChoghadiyaScreen({ navigation }: any) {
               <Text style={[styles.activeLabel, { color: goldDim }]}>{isToday && active ? tr('cg.currentlyActive', 'CURRENTLY ACTIVE') : tr('cg.dayBegins', 'DAY BEGINS WITH')}</Text>
             </View>
             <View style={styles.activeRow}>
-              <View style={[styles.yantraWrap, { backgroundColor: theme.isDark ? 'transparent' : '#ffffff', borderColor: theme.isDark ? 'transparent' : theme.cardBorder, borderWidth: theme.isDark ? 0 : 1 }]}>
-                <YantraGlow size={90} dark={theme.isDark} />
-                <YantraArt size={62} dark={theme.isDark} />
+              <View style={{ width: 64, height: 64 }}>
+                {/* subtle breathing halo behind the yantra (0.12↔0.22, 4s) */}
+                <BreathGlow size={120} color={theme.isDark ? '#e9b850' : '#f0b429'} />
+                <View style={[styles.yantraWrap, { backgroundColor: theme.isDark ? 'transparent' : '#ffffff', borderColor: theme.isDark ? 'transparent' : theme.cardBorder, borderWidth: theme.isDark ? 0 : 1 }]}>
+                  <YantraGlow size={90} dark={theme.isDark} />
+                  <YantraArt size={62} dark={theme.isDark} />
+                </View>
               </View>
               <View style={styles.activeInfo}>
                 <View style={styles.activeNameRow}>
                   <Text style={[styles.activeName, { color: hAccent, textShadowColor: hAccent, textShadowRadius: 14, textShadowOffset: { width: 0, height: 0 } }]}>{aPeriod(highlight.name, lang).toUpperCase()}</Text>
                   <CheckIcon color={hAccent} />
                 </View>
-                <View style={[styles.timeRow, { backgroundColor: theme.isDark ? 'rgba(0,0,0,0.4)' : 'rgba(95,56,8,0.07)' }]}>
+                <View style={[styles.timeRow, { backgroundColor: theme.isDark ? '#010102' : '#f4f1ee' }]}>
                   <ClockIcon color={theme.goldText} size={12} />
                   <Text style={[styles.activeTime, { color: theme.goldText }]}>{fmtTime(highlight.start)} - {fmtTime(highlight.end)}</Text>
                 </View>
@@ -683,11 +852,33 @@ export function ChoghadiyaScreen({ navigation }: any) {
             mutedColor={theme.textMuted}
           />
         </View>
+        {/* live progress — how far through the current period we are (15s tick) */}
+        {isToday && !!active && (
+          <View style={[styles.heroTrack, { backgroundColor: theme.isDark ? '#1f1b12' : '#efe7d8' }]}>
+            <LinearGradient
+              colors={theme.buttonGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={[styles.heroFill, { width: `${progressPct}%` }]}
+            />
+          </View>
+        )}
+        {/* inauspicious right now → answer the #1 question: when is the next good window? */}
+        {isToday && !!active && active.meta.nature === 'bad' && !!nextGood && (
+          <View style={styles.nextGoodRow}>
+            <Sparkle color={theme.isDark ? '#7be89a' : theme.green} size={11} />
+            <Text style={[styles.nextGoodText, { color: theme.isDark ? '#7be89a' : theme.green }]} numberOfLines={1}>
+              {lang === 'hi'
+                ? `अगला शुभ समय: ${aPeriod(nextGood.name, lang)} · ${fmtTime(nextGood.start)}`
+                : `Next auspicious: ${aPeriod(nextGood.name, lang)} · ${fmtTime(nextGood.start)}`}
+            </Text>
+          </View>
+        )}
         {/* description — separated by a soft gold rule (web ≤480 layout) */}
         <Text style={[styles.activeDesc, { color: theme.isDark ? '#b8b8b8' : theme.textSoft, borderTopColor: 'rgba(238,203,122,0.28)' }]}>
           {aPeriodDesc(highlight.name, lang) || highlight.meta.desc}
         </Text>
-      </View>
+      </Animated.View>
 
       {/* AI Muhurat Finder — best window for the user's activity */}
       <Pressable
@@ -713,11 +904,12 @@ export function ChoghadiyaScreen({ navigation }: any) {
       </Pressable>
 
       {/* Today's list */}
-      <SectionHeader
-        icon={<ClockIcon color={goldDim} size={15} />}
-        label={isToday ? tr('cg.todays', "TODAY'S CHOGHADIYA") : `CHOGHADIYA · ${selectedDate.getDate()} ${MONTHS_FULL[selectedDate.getMonth()].substring(0, 3).toUpperCase()}`}
-        color={goldDim}
-        rule={theme.isDark ? 'rgba(201,150,46,0.45)' : 'rgba(176,115,22,0.35)'}
+      <SectionTitle
+        label={isToday
+          ? tr('cg.todays', lang === 'hi' ? 'आज का चौघड़िया' : "TODAY'S CHOGHADIYA")
+          : (lang === 'hi'
+            ? `चौघड़िया · ${selectedDate.getDate()} ${MONTHS_FULL[selectedDate.getMonth()].substring(0, 3).toUpperCase()}`
+            : `CHOGHADIYA · ${selectedDate.getDate()} ${MONTHS_FULL[selectedDate.getMonth()].substring(0, 3).toUpperCase()}`)}
       />
       <View
         style={[
@@ -732,10 +924,14 @@ export function ChoghadiyaScreen({ navigation }: any) {
         <View style={[styles.phaseWrap, { borderColor: theme.cardBorder, backgroundColor: theme.cardBg }]}>
           {([['day', lang === 'hi' ? '☀️ दिन' : '☀️ Day'], ['night', lang === 'hi' ? '🌙 रात' : '🌙 Night']] as ['day' | 'night', string][]).map(([key, label]) => {
             const on = phaseTab === key;
+            const live = livePhase === key; // this side holds the period running RIGHT NOW
             return (
               <Pressable key={key} onPress={() => { hTap(); setPhaseTab(key); }} style={styles.phaseBtn}>
                 {on && <LinearGradient colors={theme.buttonGradient} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={StyleSheet.absoluteFill} />}
-                <Text style={[styles.phaseBtnText, { color: on ? theme.goldInk : theme.textMuted }]}>{label}</Text>
+                <View style={styles.phaseLabelRow}>
+                  <Text style={[styles.phaseBtnText, { color: on ? theme.goldInk : theme.textMuted }]}>{label}</Text>
+                  {live && <View style={[styles.phaseLiveDot, { backgroundColor: on ? theme.goldInk : theme.green }]} />}
+                </View>
               </Pressable>
             );
           })}
@@ -746,7 +942,21 @@ export function ChoghadiyaScreen({ navigation }: any) {
             : (lang === 'hi' ? 'सूर्यास्त से अगले सूर्योदय तक' : 'Sunset to next sunrise')}
         </Text>
         <View style={{ gap: 8 }}>
-          {listRows}
+          {phaseList.map((p, i) => (
+            <PeriodRow
+              key={`${p.name}-${i}`}
+              idx={i}
+              name={p.name}
+              time={`${fmtTime(p.start)} - ${fmtTime(p.end)}`}
+              tag={aTag(p.meta.tag, lang)}
+              accent={accentFor(theme, p.meta.color)}
+              isActive={active === p}
+              isPast={isToday && p.end.getTime() <= now.getTime()}
+              pct={active === p ? progressPct : 0}
+              theme={theme}
+              lang={lang}
+            />
+          ))}
         </View>
         {/* location line (web .cg-location) */}
         <View style={styles.locationRow}>
@@ -759,81 +969,37 @@ export function ChoghadiyaScreen({ navigation }: any) {
         </View>
       </View>
 
-      <ChoghadiyaActivities activeChoghadiya={isToday && active ? active.name : undefined} />
+      {/* Everything below the list card mounts staggered — first paint stays instant */}
+      <Deferred delay={80}>
+        <ChoghadiyaActivities activeChoghadiya={isToday && active ? active.name : undefined} />
+      </Deferred>
 
-      <ChoghadiyaSpecialMessage
-        activeName={highlight.name}
-        desc={aiMsg || highlight.meta.desc}
-        timeRange={`${fmtTime(highlight.start)} to ${fmtTime(highlight.end)}`}
-        today={isToday && !!active}
-      />
+      <Deferred delay={160}>
+        <ChoghadiyaSpecialMessage
+          activeName={highlight.name}
+          desc={aiMsg || highlight.meta.desc}
+          timeRange={`${fmtTime(highlight.start)} to ${fmtTime(highlight.end)}`}
+          today={isToday && !!active}
+        />
+      </Deferred>
 
-      {/* Upcoming — ✦ sparkle title (web cg-title small variant) */}
-      <View style={styles.upTitleRow}>
-        <Sparkle color={theme.goldText} size={13} />
-        <GradientText style={styles.upTitleText}>{tr('cg.upcoming', 'UPCOMING AUSPICIOUS TIMINGS')}</GradientText>
-        <Sparkle color={theme.goldText} size={13} />
-      </View>
-      <View style={styles.upGrid}>
-        {upcoming.map((p, i) => {
-          const isAmrit = p.name === 'Amrit';
-          // all-side gradient border — gold by default, green-gold for the
-          // most-auspicious Amrit card. Matches the app's premium gold cards.
-          const borderColors = isAmrit
-            ? (['#bdf0bd', '#32cd32', '#1f7a35', '#7ee07e'] as const)
-            : (['#fce8a8', '#e9b850', '#a17613', '#f6d27a'] as const);
-          return (
-            <LinearGradient
-              key={i}
-              colors={borderColors}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.upBorder}
-            >
-              <LinearGradient
-                colors={theme.isDark
-                  ? ['rgba(36,28,12,0.85)', 'rgba(8,6,3,0.96)']
-                  : ['#fffdf7', '#fff6e6']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                style={styles.upInner}
-              >
-                {/* gold medallion icon */}
-                <LinearGradient
-                  colors={isAmrit ? ['rgba(50,205,50,0.22)', 'rgba(50,205,50,0.05)'] : ['rgba(252,232,168,0.26)', 'rgba(238,203,122,0.06)']}
-                  start={{ x: 0.5, y: 0 }}
-                  end={{ x: 0.5, y: 1 }}
-                  style={[styles.upIcon, { borderColor: isAmrit ? 'rgba(50,205,50,0.5)' : 'rgba(238,203,122,0.5)' }]}
-                >
-                  <ChoghadiyaSymbol name={p.name} color={isAmrit ? '#5fe07f' : theme.goldText} size={19} />
-                </LinearGradient>
+      {/* Upcoming — gold SectionTitle + memoized cards */}
+      <Deferred delay={240}>
+        <SectionTitle label={tr('cg.upcoming', lang === 'hi' ? 'आगामी शुभ समय' : 'UPCOMING AUSPICIOUS TIMINGS')} />
+        <View style={styles.upGrid}>
+          {upcoming.map((p, i) => (
+            <UpcomingCard
+              key={`${p.name}-${i}`}
+              name={p.name}
+              time={`${fmtTime(p.start)} - ${fmtTime(p.end)}`}
+              theme={theme}
+              lang={lang}
+            />
+          ))}
+        </View>
+      </Deferred>
 
-                <Text style={[styles.upName, { color: isAmrit ? '#7be89a' : theme.goldText }]}>{aPeriod(p.name, lang).toUpperCase()}</Text>
-
-                {/* tiny gold divider under the name */}
-                <LinearGradient
-                  colors={['transparent', isAmrit ? 'rgba(50,205,50,0.7)' : theme.goldText, 'transparent']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.upDivider}
-                />
-
-                <Text
-                  style={[styles.upTime, { color: theme.isDark ? '#e7d8b4' : theme.textMuted }]}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.75}
-                >
-                  {fmtTime(p.start)} - {fmtTime(p.end)}
-                </Text>
-
-                <Text style={[styles.upBlurb, { color: theme.green }]}>{lang === 'hi' ? (aBlurb(p.name, lang) || 'शुभ') : (UPCOMING_BLURB[p.name] || 'AUSPICIOUS')}</Text>
-              </LinearGradient>
-            </LinearGradient>
-          );
-        })}
-      </View>
-
+      <Deferred delay={320}>
       {/* Gold calendar (web .cg-cal) */}
       <CgCalendar
         visible={calOpen}
@@ -888,6 +1054,7 @@ export function ChoghadiyaScreen({ navigation }: any) {
           </Pressable>
         </Pressable>
       </Modal>
+      </Deferred>
     </Screen>
   );
 }
@@ -944,13 +1111,22 @@ const styles = StyleSheet.create({
   ringTime: { fontFamily: fonts.interBold, fontSize: 10.5 },
   ringLeft: { fontFamily: fonts.inter, fontSize: 7.5, letterSpacing: 0.4, marginTop: 2 },
   activeDesc: { fontFamily: fonts.inter, fontSize: 11, lineHeight: 16.5, marginTop: 12, paddingTop: 12, borderTopWidth: 1 },
+  // live progress through the current period (hero bar)
+  heroTrack: { height: 4, borderRadius: 2, marginTop: 14, overflow: 'hidden' },
+  heroFill: { height: 4, borderRadius: 2 },
+  nextGoodRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 9 },
+  nextGoodText: { fontFamily: fonts.interSemi, fontSize: 11.5, flexShrink: 1 },
 
-  listHeadRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
-  listHead: { fontFamily: fonts.interMed, fontSize: 13, letterSpacing: 1 },
-  headRule: { flex: 1, height: 1, borderRadius: 1, marginLeft: 4 },
+  // gold section header between blocks (Kundli SectionTitle treatment)
+  secTitleWrap: { marginBottom: 14 },
+  secTitleText: { fontFamily: fonts.cinzel, fontSize: 13, letterSpacing: 1.8, textTransform: 'uppercase' },
+  secTitleRule: { height: 1, marginTop: 7 },
+
   phaseWrap: { flexDirection: 'row', gap: 4, padding: 4, borderWidth: 1, borderRadius: 12, marginBottom: 6 },
   phaseBtn: { flex: 1, paddingVertical: 9, alignItems: 'center', justifyContent: 'center', borderRadius: 9, overflow: 'hidden' },
+  phaseLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   phaseBtnText: { fontFamily: fonts.interBold, fontSize: 13 },
+  phaseLiveDot: { width: 5, height: 5, borderRadius: 2.5 },
   phaseHint: { fontFamily: fonts.inter, fontSize: 11, textAlign: 'center', marginBottom: 10 },
   listCard: {
     padding: 12,
@@ -963,18 +1139,20 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     elevation: 5,
   },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: 12, borderWidth: 1 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9, paddingRight: 10, paddingLeft: 14, borderRadius: 12, borderWidth: 1, overflow: 'hidden' },
+  // 4px accent strip on the left edge — nature visible at a glance
+  rowEdge: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, borderTopRightRadius: 2, borderBottomRightRadius: 2 },
+  // active row's live progress along the bottom edge
+  rowFill: { position: 'absolute', left: 0, bottom: 0, height: 3, borderRadius: 1.5, opacity: 0.6 },
   num: { width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   numText: { fontFamily: fonts.interBold, fontSize: 10 },
   rowIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  rowName: { fontFamily: fonts.interSemi, fontSize: 13 },
-  rowTime: { fontFamily: fonts.inter, fontSize: 11, marginTop: 2 },
+  rowName: { fontFamily: fonts.interSemi, fontSize: 12.5, letterSpacing: 0.3 },
+  rowTime: { fontFamily: fonts.inter, fontSize: 10.5, marginTop: 2, fontVariant: ['tabular-nums'] },
   rowTag: { fontFamily: fonts.interBold, fontSize: 9, letterSpacing: 0.5, textTransform: 'uppercase' },
   locationRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 16, marginBottom: 4 },
   locationText: { fontFamily: fonts.inter, fontSize: 10 },
 
-  upTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 16 },
-  upTitleText: { fontFamily: fonts.interSemi, fontSize: 13, letterSpacing: 1.3 },
   upGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 8 },
   /* outer = all-side gold gradient border ring */
   upBorder: {
