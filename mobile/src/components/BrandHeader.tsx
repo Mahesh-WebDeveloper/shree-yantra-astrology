@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ColorValue } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
@@ -15,6 +15,25 @@ interface Props {
   /** override the live unread badge (defaults to the real unread count) */
   badge?: number;
   showEmblem?: boolean;
+}
+
+/* icon button — hoisted OUT of BrandHeader so its identity is stable across
+   renders (an inline component remounts its subtree — and resets the press
+   spring — on every parent render) */
+function HeaderBtn({ onPress, colors, border, ripple, children }: {
+  onPress?: () => void;
+  colors: readonly [ColorValue, ColorValue];
+  border: string;
+  ripple: ColorValue;
+  children: React.ReactNode;
+}) {
+  return (
+    <PressableScale onPress={onPress} hitSlop={10} ripple={ripple} rippleBorderless style={styles.btnWrap}>
+      <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.btn, { borderColor: border }]}>
+        {children}
+      </LinearGradient>
+    </PressableScale>
+  );
 }
 
 /**
@@ -39,14 +58,6 @@ export function BrandHeader({ onMenu, onBell, badge, showEmblem = true }: Props)
     : (['#ffffff', '#f8fafc'] as const);
   const btnBorder = theme.isDark ? 'rgba(233,184,80,0.45)' : theme.cardBorder;
 
-  const Btn = ({ onPress, children }: { onPress?: () => void; children: React.ReactNode }) => (
-    <PressableScale onPress={onPress} hitSlop={10} ripple={theme.ripple} rippleBorderless style={styles.btnWrap}>
-      <LinearGradient colors={btnColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.btn, { borderColor: btnBorder }]}>
-        {children}
-      </LinearGradient>
-    </PressableScale>
-  );
-
   return (
     <View
       style={[
@@ -59,9 +70,9 @@ export function BrandHeader({ onMenu, onBell, badge, showEmblem = true }: Props)
         },
       ]}
     >
-      <Btn onPress={onMenu}>
+      <HeaderBtn onPress={onMenu} colors={btnColors} border={btnBorder} ripple={theme.ripple}>
         <MenuIcon color={theme.gold1} size={20} />
-      </Btn>
+      </HeaderBtn>
 
       <View style={styles.brand}>
         {showEmblem && <BrandEmblem color={theme.gold1} size={30} />}
@@ -75,14 +86,23 @@ export function BrandHeader({ onMenu, onBell, badge, showEmblem = true }: Props)
         </View>
       </View>
 
-      <Btn onPress={onBell}>
+      <HeaderBtn onPress={onBell} colors={btnColors} border={btnBorder} ripple={theme.ripple}>
         <BellIcon color={theme.gold1} size={20} />
         {count > 0 && (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{count > 99 ? '99+' : count}</Text>
           </View>
         )}
-      </Btn>
+      </HeaderBtn>
+
+      {/* fading gold hairline tucked just above the bar's bottom edge */}
+      <LinearGradient
+        colors={['rgba(233,184,80,0)', theme.isDark ? 'rgba(246,210,122,0.55)' : 'rgba(176,115,22,0.4)', 'rgba(233,184,80,0)']}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={styles.hairline}
+        pointerEvents="none"
+      />
     </View>
   );
 }
@@ -116,11 +136,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'visible',
   },
-  brand: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9 },
+  brand: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   brandText: { alignItems: 'center' },
-  word: { fontFamily: fonts.cinzel, fontSize: 16, letterSpacing: 2.4, textAlign: 'center' },
-  subRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 3 },
-  subDash: { width: 12, height: 1, opacity: 0.5, borderRadius: 1 },
+  word: { fontFamily: fonts.cinzel, fontSize: 16, letterSpacing: 2.6, textAlign: 'center' },
+  subRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 4 },
+  subDash: { width: 14, height: 1, opacity: 0.55, borderRadius: 1 },
+  hairline: { position: 'absolute', bottom: 6, left: 58, right: 58, height: 1 },
   sub: { fontFamily: fonts.cinzelSemi, fontSize: 8, letterSpacing: 3.2, textAlign: 'center' },
   badge: {
     position: 'absolute', top: -4, right: -4, minWidth: 17, height: 17, borderRadius: 9,

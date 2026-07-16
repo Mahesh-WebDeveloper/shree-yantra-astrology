@@ -1,5 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable, StyleSheet, ScrollView, Animated } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef, startTransition } from 'react';
+import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
+import Animated, {
+  Extrapolation, interpolate, useAnimatedStyle, useSharedValue, withSpring, withTiming,
+  type SharedValue,
+} from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, {
@@ -134,10 +138,9 @@ const DRAWER_LANGS: ReadonlyArray<readonly ['en' | 'hi', string, string]> = [
   ['hi', 'हि', 'हिंदी'],
 ];
 
-const NAV: Array<
-  | { divider: true }
-  | { label: string; icon: keyof typeof I; route: string; tab?: string; stack?: boolean; logout?: boolean }
-> = [
+type NavEntry = { label: string; icon: keyof typeof I; route: string; tab?: string; stack?: boolean; logout?: boolean };
+
+const NAV: Array<{ divider: true } | NavEntry> = [
   { label: 'Home', icon: 'home', route: 'Home', tab: 'Home' },
   { label: 'My Rashifal', icon: 'star', route: 'DailyPrediction', stack: true },
   { label: 'Rashifal · 12 Signs', icon: 'spark', route: 'Predictions', stack: true },
@@ -158,16 +161,114 @@ const NAV: Array<
   { label: 'Logout', icon: 'logout', route: 'PhoneAuth', stack: true, logout: true },
 ];
 
+/* ── UI-thread press scale (same worklet approach as CustomTabBar) ── */
+function usePressScale() {
+  const press = useSharedValue(0);
+  const style = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 - press.value * 0.03 }],
+  }));
+  const onIn = () => { press.value = withTiming(1, { duration: 70 }); };
+  const onOut = () => { press.value = withSpring(0, { damping: 14, stiffness: 260 }); };
+  return { style, onIn, onOut };
+}
+
+/* ── staggered cascade — sections/rows slide+fade in as the drawer opens.
+   Start offsets are CAPPED at 0.62 (window 0.35 → fully visible by 0.97) so the
+   bottom rows always reach full opacity — the old uncapped math left rows 13+
+   permanently semi-transparent. Runs entirely on the UI thread. ── */
+function Cascade({ index, progress, children }: {
+  index: number;
+  progress?: SharedValue<number>;
+  children: React.ReactNode;
+}) {
+  const style = useAnimatedStyle(() => {
+    if (!progress) return {};
+    const start = Math.min(0.1 + index * 0.045, 0.62);
+    return {
+      opacity: interpolate(progress.value, [0, start, start + 0.35], [0, 0, 1], Extrapolation.CLAMP),
+      transform: [{ translateX: interpolate(progress.value, [0, start + 0.35], [-24, 0], Extrapolation.CLAMP) }],
+    };
+  });
+  if (!progress) return <View>{children}</View>;
+  return <Animated.View style={style}>{children}</Animated.View>;
+}
+
+/* ── memoized selector chip (language / theme) — all props are primitives except
+   the stable onSelect, so chips skip re-rendering unless THEIR visuals change ── */
+const SelChip = React.memo(function SelChip({
+  ck, bg, border, fg, fgIcon, label, glyph, icon, rail, onSelect,
+}: {
+  ck: string; bg: string; border: string; fg: string; fgIcon?: string;
+  label: string; glyph?: string; icon?: 'sun' | 'moon'; rail?: boolean;
+  onSelect: (ck: string) => void;
+}) {
+  const { style, onIn, onOut } = usePressScale();
+  const ic = fgIcon ?? fg;
+  return (
+    <Pressable
+      onPressIn={onIn}
+      onPressOut={onOut}
+      onPress={() => onSelect(ck)}
+      style={rail ? styles.langChip : styles.selPress}
+    >
+      <Animated.View style={[styles.selBtn, { backgroundColor: bg, borderColor: border }, style]}>
+        {glyph != null && <Text style={[styles.selGlyph, { color: ic }]}>{glyph}</Text>}
+        {icon === 'sun' && <SunIcon c={ic} />}
+        {icon === 'moon' && <MoonIcon c={ic} />}
+        <Text style={[styles.selText, { color: fg }]}>{label}</Text>
+      </Animated.View>
+    </Pressable>
+  );
+});
+
+/* ── memoized nav row — gold medallion icon, spring-press (UI thread), active
+   gold left-edge strip. `item` is a module constant (stable reference) and every
+   other prop is a primitive, so rows DON'T re-render on the instant-feedback
+   local state flips — only when theme/language actually land. ── */
+const NavRow = React.memo(function NavRow({
+  item, label, active, edge, activeBg, pressBg, iconC, textC, medBg, medBorder, onGo,
+}: {
+  item: NavEntry; label: string; active: boolean;
+  edge: string; activeBg: string; pressBg: string;
+  iconC: string; textC: string; medBg: string; medBorder: string;
+  onGo: (item: NavEntry) => void;
+}) {
+  const { style, onIn, onOut } = usePressScale();
+  const Icon = I[item.icon];
+  return (
+    <Pressable
+      onPressIn={onIn}
+      onPressOut={onOut}
+      onPress={() => onGo(item)}
+      style={({ pressed }) => [
+        styles.navItem,
+        {
+          borderLeftColor: active ? edge : 'transparent',
+          backgroundColor: active ? activeBg : pressed ? pressBg : 'transparent',
+        },
+      ]}
+    >
+      <Animated.View style={[styles.navInner, style]}>
+        <View style={[styles.medallion, { backgroundColor: medBg, borderColor: medBorder }]}>
+          <Icon c={iconC} />
+        </View>
+        <Text style={[styles.navText, { color: textC }]}>{label}</Text>
+      </Animated.View>
+    </Pressable>
+  );
+});
+
 /** Side drawer — exact port of the web `.sy-drawer`:
     deep indigo gradient panel, gold-glow head with Om medallion + close button,
     Namaste + PREMIUM badge, Language & Theme selector rows, icon nav list with
     gold left-edge active state, gradient dividers, footer version line. */
-export function DrawerContent({ close, progress }: { close: () => void; progress?: Animated.Value }) {
+export function DrawerContent({ close, progress }: { close: () => void; progress?: SharedValue<number> }) {
   const { theme, name, setTheme } = useTheme();
   const dialog = useDialog();
   const insets = useSafeAreaInsets();
   const isDark = theme.isDark;
   const { lang, setLang, t: tr } = useLang();
+  const hi = lang === 'hi';
 
   // logged-in user (drawer har open par remount hota hai → mount par fresh load)
   const [firstName, setFirstName] = useState('Guest');
@@ -184,27 +285,53 @@ export function DrawerContent({ close, progress }: { close: () => void; progress
   /* which route is focused (for active highlight) — read once at mount */
   const activeTab = currentRouteName() ?? 'Home';
 
-  /* staggered reveal for each nav row — items cascade in as the drawer opens */
-  const itemAnim = (i: number) => {
-    if (!progress) return undefined;
-    const start = 0.12 + i * 0.045;
-    return {
-      opacity: progress.interpolate({ inputRange: [0, start, start + 0.32], outputRange: [0, 0, 1], extrapolate: 'clamp' }),
-      transform: [{ translateX: progress.interpolate({ inputRange: [0, start + 0.32], outputRange: [-26, 0], extrapolate: 'clamp' }) }],
-    };
-  };
+  /* ── INSTANT-feedback theme/language switch.
+     Root cause of the old lag: setTheme/setLang update app-wide context, which
+     synchronously re-renders EVERY mounted screen while the drawer overlay is
+     alive — the tapped chip's highlight waited behind that flood. Now the chip
+     flips instantly from LOCAL state (memoized rows skip this render), and the
+     heavy context switch is deferred two frames (double rAF, so the feedback
+     paints first) and marked as a low-priority transition. ── */
+  const [pendingLang, setPendingLang] = useState<'en' | 'hi' | null>(null);
+  const [pendingTheme, setPendingTheme] = useState<'light' | 'dark' | null>(null);
+  const shownLang = pendingLang ?? lang;
+  const shownTheme = pendingTheme ?? name;
+  useEffect(() => { if (pendingLang !== null && lang === pendingLang) setPendingLang(null); }, [lang, pendingLang]);
+  useEffect(() => { if (pendingTheme !== null && name === pendingTheme) setPendingTheme(null); }, [name, pendingTheme]);
 
-  const go = (item: { route: string; tab?: string; stack?: boolean; logout?: boolean }) => {
+  const chooseLang = useCallback((ck: string) => {
+    const k = ck as 'en' | 'hi';
+    hSelect();
+    setPendingLang(k);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      startTransition(() => setLang(k));
+    }));
+  }, [setLang]);
+
+  const chooseTheme = useCallback((ck: string) => {
+    const k = ck as 'light' | 'dark';
+    hSelect();
+    setPendingTheme(k);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      startTransition(() => setTheme(k));
+    }));
+  }, [setTheme]);
+
+  /* stable nav handler so memoized rows never re-render because of it */
+  const goRef = useRef<(item: NavEntry) => void>(() => {});
+  goRef.current = (item: NavEntry) => {
     hTap();
     // Logout → ask for confirmation first (keep drawer open behind the dialog)
     if (item.logout) {
       dialog(
-        'Log out?',
-        'You will need to sign in again to access your profile.',
+        hi ? 'लॉग आउट करें?' : 'Log out?',
+        hi
+          ? 'अपनी प्रोफ़ाइल फिर से देखने के लिए आपको दोबारा साइन इन करना होगा।'
+          : 'You will need to sign in again to access your profile.',
         [
-          { text: 'Cancel', style: 'cancel' },
+          { text: hi ? 'रद्द करें' : 'Cancel', style: 'cancel' },
           {
-            text: 'Log Out',
+            text: hi ? 'लॉग आउट' : 'Log Out',
             style: 'destructive',
             onPress: () => {
               logoutServer().catch(() => {}); // kill the server session (best-effort, uses current token)
@@ -225,12 +352,22 @@ export function DrawerContent({ close, progress }: { close: () => void; progress
       else navTo('Main', { screen: item.route });
     });
   };
+  const onGo = useCallback((item: NavEntry) => { goRef.current(item); }, []);
 
-  /* palette */
+  /* palette — solid hex fills inside transform-animated views (Android composite) */
   const line = isDark ? 'rgba(201,150,46,0.25)' : theme.line;
-  const sectionBg = isDark ? 'rgba(238,203,122,0.05)' : 'rgba(95,56,8,0.08)';
-  const btnBg = isDark ? 'rgba(0,0,0,0.5)' : '#ffffff';
+  const sectionBg = isDark ? '#0c0a06' : '#f2efeb';
+  const btnBg = isDark ? '#0b0a07' : '#ffffff';
   const btnBorder = isDark ? 'rgba(201,150,46,0.3)' : theme.cardBorder;
+  const chipActiveBg = isDark ? '#302a19' : '#ffe9b8';
+  const rowActiveBg = isDark ? 'rgba(233,184,80,0.12)' : 'rgba(95,56,8,0.14)';
+  const rowPressBg = isDark ? 'rgba(233,184,80,0.08)' : 'rgba(95,56,8,0.08)';
+  const medBg = isDark ? '#100d06' : '#f5f3f0';
+  const medBgActive = isDark ? '#251d0d' : '#ffe9b8';
+  const medBorder = isDark ? 'rgba(201,150,46,0.28)' : theme.cardBorder;
+  const medBorderActive = isDark ? 'rgba(233,184,80,0.55)' : theme.gold2;
+  const logoutC = isDark ? '#ef8c8c' : '#b83232';
+  const logoutBorder = isDark ? 'rgba(226,91,91,0.4)' : 'rgba(184,50,50,0.3)';
 
   return (
     <View
@@ -243,7 +380,8 @@ export function DrawerContent({ close, progress }: { close: () => void; progress
       ]}
     >
       {/* ── FIXED: Head (gold radial glow + brand + user) ── */}
-      <View style={[styles.head, { paddingTop: insets.top + 22, borderBottomColor: line }]}>
+      <Cascade index={0} progress={progress}>
+        <View style={[styles.head, { paddingTop: insets.top + 22 }]}>
           {/* radial gold glow at top-left — fixed-size (cheap to composite) */}
           <View style={styles.headGlow} pointerEvents="none">
             <Svg width={300} height={150}>
@@ -277,21 +415,29 @@ export function DrawerContent({ close, progress }: { close: () => void; progress
             <CloseIcon c={theme.gold1} />
           </Pressable>
 
-          {/* brand row: gold Om medallion + title */}
+          {/* brand row: gold Om medallion in a gold hairline ring + title */}
           <View style={styles.brandRow}>
-            <View style={styles.logoWrap}>
-              <Svg width={44} height={44} style={StyleSheet.absoluteFill}>
-                <Defs>
-                  <RadialGradient id="dLogo" cx="30%" cy="30%" r="80%">
-                    <Stop offset="0%" stopColor="#fce8a8" />
-                    <Stop offset="70%" stopColor="#8a6418" />
-                    <Stop offset="100%" stopColor="#8a6418" />
-                  </RadialGradient>
-                </Defs>
-                <Circle cx={22} cy={22} r={22} fill="url(#dLogo)" />
-              </Svg>
-              <OmLogo />
-            </View>
+            <LinearGradient
+              colors={isDark
+                ? ['#fce8a8', '#c9962e', '#7a5514']
+                : ['#e9c76a', '#c9962e', '#8a6418']}
+              start={{ x: 0.15, y: 0 }} end={{ x: 0.85, y: 1 }}
+              style={styles.logoRing}
+            >
+              <View style={[styles.logoWrap, { backgroundColor: isDark ? '#000000' : '#ffffff' }]}>
+                <Svg width={44} height={44} style={StyleSheet.absoluteFill}>
+                  <Defs>
+                    <RadialGradient id="dLogo" cx="30%" cy="30%" r="80%">
+                      <Stop offset="0%" stopColor="#fce8a8" />
+                      <Stop offset="70%" stopColor="#8a6418" />
+                      <Stop offset="100%" stopColor="#8a6418" />
+                    </RadialGradient>
+                  </Defs>
+                  <Circle cx={22} cy={22} r={22} fill="url(#dLogo)" />
+                </Svg>
+                <OmLogo />
+              </View>
+            </LinearGradient>
             <View>
               <GradientText style={styles.title}>SHREE YANTRA</GradientText>
               <Text style={[styles.titleSub, { color: theme.gold2 }]}>ASTROLOGY</Text>
@@ -309,9 +455,19 @@ export function DrawerContent({ close, progress }: { close: () => void; progress
               </View>
             )}
           </View>
-        </View>
 
-        {/* ── Language ── (nayi bhasha = DRAWER_LANGS me ek entry) */}
+          {/* fading gold rule under the head (SectionTitle-style) */}
+          <LinearGradient
+            colors={['transparent', isDark ? 'rgba(233,184,80,0.55)' : theme.gold2, 'transparent']}
+            start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }}
+            style={styles.headRule}
+            pointerEvents="none"
+          />
+        </View>
+      </Cascade>
+
+      {/* ── Language ── (nayi bhasha = DRAWER_LANGS me ek entry) */}
+      <Cascade index={1} progress={progress}>
         <View style={[styles.section, { borderBottomColor: line, backgroundColor: sectionBg }]}>
           <View style={styles.sectionLabelRow}>
             <GlobeIcon c={theme.gold2} />
@@ -322,131 +478,106 @@ export function DrawerContent({ close, progress }: { close: () => void; progress
           {DRAWER_LANGS.length <= 2 ? (
             <View style={styles.btnRow}>
               {DRAWER_LANGS.map(([key, glyph, lbl]) => {
-                const active = lang === key;
+                const active = shownLang === key;
                 return (
-                  <Pressable
-                    key={key}
-                    onPress={() => { hSelect(); setLang(key); }}
-                    style={({ pressed }) => [
-                      styles.selBtn,
-                      {
-                        backgroundColor: active ? (isDark ? 'rgba(238,203,122,0.20)' : '#ffe9b8') : btnBg,
-                        borderColor: active ? theme.gold2 : btnBorder,
-                      },
-                      pressed && { transform: [{ scale: 0.97 }] },
-                    ]}
-                  >
-                    <Text style={[styles.selGlyph, { color: active ? theme.gold1 : theme.textSoft }]}>{glyph}</Text>
-                    <Text style={[styles.selText, { color: active ? theme.gold1 : theme.textSoft }]}>{lbl}</Text>
-                  </Pressable>
+                  <SelChip
+                    key={key} ck={key}
+                    bg={active ? chipActiveBg : btnBg}
+                    border={active ? theme.gold2 : btnBorder}
+                    fg={active ? theme.gold1 : theme.textSoft}
+                    label={lbl} glyph={glyph}
+                    onSelect={chooseLang}
+                  />
                 );
               })}
             </View>
           ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.langRail}>
               {DRAWER_LANGS.map(([key, glyph, lbl]) => {
-                const active = lang === key;
+                const active = shownLang === key;
                 return (
-                  <Pressable
-                    key={key}
-                    onPress={() => { hSelect(); setLang(key); }}
-                    style={({ pressed }) => [
-                      styles.selBtn,
-                      styles.langChip,
-                      {
-                        backgroundColor: active ? (isDark ? 'rgba(238,203,122,0.20)' : '#ffe9b8') : btnBg,
-                        borderColor: active ? theme.gold2 : btnBorder,
-                      },
-                      pressed && { transform: [{ scale: 0.97 }] },
-                    ]}
-                  >
-                    <Text style={[styles.selGlyph, { color: active ? theme.gold1 : theme.textSoft }]}>{glyph}</Text>
-                    <Text style={[styles.selText, { color: active ? theme.gold1 : theme.textSoft }]}>{lbl}</Text>
-                  </Pressable>
+                  <SelChip
+                    key={key} ck={key} rail
+                    bg={active ? chipActiveBg : btnBg}
+                    border={active ? theme.gold2 : btnBorder}
+                    fg={active ? theme.gold1 : theme.textSoft}
+                    label={lbl} glyph={glyph}
+                    onSelect={chooseLang}
+                  />
                 );
               })}
             </ScrollView>
           )}
         </View>
+      </Cascade>
 
-        {/* ── Theme ── */}
+      {/* ── Theme ── */}
+      <Cascade index={2} progress={progress}>
         <View style={[styles.section, { borderBottomColor: line, backgroundColor: sectionBg }]}>
           <View style={styles.sectionLabelRow}>
             <SunSm c={theme.gold2} />
-            <Text style={[styles.sectionLabel, { color: theme.gold2 }]}>THEME</Text>
+            <Text style={[styles.sectionLabel, { color: theme.gold2 }]}>THEME / थीम</Text>
           </View>
           <View style={styles.btnRow}>
             {(['light', 'dark'] as const).map((t) => {
-              const active = name === t;
+              const active = shownTheme === t;
               return (
-                <Pressable
-                  key={t}
-                  onPress={() => { hSelect(); setTheme(t); }}
-                  style={({ pressed }) => [
-                    styles.selBtn,
-                    {
-                      backgroundColor: active ? (isDark ? 'rgba(238,203,122,0.20)' : '#ffe9b8') : btnBg,
-                      borderColor: active ? theme.gold2 : btnBorder,
-                    },
-                    pressed && { transform: [{ scale: 0.97 }] },
-                  ]}
-                >
-                  {t === 'light'
-                    ? <SunIcon c={active ? theme.gold1 : theme.goldDim} />
-                    : <MoonIcon c={active ? theme.gold1 : theme.goldDim} />}
-                  <Text style={[styles.selText, { color: active ? theme.gold1 : theme.textSoft }]}>
-                    {t === 'light' ? 'Light' : 'Dark'}
-                  </Text>
-                </Pressable>
+                <SelChip
+                  key={t} ck={t}
+                  bg={active ? chipActiveBg : btnBg}
+                  border={active ? theme.gold2 : btnBorder}
+                  fg={active ? theme.gold1 : theme.textSoft}
+                  fgIcon={active ? theme.gold1 : theme.goldDim}
+                  icon={t === 'light' ? 'sun' : 'moon'}
+                  label={t === 'light' ? (hi ? 'लाइट' : 'Light') : (hi ? 'डार्क' : 'Dark')}
+                  onSelect={chooseTheme}
+                />
               );
             })}
           </View>
         </View>
+      </Cascade>
 
-        {/* ── SCROLLABLE: nav list only (like web .sy-drawer__list) ── */}
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{ paddingVertical: 8 }}
-          showsVerticalScrollIndicator={false}
-          overScrollMode="never"
-        >
-          {NAV.map((item, i) => {
-            if ('divider' in item) {
-              return (
-                <Animated.View key={`d${i}`} style={itemAnim(i)}>
-                  <LinearGradient
-                    colors={['transparent', isDark ? 'rgba(201,150,46,0.5)' : theme.line, 'transparent']}
-                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                    style={styles.divider}
-                  />
-                </Animated.View>
-              );
-            }
-            const Icon = I[item.icon];
-            const active = !item.stack && item.tab === activeTab;
+      {/* ── SCROLLABLE: nav list only (like web .sy-drawer__list) ── */}
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingVertical: 8 }}
+        showsVerticalScrollIndicator={false}
+        overScrollMode="never"
+      >
+        {NAV.map((item, i) => {
+          if ('divider' in item) {
             return (
-              <Animated.View key={item.label} style={itemAnim(i)}>
-                <Pressable
-                  onPress={() => go(item)}
-                  style={({ pressed }) => [
-                    styles.navItem,
-                    {
-                      borderLeftColor: active ? theme.gold1 : 'transparent',
-                      backgroundColor: active
-                        ? (isDark ? 'rgba(233,184,80,0.12)' : 'rgba(95,56,8,0.14)')
-                        : pressed
-                          ? (isDark ? 'rgba(233,184,80,0.08)' : 'rgba(95,56,8,0.08)')
-                          : 'transparent',
-                    },
-                  ]}
-                >
-                  <Icon c={active ? theme.gold1 : theme.gold2} />
-                  <Text style={[styles.navText, { color: active ? theme.gold1 : theme.text }]}>{lang === 'hi' ? tr(NAV_KEY[item.route] || '', item.label) : item.label}</Text>
-                </Pressable>
-              </Animated.View>
+              <Cascade key={`d${i}`} index={3 + i} progress={progress}>
+                <LinearGradient
+                  colors={['transparent', isDark ? 'rgba(201,150,46,0.5)' : theme.line, 'transparent']}
+                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                  style={styles.divider}
+                />
+              </Cascade>
             );
-          })}
-        </ScrollView>
+          }
+          const active = !item.stack && item.tab === activeTab;
+          const label = hi ? tr(NAV_KEY[item.route] || '', item.label) : item.label;
+          return (
+            <Cascade key={item.label} index={3 + i} progress={progress}>
+              <NavRow
+                item={item}
+                label={label}
+                active={active}
+                edge={theme.gold1}
+                activeBg={rowActiveBg}
+                pressBg={rowPressBg}
+                iconC={item.logout ? logoutC : active ? theme.gold1 : theme.gold2}
+                textC={item.logout ? logoutC : active ? theme.gold1 : theme.text}
+                medBg={active ? medBgActive : medBg}
+                medBorder={item.logout ? logoutBorder : active ? medBorderActive : medBorder}
+                onGo={onGo}
+              />
+            </Cascade>
+          );
+        })}
+      </ScrollView>
 
       {/* ── FIXED: Footer ── */}
       <Text style={[styles.foot, { color: isDark ? 'rgba(216,203,168,0.82)' : theme.textMuted, paddingBottom: insets.bottom + 14 }]}>
@@ -460,18 +591,23 @@ const styles = StyleSheet.create({
   panel: { flex: 1, borderRightWidth: 1, overflow: 'hidden' },
 
   /* head */
-  head: { paddingHorizontal: 20, paddingBottom: 18, borderBottomWidth: 1, overflow: 'hidden' },
+  head: { paddingHorizontal: 20, paddingBottom: 18, overflow: 'hidden' },
   headGlow: { position: 'absolute', top: 0, left: 0 },
+  headRule: { position: 'absolute', bottom: 0, left: 14, right: 14, height: 1 },
   close: {
     position: 'absolute', right: 12, width: 40, height: 40, borderRadius: 20,
     borderWidth: 1, alignItems: 'center', justifyContent: 'center', zIndex: 5,
   },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  logoRing: {
+    width: 50, height: 50, borderRadius: 25, padding: 2,
+    alignItems: 'center', justifyContent: 'center',
+    shadowColor: '#e9b850', shadowOpacity: 0.35, shadowRadius: 18, shadowOffset: { width: 0, height: 0 },
+    elevation: 8,
+  },
   logoWrap: {
     width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
     overflow: 'hidden',
-    shadowColor: '#e9b850', shadowOpacity: 0.35, shadowRadius: 18, shadowOffset: { width: 0, height: 0 },
-    elevation: 8,
   },
   title: { fontFamily: fonts.cinzel, fontSize: 16, letterSpacing: 2.56, fontWeight: '700' },
   titleSub: { fontSize: 11, letterSpacing: 3.3, marginTop: 2, fontFamily: fonts.inter },
@@ -488,8 +624,9 @@ const styles = StyleSheet.create({
   // language chips ride a horizontal rail — chip apni width rakhta hai, stretch nahi hota
   langRail: { gap: 8, paddingRight: 4 },
   langChip: { flex: 0, minWidth: 118 },
+  selPress: { flex: 1 },
   selBtn: {
-    flex: 1, minHeight: 42, borderRadius: 10, borderWidth: 1,
+    minHeight: 42, borderRadius: 10, borderWidth: 1,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7,
     paddingHorizontal: 12, paddingVertical: 10,
   },
@@ -497,10 +634,11 @@ const styles = StyleSheet.create({
   selText: { fontFamily: fonts.interSemi, fontSize: 13 },
 
   /* nav list */
-  navItem: {
-    flexDirection: 'row', alignItems: 'center', gap: 14,
-    paddingVertical: 14, paddingHorizontal: 20,
-    borderLeftWidth: 3,
+  navItem: { paddingVertical: 7, paddingHorizontal: 16, borderLeftWidth: 3 },
+  navInner: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  medallion: {
+    width: 36, height: 36, borderRadius: 18, borderWidth: 1,
+    alignItems: 'center', justifyContent: 'center',
   },
   navText: { fontFamily: fonts.interMed, fontSize: 15 },
   divider: { height: 1, marginVertical: 8, marginHorizontal: 20 },
