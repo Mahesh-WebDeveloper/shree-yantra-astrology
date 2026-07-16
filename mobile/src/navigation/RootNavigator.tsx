@@ -18,6 +18,7 @@ import { PaymentScreen } from '../screens/PaymentScreen';
 import { SubscriptionActivatedScreen } from '../screens/SubscriptionActivatedScreen';
 import { EditProfileScreen } from '../screens/EditProfileScreen';
 import { PrivacySecurityScreen } from '../screens/PrivacySecurityScreen';
+import { LegalScreen } from '../screens/LegalScreen';
 import { SetPasswordScreen } from '../screens/SetPasswordScreen';
 import { PredictionsScreen } from '../screens/PredictionsScreen';
 import { LibraryReaderScreen } from '../screens/LibraryReaderScreen';
@@ -157,6 +158,7 @@ export function RootNavigator() {
       <Stack.Screen name="VastuLearn" component={VastuLearnScreen} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       <Stack.Screen name="PrivacySecurity" component={PrivacySecurityScreen} />
+      <Stack.Screen name="Legal" component={LegalScreen} />
       <Stack.Screen name="SetPassword" component={SetPasswordScreen} />
       <Stack.Screen name="Notifications" component={NotificationsScreen} />
       <Stack.Screen name="ManageSubscription" component={ManageSubscriptionScreen} />

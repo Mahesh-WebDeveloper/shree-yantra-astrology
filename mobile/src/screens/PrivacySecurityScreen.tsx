@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Switch, Linking } from 'react-native';
+import { View, Text, StyleSheet, Switch } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Svg, { Path, Circle, Rect, Line, Polyline } from 'react-native-svg';
 import { useTheme } from '../theme/ThemeProvider';
@@ -112,10 +112,6 @@ export function PrivacySecurityScreen({ navigation }: any) {
   const downloadData = () => dialog(hi ? 'मेरा डेटा डाउनलोड करें' : 'Download My Data', hi ? 'हम आपके डेटा की एक प्रति तैयार कर 24 घंटे के भीतर डाउनलोड लिंक ईमेल कर देंगे।' : 'We will prepare a copy of your data and email a download link within 24 hours.', [
     { text: hi ? 'रद्द करें' : 'Cancel', style: 'cancel' }, { text: hi ? 'अनुरोध करें' : 'Request', onPress: () => { hSuccess(); dialog(hi ? 'अनुरोध प्राप्त हुआ' : 'Request received', hi ? 'आपका डेटा एक्सपोर्ट तैयार हो रहा है। 📦' : 'Your data export is being prepared. 📦'); } },
   ]);
-  const openLink = (url: string, fallbackTitle: string, fallbackMsg: string) => () => {
-    hTap();
-    Linking.openURL(url).catch(() => dialog(fallbackTitle, fallbackMsg));
-  };
   return (
     <Page title={hi ? 'गोपनीयता व सुरक्षा' : 'Privacy & Security'} onBack={() => { hTap(); navigation.goBack(); }}>
       {/* intro */}
@@ -144,8 +140,9 @@ export function PrivacySecurityScreen({ navigation }: any) {
       <SectionLabel text={hi ? 'डेटा व नीतियाँ' : 'Data & Policies'} theme={theme} />
       <Card padded={false} contentStyle={styles.listCard}>
         <ActionRow icon="download" title={hi ? 'मेरा डेटा डाउनलोड करें' : 'Download My Data'} sub={hi ? 'अपने खाते के डेटा की एक प्रति प्राप्त करें' : 'Get a copy of your account data'} onPress={downloadData} theme={theme} />
-        <ActionRow icon="doc" title={hi ? 'गोपनीयता नीति' : 'Privacy Policy'} sub={hi ? 'हम आपकी जानकारी कैसे संभालते हैं' : 'How we handle your information'} onPress={openLink('https://shreeyantra.app/privacy', hi ? 'गोपनीयता नीति' : 'Privacy Policy', 'Visit shreeyantra.app/privacy')} theme={theme} />
-        <ActionRow icon="doc" title={hi ? 'सेवा की शर्तें' : 'Terms of Service'} sub={hi ? 'हमारे नियम व शर्तें' : 'Our terms & conditions'} onPress={openLink('https://shreeyantra.app/terms', hi ? 'सेवा की शर्तें' : 'Terms of Service', 'Visit shreeyantra.app/terms')} theme={theme} last />
+        {/* full documents live in-app (LegalScreen) — no dead external URLs */}
+        <ActionRow icon="doc" title={hi ? 'गोपनीयता नीति' : 'Privacy Policy'} sub={hi ? 'हम आपकी जानकारी कैसे संभालते हैं' : 'How we handle your information'} onPress={() => { hTap(); navigation.navigate('Legal', { doc: 'privacy' }); }} theme={theme} />
+        <ActionRow icon="doc" title={hi ? 'सेवा की शर्तें' : 'Terms of Service'} sub={hi ? 'हमारे नियम व शर्तें' : 'Our terms & conditions'} onPress={() => { hTap(); navigation.navigate('Legal', { doc: 'terms' }); }} theme={theme} last />
       </Card>
 
       <Text style={[styles.foot, { color: theme.textMuted }]}>{hi ? '🔒 आपकी रीडिंग व जन्म-डेटा हमारे सर्वर पर एन्क्रिप्टेड हैं।' : '🔒 Your readings & birth data are encrypted on our servers.'}</Text>
