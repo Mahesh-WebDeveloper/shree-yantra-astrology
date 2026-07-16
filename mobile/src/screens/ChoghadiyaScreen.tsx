@@ -399,6 +399,8 @@ export function ChoghadiyaScreen({ navigation }: any) {
   // Real sunrise/sunset (VedAstro / Swiss Ephemeris) for the selected date.
   // null until the first fetch lands → buildPeriods falls back to demo constants.
   const [sun, setSun] = useState<SunTimes | null>(null);
+  // Next day's sunrise — the night choghadiya's true end (dawn drifts ~1 min/day).
+  const [nextSunrise, setNextSunrise] = useState<{ h: number; m: number } | null>(null);
 
   useEffect(() => {
     let on = true;
@@ -413,23 +415,53 @@ export function ChoghadiyaScreen({ navigation }: any) {
     return () => { on = false; };
   }, []);
 
-  // Fetch real sunrise/sunset whenever the date or place changes.
+  // Fetch real sunrise/sunset whenever the date or place changes — selected date AND the
+  // next day (its sunrise closes tonight's choghadiya), in parallel.
   useEffect(() => {
     let cancelled = false;
     setSun(null); // avoid showing stale times for the previous date
+    setNextSunrise(null);
     const where = coords ? { lat: coords.lat, lng: coords.lng } : { place: placeName };
+    const tomorrow = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() + 1);
     getSunTimes({ ...where, date: apiDate(selectedDate) })
       .then((r) => { if (!cancelled) setSun({ sunrise: r.sunrise, sunset: r.sunset }); })
       .catch(() => { /* network down → buildPeriods uses demo fallback */ });
+    getSunTimes({ ...where, date: apiDate(tomorrow) })
+      .then((r) => { if (!cancelled) setNextSunrise(r.sunrise); })
+      .catch(() => { /* fallback: same-day sunrise (≤1 min off) */ });
     return () => { cancelled = true; };
   }, [selectedDate, placeName, coords]);
 
   const isToday = sameDay(selectedDate, now);
-  const periods = useMemo(() => buildPeriods(selectedDate, sun ?? undefined), [selectedDate, sun]);
+  const periods = useMemo(
+    () => buildPeriods(selectedDate, sun ?? undefined, nextSunrise ?? undefined),
+    [selectedDate, sun, nextSunrise]
+  );
   const dayList = useMemo(() => periods.slice(0, 8), [periods]);
+  const nightList = useMemo(() => periods.slice(8, 16), [periods]);
+
+  // Before dawn, the running choghadiya belongs to YESTERDAY's night table — today's
+  // periods only start at today's sunrise, so findActive(today) has a pre-dawn hole.
+  const yesterdayPeriods = useMemo(() => {
+    if (!isToday || !sun || now >= periods[0].start) return null;
+    const y = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() - 1);
+    return buildPeriods(y, sun ?? undefined, sun?.sunrise);
+  }, [isToday, sun, now, periods, selectedDate]);
 
   // active period (today only); for other dates highlight the first auspicious daytime one
-  const active = isToday ? findActive(periods, now) : undefined;
+  const active = isToday ? (findActive(periods, now) ?? (yesterdayPeriods ? findActive(yesterdayPeriods, now) : undefined)) : undefined;
+
+  // ☀️/🌙 list toggle — opens on the phase that is live right now (night after sunset
+  // and before dawn), so the user lands on the table that answers "अभी कौनसा?"
+  const [phaseTab, setPhaseTab] = useState<'day' | 'night'>('day');
+  const autoPhased = useRef('');
+  useEffect(() => {
+    const key = `${selectedDate.toDateString()}|${sun ? 'live' : 'demo'}`;
+    if (autoPhased.current === key) return;
+    autoPhased.current = key;
+    if (isToday && (active?.phase === 'night' || (sun && now < periods[0].start))) setPhaseTab('night');
+    else setPhaseTab('day');
+  }, [selectedDate, sun, isToday, active, now, periods]);
   const highlight: Period = active ?? dayList.find((p) => p.meta.nature === 'good') ?? periods[0];
   const hAccent = accentFor(theme, highlight.meta.color);
 
@@ -459,9 +491,10 @@ export function ChoghadiyaScreen({ navigation }: any) {
   // duration (minutes) of the highlighted period — used by the timer ring
   const durMin = Math.floor((highlight.end.getTime() - highlight.start.getTime()) / 60000);
 
-  // 8-row list — memoized so the 15s clock tick doesn't re-render it (dayList &
+  // 8-row list — memoized so the 15s clock tick doesn't re-render it (list &
   // active are stable references until the date or active period actually changes)
-  const listRows = useMemo(() => dayList.map((p, i) => {
+  const phaseList = phaseTab === 'night' ? nightList : dayList;
+  const listRows = useMemo(() => phaseList.map((p, i) => {
     const ac = accentFor(theme, p.meta.color);
     const isActive = active === p;
     return (
@@ -490,7 +523,7 @@ export function ChoghadiyaScreen({ navigation }: any) {
         <Text style={[styles.rowTag, { color: ac }]}>{aTag(p.meta.tag, lang)}</Text>
       </View>
     );
-  }), [dayList, active, theme]);
+  }), [phaseList, active, theme, lang]);
 
   // ── Muhurat Finder (AI): best upcoming Choghadiya window for the user's activity ──
   const [muhuratOpen, setMuhuratOpen] = useState(false);
@@ -663,6 +696,23 @@ export function ChoghadiyaScreen({ navigation }: any) {
           },
         ]}
       >
+        {/* ☀️ दिन | 🌙 रात — full 24-hour choghadiya, 8 periods per phase */}
+        <View style={[styles.phaseWrap, { borderColor: theme.cardBorder, backgroundColor: theme.cardBg }]}>
+          {([['day', lang === 'hi' ? '☀️ दिन' : '☀️ Day'], ['night', lang === 'hi' ? '🌙 रात' : '🌙 Night']] as ['day' | 'night', string][]).map(([key, label]) => {
+            const on = phaseTab === key;
+            return (
+              <Pressable key={key} onPress={() => { hTap(); setPhaseTab(key); }} style={styles.phaseBtn}>
+                {on && <LinearGradient colors={theme.buttonGradient} start={{ x: 0.1, y: 0 }} end={{ x: 0.9, y: 1 }} style={StyleSheet.absoluteFill} />}
+                <Text style={[styles.phaseBtnText, { color: on ? theme.goldInk : theme.textMuted }]}>{label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Text style={[styles.phaseHint, { color: theme.textMuted }]}>
+          {phaseTab === 'day'
+            ? (lang === 'hi' ? 'सूर्योदय से सूर्यास्त तक' : 'Sunrise to sunset')
+            : (lang === 'hi' ? 'सूर्यास्त से अगले सूर्योदय तक' : 'Sunset to next sunrise')}
+        </Text>
         <View style={{ gap: 8 }}>
           {listRows}
         </View>
@@ -862,6 +912,10 @@ const styles = StyleSheet.create({
   listHeadRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
   listHead: { fontFamily: fonts.interMed, fontSize: 13, letterSpacing: 1 },
   headRule: { flex: 1, height: 1, borderRadius: 1, marginLeft: 4 },
+  phaseWrap: { flexDirection: 'row', gap: 4, padding: 4, borderWidth: 1, borderRadius: 12, marginBottom: 6 },
+  phaseBtn: { flex: 1, paddingVertical: 9, alignItems: 'center', justifyContent: 'center', borderRadius: 9, overflow: 'hidden' },
+  phaseBtnText: { fontFamily: fonts.interBold, fontSize: 13 },
+  phaseHint: { fontFamily: fonts.inter, fontSize: 11, textAlign: 'center', marginBottom: 10 },
   listCard: {
     padding: 12,
     borderRadius: 16,

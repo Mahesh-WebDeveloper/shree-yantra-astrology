@@ -63,14 +63,16 @@ export const fmtDate = (d: Date) =>
 export interface SunTimes { sunrise: { h: number; m: number }; sunset: { h: number; m: number }; }
 
 /** All 16 periods (8 day + 8 night) for a given date.
- *  `sun` = real sunrise/sunset (VedAstro); na ho to demo constants. */
-export function buildPeriods(date: Date, sun?: SunTimes): Period[] {
+ *  `sun` = real sunrise/sunset; na ho to demo constants.
+ *  `nextSunrise` = NEXT day's real sunrise — night runs sunset → next sunrise, and the
+ *  next dawn shifts ~1 min/day, so reusing today's time drifts every night segment. */
+export function buildPeriods(date: Date, sun?: SunTimes, nextSunrise?: { h: number; m: number }): Period[] {
   const dow = date.getDay();
   const SR = sun?.sunrise || SUNRISE;
   const SS = sun?.sunset || SUNSET;
   const sr = at(date, SR);
   const ss = at(date, SS);
-  const nsr = at(addDays(date, 1), SR);
+  const nsr = at(addDays(date, 1), nextSunrise || SR);
   const dayLen = (ss.getTime() - sr.getTime()) / 8;
   const nightLen = (nsr.getTime() - ss.getTime()) / 8;
   const list: Period[] = [];
