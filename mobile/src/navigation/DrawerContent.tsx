@@ -127,6 +127,13 @@ const OmLogo = () => (
 );
 
 /* nav model — same order & labels as the web drawer */
+// Drawer ke language buttons — nayi bhasha yaha jodo; 2 tak barabar-width row,
+// 3+ par UI khud horizontal slide rail me badal jaata hai.
+const DRAWER_LANGS: ReadonlyArray<readonly ['en' | 'hi', string, string]> = [
+  ['en', 'EN', 'English'],
+  ['hi', 'हि', 'हिंदी'],
+];
+
 const NAV: Array<
   | { divider: true }
   | { label: string; icon: keyof typeof I; route: string; tab?: string; stack?: boolean; logout?: boolean }
@@ -304,36 +311,62 @@ export function DrawerContent({ close, progress }: { close: () => void; progress
           </View>
         </View>
 
-        {/* ── Language ── */}
+        {/* ── Language ── (nayi bhasha = DRAWER_LANGS me ek entry) */}
         <View style={[styles.section, { borderBottomColor: line, backgroundColor: sectionBg }]}>
           <View style={styles.sectionLabelRow}>
             <GlobeIcon c={theme.gold2} />
             <Text style={[styles.sectionLabel, { color: theme.gold2 }]}>LANGUAGE / भाषा</Text>
           </View>
-          {/* slide rail — future languages is array me add hongi, rail khud scroll karega */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.langRail}>
-            {([['en', 'EN', 'English'], ['hi', 'हि', 'हिंदी']] as const).map(([key, glyph, lbl]) => {
-              const active = lang === key;
-              return (
-                <Pressable
-                  key={key}
-                  onPress={() => { hSelect(); setLang(key); }}
-                  style={({ pressed }) => [
-                    styles.selBtn,
-                    styles.langChip,
-                    {
-                      backgroundColor: active ? (isDark ? 'rgba(238,203,122,0.20)' : '#ffe9b8') : btnBg,
-                      borderColor: active ? theme.gold2 : btnBorder,
-                    },
-                    pressed && { transform: [{ scale: 0.97 }] },
-                  ]}
-                >
-                  <Text style={[styles.selGlyph, { color: active ? theme.gold1 : theme.textSoft }]}>{glyph}</Text>
-                  <Text style={[styles.selText, { color: active ? theme.gold1 : theme.textSoft }]}>{lbl}</Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
+          {/* ≤2 bhashayein: barabar-width buttons (jaise pehle). 3+ hote hi ye khud
+              horizontal slide rail ban jaata hai — bas DRAWER_LANGS me entry jodo. */}
+          {DRAWER_LANGS.length <= 2 ? (
+            <View style={styles.btnRow}>
+              {DRAWER_LANGS.map(([key, glyph, lbl]) => {
+                const active = lang === key;
+                return (
+                  <Pressable
+                    key={key}
+                    onPress={() => { hSelect(); setLang(key); }}
+                    style={({ pressed }) => [
+                      styles.selBtn,
+                      {
+                        backgroundColor: active ? (isDark ? 'rgba(238,203,122,0.20)' : '#ffe9b8') : btnBg,
+                        borderColor: active ? theme.gold2 : btnBorder,
+                      },
+                      pressed && { transform: [{ scale: 0.97 }] },
+                    ]}
+                  >
+                    <Text style={[styles.selGlyph, { color: active ? theme.gold1 : theme.textSoft }]}>{glyph}</Text>
+                    <Text style={[styles.selText, { color: active ? theme.gold1 : theme.textSoft }]}>{lbl}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.langRail}>
+              {DRAWER_LANGS.map(([key, glyph, lbl]) => {
+                const active = lang === key;
+                return (
+                  <Pressable
+                    key={key}
+                    onPress={() => { hSelect(); setLang(key); }}
+                    style={({ pressed }) => [
+                      styles.selBtn,
+                      styles.langChip,
+                      {
+                        backgroundColor: active ? (isDark ? 'rgba(238,203,122,0.20)' : '#ffe9b8') : btnBg,
+                        borderColor: active ? theme.gold2 : btnBorder,
+                      },
+                      pressed && { transform: [{ scale: 0.97 }] },
+                    ]}
+                  >
+                    <Text style={[styles.selGlyph, { color: active ? theme.gold1 : theme.textSoft }]}>{glyph}</Text>
+                    <Text style={[styles.selText, { color: active ? theme.gold1 : theme.textSoft }]}>{lbl}</Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          )}
         </View>
 
         {/* ── Theme ── */}

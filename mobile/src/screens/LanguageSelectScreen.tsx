@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Animated, Easing, Dimensions, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Animated, Easing, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, G } from 'react-native-svg';
@@ -14,16 +14,12 @@ import { hTap, hSelect } from '../lib/haptics';
 
 type Choice = 'hi' | 'en';
 
-// The options ride a horizontal slide (snap carousel with a peek of the next card) —
-// adding a future language is just one more entry here, the UI scales by itself.
+// The options ride a vertical slide (full-width stacked cards in a ScrollView) —
+// adding a future language is just one more entry here, the list scrolls by itself.
 const LANGS: { code: Choice; glyph: string; title: string; native: string; line: string }[] = [
   { code: 'hi', glyph: 'अ', title: 'हिंदी', native: 'Hindi · देवनागरी', line: 'ऐप हिंदी में देखें' },
   { code: 'en', glyph: 'A', title: 'English', native: 'English', line: 'Use the app in English' },
 ];
-
-const SCREEN_W = Dimensions.get('window').width;
-const CARD_W = SCREEN_W - 96; // ~74px of the next card peeks in — the slide is self-evident
-const CARD_GAP = 12;
 
 // A glowing gold mandala medallion with the language's script glyph in the centre.
 function ScriptMedallion({ glyph, active, theme }: { glyph: string; active: boolean; theme: any }) {
@@ -113,10 +109,9 @@ export function LanguageSelectScreen({ navigation, route }: any) {
     ).start();
   }, [fade, cardAnims]);
 
-  const pick = (c: Choice, idx: number) => {
+  const pick = (c: Choice, _idx: number) => {
     setChoice(c);
     setLang(c);
-    railRef.current?.scrollTo({ x: idx * (CARD_W + CARD_GAP), animated: true });
   };
 
   const onContinue = () => {
@@ -139,25 +134,18 @@ export function LanguageSelectScreen({ navigation, route }: any) {
           </Text>
         </View>
 
-        {/* Horizontal slide (snap + peek of the next card) — future languages scale into
-            the same rail; the peek itself tells the user there is more to swipe. */}
+        {/* Vertical slide — cards poori width ke, upar-neeche scroll; future languages
+            list me judti jaayengi aur page khud scroll karega (user ki pasand: vertical). */}
         <View style={styles.cards}>
           <ScrollView
             ref={railRef}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            snapToInterval={CARD_W + CARD_GAP}
-            decelerationRate="fast"
+            showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.rail}
-            contentOffset={{ x: Math.max(0, LANGS.findIndex((l) => l.code === choice)) * (CARD_W + CARD_GAP), y: 0 }}
           >
             {LANGS.map((l, i) => (
-              <View key={l.code} style={{ width: CARD_W }}>
-                <LangCard item={l} active={choice === l.code} onPress={() => pick(l.code, i)} theme={theme} anim={cardAnims[i]} />
-              </View>
+              <LangCard key={l.code} item={l} active={choice === l.code} onPress={() => pick(l.code, i)} theme={theme} anim={cardAnims[i]} />
             ))}
           </ScrollView>
-          <Text style={[styles.swipeHint, { color: theme.textMuted }]}>‹ स्वाइप करें · Swipe ›</Text>
         </View>
 
         <View style={styles.footer}>
@@ -179,8 +167,7 @@ const styles = StyleSheet.create({
   h1Hi: { fontFamily: fonts.devanagari, fontSize: 19, textAlign: 'center', marginTop: 2 },
   sub: { fontFamily: fonts.inter, fontSize: 11.5, textAlign: 'center', lineHeight: 17, marginTop: 8, maxWidth: 320 },
   cards: { flex: 1, justifyContent: 'center' },
-  rail: { paddingHorizontal: 4, gap: CARD_GAP, alignItems: 'center' },
-  swipeHint: { fontFamily: fonts.inter, fontSize: 10.5, letterSpacing: 0.6, textAlign: 'center', marginTop: 14, opacity: 0.8 },
+  rail: { flexGrow: 1, justifyContent: 'center', gap: 16, paddingVertical: 12 },
   cardRing: { borderRadius: 22, padding: 1.4 },
   cardRingActive: { shadowColor: '#e9b850', shadowOpacity: 0.4, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 10 },
   card: { flexDirection: 'row', alignItems: 'center', gap: 16, borderRadius: 21, paddingHorizontal: 18, paddingVertical: 20 },
