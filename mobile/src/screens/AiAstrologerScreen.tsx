@@ -56,11 +56,13 @@ export function AiAstrologerScreen({ navigation, route }: any) {
   const [history, setHistory] = useState<ChatTurn[]>([]);
   const [sending, setSending] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  // page par sirf SABSE NAYI chat dikhti hai; purani sab history icon/modal me.
+  // Load par wo bhi collapsed rehti hai — naya sawaal bhejte hi uska jawab khul jaata hai.
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   // chat history: 2 din local cache (turant) + server par all-time (purani chat load-more se)
   const [userId, setUserId] = useState<string | null>(null);
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const [hasMore, setHasMore] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
   const initialSentRef = useRef(false);
   const scrollRef = useRef<any>(null);
   const historyYRef = useRef(0);
@@ -89,6 +91,7 @@ export function AiAstrologerScreen({ navigation, route }: any) {
     const id = retryTurnId || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     setQuestion('');
     setSending(true);
+    setExpandedId(id); // naya sawaal — iska jawab khula dikhe (purani chats collapsed rehti hai)
     const now = new Date().toISOString();
     if (retryTurnId) {
       setHistory((h) => h.map((turn) => (turn.id === retryTurnId ? { id, question: q, loading: true, createdAt: now } : turn)));
@@ -154,20 +157,8 @@ export function AiAstrologerScreen({ navigation, route }: any) {
     saveCachedChat(userId, cacheable);
   }, [history, historyLoaded, userId]);
 
-  /* 3) Purani chat (2 din se bhi purani) — DB se cursor le kar aur load karo. */
-  const loadOlder = async () => {
-    if (loadingMore || !hasMore) return;
-    const oldest = history[history.length - 1];
-    if (!oldest?.createdAt) return;
-    hTap();
-    setLoadingMore(true);
-    try {
-      const r = await getChatHistory(oldest.createdAt);
-      setHistory((h) => [...h, ...r.turns.map(dtoToTurn)]);
-      setHasMore(r.hasMore);
-    } catch { /* ignore */ }
-    finally { setLoadingMore(false); }
-  };
+  /* 3) Purani chats ab inline load nahi hoti — poora itihaas ChatHistoryModal me
+        (search + date-groups + pagination wahi sambhaalta hai). */
 
   // route se aaya sawaal — history load hone ke BAAD bhejo (warna wo overwrite ho jaayega)
   useEffect(() => {
@@ -260,7 +251,8 @@ export function AiAstrologerScreen({ navigation, route }: any) {
       {/* marker: remembers where the answer list starts so we can scroll the newest reply into view */}
       <View onLayout={(e) => { historyYRef.current = e.nativeEvent.layout.y; }} />
 
-      {history.map((turn) => (
+      {/* sirf sabse nayi chat inline — puri history 🕐 icon (modal) me */}
+      {history.slice(0, 1).map((turn) => (
         <Card key={turn.id} style={{ marginTop: 14 }}>
           <Text style={[styles.questionTitle, { color: theme.goldText }]}>{t('ai.question', 'Question')}</Text>
           <Text style={[styles.questionBody, { color: theme.text }]}>{turn.question}</Text>
@@ -293,29 +285,47 @@ export function AiAstrologerScreen({ navigation, route }: any) {
           )}
 
           {!!turn.response && (
-            <AnswerView response={turn.response} onAsk={(q) => sendQuestion(q)} disabled={sending} />
+            <>
+              {/* jawab default collapsed — arrow se khulta/band hota hai */}
+              <Pressable
+                onPress={() => { hTap(); setExpandedId(expandedId === turn.id ? null : turn.id); }}
+                hitSlop={6}
+                style={({ pressed }) => [
+                  styles.answerToggle,
+                  { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.08)' : '#fffaf0' },
+                  pressed && { opacity: 0.8 },
+                ]}
+              >
+                <Text style={[styles.answerToggleTxt, { color: theme.gold1 }]}>
+                  {expandedId === turn.id
+                    ? (lang === 'hi' ? 'उत्तर छिपाएँ' : 'Hide answer')
+                    : (lang === 'hi' ? 'उत्तर देखें' : 'View answer')}
+                </Text>
+                <Text style={[styles.answerToggleArrow, { color: theme.gold1 }]}>
+                  {expandedId === turn.id ? '▲' : '▼'}
+                </Text>
+              </Pressable>
+              {expandedId === turn.id && (
+                <AnswerView response={turn.response} onAsk={(q) => sendQuestion(q)} disabled={sending} />
+              )}
+            </>
           )}
         </Card>
       ))}
 
-      {/* purani chat (2 din se purani) — DB me sab kuch surakshit hai, yahan se load hoti hai */}
-      {hasMore && (
+      {/* purani chats — history browser me (search + date groups ke saath) */}
+      {(history.length > 1 || hasMore) && (
         <Pressable
-          onPress={loadOlder}
-          disabled={loadingMore}
+          onPress={() => { hTap(); setHistoryOpen(true); }}
           style={({ pressed }) => [
             styles.olderBtn,
             { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.06)' : '#ffffff' },
             pressed && { opacity: 0.75 },
           ]}
         >
-          {loadingMore ? (
-            <ActivityIndicator color={theme.gold1} size="small" />
-          ) : (
-            <Text style={[styles.olderTxt, { color: theme.gold1 }]}>
-              {lang === 'hi' ? '↑ पुरानी चैट देखें' : '↑ Load older chat'}
-            </Text>
-          )}
+          <Text style={[styles.olderTxt, { color: theme.gold1 }]}>
+            {lang === 'hi' ? '🕐 पुरानी चैट इतिहास में देखें' : '🕐 View older chats in history'}
+          </Text>
         </Pressable>
       )}
 
@@ -359,4 +369,11 @@ const styles = StyleSheet.create({
   voiceHint: { fontFamily: fonts.inter, fontSize: 11, lineHeight: 16, marginTop: 8 },
   olderBtn: { marginTop: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: 14, paddingVertical: 13 },
   olderTxt: { fontFamily: fonts.interSemi, fontSize: 13 },
+  // "उत्तर देखें ▼" collapsed-answer toggle
+  answerToggle: {
+    marginTop: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    borderWidth: 1, borderRadius: 12, paddingVertical: 11,
+  },
+  answerToggleTxt: { fontFamily: fonts.interSemi, fontSize: 12.5, letterSpacing: 0.4 },
+  answerToggleArrow: { fontSize: 9 },
 });

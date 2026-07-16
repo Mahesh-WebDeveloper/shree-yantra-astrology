@@ -1,5 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Share, Animated, Easing, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Share, Animated, Easing } from 'react-native';
+// Stack screens par edge-swipe-back (gestureEnabled horizontal) RN core ScrollView ke
+// horizontal pan ko kha jaata hai — gesture-handler ka ScrollView stack ke gesture ke
+// saath cooperate karta hai, isliye rails yahi use karte hai.
+import { ScrollView } from 'react-native-gesture-handler';
 import Svg, { Path, Circle, Line, Polyline } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme/ThemeProvider';
@@ -20,6 +24,7 @@ import { useT, useLang } from '../i18n/LanguageProvider';
 import { Lang } from '../i18n/strings';
 import { aArea, aAstroText, aColor, aMood, aPanchangLabel, aPanchangTerm, aSign } from '../i18n/astro';
 import { useReadingPrefs, readingStyle, READING_SCALES, ReadingScale } from '../hooks/useReadingPrefs';
+import { ReadingBar } from '../components/ReadingBar';
 
 const DEFAULT_BIRTH = { dob: '01-01-2000', tob: '06:42', tz: '+05:30', place: 'Jaipur' };
 
@@ -161,62 +166,6 @@ function useSpringPress(to = 0.97) {
   return { sc, pressIn, pressOut };
 }
 
-/* ── Aa reading bar — font-size steps + bold-body toggle (persisted) ── */
-function ReadingBar({
-  scale, bold, setScale, setBold, theme, lang,
-}: {
-  scale: ReadingScale; bold: boolean;
-  setScale: (s: ReadingScale) => void; setBold: (b: boolean) => void;
-  theme: Theme; lang: Lang;
-}) {
-  const sizes: { v: ReadingScale; f: number }[] = [
-    { v: READING_SCALES[0], f: 11 },
-    { v: READING_SCALES[1], f: 13.5 },
-    { v: READING_SCALES[2], f: 16 },
-  ];
-  return (
-    <View style={[styles.readBar, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? '#0b0906' : '#fffdf7' }]}>
-      <Text style={[styles.readLbl, { color: theme.textMuted }]}>{lang === 'hi' ? 'पढ़ने का आकार' : 'Reading size'}</Text>
-      <View style={styles.readBtns}>
-        {sizes.map(({ v, f }) => {
-          const on = scale === v;
-          return (
-            <Pressable
-              key={v}
-              onPress={() => { hSelect(); setScale(v); }}
-              hitSlop={4}
-              style={({ pressed }) => [styles.readBtnWrap, pressed && { transform: [{ scale: 0.94 }] }]}
-            >
-              {on ? (
-                <LinearGradient colors={theme.buttonGradient} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.readBtn}>
-                  <Text style={{ fontFamily: fonts.interBold, fontSize: f, color: theme.buttonInk }}>A</Text>
-                </LinearGradient>
-              ) : (
-                <View style={[styles.readBtn, { borderWidth: 1, borderColor: theme.cardBorder }]}>
-                  <Text style={{ fontFamily: fonts.interSemi, fontSize: f, color: theme.goldText }}>A</Text>
-                </View>
-              )}
-            </Pressable>
-          );
-        })}
-      </View>
-      <Pressable
-        onPress={() => { hSelect(); setBold(!bold); }}
-        hitSlop={4}
-        style={({ pressed }) => [
-          styles.boldBtn,
-          {
-            borderColor: bold ? theme.gold2 : theme.cardBorder,
-            backgroundColor: bold ? (theme.isDark ? '#241b09' : '#faf0da') : (theme.isDark ? '#0b0906' : '#ffffff'),
-          },
-          pressed && { transform: [{ scale: 0.94 }] },
-        ]}
-      >
-        <Text style={[styles.boldBtnText, { color: theme.goldText }]}>{lang === 'hi' ? 'मोटे अक्षर' : 'Bold text'}</Text>
-      </Pressable>
-    </View>
-  );
-}
 
 /* ── Mood meter — thin gold progress bar (Choghadiya hero bar look) ── */
 const MoodBar = React.memo(function MoodBar({
@@ -265,7 +214,7 @@ const AreaCard = React.memo(function AreaCard({
   title, text, action, score, theme, lang, scale, bold,
 }: {
   title: string; text: string; action?: string; score?: number;
-  theme: Theme; lang: Lang; scale: number; bold: boolean;
+  theme: Theme; lang: Lang; scale: number; bold: number;
 }) {
   const icon = AREA_ICONS[title] || AREA_ICONS.Career;
   const pct = clampPct(score, 70);
@@ -317,7 +266,7 @@ const RemedyCard = React.memo(function RemedyCard({
   title, body, timing, mantra, priority, defaultOpen, theme, lang, scale, bold,
 }: {
   title: string; body?: string; timing?: string; mantra?: string; priority?: string;
-  defaultOpen?: boolean; theme: Theme; lang: Lang; scale: number; bold: boolean;
+  defaultOpen?: boolean; theme: Theme; lang: Lang; scale: number; bold: number;
 }) {
   const [open, setOpen] = useState(!!defaultOpen);
   const { sc, pressIn, pressOut } = useSpringPress(0.98);
@@ -373,7 +322,7 @@ const RemedyCard = React.memo(function RemedyCard({
 const ListColumn = React.memo(function ListColumn({
   kind, title, items, theme, lang, scale, bold,
 }: {
-  kind: 'do' | 'avoid'; title: string; items: string[]; theme: Theme; lang: Lang; scale: number; bold: boolean;
+  kind: 'do' | 'avoid'; title: string; items: string[]; theme: Theme; lang: Lang; scale: number; bold: number;
 }) {
   const good = kind === 'do';
   const color = good ? theme.green : theme.red;
@@ -434,7 +383,7 @@ export function DailyPredictionScreen({ navigation }: any) {
   const accent = (tone: Tone) => (tone === 'good' ? theme.green : tone === 'bad' || tone === 'caution' ? theme.red : theme.gold1);
 
   // reader prefs — the Aa control (persisted; applies only to reading text)
-  const { scale, bold, setScale, setBold } = useReadingPrefs();
+  const { scale, weight: bold, stepScale, stepWeight } = useReadingPrefs(); // bold = weight step (0/1/2)
   const [readerOpen, setReaderOpen] = useState(false);
   const rd = useCallback(
     (size: number, lineHeight: number) => readingStyle(scale, bold, size, lineHeight),
@@ -652,7 +601,7 @@ export function DailyPredictionScreen({ navigation }: any) {
       </View>
 
       {readerOpen && (
-        <ReadingBar scale={scale} bold={bold} setScale={setScale} setBold={setBold} theme={theme} lang={lang} />
+        <ReadingBar scale={scale} weight={bold} stepScale={stepScale} stepWeight={stepWeight} theme={theme} lang={lang} />
       )}
 
       {tab !== 'daily' ? (

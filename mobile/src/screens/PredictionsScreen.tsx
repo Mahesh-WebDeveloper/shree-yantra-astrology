@@ -1,5 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ActivityIndicator, Image, Animated, Easing, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ActivityIndicator, Image, Animated, Easing } from 'react-native';
+// Stack ka horizontal back-gesture RN core ScrollView ka horizontal swipe kha jaata tha
+// (राशि rail slide nahi hota tha) — gesture-handler ka ScrollView isse cooperate karta hai.
+import { ScrollView } from 'react-native-gesture-handler';
 import Svg, { Line, Path, Polyline } from 'react-native-svg';
 import { rashiImage } from '../components/icons/rashiImages';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -21,6 +24,7 @@ import { getHoroscope, getPersonalizedHoroscope, getSignRashifal, SignRashifal, 
 import { useLang } from '../i18n/LanguageProvider';
 import { Lang } from '../i18n/strings';
 import { useReadingPrefs, readingStyle, READING_SCALES, ReadingScale } from '../hooks/useReadingPrefs';
+import { ReadingBar } from '../components/ReadingBar';
 
 const PERIODS: HoroscopePeriod[] = ['daily', 'weekly', 'monthly', 'yearly'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -132,65 +136,6 @@ function useSpringPress(to = 0.97) {
   return { sc, pressIn, pressOut };
 }
 
-/* ── Aa reading bar — font-size steps + bold-body toggle. Backed by the SAME
-   persisted prefs as DailyPredictionScreen (sy.rashifal.reading), so the size
-   chosen on either rashifal page applies to both. ── */
-function ReadingBar({
-  scale, bold, setScale, setBold, theme, lang,
-}: {
-  scale: ReadingScale; bold: boolean;
-  setScale: (s: ReadingScale) => void; setBold: (b: boolean) => void;
-  theme: Theme; lang: Lang;
-}) {
-  const sizes: { v: ReadingScale; f: number }[] = [
-    { v: READING_SCALES[0], f: 11 },
-    { v: READING_SCALES[1], f: 13.5 },
-    { v: READING_SCALES[2], f: 16 },
-  ];
-  return (
-    <View style={[styles.readBar, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? '#0b0906' : '#fffdf7' }]}>
-      <Text style={[styles.readLbl, { color: theme.textMuted }]}>{lang === 'hi' ? 'पढ़ने का आकार' : 'Reading size'}</Text>
-      <View style={styles.readBtns}>
-        {sizes.map(({ v, f }) => {
-          const on = scale === v;
-          return (
-            <Pressable
-              key={v}
-              onPress={() => { hSelect(); setScale(v); }}
-              hitSlop={4}
-              style={({ pressed }) => [styles.readBtnWrap, pressed && { transform: [{ scale: 0.94 }] }]}
-            >
-              {on ? (
-                <LinearGradient colors={theme.buttonGradient} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.readBtn}>
-                  <Text style={{ fontFamily: fonts.interBold, fontSize: f, color: theme.buttonInk }}>A</Text>
-                </LinearGradient>
-              ) : (
-                <View style={[styles.readBtn, { borderWidth: 1, borderColor: theme.cardBorder }]}>
-                  <Text style={{ fontFamily: fonts.interSemi, fontSize: f, color: theme.goldText }}>A</Text>
-                </View>
-              )}
-            </Pressable>
-          );
-        })}
-      </View>
-      <Pressable
-        onPress={() => { hSelect(); setBold(!bold); }}
-        hitSlop={4}
-        style={({ pressed }) => [
-          styles.boldBtn,
-          {
-            borderColor: bold ? theme.gold2 : theme.cardBorder,
-            backgroundColor: bold ? (theme.isDark ? '#241b09' : '#faf0da') : (theme.isDark ? '#0b0906' : '#ffffff'),
-          },
-          pressed && { transform: [{ scale: 0.94 }] },
-        ]}
-      >
-        <Text style={[styles.boldBtnText, { color: theme.goldText }]}>{lang === 'hi' ? 'मोटे अक्षर' : 'Bold text'}</Text>
-      </Pressable>
-    </View>
-  );
-}
-
 /* ── Sign medallion — one item of the horizontal snap rail. Spring press;
    selected = gold gradient ring. All fills OPAQUE (sits in a scale-animated
    wrapper — Android white-composite bug). ── */
@@ -231,7 +176,7 @@ const SignMedallion = React.memo(function SignMedallion({
 const AreaRow = React.memo(function AreaRow({
   area, theme, scale, bold,
 }: {
-  area: { key: string; title: string; score: number; text: string }; theme: Theme; scale: number; bold: boolean;
+  area: { key: string; title: string; score: number; text: string }; theme: Theme; scale: number; bold: number;
 }) {
   const pct = Math.max(0, Math.min(100, area.score || 0));
   return (
@@ -252,7 +197,7 @@ const AreaRow = React.memo(function AreaRow({
 const ListColumn = React.memo(function ListColumn({
   kind, title, items, theme, scale, bold,
 }: {
-  kind: 'do' | 'avoid'; title: string; items: string[]; theme: Theme; scale: number; bold: boolean;
+  kind: 'do' | 'avoid'; title: string; items: string[]; theme: Theme; scale: number; bold: number;
 }) {
   const good = kind === 'do';
   const color = good ? theme.green : theme.red;
@@ -283,7 +228,7 @@ const ListColumn = React.memo(function ListColumn({
 const RashifalSection = React.memo(function RashifalSection({
   heading, text, saral, theme, lang, scale, bold,
 }: {
-  heading?: string; text: string; saral?: string; theme: Theme; lang: Lang; scale: number; bold: boolean;
+  heading?: string; text: string; saral?: string; theme: Theme; lang: Lang; scale: number; bold: number;
 }) {
   return (
     <View style={[styles.aiSection, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(255,253,247,0.7)' }]}>
@@ -349,7 +294,7 @@ export function PredictionsScreen({ navigation }: any) {
   const [aiRLoading, setAiRLoading] = useState(false);
 
   // reader prefs — the shared Aa control (persisted; applies only to reading text)
-  const { scale, bold, setScale, setBold } = useReadingPrefs();
+  const { scale, weight: bold, stepScale, stepWeight } = useReadingPrefs(); // bold = weight step (0/1/2)
   const [readerOpen, setReaderOpen] = useState(false);
   const rd = useCallback(
     (size: number, lineHeight: number) => readingStyle(scale, bold, size, lineHeight),
@@ -515,7 +460,7 @@ export function PredictionsScreen({ navigation }: any) {
       </View>
 
       {readerOpen && (
-        <ReadingBar scale={scale} bold={bold} setScale={setScale} setBold={setBold} theme={theme} lang={lang} />
+        <ReadingBar scale={scale} weight={bold} stepScale={stepScale} stepWeight={stepWeight} theme={theme} lang={lang} />
       )}
 
       {/* ── sign picker — horizontal snap rail of medallions ── */}

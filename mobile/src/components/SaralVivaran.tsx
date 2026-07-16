@@ -11,7 +11,8 @@ import { SpeakButton } from './SpeakButton';
  * summary with real-life examples) so a non-technical / non-astrology user understands.
  * Renders nothing when the field is empty.
  */
-export function SaralVivaran({ text, scale = 1, bold = false }: { text?: string | null; scale?: number; bold?: boolean }) {
+// `bold` weight-step (0/1/2) bhi leta hai — reading prefs ka 3-step font weight
+export function SaralVivaran({ text, scale = 1, bold = false }: { text?: string | null; scale?: number; bold?: boolean | number }) {
   const { theme } = useTheme();
   const { lang } = useLang();
   if (!text || !String(text).trim()) return null;
@@ -41,7 +42,7 @@ export function SaralVivaran({ text, scale = 1, bold = false }: { text?: string 
             color: theme.text,
             fontSize: 14 * scale,
             lineHeight: 23 * scale,
-            fontFamily: bold ? fonts.interMed : fonts.inter,
+            fontFamily: bold === 2 ? fonts.interSemi : bold ? fonts.interMed : fonts.inter,
           },
         ]}
       >
