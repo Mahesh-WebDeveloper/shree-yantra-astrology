@@ -79,10 +79,17 @@ export function ManageSubscriptionScreen({ navigation }: any) {
         </View>
       </Card>
 
-      {/* Cancel is intentionally NOT here. A low-key link leads to a deeper Billing & Account
-          screen where cancellation lives at the very bottom — so it is not front-and-centre. */}
-      <Pressable onPress={() => { hTap(); navigation.navigate('BillingOptions'); }} hitSlop={6} style={styles.billingLink}>
-        <Text style={[styles.billingLinkTxt, { color: theme.textMuted }]}>{hi ? 'बिलिंग और खाता विकल्प ›' : 'Billing & account options ›'}</Text>
+      {/* Cancel is intentionally NOT here. A gold outlined button leads to a deeper Billing &
+          Account screen where cancellation lives at the very bottom — visible, not buried. */}
+      <Pressable
+        onPress={() => { hTap(); navigation.navigate('BillingOptions'); }}
+        style={({ pressed }) => [styles.billingLink, pressed && { transform: [{ scale: 0.97 }] }]}
+      >
+        <LinearGradient colors={['#f6d27a', '#e9b850', '#a8770f']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.billingRing}>
+          <View style={[styles.billingBtn, { backgroundColor: theme.isDark ? '#0b0906' : '#fffaf0' }]}>
+            <Text style={[styles.billingLinkTxt, { color: theme.goldText }]}>{hi ? 'बिलिंग और खाता विकल्प ›' : 'Billing & account options ›'}</Text>
+          </View>
+        </LinearGradient>
       </Pressable>
     </Page>
   );
@@ -121,6 +128,8 @@ const styles = StyleSheet.create({
   price: { fontFamily: fonts.cinzelSemi, fontSize: 15 },
   per: { fontFamily: fonts.inter, fontSize: 9.5, letterSpacing: 1 },
 
-  billingLink: { marginTop: 20, alignSelf: 'center', paddingVertical: 8 },
-  billingLinkTxt: { fontFamily: fonts.inter, fontSize: 12, letterSpacing: 0.3 },
+  billingLink: { marginTop: 20, alignSelf: 'center' },
+  billingRing: { borderRadius: radii.pill, padding: 1.2 },
+  billingBtn: { borderRadius: radii.pill, paddingHorizontal: 20, paddingVertical: 10 },
+  billingLinkTxt: { fontFamily: fonts.interSemi, fontSize: 12.5, letterSpacing: 0.4 },
 });

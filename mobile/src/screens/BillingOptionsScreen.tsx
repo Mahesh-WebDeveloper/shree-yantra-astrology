@@ -73,9 +73,12 @@ export function BillingOptionsScreen({ navigation }: any) {
           : 'For any billing question, use Help & Support → Email support and our team will assist within a day.'}
       </Text>
 
-      {/* buried at the very bottom, small and muted */}
-      <Pressable onPress={cancel} hitSlop={6} style={styles.cancelLink}>
-        <Text style={[styles.cancelTxt, { color: theme.textMuted }]}>{hi ? 'सदस्यता रद्द करें' : 'Cancel subscription'}</Text>
+      {/* at the very bottom — an outlined gold button: black fill, gold ring, gold text */}
+      <Pressable
+        onPress={cancel}
+        style={({ pressed }) => [styles.cancelBtn, pressed && { transform: [{ scale: 0.97 }], opacity: 0.85 }]}
+      >
+        <Text style={styles.cancelTxt}>{hi ? 'सदस्यता रद्द करें' : 'Cancel Subscription'}</Text>
       </Pressable>
     </Page>
   );
@@ -88,6 +91,12 @@ const styles = StyleSheet.create({
   k: { fontFamily: fonts.interSemi, fontSize: 13.5 },
   v: { fontFamily: fonts.inter, fontSize: 12.5, lineHeight: 18, marginTop: 3 },
   note: { fontFamily: fonts.inter, fontSize: 11.5, lineHeight: 17, marginTop: 16, paddingHorizontal: 2 },
-  cancelLink: { marginTop: 40, marginBottom: 8, alignSelf: 'center', paddingVertical: 8, paddingHorizontal: 12 },
-  cancelTxt: { fontFamily: fonts.inter, fontSize: 12, textDecorationLine: 'underline', opacity: 0.7 },
+  // user-specified look: golden outline ring, black background, golden text
+  cancelBtn: {
+    marginTop: 40, marginBottom: 8, alignSelf: 'center',
+    paddingVertical: 11, paddingHorizontal: 24,
+    borderRadius: radii.pill, borderWidth: 1.2, borderColor: '#e9b850',
+    backgroundColor: '#0a0805',
+  },
+  cancelTxt: { fontFamily: fonts.interSemi, fontSize: 12.5, letterSpacing: 0.5, color: '#e9b850' },
 });

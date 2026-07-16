@@ -188,11 +188,8 @@ export function ProfileScreen({ navigation }: any) {
     else if (label === 'Saved Library') navigation.navigate('Library');
     else if (label === 'Help & Support') navigation.navigate('Help');
     else if (label === 'Language') {
-      dialog(hi ? 'भाषा' : 'Language', hi ? 'अपनी पसंदीदा भाषा चुनें' : 'Choose your preferred language', [
-        { text: 'English', onPress: () => { setLang('en'); hSuccess(); } },
-        { text: 'हिंदी', onPress: () => { setLang('hi'); hSuccess(); } },
-        { text: hi ? 'रद्द करें' : 'Cancel', style: 'cancel' },
-      ]);
+      // dialog me future languages nahi samayengi — full slide-select screen kholo
+      navigation.navigate('LanguageSelect', { mode: 'settings' });
     } else if (label === 'Privacy & Security') {
       navigation.navigate('PrivacySecurity');
     }

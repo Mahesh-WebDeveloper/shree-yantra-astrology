@@ -561,8 +561,22 @@ async function getSunTimes(input) {
   ]);
   const srHM = String(srR && srR.Payload && srR.Payload.SunriseTime && srR.Payload.SunriseTime.StdTime).split(' ')[0];
   const ssHM = String(ssR && ssR.Payload && ssR.Payload.SunsetTime && ssR.Payload.SunsetTime.StdTime).split(' ')[0];
-  const [srH, srM] = srHM.split(':').map(Number);
-  const [ssH, ssM] = ssHM.split(':').map(Number);
+  let [srH, srM] = srHM.split(':').map(Number);
+  let [ssH, ssM] = ssHM.split(':').map(Number);
+  // VedAstro hiccup (missing payload) yaha "undefined" parse hokar NaN ban jaata tha aur
+  // HTTP 200 ke saath client tak pahunchta tha → app me "NaN:NaN" times. Kabhi NaN mat
+  // bhejo: local ephemeris fallback (wahi Drik-verified math jo observance engine chalata hai).
+  if (![srH, srM, ssH, ssM].every(Number.isFinite)) {
+    const eph = require('../utils/localEphemeris');
+    const [dd, mm, yyyy] = dstr.split('/').map(Number);
+    const dateObj = new Date(yyyy, mm - 1, dd);
+    const tzMin = eph.parseTzMin(tz);
+    const sr = eph.riseSetMinutes('Sun', dateObj, Number(lat), Number(lng), tzMin, +1);
+    const ss = eph.riseSetMinutes('Sun', dateObj, Number(lat), Number(lng), tzMin, -1);
+    if (sr == null || ss == null) throw Object.assign(new Error('Sunrise/sunset is jagah-date ke liye nahi mil paya'), { status: 502 });
+    const toHM = (mins) => { const t = Math.round(mins); return { h: Math.floor(t / 60) % 24, m: t % 60 }; };
+    return { date: dstr, place: location.Name, sunrise: toHM(sr), sunset: toHM(ss), source: 'local-ephemeris' };
+  }
   return { date: dstr, place: location.Name, sunrise: { h: srH, m: srM }, sunset: { h: ssH, m: ssM } };
 }
 

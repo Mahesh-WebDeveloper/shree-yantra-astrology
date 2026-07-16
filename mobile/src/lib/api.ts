@@ -1502,5 +1502,12 @@ export const getVargaCharts = (input: KundliInput & { charts?: string[] }) => po
 export const getDasha = (input: KundliInput) => post<DashaResponse>('/api/dasha', input);
 export const getYoga = (input: KundliInput) => post<YogaResponse>('/api/yoga', input);
 export const getSunTimes = (input: { place?: string; lat?: number; lng?: number; date?: string; tz?: string }) =>
-  post<SunTimesResponse>('/api/sunrise', input);
+  post<SunTimesResponse>('/api/sunrise', input).then((r) => {
+    // Kabhi NaN times UI tak mat jaane do — invalid ho to throw, callers ke .catch
+    // fallbacks (demo constants) sambhal lete hai. (Server-side VedAstro hiccup me
+    // {h:NaN} 200 ke saath aa sakta tha → screen par "NaN:NaN".)
+    const ok = (t: { h: number; m: number } | undefined) => !!t && Number.isFinite(t.h) && Number.isFinite(t.m);
+    if (!ok(r.sunrise) || !ok(r.sunset)) throw new Error('invalid sun times');
+    return r;
+  });
 export const getHealth = () => get<{ status: string; db: string }>('/api/health');
