@@ -67,11 +67,28 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   }, [screenH, sheetY]);
 
   useEffect(() => {
-    // background playback ON — long audio (Gita chapters/bhajans) screen-lock par bhi chalta rahe
-    setAudioModeAsync({ playsInSilentMode: true, shouldPlayInBackground: true }).catch(() => {});
+    // background playback ON — long audio (Gita chapters/bhajans) screen-lock par bhi chalta rahe.
+    // interruptionMode 'doNotMix' ZAROORI hai: (a) lock-screen/notification controls isi par
+    // chalte hai, (b) industry standard — hamara audio shuru ho to doosre app ka ruk jaaye.
+    setAudioModeAsync({ playsInSilentMode: true, shouldPlayInBackground: true, interruptionMode: 'doNotMix' }).catch(() => {});
     return () => {
+      try { player.setActiveForLockScreen(false); } catch (_) {}
       try { player.remove(); } catch (_) {}
     };
+  }, [player]);
+
+  // Media notification + lock-screen controls (jo har music app dikhata hai) — expo-audio ka
+  // AudioControlsService native side par pehle se declared hai (manifest me service +
+  // FOREGROUND_SERVICE_MEDIA_PLAYBACK); ye call use track ke naam ke saath activate karti hai.
+  // Bina iske Android background audio ~3 min me maar bhi deta hai.
+  const showMediaControls = useCallback((t: Track) => {
+    try {
+      player.setActiveForLockScreen(
+        true,
+        { title: t.title, artist: t.sub || 'Shree Yantra', albumTitle: 'Shree Yantra' },
+        { showSeekForward: true, showSeekBackward: true },
+      );
+    } catch (_) { /* purane OS/edge par bhi playback na ruke */ }
   }, [player]);
 
   const play = useCallback(
@@ -89,8 +106,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       // ambient drones loop (seamless); long-form audio (loop:false) ek baar chalke ruk jaaye
       player.loop = t.loop !== false;
       player.play();
+      showMediaControls(t); // notification/lock-screen par naya track naam turant
     },
-    [player, track]
+    [player, track, showMediaControls]
   );
 
   const toggle = useCallback(() => {
@@ -133,6 +151,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
   const stop = useCallback(() => {
     try { player.pause(); } catch (_) {}
+    try { player.setActiveForLockScreen(false); } catch (_) {} // notification bhi hatao
     setTrack(null);
     setExpanded(false);
   }, [player]);
