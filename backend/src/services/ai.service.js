@@ -416,11 +416,18 @@ async function cached(key, type, producer) {
 // Panchang response → compact "today" block (shared by buildContext + full context)
 function panchToToday(panch) {
   if (!panch) return null;
+  // "Aaj ki" tithi/nakshatra = UDAYA (sunrise) limbs — dharmik niyam: सूर्योदय ki tithi
+  // pura din maani jaati hai. Current-moment limb bhejne se AI din ko "ek aage" padhta
+  // tha jaise hi sunrise-tithi khatam hoti (app display bhi isi niyam par fix hua hai).
+  const tithi = panch.sunriseTithi || panch.tithi;
+  const nakshatra = panch.sunriseNakshatra || panch.nakshatra;
+  const yoga = panch.sunriseYoga || panch.yoga;
+  const karana = panch.sunriseKarana || panch.karana;
   return {
-    date: panch.date, weekday: panch.weekday, tithi: panch.tithi && panch.tithi.name,
-    paksha: panch.tithi && panch.tithi.paksha, nakshatra: panch.nakshatra && panch.nakshatra.name,
-    yoga: panch.yoga && panch.yoga.name,
-    karana: panch.karana && panch.karana.name,
+    date: panch.date, weekday: panch.weekday, tithi: tithi && tithi.name,
+    paksha: tithi && tithi.paksha, nakshatra: nakshatra && nakshatra.name,
+    yoga: yoga && yoga.name,
+    karana: karana && karana.name,
     transitMoon: panch.moon && panch.moon.sign,
     transitMoonNakshatra: panch.moon && panch.moon.nakshatra,
     sun: panch.sun && panch.sun.sign,
@@ -760,7 +767,9 @@ function ensureDailyShape(out, ctx, lang) {
 
 async function generateDailyPrediction(input) {
   const lang = langOf(input);
-  const key = `daily|v7|${birthSig(input)}|${todayStr()}|${lang}`;
+  // v8: today block ab udaya (sunrise) tithi bolta hai — purani cached readings current-
+  // moment tithi ke saath bani thi, unhe regenerate hona chahiye
+  const key = `daily|v8|${birthSig(input)}|${todayStr()}|${lang}`;
   return cached(key, 'daily', async () => {
     const ctx = await buildFullAstroContext(input);
     // Missing blocks are OMITTED (not sent as null) so the model is never tempted
