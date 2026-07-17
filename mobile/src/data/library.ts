@@ -870,7 +870,7 @@ export const SCRIPTURES: LibraryItem[] = BOOK_LIST.map((b) => ({
 }));
 
 /* ── Top filter chips — TOPIC categories (each shows its own books + audio). ── */
-export type FilterKey = 'all' | 'mantra' | 'aarti' | 'veda' | 'purana' | 'gita' | 'music' | 'saved';
+export type FilterKey = 'all' | 'mantra' | 'aarti' | 'veda' | 'purana' | 'gita' | 'music' | 'meditation' | 'saved';
 export type IconName = 'sparkle' | 'mantra' | 'flame' | 'scroll' | 'stack' | 'lotus' | 'music' | 'bookmark';
 export interface LibFilter { key: FilterKey; label: string; icon: IconName }
 export const LIB_FILTERS: LibFilter[] = [
@@ -881,6 +881,7 @@ export const LIB_FILTERS: LibFilter[] = [
   { key: 'purana', label: 'PURANA',   icon: 'stack' },
   { key: 'gita',   label: 'GITA & EPICS', icon: 'lotus' },
   { key: 'music',  label: 'MUSIC',    icon: 'music' },
+  { key: 'meditation', label: 'MEDITATION', icon: 'music' },
   { key: 'saved',  label: 'SAVED',    icon: 'bookmark' },
 ];
 

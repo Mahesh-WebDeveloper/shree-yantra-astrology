@@ -487,6 +487,7 @@ export function LibraryScreen({ navigation }: any) {
   const mediaMusic = mediaItems.filter((item) => item.category === 'spiritual_music' && !hide(item));
   const mediaBhajans = mediaItems.filter((item) => item.category === 'bhajan' && !hide(item));
   const mediaAarti = mediaItems.filter((item) => (item.category as string) === 'aarti' && !hide(item));
+  const mediaMeditation = mediaItems.filter((item) => (item.category as string) === 'meditation' && !hide(item));
 
   /* Saved list — static library items (books/mantras/music) + dynamic media
      (mantra/bhajan/audio) resolved by id, into one normalized render shape. */
@@ -529,8 +530,8 @@ export function LibraryScreen({ navigation }: any) {
   const renderMediaRows = (items: MediaItem[]) => (
       <View style={{ gap: 12 }}>
         {items.map((item) => {
-          const glyph = (item.category as string) === 'aarti' ? 'om' : item.category === 'bhajan' ? 'star' : item.subCategory === 'flute' ? 'flute' : item.subCategory === 'temple_bells' ? 'bells' : item.category === 'mantra' ? 'om' : 'mix';
-          const accent = (item.category as string) === 'aarti' ? theme.red : item.category === 'bhajan' ? theme.red : item.subCategory === 'flute' ? theme.green : theme.goldText;
+          const glyph = (item.category as string) === 'meditation' ? 'flute' : (item.category as string) === 'aarti' ? 'om' : item.category === 'bhajan' ? 'star' : item.subCategory === 'flute' ? 'flute' : item.subCategory === 'temple_bells' ? 'bells' : item.category === 'mantra' ? 'om' : 'mix';
+          const accent = (item.category as string) === 'meditation' ? theme.green : (item.category as string) === 'aarti' ? theme.red : item.category === 'bhajan' ? theme.red : item.subCategory === 'flute' ? theme.green : theme.goldText;
           const sourceLabel = [item.sourceName || (item.sourceType === 'youtube' ? 'YouTube' : item.sourceType === 'audio' ? 'Audio' : 'External'), item.durationText, item.licenseName].filter(Boolean).join(' - ');
           return (
             <Pressable
@@ -846,6 +847,7 @@ export function LibraryScreen({ navigation }: any) {
       {(filter === 'all' || filter === 'aarti') && <Deferred delay={150}>{renderBookGrid(tr('lib.sec.aarti', 'AARTI & DEVOTION'), hi ? 'सभी देवी-देवताओं की पूर्ण आरती।' : 'Full aarti of every deity.', booksByCat('aarti'))}</Deferred>}
       {(filter === 'all' || filter === 'aarti') && mediaAarti.length > 0 && <Deferred delay={200}>{renderMediaSection(tr('lib.dynamicAarti', 'AARTI'), mediaAarti)}</Deferred>}
       {(filter === 'all' || filter === 'aarti') && mediaBhajans.length > 0 && <Deferred delay={250}>{renderMediaSection(tr('lib.dynamicBhajans', 'BHAJANS'), mediaBhajans)}</Deferred>}
+      {(filter === 'all' || filter === 'meditation') && mediaMeditation.length > 0 && <Deferred delay={280}>{renderMediaSection(tr('lib.dynamicMeditation', hi ? 'ध्यान संगीत' : 'MEDITATION MUSIC'), mediaMeditation)}</Deferred>}
 
       {/* ── THE VEDAS ── */}
       {(filter === 'all' || filter === 'veda') && <Deferred delay={300}>{renderBookGrid(tr('lib.sec.veda', 'THE VEDAS'), hi ? 'ऋग्, यजुर्, साम, अथर्व व उपनिषद्।' : 'Rig, Yajur, Sama, Atharva & Upanishads.', booksByCat('veda'))}</Deferred>}

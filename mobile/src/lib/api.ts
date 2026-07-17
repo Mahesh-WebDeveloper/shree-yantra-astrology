@@ -888,7 +888,7 @@ export interface ContentBook {
 export const getLibrary = () => get<{ books: ContentBook[] }>(withLang('/api/library'));
 export const getBook = (id: string) => get<{ book: ContentBook }>(withLang(`/api/library/${id}`));
 
-export type MediaCategory = 'mantra' | 'spiritual_music' | 'bhajan' | 'aarti';
+export type MediaCategory = 'mantra' | 'spiritual_music' | 'bhajan' | 'aarti' | 'meditation';
 export interface MediaItem {
   _id: string;
   title: string;
