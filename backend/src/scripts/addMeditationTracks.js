@@ -3,6 +3,7 @@
 const ITEMS = [
   { slug: 'meditation/varanasi-temple-flow', title: 'Varanasi Temple Flow', hi: 'सितार · बांसुरी · तबला', cat: 'meditation', sub: 'sitar', artist: 'Instrumental', secs: 5876, src: 'https://www.youtube.com/watch?v=tAk4G8Rs1RQ' },
   { slug: 'meditation/dopamine-boost-flow',  title: 'Positive Energy Flow',  hi: 'बांसुरी · सितार · तबला', cat: 'meditation', sub: 'flute', artist: 'Instrumental', secs: 1667, src: 'https://www.youtube.com/watch?v=kY7GcKagdjI' },
+  { slug: 'meditation/spiritual-temple-music', title: 'Spiritual Temple Music', hi: 'बांसुरी · तबला · सितार', cat: 'meditation', sub: 'flute', artist: 'Instrumental', secs: 2053, src: 'https://www.youtube.com/watch?v=NF4gjQzGetw' },
   { slug: 'bhajan/krishna-govind-hare-murari', title: 'Shri Krishna Govind Hare Murari', hi: 'श्री कृष्ण गोविंद हरे मुरारी', cat: 'bhajan', sub: 'krishna', artist: 'Jagjit Singh', secs: 1226, src: 'https://www.youtube.com/watch?v=S6UiK9YD0mE' },
 ];
 const fmt = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
