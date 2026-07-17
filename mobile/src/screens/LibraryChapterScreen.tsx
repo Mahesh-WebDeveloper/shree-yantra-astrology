@@ -8,10 +8,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path, Polyline, Defs, RadialGradient, Stop, Rect } from 'react-native-svg';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts } from '../theme/tokens';
-import { usePlayer } from '../audio/PlayerProvider';
+
 import { hTap, hPress, hSelect } from '../lib/haptics';
 import { useLang } from '../i18n/LanguageProvider';
-import { BOOKS, byId, ReaderVerse } from '../data/library';
+import { BOOKS, ReaderVerse } from '../data/library';
 import { setProgress } from '../lib/libraryStore';
 
 const { width: SCREEN_W } = Dimensions.get('window');
@@ -78,7 +78,6 @@ export function LibraryChapterScreen({ navigation, route }: any) {
   const { lang } = useLang();
   const hi = lang === 'hi';
   const insets = useSafeAreaInsets();
-  const player = usePlayer();
   const pal = paperTheme(theme.isDark);
   const dim = theme.isDark ? '#b89a5b' : theme.textMuted;
 
@@ -88,8 +87,6 @@ export function LibraryChapterScreen({ navigation, route }: any) {
   const last = doc.chapters.length - 1;
   const percent = Math.round(((chapter + 1) / doc.chapters.length) * 100);
 
-  const track = byId(doc.trackId);
-  const isPlaying = player.track?.id === doc.trackId && player.isPlaying;
 
   // build the page list: a cover page, then one page per verse
   const pages = useMemo<Page[]>(
@@ -125,9 +122,9 @@ export function LibraryChapterScreen({ navigation, route }: any) {
           <Text style={[styles.topTitle, { color: theme.goldText }]} numberOfLines={1}>{doc.title}</Text>
           <Text style={[styles.topEyebrow, { color: dim }]} numberOfLines={1}>Chapter {chapter + 1} of {doc.chapters.length}</Text>
         </View>
-        <Pressable onPress={() => { hPress(); player.play(track); }} hitSlop={8} style={({ pressed }) => [styles.iconBtn, { borderColor: isPlaying ? theme.gold1 : theme.cardBorder, backgroundColor: isPlaying ? 'rgba(233,184,80,0.16)' : (theme.isDark ? 'rgba(0,0,0,0.5)' : 'rgba(176,115,22,0.06)') }, pressed && { transform: [{ scale: 0.92 }] }]}>
-          <Svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={theme.gold1} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><Path d="M3 18v-6a9 9 0 0 1 18 0v6" /><Path d="M21 19a2 2 0 0 1-2 2h-1v-6h3zM3 19a2 2 0 0 0 2 2h1v-6H3z" /></Svg>
-        </Pressable>
+        {/* (retired) headphones "Listen" button — demo drone tracks production se hata diye;
+            asli audio admin media library se aata hai. Layout balance ke liye spacer. */}
+        <View style={styles.iconBtn} />
       </View>
 
       {/* paged manuscript */}

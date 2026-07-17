@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { useWindowDimensions } from 'react-native';
 import { useSharedValue, withSpring, withTiming, runOnJS, SharedValue } from 'react-native-reanimated';
 import { createAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from 'expo-audio';
-import { TRACKS, Track } from '../data/library';
+import { Track } from '../data/library';
 import { track as trackEvent } from '../lib/analytics';
 
 // shared spring for the player sheet open/close + interactive drag
@@ -129,11 +129,13 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
   const step = useCallback(
     (dir: 1 | -1) => {
-      const list = queue.length ? queue : TRACKS;
+      // next/prev sirf asli queue (playlist) me chalta hai — demo TRACKS fallback retired
+      const list = queue;
+      if (!list.length) return;
       const i = track ? list.findIndex((t) => t.id === track.id) : -1;
-      if (i < 0) { if (list[0]) play(list[0], queue.length ? queue : undefined); return; }
+      if (i < 0) { play(list[0], list); return; }
       const ni = (i + dir + list.length) % list.length;
-      play(list[ni], queue.length ? queue : undefined);
+      play(list[ni], list);
     },
     [queue, track, play]
   );

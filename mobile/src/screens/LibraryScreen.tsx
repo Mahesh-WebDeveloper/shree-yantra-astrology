@@ -21,8 +21,8 @@ import { useLang, useT } from '../i18n/LanguageProvider';
 import { avatarUrl, getLibrary, getMedia, getDailyShloka, ContentBook, MediaItem, DailyShloka } from '../lib/api';
 import { hTap, hSelect } from '../lib/haptics';
 import {
-  LIB_FILTERS, SCRIPTURES, CONTINUE, booksByCat,
-  byId, itemById, TRACKS, Track, TrackColor, LibraryItem, FilterKey, LibFilter,
+  LIB_FILTERS, SCRIPTURES, booksByCat,
+  itemById, Track, TrackColor, LibraryItem, FilterKey, LibFilter,
 } from '../data/library';
 import { useLibraryStore, toggleSaved } from '../lib/libraryStore';
 
@@ -387,15 +387,12 @@ export function LibraryScreen({ navigation }: any) {
   };
   const openItem = (it: LibraryItem) => {
     if (it.bookId) return openReader(it.bookId);
-    if (it.trackId) { hTap(); player.play(byId(it.trackId)); }
-    else hTap();
+    hTap(); // demo trackId play retired — playable audio sirf admin media se aata hai
   };
 
   const isCurrent = (id?: string) => !!id && player.track?.id === id;
   const playing = (id?: string) => isCurrent(id) && player.isPlaying;
-  const playTrack = (t: Track) => { hTap(); player.play(t); };
 
-  const cont = byId(CONTINUE);
 
   const dim = theme.isDark ? '#b89a5b' : theme.textMuted;
 
@@ -469,12 +466,13 @@ export function LibraryScreen({ navigation }: any) {
   // CONTINUE LISTENING → REAL Bhagavad Gita Chapter 2 audio (Yatharth Geeta) once loaded;
   // falls back to the static placeholder until the media list arrives.
   const gitaCh2 = gitaAudio.find((m) => /chapter\s*0*2\b/i.test(m.title || ''));
-  const contTrack: Track = gitaCh2 ? mediaToTrack(gitaCh2) : cont;
-  const playContinue = () => { hTap(); player.play(contTrack, gitaCh2 ? gitaQueue : undefined); };
+  // demo fallback retired — continue-listening sirf REAL audio par (live ya Gita audio)
+  const contTrack: Track | null = gitaCh2 ? mediaToTrack(gitaCh2) : null;
+  const playContinue = () => { if (!contTrack) return; hTap(); player.play(contTrack, gitaCh2 ? gitaQueue : undefined); };
   // The Continue card is a LIVE mini-player: reflect whatever is currently loaded in the
   // player (so next/prev update the title, seekbar, time + play/pause icon in real time);
   // fall back to the Gita placeholder when nothing has been played yet.
-  const activeTrack = player.track ?? contTrack;
+  const activeTrack = player.track ?? contTrack;  // card tabhi render hota hai jab ye non-null ho
   const liveActive = !!player.track;
   const onContPlay = () => { hTap(); if (liveActive) player.toggle(); else playContinue(); };
 
@@ -500,18 +498,7 @@ export function LibraryScreen({ navigation }: any) {
         glyph: (m.category === 'bhajan' ? 'star' : m.category === 'spiritual_music' ? 'mix' : 'om') as LibraryItem['glyph'],
         scripture: false, playable: m.sourceType !== 'youtube', open: () => openMedia(m),
       };
-      const t = TRACKS.find((x) => x.id === id);
-      if (t) return {
-        id,
-        title: t.title,
-        subtitle: t.sub,
-        glyph: 'om',
-        scripture: false,
-        playable: true,
-        trackId: t.id,
-        open: () => playTrack(t),
-      };
-      return null;
+      return null; // (purane demo-track saves ab resolve nahi hote)
     })
     .filter(Boolean) as SavedEntry[];
 
@@ -795,8 +782,8 @@ export function LibraryScreen({ navigation }: any) {
               <Text style={{ color: theme.gold2, fontSize: 26, fontFamily: fonts.devanagari }}>ॐ</Text>
             </LinearGradient>
             <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={[styles.contTitle, { color: theme.isDark ? '#fff' : theme.text }]} numberOfLines={1}>{activeTrack.title}</Text>
-              <Text style={[styles.itemSub, { color: theme.textMuted }]} numberOfLines={1}>{activeTrack.sub}</Text>
+              <Text style={[styles.contTitle, { color: theme.isDark ? '#fff' : theme.text }]} numberOfLines={1}>{activeTrack?.title}</Text>
+              <Text style={[styles.itemSub, { color: theme.textMuted }]} numberOfLines={1}>{activeTrack?.sub}</Text>
             </View>
             {liveActive && <Chevron color={theme.gold2} size={18} />}
           </Pressable>

@@ -24,25 +24,11 @@ export interface Track {
   loop?: boolean;          // ambient drones loop (default); long-form audio (chapters/bhajans) => false
 }
 
-const OM = require('../../assets/audio/om-drone.wav');
-const TANPURA = require('../../assets/audio/tanpura.wav');
-const FLUTE = require('../../assets/audio/flute-calm.wav');
-const BELLS = require('../../assets/audio/temple-bells.wav');
-
-export const TRACKS: Track[] = [
-  { id: 'gayatri', title: 'Gayatri Mantra', sub: 'Rigveda · 108 cycles', color: 'gold', source: OM },
-  { id: 'mahamrityunjaya', title: 'Mahamrityunjaya', sub: 'Healing · Lord Shiva', color: 'purple', source: TANPURA },
-  { id: 'om-namah', title: 'Om Namah Shivaya', sub: 'Panchakshara · 21 min', color: 'blue', source: FLUTE },
-  { id: 'gita-ch2', title: 'Bhagavad Gita · Chapter 2', sub: 'Shloka 47 – 72', color: 'gold', source: OM },
-  { id: 'meditation', title: 'Deep Meditation', sub: 'Theta drone · 432 Hz', color: 'purple', source: TANPURA },
-  { id: 'temple-bells', title: 'Temple Bells', sub: 'Morning aarti ambience', color: 'gold', source: BELLS },
-  { id: 'flute', title: 'Krishna Flute', sub: 'Calm · nature blend', color: 'green', source: FLUTE },
-  { id: 'tanpura', title: 'Tanpura Sruti', sub: 'Sa–Pa drone · practice', color: 'blue', source: TANPURA },
-];
-export const byId = (id: string) => TRACKS.find((t) => t.id === id) ?? TRACKS[0];
-
-/** "Continue Listening" featured track. */
-export const CONTINUE = 'gita-ch2';
+/* PRODUCTION: saare bundled demo tracks (synthesized drones jo asli mantra/bhajan
+   naamo se dikhte the — "Gayatri Mantra" title par om-drone.wav!) HATA diye gaye hai.
+   Ab har playable audio admin media library (server) se aata hai — koi fake data nahi.
+   TRACKS sirf type-compatibility ke liye khaali export hai (PlayerProvider queue par chalta hai). */
+export const TRACKS: Track[] = [];
 
 /* ── Unified content entity (API-ready) ──────────────────────────────── */
 export interface LibraryItem {
@@ -73,7 +59,7 @@ export interface BookDoc {
   hindi: string;       // Devanagari name shown on the cover
   cover: TrackColor;
   language: string[];  // ['Hindi','English']
-  trackId: string;     // "Listen" audio
+  trackId?: string;    // (retired) demo "Listen" audio — ab koi book isse set nahi karti
   intro: string;
   chapters: BookChapter[];
   subtitle?: string;   // optional card subtitle override (e.g. Mahapurana verse count)
@@ -88,7 +74,7 @@ export interface BookDoc {
 
 const PURAN_BRAHMA: BookDoc = {
   id: 'puran-brahma', eyebrow: '18 महापुराण · Brahma', title: 'Brahma Purana', hindi: 'ब्रह्म\nपुराण', cover: 'gold',
-  language: ['Sanskrit', 'Hindi', 'English'], trackId: 'gayatri',
+  language: ['Sanskrit', 'Hindi', 'English'],
   subtitle: 'महापुराण · Brahma · ~10,000 श्लोक',
   intro: 'Traditionally counted first among the eighteen Mahapuranas — hence its title Adi Purana (the First Purana). Classed as a rajasic Purana associated with Brahma, it holds about 10,000 verses across a Purvabhaga (former part) and Uttarabhaga (latter part), narrated by the Suta Lomaharshana to the sages at Naimisharanya. It is famous as a pilgrim\'s guide to the sacred sites of the Godavari region and Odisha — including the Konark Sun Temple and the Jagannath shrine of Purushottama Kshetra (Puri).',
   chapters: [
@@ -115,7 +101,7 @@ const PURAN_BRAHMA: BookDoc = {
 
 const PURAN_PADMA: BookDoc = {
   id: 'puran-padma', eyebrow: '18 महापुराण · Vaishnava', title: 'Padma Purana', hindi: 'पद्म\nपुराण', cover: 'rose',
-  language: ['Sanskrit', 'Hindi', 'English'], trackId: 'flute',
+  language: ['Sanskrit', 'Hindi', 'English'],
   subtitle: 'महापुराण · Vaishnava · ~55,000 श्लोक',
   intro: 'A sattvic Vaishnava Mahapurana and, at roughly 55,000 verses, the second largest of the eighteen. It is named after the padma — the cosmic lotus that rises from the navel of Vishnu, upon which Brahma is seated to begin creation. Arranged in five khandas (Srishti, Bhumi, Svarga, Patala/Brahma and Uttara), it is renowned for the Bhagavad Gita Mahatmya, the Bhagavata Mahatmya, glorification of Rama and the holy Tulasi.',
   chapters: [
@@ -142,7 +128,7 @@ const PURAN_PADMA: BookDoc = {
 
 const PURAN_VISHNU: BookDoc = {
   id: 'puran-vishnu', eyebrow: '18 महापुराण · Vaishnava', title: 'Vishnu Purana', hindi: 'विष्णु\nपुराण', cover: 'blue',
-  language: ['Sanskrit', 'Hindi', 'English'], trackId: 'meditation',
+  language: ['Sanskrit', 'Hindi', 'English'],
   subtitle: 'महापुराण · Vaishnava · ~23,000 श्लोक',
   intro: 'A sattvic Vaishnava Mahapurana revered as the Purana-ratna, the very gem of the Puranas, for its clear and concentrated doctrine. Traditionally of about 23,000 verses, it is arranged in six amshas (parts) and unfolds as a dialogue in which the sage Parashara answers his disciple Maitreya on the nature of the universe. It centres wholly on Vishnu — from whom all arises, in whom all abides, and into whom all returns — and includes the beloved tales of Dhruva, Prahlada and the life of Krishna.',
   chapters: [
@@ -172,7 +158,7 @@ const PURAN_VISHNU: BookDoc = {
 
 const PURAN_BHAGAVATA: BookDoc = {
   id: 'puran-bhagavata', eyebrow: '18 महापुराण · Vaishnava', title: 'Shrimad Bhagavatam', hindi: 'श्रीमद्\nभागवत', cover: 'gold',
-  language: ['Sanskrit', 'Hindi', 'English'], trackId: 'flute',
+  language: ['Sanskrit', 'Hindi', 'English'],
   subtitle: 'महापुराण · Vaishnava · ~18,000 श्लोक',
   intro: 'The Bhagavata Purana — the crown jewel of the sattvic Vaishnava Puranas and the most beloved scripture of bhakti. In some 18,000 verses across twelve skandhas (books), it is narrated by Shuka to King Parikshit in his last seven days of life. It moves from creation to liberation and reaches its heart in the tenth Skandha, the full life-story (lila) of Krishna — including such treasured episodes as the deliverance of Gajendra the elephant-king.',
   chapters: [
@@ -215,7 +201,7 @@ const PURAN_BHAGAVATA: BookDoc = {
 
 const PURAN_SHIVA: BookDoc = {
   id: 'puran-shiva', eyebrow: '18 महापुराण · Shaiva', title: 'Shiva Purana', hindi: 'शिव\nपुराण', cover: 'purple',
-  language: ['Sanskrit', 'Hindi', 'English'], trackId: 'mahamrityunjaya',
+  language: ['Sanskrit', 'Hindi', 'English'],
   subtitle: 'महापुराण · शैव · ~24,000 श्लोक',
   intro: 'The great Shaiva Mahapurana, presided over by Lord Shiva and narrated by the sage Vyasa through Suta to the sages of Naimisharanya. It celebrates Shiva as the supreme reality worshipped through the Linga, the Panchakshara mantra "Om Namah Shivaya", and the twelve Jyotirlingas. The surviving text runs to about 24,000 verses arranged in seven Samhitas (books) — Vidyeshvara, Rudra, Shatarudra, Kotirudra, Uma, Kailasa and Vayaviya.',
   chapters: [
@@ -248,7 +234,7 @@ const PURAN_SHIVA: BookDoc = {
 
 const PURAN_SKANDA: BookDoc = {
   id: 'puran-skanda', eyebrow: '18 महापुराण · Shaiva', title: 'Skanda Purana', hindi: 'स्कन्द\nपुराण', cover: 'blue',
-  language: ['Sanskrit', 'Hindi', 'English'], trackId: 'om-namah',
+  language: ['Sanskrit', 'Hindi', 'English'],
   subtitle: 'महापुराण · शैव · ~81,000 श्लोक',
   intro: 'The largest of all eighteen Mahapuranas, presided over by Skanda (Kartikeya), the warrior son of Shiva and Parvati, who narrates it to the sages. With roughly 81,000 verses, it is above all a vast treasury of Mahatmyas (glories) of sacred places. The common recension is arranged in seven khandas — Maheshwara, Vaishnava, Brahma, Kashi, Avanti, Nagara and Prabhasa — famous for the Kashi Khanda (Varanasi), the Kedara and Kaumarika sections, and the Satyanarayana Vrata Katha.',
   chapters: [
@@ -281,7 +267,7 @@ const PURAN_SKANDA: BookDoc = {
 
 const PURAN_LINGA: BookDoc = {
   id: 'puran-linga', eyebrow: '18 महापुराण · Shaiva', title: 'Linga Purana', hindi: 'लिङ्ग\nपुराण', cover: 'gold',
-  language: ['Sanskrit', 'Hindi', 'English'], trackId: 'om-namah',
+  language: ['Sanskrit', 'Hindi', 'English'],
   subtitle: 'महापुराण · शैव · ~11,000 श्लोक',
   intro: 'A core Shaiva Mahapurana of about 11,000 verses, named for its central theme — the worship of Shiva in the aniconic form of the Linga. Narrated by Vyasa, it is arranged in two parts (Purva-bhaga and Uttara-bhaga) and famously tells of the Lingodbhava: the beginningless, endless pillar of light from which Shiva reveals himself as the ultimate reality beyond Brahma and Vishnu. It covers cosmology, the Yugas and Manvantaras, Shaiva yoga, ritual Linga-worship, tirthas and ethics.',
   chapters: [
@@ -311,7 +297,7 @@ const PURAN_LINGA: BookDoc = {
 
 const PURAN_MARKANDEYA: BookDoc = {
   id: 'puran-markandeya', eyebrow: '18 महापुराण · Devi/Shakta', title: 'Markandeya Purana', hindi: 'मार्कण्डेय\nपुराण', cover: 'rose',
-  language: ['Sanskrit', 'Hindi', 'English'], trackId: 'gayatri',
+  language: ['Sanskrit', 'Hindi', 'English'],
   subtitle: 'महापुराण · देवी/शाक्त · ~9,000 श्लोक',
   intro: 'One of the oldest Mahapuranas, of about 9,000 verses, framed as the wisdom of the immortal sage Markandeya. It opens with the sage Jaimini approaching four wise Dharmika birds who answer his questions from the Mahabharata. Above all it is treasured for the Devi Mahatmya (Durga Saptashati) — cantos 81 to 93 — the foundational Shakta scripture of 700 verses that hymns the Great Goddess as the supreme power, recited across every Navaratri.',
   chapters: [
@@ -354,7 +340,6 @@ const PURAN_NARADA: BookDoc = {
   hindi: 'नारद\nपुराण',
   cover: 'gold',
   language: ['Sanskrit', 'Hindi', 'English'],
-  trackId: 'gayatri',
   subtitle: 'महापुराण · वैष्णव · ~25,000 श्लोक',
   intro: 'A Vaishnava Mahapurana narrated by the celestial sage Narada, traditionally counted at ~25,000 verses and arranged in two parts — the Purvabhaga (125 chapters, in four padas) and the Uttarabhaga (82 chapters). It is famed for its encyclopedic treatment of the six Vedangas — above all Jyotisha (astrology and astronomy) — for chapter-by-chapter summaries of all eighteen Puranas, and for its teachings on bhakti, dharma and sacred music.',
   chapters: [
@@ -390,7 +375,6 @@ const PURAN_AGNI: BookDoc = {
   hindi: 'अग्नि\nपुराण',
   cover: 'rose',
   language: ['Sanskrit', 'Hindi', 'English'],
-  trackId: 'mahamrityunjaya',
   subtitle: 'महापुराण · ज्ञानकोश · ~15,000 श्लोक',
   intro: 'Traditionally recited by Agni, the fire-god, to the sage Vasishtha, this Mahapurana of about 15,000 verses in some 382 chapters is renowned as an encyclopedia of all knowledge. Its chapters range across cosmology and the avatars of Vishnu, ritual and mantra, temple architecture (vastu) and iconography, statecraft, gemology, Ayurveda and the healing of humans, animals and plants, grammar, meter and poetics, law, astrology and the science of war — ending on yoga and liberation.',
   chapters: [
@@ -429,7 +413,6 @@ const PURAN_BHAVISHYA: BookDoc = {
   hindi: 'भविष्य\nपुराण',
   cover: 'purple',
   language: ['Sanskrit', 'Hindi', 'English'],
-  trackId: 'om-namah',
   subtitle: 'महापुराण · सौर · ~14,000 श्लोक',
   intro: 'Its very name means the Purana of what is to come — bhavishya, the future. Traditionally reckoned at about 14,000 verses and divided into four parvas (Brahma, Madhyama, Pratisarga and Uttara), it is a classic authority on vratas and festivals and the most comprehensive Puranic source for the worship of Surya, the Sun, and the Maga (Shakadvipiya) solar priests. Its Pratisarga Parva is famous — and much debated — for its prophetic narratives of coming ages.',
   chapters: [
@@ -465,7 +448,6 @@ const PURAN_BRAHMAVAIVARTA: BookDoc = {
   hindi: 'ब्रह्मवैवर्त\nपुराण',
   cover: 'blue',
   language: ['Sanskrit', 'Hindi', 'English'],
-  trackId: 'flute',
   subtitle: 'महापुराण · वैष्णव · ~18,000 श्लोक',
   intro: 'A Krishna-centric Vaishnava Mahapurana of about 18,000 verses, arranged in four khandas — Brahma, Prakriti, Ganesha (Ganapati) and Sri Krishna Janma. It exalts Krishna as the supreme being from whom all gods arise, and Radha as his inseparable divine energy; it unfolds the theology of Prakriti, the Divine Feminine, in her five forms, and narrates the birth and greatness of Ganesha and the eternal realm of Goloka.',
   chapters: [
@@ -500,7 +482,6 @@ const PURAN_VARAHA: BookDoc = {
   hindi: 'वराह\nपुराण',
   cover: 'green',
   language: ['Sanskrit', 'Hindi', 'English'],
-  trackId: 'om-namah',
   subtitle: 'महापुराण · वैष्णव · ~24,000 श्लोक',
   intro: 'A Vaishnava Mahapurana traditionally reckoned at ~24,000 verses (the surviving text runs to some 217 chapters), narrated by Lord Vishnu in his Varaha, the boar avatar, to the Earth goddess Bhudevi whom he has just lifted from the cosmic waters. It is famed for the story of that rescue and for its teachings on vratas, on the tirthas of Mathura, on charity and the rites for ancestors, and on devotion to Vishnu.',
   chapters: [
@@ -546,7 +527,6 @@ const PURAN_VAMANA: BookDoc = {
   hindi: 'वामन\nपुराण',
   cover: 'gold',
   language: ['Sanskrit', 'Hindi', 'English'],
-  trackId: 'flute',
   subtitle: 'महापुराण · वैष्णव · ~10,000 श्लोक',
   intro: 'The Purana of Vishnu\'s dwarf incarnation, Vamana, who as Trivikrama measured the three worlds in three strides and humbled the demon-king Bali. A Mahapurana of about 10,000 verses narrated by the sage Pulastya, it weaves together Vaishnava, Shaiva and tirtha lore. It is especially famed for the Trivikrama story, the tale of Prahlada, and its Saromahatmya on sacred lakes and Kurukshetra.',
   chapters: [
@@ -578,7 +558,6 @@ const PURAN_KURMA: BookDoc = {
   hindi: 'कूर्म\nपुराण',
   cover: 'green',
   language: ['Sanskrit', 'Hindi', 'English'],
-  trackId: 'mahamrityunjaya',
   subtitle: 'महापुराण · शैव · ~17,000 श्लोक',
   intro: 'Narrated by Vishnu in his Kurma (tortoise) form during the churning of the ocean of milk, this Mahapurana of about 17,000 verses is arranged in a Purva and an Uttara portion. It is most celebrated for embedding the Ishvara Gita — Lord Shiva\'s discourse on yoga, OM and non-dual reality to the sages at Badarikashrama — together with the Vyasa Gita. It blends Vaishnava, Shaiva and Shakta devotion and glorifies Varanasi and Prayaga.',
   chapters: [
@@ -610,7 +589,6 @@ const PURAN_MATSYA: BookDoc = {
   hindi: 'मत्स्य\nपुराण',
   cover: 'rose',
   language: ['Sanskrit', 'Hindi', 'English'],
-  trackId: 'temple-bells',
   subtitle: 'महापुराण · शैव · ~14,000 श्लोक',
   intro: 'Told by Vishnu in his Matsya (fish) avatar to King Manu during the great deluge, this Mahapurana of roughly 14,000 verses is among the oldest of the eighteen. The fish tows Manu\'s ark to safety, preserving the seeds of all life and the Vedas across the cosmic flood. It is uniquely famed for its detailed chapters on temple architecture and Vastu Shastra, and for the Narmada Mahatmya.',
   chapters: [
@@ -642,7 +620,6 @@ const PURAN_GARUDA: BookDoc = {
   hindi: 'गरुड़\nपुराण',
   cover: 'blue',
   language: ['Sanskrit', 'Hindi', 'English'],
-  trackId: 'meditation',
   subtitle: 'महापुराण · वैष्णव · ~19,000 श्लोक',
   intro: 'A Vaishnava Mahapurana of about 19,000 verses, presented as the knowledge Vishnu imparted to his mount Garuda and retold by Suta to the sages of Naimisha. Its first part (Acara Khanda) covers Vishnu devotion, worship, cosmology, gemmology and medicine. It is most widely known for the Preta Khanda, which addresses death, the soul\'s journey and the rites for the departed — for which it is traditionally read after a death in the family.',
   chapters: [
@@ -674,7 +651,6 @@ const PURAN_BRAHMANDA: BookDoc = {
   hindi: 'ब्रह्माण्ड\nपुराण',
   cover: 'purple',
   language: ['Sanskrit', 'Hindi', 'English'],
-  trackId: 'gayatri',
   subtitle: 'महापुराण · शाक्त · ~12,000 श्लोक',
   intro: 'One of the oldest Mahapuranas — about 12,000 verses named for the Brahmanda, the cosmic egg from which the universe unfolds. Narrated by Suta and arranged in four sections (Prakriya, Anushanga, Upodghata and Upasamhara), it details creation, sacred geography and the ages of the Manus. It is celebrated above all for containing the Lalita Sahasranama, the thousand names of the Goddess Lalita Tripurasundari, and it also carries the Adhyatma Ramayana.',
   chapters: [
@@ -711,7 +687,7 @@ const PURAN_BRAHMANDA: BookDoc = {
 export const BOOKS: Record<string, BookDoc> = {
   gita: {
     id: 'gita', eyebrow: 'Bhagavad Gita', title: 'Bhagavad Gita', hindi: 'श्रीमद्\nभगवद्गीता', cover: 'purple',
-    language: ['Hindi', 'English'], trackId: 'gita-ch2',
+    language: ['Hindi', 'English'],
     intro: 'The eternal dialogue between Arjuna and Krishna on the battlefield of Kurukshetra — on duty, the eternal soul, and steadiness of mind.',
     chapters: [
       { title: 'Ch 1 · Arjuna Vishada Yoga', verses: [
@@ -726,7 +702,7 @@ export const BOOKS: Record<string, BookDoc> = {
   },
   ramayan: {
     id: 'ramayan', eyebrow: 'Valmiki Ramayana', title: 'Ramayana', hindi: 'रामायण', cover: 'gold',
-    language: ['Hindi', 'English'], trackId: 'temple-bells',
+    language: ['Hindi', 'English'],
     intro: 'The journey of Lord Rama — devotion, dharma, and the triumph of good over evil — told across seven kandas (books).',
     chapters: [
       { title: 'Bala Kanda · The Birth', verses: [
@@ -740,7 +716,7 @@ export const BOOKS: Record<string, BookDoc> = {
   },
   ramcharitmanas: {
     id: 'ramcharitmanas', eyebrow: 'Tulsidas · Awadhi', title: 'Ramcharitmanas', hindi: 'श्रीराम\nचरितमानस', cover: 'rose',
-    language: ['Hindi'], trackId: 'temple-bells',
+    language: ['Hindi'],
     intro: 'Goswami Tulsidas ka Ramayan — saat kand me Bhagwan Ram ki katha, sahaj Awadhi/Hindi me. Chaupai, doha aur sortha ke roop me.',
     chapters: [
       { title: 'बालकांड', verses: [
@@ -750,7 +726,7 @@ export const BOOKS: Record<string, BookDoc> = {
   },
   'hanuman-chalisa': {
     id: 'hanuman-chalisa', eyebrow: 'Tulsidas · Awadhi', title: 'Hanuman Chalisa', hindi: 'श्री हनुमान\nचालीसा', cover: 'gold',
-    language: ['Hindi', 'English'], trackId: 'temple-bells',
+    language: ['Hindi', 'English'],
     intro: 'Goswami Tulsidas rachit 40 chaupaiyon ka bhajan — Shri Hanuman ki stuti. Devanagari + roman + English arth, aur har chaupai ka AI se saral arth.',
     chapters: [
       { title: 'Hanuman Chalisa', verses: [
@@ -760,7 +736,7 @@ export const BOOKS: Record<string, BookDoc> = {
   },
   'aarti-sangrah': {
     id: 'aarti-sangrah', eyebrow: 'भक्ति · Bhakti', title: 'Aarti Sangrah', hindi: 'आरती\nसंग्रह', cover: 'gold',
-    language: ['Hindi'], trackId: 'temple-bells',
+    language: ['Hindi'],
     intro: 'Sabhi pramukh Hindu devi-devताओं ki sampoorna (poori) aartiyan — Ganesh, Shiv, Vishnu, Krishna, Ram, Hanuman, Durga, Kali, Laxmi, Saraswati, Surya, Shani, Ganga, Khatu Shyam, Sai aur bahut — categories me.',
     chapters: [
       { title: 'आरतियाँ', verses: [{ ref: 'गणेश', sa: 'जय गणेश जय गणेश जय गणेश देवा।', en: '' }] },
@@ -768,7 +744,7 @@ export const BOOKS: Record<string, BookDoc> = {
   },
   'mantra-sangrah': {
     id: 'mantra-sangrah', eyebrow: 'भक्ति · Bhakti', title: 'Mantra Sangrah', hindi: 'मंत्र\nसंग्रह', cover: 'purple',
-    language: ['Hindi', 'English'], trackId: 'gayatri',
+    language: ['Hindi', 'English'],
     intro: 'Sabse mukhya, sarvमान्य mantra — Mahamrityunjaya, Gayatri, ॐ नमः शिवाय, Hare Krishna, Ganesh mool, Mahalakshmi, Shani — arth, kab v kitni baar japें, aur AI se saral samajh.',
     chapters: [
       { title: 'मंत्र', verses: [{ ref: 'महामृत्युंजय', sa: 'ॐ त्र्यम्बकं यजामहे सुगन्धिं पुष्टिवर्धनम्।', en: '' }] },
@@ -776,7 +752,7 @@ export const BOOKS: Record<string, BookDoc> = {
   },
   'stotra-sangrah': {
     id: 'stotra-sangrah', eyebrow: 'भक्ति · Bhakti', title: 'Stotra Sangrah', hindi: 'स्तोत्र\nसंग्रह', cover: 'green',
-    language: ['Hindi'], trackId: 'temple-bells',
+    language: ['Hindi'],
     intro: 'Pramanik Sanskrit stotra — Sankatnashan Ganesh Stotra aadi (aur stotra source-verify karke jode ja rahe hain).',
     chapters: [
       { title: 'स्तोत्र', verses: [{ ref: 'गणेश', sa: 'प्रणम्य शिरसा देवं गौरीपुत्रं विनायकम्।', en: '' }] },
@@ -784,7 +760,7 @@ export const BOOKS: Record<string, BookDoc> = {
   },
   mahabharat: {
     id: 'mahabharat', eyebrow: 'Veda Vyasa · Gita Press', title: 'Mahabharata', hindi: 'महाभारत', cover: 'blue',
-    language: ['Sanskrit', 'Hindi', 'English'], trackId: 'meditation',
+    language: ['Sanskrit', 'Hindi', 'English'],
     intro: 'Vyasa’s epic of dharma — the great story of the Bharata dynasty. Volume 1 (Gita Press, Gorakhpur) covers the Adi Parva and Sabha Parva. The verses below are the canonical opening invocations.',
     chapters: [
       { title: 'आदिपर्व · मंगलाचरण (Invocation)', verses: [
@@ -798,7 +774,7 @@ export const BOOKS: Record<string, BookDoc> = {
   },
   rigveda: {
     id: 'rigveda', eyebrow: 'The Vedas · Rigveda', title: 'Rigveda', hindi: 'ऋग्वेद', cover: 'gold',
-    language: ['Hindi', 'English'], trackId: 'gayatri',
+    language: ['Hindi', 'English'],
     intro: 'The oldest of the four Vedas — hymns to the cosmic powers, opening with an invocation to Agni, the sacred fire.',
     chapters: [
       { title: 'Mandala 1 · Agni Sukta', verses: [
@@ -809,7 +785,7 @@ export const BOOKS: Record<string, BookDoc> = {
   },
   samaveda: {
     id: 'samaveda', eyebrow: 'The Vedas · Samaveda', title: 'Samaveda', hindi: 'सामवेद', cover: 'green',
-    language: ['Hindi', 'English'], trackId: 'flute',
+    language: ['Hindi', 'English'],
     intro: 'The Veda of song — it sets the hymns of the Rigveda to sacred melody, the root of all Indian classical music.',
     chapters: [
       { title: 'Purvarchika · The Chant', verses: [
@@ -819,7 +795,7 @@ export const BOOKS: Record<string, BookDoc> = {
   },
   yajurveda: {
     id: 'yajurveda', eyebrow: 'The Vedas · Yajurveda', title: 'Yajurveda', hindi: 'यजुर्वेद', cover: 'rose',
-    language: ['Hindi', 'English'], trackId: 'tanpura',
+    language: ['Hindi', 'English'],
     intro: 'The Veda of ritual formulas — guiding the performance of sacrifice and the inner meaning of devotion.',
     chapters: [
       { title: 'Chapter 40 · Ishavasya', verses: [
@@ -829,7 +805,7 @@ export const BOOKS: Record<string, BookDoc> = {
   },
   atharvaveda: {
     id: 'atharvaveda', eyebrow: 'The Vedas · Atharvaveda', title: 'Atharvaveda', hindi: 'अथर्ववेद', cover: 'purple',
-    language: ['Hindi', 'English'], trackId: 'meditation',
+    language: ['Hindi', 'English'],
     intro: 'The Veda of everyday wisdom — hymns for health, harmony, prosperity and peace in daily living.',
     chapters: [
       { title: 'Book 3 · Hymn of Unity', verses: [
@@ -839,7 +815,7 @@ export const BOOKS: Record<string, BookDoc> = {
   },
   upanishads: {
     id: 'upanishads', eyebrow: 'Vedanta · Upanishads', title: 'Upanishads', hindi: 'उपनिषद्', cover: 'blue',
-    language: ['Sanskrit', 'English'], trackId: 'meditation',
+    language: ['Sanskrit', 'English'],
     intro: 'The philosophical essence of the Vedas — Isha, Katha and Mandukya Upanishads, on the Self, the eternal, and liberation.',
     chapters: [
       { title: 'Ishavasya · Mantra 1', verses: [
