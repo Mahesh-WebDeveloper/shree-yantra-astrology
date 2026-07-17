@@ -6,6 +6,7 @@ const ITEMS = [
   { slug: 'meditation/spiritual-temple-music', title: 'Spiritual Temple Music', hi: 'बांसुरी · तबला · सितार', cat: 'meditation', sub: 'flute', artist: 'Instrumental', secs: 2053, src: 'https://www.youtube.com/watch?v=NF4gjQzGetw' },
   { slug: 'mantra/karpur-gauram', title: 'Karpur Gauram Karunavtaram', hi: 'कर्पूर गौरं करुणावतारं · शिव आरती मंत्र', cat: 'mantra', sub: 'shiv', artist: 'Wave LoFi Bhajans', secs: 263, src: 'https://www.youtube.com/watch?v=LxVUj791ycA' },
   { slug: 'bhajan/hum-katha-sunate', title: 'Hum Katha Sunate', hi: 'हम कथा सुनाते राम सकल गुण धाम की · उत्तर रामायण (लव-कुश)', cat: 'bhajan', sub: 'ram', artist: 'Traditional', secs: 939, src: 'https://www.youtube.com/watch?v=c-72uuITVMc' },
+  { slug: 'mantra/hare-krishna-hare-rama', title: 'Hare Krishna Hare Rama', hi: 'हरे कृष्ण महामंत्र · ISKCON कीर्तन · गहन ध्यान', cat: 'mantra', sub: 'krishna', artist: 'ISKCON Kirtan', secs: 2257, src: 'https://www.youtube.com/watch?v=t-lg_Fe8NDc' },
   { slug: 'bhajan/krishna-govind-hare-murari', title: 'Shri Krishna Govind Hare Murari', hi: 'श्री कृष्ण गोविंद हरे मुरारी', cat: 'bhajan', sub: 'krishna', artist: 'Jagjit Singh', secs: 1226, src: 'https://www.youtube.com/watch?v=S6UiK9YD0mE' },
 ];
 const fmt = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
