@@ -681,9 +681,15 @@ export function WelcomeScreen({ navigation }: any) {
                 </>
               ) : (
                 <>
+                  {/* din ki tithi/nakshatra = SUNRISE wali (Drik niyam) — current-moment nahi,
+                      warna sunrise-limb khatam hote hi card ek aage dikhta hai */}
                   <Text style={[styles.panchMain, { color: theme.isDark ? '#f3e7c8' : theme.text }]} numberOfLines={1}>
                     {panch
-                      ? `${hi ? (panch.tithi.hi || panch.tithi.name) : panch.tithi.name} · ${hi ? (panch.nakshatra.hi || panch.nakshatra.name) : panch.nakshatra.name}`
+                      ? (() => {
+                          const t = (panch as any).sunriseTithi || panch.tithi;
+                          const n = (panch as any).sunriseNakshatra || panch.nakshatra;
+                          return `${hi ? (t.hi || t.name) : t.name} · ${hi ? (n.hi || n.name) : n.name}`;
+                        })()
                       : (hi ? 'तिथि व नक्षत्र देखें' : 'View tithi & nakshatra')}
                   </Text>
                   <Text style={[styles.panchSub, { color: theme.isDark ? 'rgba(239,224,168,0.7)' : theme.textMuted }]} numberOfLines={1}>
@@ -692,7 +698,10 @@ export function WelcomeScreen({ navigation }: any) {
                         <Text style={{ color: theme.gold1, fontFamily: fonts.interSemi }}>
                           {`🌅 ${panch.sunrise}  🌇 ${panch.sunset}`}
                         </Text>
-                        {panch.tithi?.endsAt ? `  ·  ⏳ ${hi ? 'तिथि' : 'Tithi'} ${angaEnd(panch.tithi.endsAt)}` : (panch.masa ? `  ·  ${hi ? panch.masa.amanta.hi : panch.masa.amanta.en}` : '')}
+                        {(() => {
+                          const t = (panch as any).sunriseTithi || panch.tithi;
+                          return t?.endsAt ? `  ·  ⏳ ${hi ? 'तिथि' : 'Tithi'} ${angaEnd(t.endsAt)}` : (panch.masa ? `  ·  ${hi ? panch.masa.amanta.hi : panch.masa.amanta.en}` : '');
+                        })()}
                       </>
                     ) : (hi ? 'शुभ मुहूर्त · राहु काल · व्रत-त्योहार' : 'Shubh muhurat · Rahu Kaal · vrat & festivals')}
                   </Text>

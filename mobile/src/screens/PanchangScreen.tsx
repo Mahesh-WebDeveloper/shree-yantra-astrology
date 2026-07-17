@@ -417,13 +417,22 @@ export function PanchangScreen({ navigation }: any) {
   const L = (o?: { en: string; hi: string } | null) => (o ? (lang === 'hi' ? o.hi : o.en) : '');
   const tm = (p?: { hm12: string; hm24: string } | null, fallback?: string | null) => toEng(p ? (lang === 'hi' ? p.hm24 : p.hm12) : (fallback || '—'));
   const dur = (d?: { text: string; hi: string } | null) => toEng(d ? (lang === 'hi' ? d.hi : d.text) : '—');
-  const tithiPaksha = data ? (lang === 'hi' ? data.tithi?.pakshaHi : (data.tithi?.paksha ? `${data.tithi.paksha} Paksha` : '')) : '';
-  const sunriseTithiDiff = !!(data?.isCurrent && data?.sunriseTithi && data?.tithi && data.sunriseTithi.num !== data.tithi.num);
-  const sunriseTithiName = data?.sunriseTithi ? (lang === 'hi' ? (data.sunriseTithi.hi || data.sunriseTithi.name) : data.sunriseTithi.name) : '';
-  const sunriseTithiSub = sunriseTithiDiff && sunriseTithiName
-    ? `${lang === 'hi' ? 'सूर्योदय पर' : 'At sunrise'} ${sunriseTithiName}`
-    : '';
-  const activeTithiSub = [tithiPaksha, sunriseTithiSub].filter(Boolean).join(' · ');
+  // Din ki tithi = SUNRISE wali (Drik/har parampara ka niyam) — pehle current-moment
+  // tithi headline thi, to sunrise-tithi khatam hote hi app "ek aage" dikhne lagta tha
+  // (16 Jul: aaj तृतीया, app me चतुर्थी). Ab headline sunrise limb hai apne end-time ke
+  // saath, aur badal chuki ho to sub me "अभी …" note. Non-today dates par backend pehle
+  // se sunrise limbs hi bhejta hai.
+  const dispTithi = (data?.isCurrent && data.sunriseTithi) ? data.sunriseTithi : data?.tithi;
+  const dispNak = (data?.isCurrent && data.sunriseNakshatra) ? data.sunriseNakshatra : data?.nakshatra;
+  const dispYoga = (data?.isCurrent && data.sunriseYoga) ? data.sunriseYoga : data?.yoga;
+  const dispKarana = (data?.isCurrent && data.sunriseKarana) ? data.sunriseKarana : data?.karana;
+  const angaName = (o?: { name: string; hi?: string } | null) => (o ? (lang === 'hi' ? (o.hi || o.name) : o.name) : '');
+  const nowNote = (disp?: { num?: number; name?: string } | null, cur?: { num?: number; name?: string; hi?: string } | null) =>
+    disp && cur && (disp.num ?? disp.name) !== (cur.num ?? cur.name)
+      ? `${lang === 'hi' ? 'अभी' : 'Now'} ${angaName(cur as any)}`
+      : '';
+  const tithiPaksha = dispTithi ? (lang === 'hi' ? (dispTithi as any).pakshaHi : ((dispTithi as any).paksha ? `${(dispTithi as any).paksha} Paksha` : '')) : '';
+  const activeTithiSub = [tithiPaksha, nowNote(dispTithi as any, data?.tithi as any)].filter(Boolean).join(' · ');
   const dayToRows = (f: PanchangFestivalDay): FestivalRow[] =>
     (f.observances || []).map((obs) => ({ date: f.date, weekday: f.weekday, weekdayHi: f.weekdayHi, tithi: f.tithi, obs }));
 
@@ -565,10 +574,10 @@ export function PanchangScreen({ navigation }: any) {
           {/* 5 angas with end-times — shown FIRST (the core of the panchang) */}
           <Text style={[styles.h, { color: theme.gold1 }]}>{lang === 'hi' ? 'पंचांग — पाँच अंग' : 'Panchang — Five Limbs'}</Text>
           <View style={styles.grid}>
-            <AngCard label={lang === 'hi' ? 'तिथि' : 'Tithi'} num={data.tithi?.num} value={lang === 'hi' ? (data.tithi?.hi || data.tithi?.name) : data.tithi?.name} sub={activeTithiSub} end={data.tithi?.endsAt} theme={theme} lang={lang} />
-            <AngCard label={lang === 'hi' ? 'नक्षत्र' : 'Nakshatra'} num={data.nakshatra?.num} value={lang === 'hi' ? (data.nakshatra?.hi || data.nakshatra?.name) : data.nakshatra?.name} sub={data.nakshatra?.pada ? `${lang === 'hi' ? 'पाद' : 'Pada'} ${data.nakshatra.pada}` : ''} end={data.nakshatra?.endsAt} theme={theme} lang={lang} />
-            <AngCard label={lang === 'hi' ? 'योग' : 'Yoga'} num={data.yoga?.num} value={lang === 'hi' ? (data.yoga?.hi || data.yoga?.name) : data.yoga?.name} end={data.yoga?.endsAt} theme={theme} lang={lang} />
-            <AngCard label={lang === 'hi' ? 'करण' : 'Karana'} value={lang === 'hi' ? (data.karana?.hi || data.karana?.name) : data.karana?.name} end={data.karana?.endsAt} theme={theme} lang={lang} />
+            <AngCard label={lang === 'hi' ? 'तिथि' : 'Tithi'} num={dispTithi?.num} value={angaName(dispTithi as any)} sub={activeTithiSub} end={dispTithi?.endsAt} theme={theme} lang={lang} />
+            <AngCard label={lang === 'hi' ? 'नक्षत्र' : 'Nakshatra'} num={dispNak?.num} value={angaName(dispNak as any)} sub={[(dispNak as any)?.pada ? `${lang === 'hi' ? 'पाद' : 'Pada'} ${(dispNak as any).pada}` : '', nowNote(dispNak as any, data.nakshatra as any)].filter(Boolean).join(' · ')} end={dispNak?.endsAt} theme={theme} lang={lang} />
+            <AngCard label={lang === 'hi' ? 'योग' : 'Yoga'} num={dispYoga?.num} value={angaName(dispYoga as any)} sub={nowNote(dispYoga as any, data.yoga as any)} end={dispYoga?.endsAt} theme={theme} lang={lang} />
+            <AngCard label={lang === 'hi' ? 'करण' : 'Karana'} value={angaName(dispKarana as any)} sub={nowNote(dispKarana as any, data.karana as any)} end={dispKarana?.endsAt} theme={theme} lang={lang} />
             <AngCard label={lang === 'hi' ? 'वार' : 'Vaar'} value={weekday} theme={theme} lang={lang} />
             <AngCard label={lang === 'hi' ? 'चंद्र राशि' : 'Moon Sign'} value={data.moon?.sign ? aSign(data.moon.sign, lang) : '—'} theme={theme} lang={lang} />
           </View>
