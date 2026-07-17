@@ -370,17 +370,21 @@ export function LibraryScreen({ navigation }: any) {
     hTap();
     navigation.navigate('ContentBook', { id: book._id });
   };
-  const openMedia = (media: MediaItem) => {
+  const mediaAsTrack = (media: MediaItem): Track => ({
+    id: media._id,
+    title: media.title,
+    sub: media.subtitle || media.artist || media.subCategory || '',
+    color: media.category === 'bhajan' ? 'rose' : media.subCategory === 'flute' ? 'green' : 'gold',
+    source: avatarUrl(media.audioUrl || '') || media.audioUrl || '',
+    loop: false, // commentary/bhajan/track ek baar chale, loop na ho
+  });
+  // `section` = jis list se item khela gaya — wahi player ki queue banti hai, isi se
+  // popup ke next/prev buttons chalte hai (bina queue ke wo kuch nahi karte).
+  const openMedia = (media: MediaItem, section?: MediaItem[]) => {
     hTap();
     if (media.sourceType === 'audio' && media.audioUrl) {
-      player.play({
-        id: media._id,
-        title: media.title,
-        sub: media.subtitle || media.artist || media.subCategory || '',
-        color: media.category === 'bhajan' ? 'rose' : media.subCategory === 'flute' ? 'green' : 'gold',
-        source: avatarUrl(media.audioUrl) || media.audioUrl,
-        loop: false, // commentary/bhajan/track ek baar chale, loop na ho
-      });
+      const queue = (section || []).filter((m) => m.sourceType === 'audio' && m.audioUrl).map(mediaAsTrack);
+      player.play(mediaAsTrack(media), queue.length > 1 ? queue : undefined);
       return;
     }
     navigation.navigate('MediaPlayer', { media });
@@ -496,7 +500,7 @@ export function LibraryScreen({ navigation }: any) {
         id, title: m.title,
         subtitle: [m.subtitle, m.artist, m.subCategory].filter(Boolean).join(' • '),
         glyph: (m.category === 'bhajan' ? 'star' : m.category === 'spiritual_music' ? 'mix' : 'om') as LibraryItem['glyph'],
-        scripture: false, playable: m.sourceType !== 'youtube', open: () => openMedia(m),
+        scripture: false, playable: m.sourceType !== 'youtube', open: () => openMedia(m, mediaItems.filter((x) => x.category === m.category)),
       };
       return null; // (purane demo-track saves ab resolve nahi hote)
     })
@@ -531,7 +535,7 @@ export function LibraryScreen({ navigation }: any) {
           return (
             <Pressable
               key={item._id}
-              onPress={() => openMedia(item)}
+              onPress={() => openMedia(item, items)}
               style={({ pressed }) => [styles.mantra, pressed && { backgroundColor: theme.isDark ? 'rgba(230,194,119,0.06)' : 'rgba(176,115,22,0.06)' }]}
             >
               <LinearGradient colors={theme.isDark ? MANTRA_TILE_DARK : MANTRA_TILE_LIGHT} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={[styles.mantraImg, { borderColor: theme.cardBorder }]}>

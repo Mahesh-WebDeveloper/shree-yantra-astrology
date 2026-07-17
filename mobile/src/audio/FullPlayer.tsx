@@ -36,20 +36,25 @@ const tintFor = (theme: Theme, c: TrackColor) =>
   c === 'purple' ? theme.purple : c === 'green' ? theme.green : c === 'blue' ? theme.blue : c === 'rose' ? theme.red : theme.gold1;
 
 /* ── Rotating sacred disc — gold mandala medallion, spins while playing ──
- * Transform-only (rotate + opacity) → runs entirely on the UI thread. */
-function RotatingDisc({ size, playing, theme, compact }: { size: number; playing: boolean; theme: Theme; compact: boolean }) {
+ * Transform-only (rotate + opacity) → runs entirely on the UI thread.
+ * Layers (bottom→top): breathing glow → static outer hairline ring →
+ * SPINNING groove plate → STEADY centre hub with the ॐ glyph.
+ * The glyph lives OUTSIDE the rotating wrapper so it never spins, and its
+ * lineHeight is ≥1.4× fontSize + includeFontPadding:false so the tall
+ * Devanagari chandrabindu never clips and sits dead-centre. */
+function RotatingDisc({ size, playing, theme }: { size: number; playing: boolean; theme: Theme }) {
   const rot = useSharedValue(0);
-  const glow = useSharedValue(0.16);
+  const glow = useSharedValue(0.14);
 
   useEffect(() => {
     if (playing) {
-      // 360° / 12s, seamless loop (repeat snaps back exactly one revolution)
+      // 360° / 14s, seamless loop (repeat snaps back exactly one revolution)
       rot.value = rot.value % 360;
-      rot.value = withRepeat(withTiming(rot.value + 360, { duration: 12000, easing: Easing.linear }), -1, false);
+      rot.value = withRepeat(withTiming(rot.value + 360, { duration: 14000, easing: Easing.linear }), -1, false);
       glow.value = withRepeat(
         withSequence(
-          withTiming(0.3, { duration: 1500, easing: Easing.inOut(Easing.sin) }),
-          withTiming(0.15, { duration: 1500, easing: Easing.inOut(Easing.sin) })
+          withTiming(0.22, { duration: 2000, easing: Easing.inOut(Easing.sin) }),
+          withTiming(0.12, { duration: 2000, easing: Easing.inOut(Easing.sin) })
         ),
         -1,
         false
@@ -58,7 +63,7 @@ function RotatingDisc({ size, playing, theme, compact }: { size: number; playing
       cancelAnimation(rot);
       rot.value = rot.value % 360; // freeze where it is
       cancelAnimation(glow);
-      glow.value = withTiming(0.16, { duration: 420 });
+      glow.value = withTiming(0.14, { duration: 420 });
     }
     return () => { cancelAnimation(rot); cancelAnimation(glow); };
   }, [playing, rot, glow]);
@@ -67,14 +72,25 @@ function RotatingDisc({ size, playing, theme, compact }: { size: number; playing
   const glowStyle = useAnimatedStyle(() => ({ opacity: glow.value }));
 
   const ring = theme.gold1;
+  // gold1 is near-black in light mode — glow must stay warm amber in BOTH themes
+  const glowColor = theme.isDark ? theme.gold1 : '#f59e0b';
+  const outer = size + 16;              // static hairline ring just outside the plate
+  const hub = Math.round(size * 0.54);  // steady medallion the glyph sits on
+  const om = Math.round(hub * 0.5);     // glyph scales with the hub at every size
+
   return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ width: outer, height: outer, alignItems: 'center', justifyContent: 'center' }}>
       <Animated.View
         pointerEvents="none"
         style={[
-          { position: 'absolute', width: size + 34, height: size + 34, borderRadius: (size + 34) / 2, backgroundColor: theme.gold1 },
+          { position: 'absolute', width: size + 34, height: size + 34, borderRadius: (size + 34) / 2, backgroundColor: glowColor },
           glowStyle,
         ]}
+      />
+      {/* static outer gold hairline — frames the spinning plate */}
+      <View
+        pointerEvents="none"
+        style={{ position: 'absolute', width: outer, height: outer, borderRadius: outer / 2, borderWidth: 1, borderColor: ring, opacity: 0.4 }}
       />
       <Animated.View style={[{ width: size, height: size, borderRadius: size / 2, overflow: 'hidden' }, discStyle]}>
         <LinearGradient
@@ -82,19 +98,43 @@ function RotatingDisc({ size, playing, theme, compact }: { size: number; playing
           style={[StyleSheet.absoluteFill, { borderRadius: size / 2, borderWidth: 1, borderColor: theme.cardBorder }]}
         />
         <Svg width={size} height={size} viewBox="0 0 200 200">
-          {/* concentric mandala rings */}
+          {/* concentric mandala grooves — these are what visibly spin */}
           <Circle cx={100} cy={100} r={95} stroke={ring} strokeOpacity={0.5} strokeWidth={1.6} fill="none" />
           <Circle cx={100} cy={100} r={86} stroke={ring} strokeOpacity={0.35} strokeWidth={1.2} strokeDasharray="2 6" fill="none" />
           <Circle cx={100} cy={100} r={74} stroke={ring} strokeOpacity={0.28} strokeWidth={4} strokeDasharray="1 11" fill="none" />
           <Circle cx={100} cy={100} r={62} stroke={ring} strokeOpacity={0.4} strokeWidth={1} strokeDasharray="12 7" fill="none" />
-          <Circle cx={100} cy={100} r={50} stroke={ring} strokeOpacity={0.5} strokeWidth={1.2} strokeDasharray="2 4" fill="none" />
-          <Circle cx={100} cy={100} r={38} stroke={ring} strokeOpacity={0.3} strokeWidth={1} fill="none" />
-          <Circle cx={100} cy={100} r={3} fill={ring} fillOpacity={0.7} />
         </Svg>
-        <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]} pointerEvents="none">
-          <Text style={{ color: theme.gold1, fontFamily: fonts.devanagari, fontSize: compact ? 54 : 68, lineHeight: compact ? 66 : 82 }}>ॐ</Text>
-        </View>
       </Animated.View>
+      {/* steady centre hub — the ॐ does NOT rotate with the plate */}
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          width: hub,
+          height: hub,
+          borderRadius: hub / 2,
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderWidth: 1,
+          borderColor: theme.isDark ? 'rgba(246,210,122,0.45)' : 'rgba(146,64,14,0.35)',
+          backgroundColor: theme.isDark ? 'rgba(10,8,22,0.62)' : 'rgba(255,251,235,0.92)',
+        }}
+      >
+        <Text
+          allowFontScaling={false}
+          style={{
+            color: theme.gold1,
+            fontFamily: fonts.devanagari,
+            fontSize: om,
+            lineHeight: Math.round(om * 1.4),
+            includeFontPadding: false,
+            textAlign: 'center',
+            textAlignVertical: 'center',
+          }}
+        >
+          ॐ
+        </Text>
+      </View>
     </View>
   );
 }
@@ -215,12 +255,14 @@ export function FullPlayer() {
       <GestureDetector gesture={pan}>
         {/* collapsable={false}: Android par RNGH is View ko collapse na kare, warna drag/pan fire nahi hota */}
         <View style={styles.sheetContent} collapsable={false}>
-          <View style={{ paddingTop: insets.top + 8 }}>
+          <View style={{ paddingTop: insets.top + 6 }}>
+            {/* grab-handle pill — signals the swipe-down affordance up top */}
+            <View style={[styles.handle, { backgroundColor: theme.isDark ? 'rgba(246,210,122,0.35)' : 'rgba(15,23,42,0.22)' }]} />
             <View style={styles.headerRow}>
               <Pressable onPress={minimise} hitSlop={10} style={({ pressed }) => [styles.iconBtn, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.45)' : '#ffffff' }, pressed && { transform: [{ scale: 0.92 }] }]}>
                 <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={theme.gold1} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><Path d="M6 9l6 6 6-6" /></Svg>
               </Pressable>
-              <Text style={[styles.eyebrow, { color: theme.isDark ? '#b89a5b' : theme.textMuted }]}>{hi ? 'अभी बज रहा है' : 'NOW PLAYING'}</Text>
+              <Text style={[styles.eyebrow, { color: theme.goldDim }]}>{hi ? 'अभी बज रहा है' : 'NOW PLAYING'}</Text>
               <Pressable
                 onPress={() => { hSelect(); toggleSaved(track.id); }}
                 hitSlop={10}
@@ -236,12 +278,11 @@ export function FullPlayer() {
                 <BookmarkIcon color={isSaved ? theme.gold1 : theme.goldText} active={isSaved} size={18} />
               </Pressable>
             </View>
-            <View style={[styles.handle, { backgroundColor: theme.cardBorder }]} />
           </View>
 
           <View style={[styles.body, compact && styles.bodyCompact]}>
             <View style={[styles.artWrap, compact && styles.artWrapCompact]}>
-              <RotatingDisc size={artSize} playing={isPlaying} theme={theme} compact={compact} />
+              <RotatingDisc size={artSize} playing={isPlaying} theme={theme} />
             </View>
 
             <View style={styles.titleRow}>
@@ -296,7 +337,7 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18 },
   iconBtn: { width: 42, height: 42, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   eyebrow: { fontFamily: fonts.cinzelSemi, fontSize: 11, letterSpacing: 2.4 },
-  handle: { width: 44, height: 4, borderRadius: 2, alignSelf: 'center', marginTop: 12 },
+  handle: { width: 44, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 10 },
 
   body: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 30, paddingBottom: 30, gap: 6 },
   bodyCompact: { justifyContent: 'flex-start', paddingTop: 18, paddingBottom: 16 },
@@ -304,13 +345,13 @@ const styles = StyleSheet.create({
   artWrapCompact: { marginBottom: 14 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, maxWidth: '100%', marginTop: 8 },
   titleClamp: { flexShrink: 1 },
-  title: { fontFamily: fonts.cinzel, fontSize: 22, fontWeight: '700', textAlign: 'center' },
+  title: { fontFamily: fonts.cinzel, fontSize: 22, lineHeight: 29, fontWeight: '700', textAlign: 'center' },
   titleCompact: { fontSize: 18, lineHeight: 24 },
   sub: { fontFamily: fonts.inter, fontSize: 13, lineHeight: 19, marginTop: 4, marginBottom: 18, textAlign: 'center' },
 
   seekWrap: { alignSelf: 'stretch', marginTop: 6 },
   timeRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
-  time: { fontFamily: fonts.inter, fontSize: 11 },
+  time: { fontFamily: fonts.inter, fontSize: 11, fontVariant: ['tabular-nums'], letterSpacing: 0.3 },
 
   transport: { alignSelf: 'stretch', marginHorizontal: -14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 26 },
   tBtn: { width: 52, height: 52, borderRadius: 26, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
