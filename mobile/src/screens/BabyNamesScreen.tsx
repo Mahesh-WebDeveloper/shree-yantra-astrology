@@ -307,7 +307,7 @@ export function BabyNamesScreen({ navigation }: any) {
                   return (
                     <Pressable key={s.v} onPress={() => { hSelect(); setSSort(s.v); }} style={{ flex: 1 }}>
                       <View style={[styles.miniChip, on ? { backgroundColor: theme.gold2, borderColor: theme.gold2 } : { borderColor: theme.cardBorder }]}>
-                        <Text style={[styles.miniTxt, { color: on ? theme.buttonInk : theme.gold2 }]}>{hi ? s.hi : s.en}</Text>
+                        <Text style={[styles.miniTxt, { color: on ? (theme.isDark ? theme.buttonInk : '#ffffff') : theme.gold2 }]}>{hi ? s.hi : s.en}</Text>
                       </View>
                     </Pressable>
                   );

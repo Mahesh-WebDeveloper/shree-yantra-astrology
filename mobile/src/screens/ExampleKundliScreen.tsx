@@ -115,7 +115,7 @@ export function ExampleKundliScreen({ navigation }: any) {
           return (
             <Pressable key={c.code} onPress={() => { hTap(); setSel(i); }}
               style={[styles.chip, { borderColor: on ? theme.gold1 : theme.cardBorder, backgroundColor: on ? theme.gold1 : (theme.isDark ? 'rgba(233,184,80,0.08)' : '#fff') }]}>
-              <Text style={[styles.chipTxt, { color: on ? '#1a1206' : theme.gold1 }]}>{c.code}</Text>
+              <Text style={[styles.chipTxt, { color: on ? (theme.isDark ? '#1a1206' : theme.goldInk) : theme.gold1 }]}>{c.code}</Text>
             </Pressable>
           );
         })}

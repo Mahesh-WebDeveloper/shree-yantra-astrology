@@ -612,7 +612,7 @@ export function PanchangScreen({ navigation }: any) {
                 <View style={styles.pkHead}>
                   <Text style={[styles.h, { color: theme.gold1, marginBottom: 0 }]}>🌙 {lang === 'hi' ? 'पंचक (बिच्छुड़ो)' : 'Panchak (Bichhuda)'}</Text>
                   <View style={[styles.pkBadge, { backgroundColor: accent }]}>
-                    <Text style={styles.pkBadgeTxt}>{p.active ? (lang === 'hi' ? 'सक्रिय' : 'ACTIVE') : (lang === 'hi' ? 'नहीं' : 'OFF')}</Text>
+                    <Text style={[styles.pkBadgeTxt, !p.active && !theme.isDark && { color: '#ffffff' }]}>{p.active ? (lang === 'hi' ? 'सक्रिय' : 'ACTIVE') : (lang === 'hi' ? 'नहीं' : 'OFF')}</Text>
                   </View>
                 </View>
 

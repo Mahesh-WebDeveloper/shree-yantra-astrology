@@ -12,23 +12,26 @@ import { MUHURAT_GROUPS, MuhuratCat } from '../data/muhuratCategories';
 
 // Premium pure-black + gold category card with a hand-drawn gold SVG icon.
 function CatCard({ cat, onPress }: { cat: MuhuratCat; onPress: () => void }) {
+  const { theme } = useTheme();
   const { lang } = useLang();
   const scale = useRef(new Animated.Value(1)).current;
   const to = (v: number) => Animated.spring(scale, { toValue: v, useNativeDriver: true, friction: 7 }).start();
+  // light mode: opaque warm-white card (solid hex — inside a transform-animated wrapper)
+  const light = !theme.isDark;
   return (
     <Animated.View style={{ width: '48%', transform: [{ scale }] }}>
       <Pressable onPress={() => { hTap(); onPress(); }} onPressIn={() => to(0.97)} onPressOut={() => to(1)}>
-        <View style={styles.card}>
+        <View style={[styles.card, light && { backgroundColor: '#fffdf7', borderColor: theme.cardBorder }]}>
           {/* top-corner gold glow over the pure-black card */}
           <LinearGradient colors={['rgba(233,184,80,0.20)', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 0.85, y: 0.7 }} style={styles.sheen} />
-          <View style={styles.iconBadge}>
-            <MuhuratIcon k={cat.key} color="#f0c65e" size={28} />
+          <View style={[styles.iconBadge, light && { borderColor: theme.cardBorder, backgroundColor: '#f8efd9' }]}>
+            <MuhuratIcon k={cat.key} color={light ? '#92400e' : '#f0c65e'} size={28} />
           </View>
-          <Text style={styles.cardName} numberOfLines={2}>{lang === 'hi' ? cat.name.hi : cat.name.en}</Text>
-          <Text style={styles.cardBlurb} numberOfLines={2}>{lang === 'hi' ? cat.blurb.hi : cat.blurb.en}</Text>
+          <Text style={[styles.cardName, light && { color: theme.text }]} numberOfLines={2}>{lang === 'hi' ? cat.name.hi : cat.name.en}</Text>
+          <Text style={[styles.cardBlurb, light && { color: theme.textMuted }]} numberOfLines={2}>{lang === 'hi' ? cat.blurb.hi : cat.blurb.en}</Text>
           {cat.nameBased && (
-            <View style={styles.nameTag}>
-              <Text style={styles.nameTagTxt}>🌙 {lang === 'hi' ? 'नाम से भी' : 'By name'}</Text>
+            <View style={[styles.nameTag, light && { borderColor: theme.cardBorder, backgroundColor: '#f8efd9' }]}>
+              <Text style={[styles.nameTagTxt, light && { color: '#92400e' }]}>🌙 {lang === 'hi' ? 'नाम से भी' : 'By name'}</Text>
             </View>
           )}
         </View>

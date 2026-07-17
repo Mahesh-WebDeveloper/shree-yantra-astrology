@@ -69,7 +69,7 @@ export function KundliExploreScreen({ navigation }: any) {
           {/* selected bhava explanation */}
           <View style={[styles.card, { borderColor: theme.gold2 + '55', backgroundColor: theme.isDark ? 'rgba(233,184,80,0.05)' : 'rgba(255,250,240,0.8)', marginTop: 14 }]}>
             <View style={styles.bhHead}>
-              <View style={[styles.bhNum, { backgroundColor: theme.gold1 }]}><Text style={styles.bhNumTxt}>{house}</Text></View>
+              <View style={[styles.bhNum, { backgroundColor: theme.gold1 }]}><Text style={[styles.bhNumTxt, !theme.isDark && { color: theme.goldInk }]}>{house}</Text></View>
               <View style={{ flex: 1, marginLeft: 12 }}>
                 <Text style={[styles.bhName, { color: theme.text }]}>{L(bhava.name)}</Text>
                 <Text style={[styles.bhTitle, { color: theme.gold1 }]}>{L(bhava.title)}</Text>

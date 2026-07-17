@@ -66,7 +66,7 @@ function ChapterRow({ chapter, index, l, onOpen }: { chapter: VLearnChapter; ind
     >
       <View style={[styles.rowArt, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.35)' : '#ffffff' }]}>
         <VastuArt art={chapter.art} dark={theme.isDark} width={70} height={56} />
-        <View style={[styles.numChip, { backgroundColor: theme.gold1 }]}><Text style={styles.numTxt}>{index + 1}</Text></View>
+        <View style={[styles.numChip, { backgroundColor: theme.gold1 }]}><Text style={[styles.numTxt, !theme.isDark && { color: theme.goldInk }]}>{index + 1}</Text></View>
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
         <View style={styles.rowMetaLine}>

@@ -77,7 +77,7 @@ function LangCard({ item, active, onPress, theme, anim }: { item: (typeof LANGS)
             </View>
             <View style={[styles.check, { borderColor: active ? theme.gold1 : theme.cardBorder, backgroundColor: active ? theme.gold1 : 'transparent' }]}>
               {active && (
-                <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#2a1800" strokeWidth={3.4} strokeLinecap="round" strokeLinejoin="round"><Path d="M20 6L9 17l-5-5" /></Svg>
+                <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={theme.isDark ? '#2a1800' : theme.goldInk} strokeWidth={3.4} strokeLinecap="round" strokeLinejoin="round"><Path d="M20 6L9 17l-5-5" /></Svg>
               )}
             </View>
           </LinearGradient>

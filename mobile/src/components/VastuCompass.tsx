@@ -166,7 +166,7 @@ export function VastuCompass({ visible, title, instruction, onPick, onClose }: {
               onPress={() => { if (dir) { hSuccess(); onPick(dir); } }}
               style={[styles.btn, styles.btnGold, { backgroundColor: dir ? theme.gold1 : theme.cardBorder }]}
             >
-              <Text style={[styles.btnTxt, { color: '#1a1206', fontFamily: fonts.interBold }]}>
+              <Text style={[styles.btnTxt, { color: theme.isDark ? '#1a1206' : (dir ? theme.goldInk : theme.textMuted), fontFamily: fonts.interBold }]}>
                 ✓ {dir ? (hi ? `${DIR_INFO[dir].hi.split(' ')[0]} चुनें` : `Use ${DIR_INFO[dir].en}`) : (hi ? 'रुकें…' : 'Hold on…')}
               </Text>
             </Pressable>

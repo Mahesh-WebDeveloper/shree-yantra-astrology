@@ -32,7 +32,7 @@ function YearRow({ y, lang, theme }: { y: TransitYear; lang: 'en' | 'hi'; theme:
       <View style={[styles.card, { borderColor: accent, backgroundColor: y.current ? theme.gold1 + '14' : (theme.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(255,253,247,0.85)') }]}>
         <View style={styles.head}>
           <Text style={[styles.year, { color: theme.text }]}>{y.year}</Text>
-          {y.current && <View style={[styles.nowPill, { backgroundColor: theme.gold1 }]}><Text style={styles.nowTxt}>{lang === 'hi' ? 'अभी' : 'NOW'}</Text></View>}
+          {y.current && <View style={[styles.nowPill, { backgroundColor: theme.gold1 }]}><Text style={[styles.nowTxt, !theme.isDark && { color: theme.goldInk }]}>{lang === 'hi' ? 'अभी' : 'NOW'}</Text></View>}
         </View>
         <View style={styles.planRow}>
           <Text style={[styles.pl, { color: kindColor(sat.kind) }]}>♄ {lang === 'hi' ? 'शनि' : 'Saturn'}: <Text style={{ color: theme.textSoft }}>{satSign}</Text>{satEvent ? `  · ${satEvent}` : ''}</Text>

@@ -108,7 +108,7 @@ export function SignInScreen({ navigation }: any) {
           <View style={styles.rowBetween}>
             <Pressable style={styles.remember} onPress={() => { hSelect(); setRemember((r) => !r); }} hitSlop={6}>
               <View style={[styles.check, { borderColor: theme.gold2, backgroundColor: remember ? theme.gold2 : 'transparent' }]}>
-                {remember && <Svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke={theme.buttonInk} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round"><Path d="M20 6L9 17l-5-5" /></Svg>}
+                {remember && <Svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke={theme.isDark ? theme.buttonInk : '#ffffff'} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round"><Path d="M20 6L9 17l-5-5" /></Svg>}
               </View>
               <Text style={[styles.rememberText, { color: theme.textSoft }]}>{t('signin.rememberMe', 'Remember me')}</Text>
             </Pressable>

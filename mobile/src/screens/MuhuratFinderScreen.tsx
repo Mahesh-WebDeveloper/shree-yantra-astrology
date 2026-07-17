@@ -393,7 +393,7 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
               const on = !pickedDate && sel === v;
               return (
                 <Pressable key={v} onPress={() => { hTap(); setPickedDate(null); setSel(v); }} style={[styles.chip, { borderColor: on ? theme.gold1 : theme.cardBorder, backgroundColor: on ? theme.gold1 : (theme.isDark ? 'rgba(233,184,80,0.08)' : '#fff') }]}>
-                  <Text style={[styles.chipTxt, { color: on ? '#1a1206' : theme.gold1 }]}>{lbl}</Text>
+                  <Text style={[styles.chipTxt, { color: on ? (theme.isDark ? '#1a1206' : theme.goldInk) : theme.gold1 }]}>{lbl}</Text>
                 </Pressable>
               );
             })}
@@ -414,7 +414,7 @@ export function MuhuratFinderScreen({ navigation, route }: any) {
               const on = !pickedDate && sel === mo.idx;
               return (
                 <Pressable key={mo.idx} onPress={() => { hTap(); setPickedDate(null); setSel(mo.idx); }} style={[styles.chip, { borderColor: on ? theme.gold1 : theme.cardBorder, backgroundColor: on ? theme.gold1 : (theme.isDark ? 'rgba(233,184,80,0.08)' : '#fff') }]}>
-                  <Text style={[styles.chipTxt, { color: on ? '#1a1206' : theme.gold1 }]}>{mo.label}</Text>
+                  <Text style={[styles.chipTxt, { color: on ? (theme.isDark ? '#1a1206' : theme.goldInk) : theme.gold1 }]}>{mo.label}</Text>
                 </Pressable>
               );
             })}
