@@ -752,7 +752,14 @@ export function WelcomeScreen({ navigation }: any) {
             </View>
           </View>
           <View style={styles.horoBtnRow}>
+            {/* key={theme.name}: RN-Android bug — a Pressable with android_ripple gets its
+                background drawable's invalidate-callback stolen by an orphaned composite
+                (BackgroundStyleApplicator.setFeedbackUnderlay discards withNewFeedbackUnderlay's
+                result), so theme-driven backgroundColor changes commit in JS but never repaint
+                natively (button stayed WHITE after light→dark until a navigation redraw).
+                Remounting the native view on theme switch guarantees a fresh paint. */}
             <Pressable
+              key={theme.name}
               onPress={() => { hTap(); navigation.navigate('DailyPrediction'); }}
               android_ripple={{ color: theme.ripple }}
               style={({ pressed }) => [styles.horoBtn, { borderColor: theme.isDark ? 'rgba(246,210,122,0.5)' : theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : '#f8fafc' }, pressed && { transform: [{ scale: 0.98 }] }]}

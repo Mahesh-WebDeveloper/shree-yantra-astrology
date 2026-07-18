@@ -258,7 +258,10 @@ export function PhoneAuthScreen({ navigation }: any) {
             <Text style={[styles.dividerText, { color: theme.gold2 }]}>{t('auth.or', 'OR')}</Text>
             <View style={[styles.line, { backgroundColor: theme.line }]} />
           </View>
+          {/* key={theme.name}: android_ripple + theme-driven bg needs a native remount
+              on theme switch (RN-Android ripple/background repaint bug) */}
           <Pressable
+            key={theme.name}
             onPress={onGoogle}
             disabled={busy}
             android_ripple={{ color: theme.ripple }}

@@ -130,18 +130,19 @@ export function SignInScreen({ navigation }: any) {
           <View style={[styles.line, { backgroundColor: theme.line }]} />
         </View>
 
-        {/* social */}
+        {/* social — theme.name keys: android_ripple + theme-driven bg needs a native
+            remount on theme switch (RN-Android ripple/background repaint bug) */}
         <View style={styles.socialRow}>
-          <Pressable onPress={() => { hTap(); navigation.navigate('Main'); }} style={[styles.social, { borderColor: theme.isDark ? 'rgba(201,150,46,0.35)' : 'rgba(176,115,22,0.26)', backgroundColor: theme.isDark ? 'rgba(0,0,0,0.7)' : '#fffdf7' }]} android_ripple={{ color: theme.ripple }}>
+          <Pressable key={`g-${theme.name}`} onPress={() => { hTap(); navigation.navigate('Main'); }} style={[styles.social, { borderColor: theme.isDark ? 'rgba(201,150,46,0.35)' : 'rgba(176,115,22,0.26)', backgroundColor: theme.isDark ? 'rgba(0,0,0,0.7)' : '#fffdf7' }]} android_ripple={{ color: theme.ripple }}>
             <GoogleIcon /><Text style={[styles.socialText, { color: theme.text }]}>Google</Text>
           </Pressable>
-          <Pressable onPress={() => { hTap(); navigation.navigate('Main'); }} style={[styles.social, { borderColor: theme.isDark ? 'rgba(201,150,46,0.35)' : 'rgba(176,115,22,0.26)', backgroundColor: theme.isDark ? 'rgba(0,0,0,0.7)' : '#fffdf7' }]} android_ripple={{ color: theme.ripple }}>
+          <Pressable key={`a-${theme.name}`} onPress={() => { hTap(); navigation.navigate('Main'); }} style={[styles.social, { borderColor: theme.isDark ? 'rgba(201,150,46,0.35)' : 'rgba(176,115,22,0.26)', backgroundColor: theme.isDark ? 'rgba(0,0,0,0.7)' : '#fffdf7' }]} android_ripple={{ color: theme.ripple }}>
             <AppleIcon c={theme.text} /><Text style={[styles.socialText, { color: theme.text }]}>Apple</Text>
           </Pressable>
         </View>
 
         <Text style={[styles.foot, { color: theme.textSoft }]}>{t('signin.newUser', 'New to Shree Yantra?')}</Text>
-        <Pressable onPress={() => { hTap(); navigation.navigate('Register'); }} android_ripple={{ color: theme.ripple }} style={[styles.ghostBtn, { borderColor: theme.isDark ? 'rgba(201,150,46,0.5)' : 'rgba(176,115,22,0.26)', backgroundColor: theme.isDark ? 'rgba(0,0,0,0.6)' : '#fffdf7' }]}>
+        <Pressable key={`r-${theme.name}`} onPress={() => { hTap(); navigation.navigate('Register'); }} android_ripple={{ color: theme.ripple }} style={[styles.ghostBtn, { borderColor: theme.isDark ? 'rgba(201,150,46,0.5)' : 'rgba(176,115,22,0.26)', backgroundColor: theme.isDark ? 'rgba(0,0,0,0.6)' : '#fffdf7' }]}>
           <Text style={[styles.ghostText, { color: theme.gold1 }]}>{t('signin.createAccount', 'Create Account')}</Text>
         </Pressable>
       </KeyboardAwareScroll>

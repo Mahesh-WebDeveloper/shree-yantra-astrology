@@ -40,7 +40,13 @@ export function GoldButton({ label, onPress, variant = 'primary', style, icon, t
 
   if (isGhost) {
     return (
+      // key={theme.name}: android_ripple + theme-driven backgroundColor on the same
+      // Pressable hits an RN-Android repaint bug (ripple underlay steals the background
+      // drawable's invalidate callback) — remount the native view on theme switch so the
+      // new colors actually paint. (Primary variant is unaffected: its Pressable carries
+      // no background/border; the surface is the child LinearGradient.)
       <Pressable
+        key={theme.name}
         onPress={handlePress}
         android_ripple={{ color: theme.ripple }}
         style={({ pressed }) => [

@@ -49,7 +49,12 @@ export function PressableScale({
   });
 
   return (
+    // key on the ripple colour: RN-Android never applies an UPDATED android_ripple
+    // (BackgroundStyleApplicator.setFeedbackUnderlay discards the new composite
+    // drawable), so a theme-driven ripple colour would go stale — remount the native
+    // view when it changes. Styles are safe here: they live on the inner Animated.View.
     <Pressable
+      key={ripple === null ? 'no-ripple' : String(ripple)}
       onPressIn={(e) => { to(scaleTo); onPressIn?.(e); }}
       onPressOut={(e) => { to(1); onPressOut?.(e); }}
       onPress={(e) => { HAPTICS[haptic](); onPress?.(e); }}

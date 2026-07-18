@@ -97,8 +97,10 @@ export function HelpScreen({ navigation }: any) {
 
       <View style={styles.quick}>
         {QUICK.map((q) => (
+          // theme.name in the key: android_ripple + theme-driven bg needs a native
+          // remount on theme switch (RN-Android ripple/background repaint bug)
           <Pressable
-            key={q.key}
+            key={`${q.key}-${theme.name}`}
             onPress={() => onQuick(q.key)}
             android_ripple={{ color: theme.ripple }}
             style={({ pressed }) => [

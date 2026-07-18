@@ -317,8 +317,10 @@ function MenuCard({ items, theme, onItem }: { items: MenuItem[]; theme: Theme; o
   return (
     <Card padded={false} solidBlack contentStyle={styles.listCard}>
       {items.map((it, i) => (
+        // theme.name in the key: android_ripple + theme-driven borderBottomColor needs a
+        // native remount on theme switch (RN-Android ripple/background repaint bug)
         <Pressable
-          key={it.label}
+          key={`${it.label}-${theme.name}`}
           onPress={() => onItem(it.label)}
           android_ripple={{ color: theme.ripple }}
           style={({ pressed }) => [

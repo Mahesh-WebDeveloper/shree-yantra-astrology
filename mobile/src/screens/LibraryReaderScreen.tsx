@@ -116,8 +116,10 @@ export function LibraryReaderScreen({ navigation, route }: any) {
           {doc.chapters.map((c, i) => {
             const current = i === lastChapter;
             return (
+              // theme.name in the key: android_ripple + theme-driven bg/border needs a
+              // native remount on theme switch (RN-Android ripple/background repaint bug)
               <Pressable
-                key={c.title}
+                key={`${c.title}-${theme.name}`}
                 onPress={() => openChapter(i)}
                 android_ripple={{ color: theme.ripple }}
                 style={({ pressed }) => [

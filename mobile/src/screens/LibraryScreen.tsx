@@ -289,7 +289,10 @@ const BookCard = React.memo(function BookCard({ item, title, subtitle, theme, hi
   const ac = colorFor(theme, item.color);
   return (
     <Animated.View style={[styles.vedaCardWrap, { transform: [{ scale: sc }] }]}>
+      {/* key={theme.name}: android_ripple + theme-driven bg needs a native remount on
+          theme switch (RN-Android ripple/background repaint bug) */}
       <Pressable
+        key={theme.name}
         onPress={() => onOpen(item.bookId!)}
         onPressIn={pressIn}
         onPressOut={pressOut}

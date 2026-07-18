@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, startTransition } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
 import Animated, {
   Extrapolation, interpolate, useAnimatedStyle, useSharedValue, withSpring, withTiming,
@@ -291,7 +291,12 @@ export function DrawerContent({ close, progress }: { close: () => void; progress
      alive — the tapped chip's highlight waited behind that flood. Now the chip
      flips instantly from LOCAL state (memoized rows skip this render), and the
      heavy context switch is deferred two frames (double rAF, so the feedback
-     paints first) and marked as a low-priority transition. ── */
+     paints first). Deliberately NO startTransition here: react-freeze's frozen
+     screens (freezeOnBlur) suspend with a never-resolving thenable, and a
+     TRANSITION update that suspends can be withheld by React indefinitely
+     (partial/never-landing theme commits), whereas a default-priority update
+     always commits atomically — frozen screens simply catch up on unfreeze.
+     The double rAF alone already keeps the tap feedback jank-free. ── */
   const [pendingLang, setPendingLang] = useState<'en' | 'hi' | null>(null);
   const [pendingTheme, setPendingTheme] = useState<'light' | 'dark' | null>(null);
   const shownLang = pendingLang ?? lang;
@@ -304,7 +309,7 @@ export function DrawerContent({ close, progress }: { close: () => void; progress
     hSelect();
     setPendingLang(k);
     requestAnimationFrame(() => requestAnimationFrame(() => {
-      startTransition(() => setLang(k));
+      setLang(k);
     }));
   }, [setLang]);
 
@@ -313,7 +318,7 @@ export function DrawerContent({ close, progress }: { close: () => void; progress
     hSelect();
     setPendingTheme(k);
     requestAnimationFrame(() => requestAnimationFrame(() => {
-      startTransition(() => setTheme(k));
+      setTheme(k);
     }));
   }, [setTheme]);
 
