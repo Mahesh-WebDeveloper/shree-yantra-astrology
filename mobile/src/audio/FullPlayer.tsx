@@ -211,25 +211,30 @@ export function FullPlayer() {
       if (sheetY.value < 0) sheetY.value = withSpring(0, SHEET_SPRING);
     });
 
-  // The player GROWS out of the docked mini-bar (≈120px above the bottom inset) instead of
-  // sliding up from the very bottom — a container-transform feel. Uniform scale keeps the
-  // content undistorted; opacity + backdrop fade in as it expands. Drives off the shared
-  // sheetY so it follows the finger during the drag.
+  // HEIGHT-GROWTH morph (user spec): pehle ye scale-zoom tha jo "naya popup" jaisa
+  // padhta tha. Ab sheet ka bottom screen se anchored rehta hai aur TOP EDGE mini-bar
+  // ki oonchai se smoothly upar uthta hai — box ki height badhti dikhti hai. Full-height
+  // sheet ko translateY se neeche dhakela jaata hai (collapsed me top = mini-bar ka top),
+  // to GPU par sirf transform chalta hai, layout/height ka mehenga kaam nahi.
   const originY = Math.max(0, screenH - insets.bottom - 120);
 
   const sheetStyle = useAnimatedStyle(() => {
     const p = interpolate(sheetY.value, [0, screenH], [1, 0], Extrapolation.CLAMP); // 1 open, 0 collapsed
     return {
-      opacity: interpolate(p, [0, 0.35], [0, 1], Extrapolation.CLAMP),
+      // turant opaque — wahi box hai, naya nahi
+      opacity: interpolate(p, [0, 0.08], [0, 1], Extrapolation.CLAMP),
+      // collapsed me mini-bar/nav jaise rounded top corners; full hote hi square
+      borderTopLeftRadius: interpolate(p, [0.7, 1], [20, 0], Extrapolation.CLAMP),
+      borderTopRightRadius: interpolate(p, [0.7, 1], [20, 0], Extrapolation.CLAMP),
       transform: [
-        { translateY: interpolate(p, [0, 1], [34, 0], Extrapolation.CLAMP) },
-        { scale: interpolate(p, [0, 1], [0.46, 1], Extrapolation.CLAMP) },
+        { translateY: interpolate(p, [0, 1], [originY, 0], Extrapolation.CLAMP) },
       ],
     };
   });
 
+  // background bhi jaldi solid ho jaye — growing box ke andar content aaram se aata hai
   const backdropStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(sheetY.value, [0, screenH], [1, 0], Extrapolation.CLAMP),
+    opacity: interpolate(sheetY.value, [0, screenH * 0.35], [1, 0.55], Extrapolation.CLAMP),
   }));
 
   if (!expanded || !track) return null;
@@ -238,7 +243,7 @@ export function FullPlayer() {
   const tint = tintFor(theme, track.color);
 
   return (
-    <Animated.View style={[StyleSheet.absoluteFill, styles.host, { transformOrigin: ['50%', originY, 0] }, sheetStyle]}>
+    <Animated.View style={[StyleSheet.absoluteFill, styles.host, sheetStyle]}>
       <Animated.View style={[StyleSheet.absoluteFill, backdropStyle]}>
         <LinearGradient colors={theme.bgGradient} style={StyleSheet.absoluteFill} />
         <CosmicBackground />
@@ -332,7 +337,8 @@ export function FullPlayer() {
 }
 
 const styles = StyleSheet.create({
-  host: { zIndex: 50 },
+  // overflow hidden — rounded top corners ke bahar ka content clip ho (growth ke dauraan)
+  host: { zIndex: 50, overflow: 'hidden' },
   sheetContent: { flex: 1 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18 },
   iconBtn: { width: 42, height: 42, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
