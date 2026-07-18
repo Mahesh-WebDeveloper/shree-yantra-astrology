@@ -2,7 +2,9 @@ import React from 'react';
 import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { NAV_CONTENT_HEIGHT, NAV_TOP_RADIUS } from '../navigation/CustomTabBar';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts } from '../theme/tokens';
 import { usePlayer, usePlayerTime, SHEET_SPRING } from './PlayerProvider';
@@ -61,24 +63,47 @@ export function NowPlayingBar({ hasBottomNav = true }: { hasBottomNav?: boolean 
 
   if (!track) return null;
 
-  const dockBottom = insets.bottom + (hasBottomNav ? 92 : 14);
+  // DOCKED (tab screens): the bar sits DIRECTLY on the nav bar — same edge-to-edge
+  // width, rounded top corners + gold hairline (taken over from the nav bar, whose
+  // top squares off underneath) → the two read as one continuous card.
+  // FLOATING (screens without the bottom nav): the classic bordered pill.
+  const docked = hasBottomNav;
+  const dockBottom = insets.bottom + (docked ? NAV_CONTENT_HEIGHT : 14);
   const isSaved = saved.includes(track.id);
 
   return (
-    <View style={[styles.wrap, { bottom: dockBottom }]} pointerEvents="box-none">
+    <View
+      style={[styles.wrap, docked ? styles.wrapDocked : styles.wrapFloating, { bottom: dockBottom }]}
+      pointerEvents="box-none"
+    >
       <GestureDetector gesture={pan}>
         <Animated.View
           collapsable={false}
           style={[
             styles.bar,
+            docked ? styles.barDocked : styles.barFloating,
             compact && styles.barCompact,
             {
-              backgroundColor: theme.isDark ? 'rgba(14,14,22,0.97)' : 'rgba(255,251,243,0.98)',
+              // fully opaque: this surface lives inside a transform-animated wrapper
+              // (press scale) — translucency would white-composite on Android
+              backgroundColor: theme.isDark ? '#0e0e16' : '#fffbf3',
               borderColor: theme.cardBorder,
             },
             barPressStyle,
           ]}
         >
+          {docked ? (
+            // gold top hairline — the unified card's top-edge accent while music plays
+            <LinearGradient
+              colors={theme.isDark
+                ? ['rgba(252,232,168,0)', 'rgba(252,232,168,0.85)', 'rgba(233,184,80,0.55)', 'rgba(252,232,168,0)']
+                : ['rgba(146,64,14,0)', 'rgba(146,64,14,0.55)', 'rgba(146,64,14,0.32)', 'rgba(146,64,14,0)']}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={styles.topHairline}
+              pointerEvents="none"
+            />
+          ) : null}
           <View style={[styles.handle, { backgroundColor: theme.cardBorder }]} />
           <ProgressLine trackColor={theme.line} fillColor={theme.gold1} />
 
@@ -125,15 +150,32 @@ export function NowPlayingBar({ hasBottomNav = true }: { hasBottomNav?: boolean 
 }
 
 const styles = StyleSheet.create({
-  wrap: { position: 'absolute', left: 12, right: 12 },
+  wrap: { position: 'absolute' },
+  wrapFloating: { left: 12, right: 12 },
+  wrapDocked: { left: 0, right: 0 },
   bar: {
-    flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 10, paddingTop: 14, paddingBottom: 8,
-    borderRadius: 16, borderWidth: 1, overflow: 'hidden',
+    flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 10, paddingTop: 14, paddingBottom: 9,
+    overflow: 'hidden',
+  },
+  /* classic pill on screens without the bottom nav */
+  barFloating: {
+    borderRadius: 16, borderWidth: 1,
     shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 10,
   },
+  /* docked on the nav bar: takes the unified card's rounded top; square bottom sits
+     flush on the nav bar. elevation 0 → no Android shadow smudge on the seam. */
+  barDocked: {
+    borderTopLeftRadius: NAV_TOP_RADIUS, borderTopRightRadius: NAV_TOP_RADIUS,
+    paddingHorizontal: 14,
+    shadowColor: '#000', shadowOpacity: 0.35, shadowRadius: 16, shadowOffset: { width: 0, height: -8 },
+    elevation: 0,
+  },
   barCompact: { gap: 6, paddingHorizontal: 8 },
+  topHairline: { position: 'absolute', top: 0, left: 0, right: 0, height: 1.5 },
   handle: { position: 'absolute', top: 5, alignSelf: 'center', width: 36, height: 3, borderRadius: 2, opacity: 0.9 },
-  progress: { position: 'absolute', top: 0, left: 0, right: 0, height: 2 },
+  /* progress line lives at the BOTTOM edge — in docked mode it doubles as the fine
+     seam between player and nav bar within the unified card */
+  progress: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 2 },
   progressFill: { height: 2 },
   expandZone: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, minWidth: 0 },
   art: { width: 38, height: 38, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
