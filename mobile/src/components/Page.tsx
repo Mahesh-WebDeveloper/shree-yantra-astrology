@@ -1,5 +1,6 @@
-import React from 'react';
-import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import React, { useCallback, useRef } from 'react';
+import { View, StyleSheet, StyleProp, ViewStyle, ScrollView } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
 import { TopBar } from './TopBar';
@@ -24,12 +25,22 @@ export function Page({ title, onBack, right, onRight, children, scroll = true, c
   const insets = useSafeAreaInsets();
   const padded = [styles.content, { paddingBottom: insets.bottom + 28 }, contentStyle];
 
+  // Har screen focus par top se dikhe (user niyam — poore app me). Caller ka apna
+  // scrollRef ho to wahi use hota hai, warna hamara.
+  const innerRef = useRef<ScrollView>(null);
+  const ref = scrollRef ?? innerRef;
+  useFocusEffect(
+    useCallback(() => {
+      ref.current?.scrollTo?.({ y: 0, animated: false });
+    }, [ref])
+  );
+
   return (
     <View style={[styles.fill, { backgroundColor: theme.bgDeep }]}>
       <CosmicBackground />
       <TopBar title={title} onBack={onBack} right={right} onRight={onRight} />
       {scroll ? (
-        <KeyboardAwareScroll ref={scrollRef} contentContainerStyle={padded} showsVerticalScrollIndicator={false}>
+        <KeyboardAwareScroll ref={ref} contentContainerStyle={padded} showsVerticalScrollIndicator={false}>
           {children}
         </KeyboardAwareScroll>
       ) : (

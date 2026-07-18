@@ -1,5 +1,6 @@
-import React from 'react';
-import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import React, { useCallback, useRef } from 'react';
+import { View, StyleSheet, StyleProp, ViewStyle, ScrollView } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
 import { space } from '../theme/tokens';
@@ -21,6 +22,15 @@ export function Screen({ children, scroll = true, contentStyle, tabPadding = tru
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
 
+  // Tab par WAPAS aane par page top se dikhe (freezeOnBlur scroll position bachaa
+  // leta tha — Library aadhi scroll karke Home ja kar lautne par wahi se khulta tha).
+  const scrollRef = useRef<ScrollView>(null);
+  useFocusEffect(
+    useCallback(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, [])
+  );
+
   const padded = [
     // when a fixed header is present it occupies the safe-area top, so the scroll body
     // only needs a small gap (no double insets.top padding).
@@ -35,6 +45,7 @@ export function Screen({ children, scroll = true, contentStyle, tabPadding = tru
       {header ? <View style={{ zIndex: 20 }}>{header}</View> : null}
       {scroll ? (
         <KeyboardAwareScroll
+          ref={scrollRef}
           contentContainerStyle={padded}
           showsVerticalScrollIndicator={false}
           keyboardDismissMode="on-drag"
