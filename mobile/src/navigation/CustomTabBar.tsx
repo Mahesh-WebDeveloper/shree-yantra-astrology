@@ -4,10 +4,7 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming, interpolate,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, {
-  Defs, RadialGradient, Stop, Ellipse, Circle,
-  LinearGradient as SvgLinearGradient,
-} from 'react-native-svg';
+import Svg, { Defs, RadialGradient, Stop, Ellipse } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useTheme } from '../theme/ThemeProvider';
@@ -36,8 +33,9 @@ const ICONS: Record<string, (p: IconProps) => React.ReactElement> = {
   Profile: ProfileIcon,
 };
 
-/** Active-tab medallion: soft radial gold glow + a delicate gradient ring
-    around the icon. Pure static SVG — only its wrapper's opacity animates. */
+/** Active-tab glow: sirf soft radial gold aura — user ki pasand par ring circle
+    aur underline hata diye; highlight ab icon ki tint + ye halka glow hai.
+    Pure static SVG — only its wrapper's opacity animates. */
 function Medallion({ dark }: { dark: boolean }) {
   return (
     <Svg width={52} height={44} viewBox="0 0 52 44">
@@ -47,13 +45,8 @@ function Medallion({ dark }: { dark: boolean }) {
           <Stop offset="55%" stopColor="#e9b850" stopOpacity={0.11} />
           <Stop offset="82%" stopColor="#e9b850" stopOpacity={0} />
         </RadialGradient>
-        <SvgLinearGradient id="navRing" x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0%" stopColor={dark ? '#fce8a8' : '#92400e'} stopOpacity={dark ? 0.55 : 0.45} />
-          <Stop offset="100%" stopColor={dark ? '#c9962e' : '#92400e'} stopOpacity={dark ? 0.12 : 0.1} />
-        </SvgLinearGradient>
       </Defs>
       <Ellipse cx={26} cy={21} rx={26} ry={21} fill="url(#navGlow)" />
-      <Circle cx={26} cy={21} r={16.5} stroke="url(#navRing)" strokeWidth={1} fill="none" />
     </Svg>
   );
 }
@@ -61,7 +54,7 @@ function Medallion({ dark }: { dark: boolean }) {
 /** One tab. All motion lives in Reanimated worklets on the UI THREAD, so the glow and
     icon spring stay perfectly smooth even while the tab press mounts a heavy screen and
     blocks JS — which is exactly when the old JS-driven traveling indicator stuttered.
-    (No traveling indicator here, ever: each tab's medallion/tick fades IN PLACE.) */
+    (No traveling indicator here, ever: each tab's glow fades IN PLACE.) */
 function TabItem({
   focused, label, Icon, onPress, isDark, activeColor, inactiveColor,
 }: {
@@ -123,15 +116,6 @@ function TabItem({
         )}
       </Animated.View>
 
-      {/* baseline tick under the active tab — fades with the glow, no travel */}
-      <Animated.View style={[styles.tickWrap, glowStyle]} pointerEvents="none">
-        <LinearGradient
-          colors={['rgba(233,184,80,0)', isDark ? '#f6d27a' : '#c9962e', 'rgba(233,184,80,0)']}
-          start={{ x: 0, y: 0.5 }}
-          end={{ x: 1, y: 0.5 }}
-          style={styles.tick}
-        />
-      </Animated.View>
     </Pressable>
   );
 }
@@ -253,7 +237,7 @@ const styles = StyleSheet.create({
   item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 },
   iconZone: { width: 48, height: 34, alignItems: 'center', justifyContent: 'center' },
   glowWrap: { position: 'absolute', top: -5, alignItems: 'center', justifyContent: 'center' },
-  tickWrap: { position: 'absolute', bottom: 5, left: 0, right: 0, alignItems: 'center' },
-  tick: { width: 32, height: 2.5, borderRadius: 2 },
+
+
   label: { fontSize: 9.5, lineHeight: 12, letterSpacing: 0.1, fontFamily: fonts.cinzel, fontWeight: '600' },
 });
