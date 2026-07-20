@@ -1029,7 +1029,7 @@ async function askAstrologer(input) {
   const question = String(input.question || '').trim();
   if (!question) throw Object.assign(new Error('Question chahiye'), { status: 400 });
   if (question.length > 900) throw Object.assign(new Error('Question 900 characters se chhota rakhein'), { status: 400 });
-  const key = `ask|v5|${birthSig(input)}|${todayStr()}|${lang}|${questionKey(question)}`;
+  const key = `ask|v6|${birthSig(input)}|${todayStr()}|${lang}|${questionKey(question)}`;
   return cached(key, 'ask-astrologer', async () => {
     // Pull the user's COMPLETE kundli in parallel: natal chart+dasha+panchang (buildContext),
     // full Vimshottari dasha timeline, live gochar (transits + Sade Sati/Dhaiya), and varga charts.
@@ -1094,9 +1094,15 @@ ${JSON.stringify({
 }, null, 2)}
 
 ${writeIn(lang)}
-WRITING STYLE — give TWO LAYERS for every point (MANY users have ZERO astrology knowledge, so always explain in plain words too):
+TIMELINE STORYTELLING (the heart of a great reading — users mainly want to know: "pichhla samay kaisa tha, ab kya chal raha hai, aage kya hoga"):
+- Whenever the question touches life, time, future, struggles, career, marriage, or is broad/general, WEAVE the reading as a STORY OF TIME across three arcs, each derived STRICTLY from the context: PAST (the previous antardasha/mahadasha from dashaTimeline, past Sade Sati/Dhaiya windows), PRESENT (current mahadasha+antardasha, saturnStatus, today's transits), FUTURE (the next periods and their start dates, nextSadeSati, upcoming transits).
+- Tell it like a warm, experienced jyotishi narrating a katha: name the period, its dates, and then paint what such a period TYPICALLY feels like in real life — exams/documents getting delayed, running around for paperwork, home responsibilities piling up, relationships needing patience, money needing care, energy returning, new beginnings opening. Make it vivid and relatable.
+- STORY GUARDRAIL (absolute): these life examples must ALWAYS be phrased as tendencies of the period ("aise samay mein aksar...", "is dasha mein log प्रायः mahsoos karte hain...") — NEVER as claimed facts about this user's actual life ("aapki shaadi hui", "aapka certificate atka" are FORBIDDEN unless the user themselves said so in the question). You may warmly invite them to see if it matches: "dekhiye kya aapko yeh apne beete samay mein mehsoos hua?".
+- Balance hope with honesty: name the likely frictions of a period AND its gifts, then what the NEXT period will shift (with its real start date from dashaTimeline).
+
+WRITING STYLE — give TWO LAYERS for every point (MANY users have ZERO astrology knowledge, so always explain in plain words too — astrologers should be able to verify the technical layer, normal users should feel the story):
 - "answer": warm, DIRECT 4-6 sentences. First directly answer the exact question (apply DIRECT-ANSWER RULES) in SIMPLE everyday language a non-technical person instantly understands, then reassure.
-- "sections": 3 to 6 well-titled sections. EACH section's "text" MUST do BOTH, in this order:
+- "sections": 3 to 6 well-titled sections. For time/life questions PREFER this arc: "पिछला समय" (recent past period), "अभी का समय" (current period), "आने वाला समय" (next period with its real start date) — plus any topic-specific sections. EACH section's "text" MUST do BOTH, in this order:
    (a) TECHNICAL BASIS — name the exact astrological factor used (which graha / house / sign / yoga / transit / dasha) — the precise reason.
    (b) SIMPLE MEANING — then re-explain the SAME thing in very easy, everyday words, starting that part on a new line with "${lang === 'hi' ? 'आसान भाषा में:' : 'In simple words:'}" so someone with no astrology knowledge fully understands what it means for their real life.
 - "vedastroBasis" (internal key): short PRECISE calculation facts actually used (e.g. "Saturn transit Pisces = 8th from Moon (Leo) → Dhaiya"), bullet style. Never mention any provider, API, or brand name.
