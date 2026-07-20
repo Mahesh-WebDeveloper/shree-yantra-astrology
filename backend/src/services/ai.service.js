@@ -466,6 +466,9 @@ async function buildContext(input) {
     } : null,
     yogas: (data.yogas || []).slice(0, 6).map((y) => ({ name: y.name, description: y.description })),
     doshas: (data.doshas || []).filter((x) => x.present).map((x) => ({ name: x.name, detail: x.detail, tag: x.tag })),
+      doshaStatus: (data.doshas || []).map((x) => ({ name: x.name, present: !!x.present, detail: x.detail || '' })),
+    // har dosha ka explicit present/absent — AI galat user-claims ko isi se correct karta hai
+    doshaStatus: (data.doshas || []).map((x) => ({ name: x.name, present: !!x.present, detail: x.detail || '' })),
     planets: (data.planets || []).filter((p) => p.sign).map((p) => ({
       planet: p.planet,
       sign: p.sign,
@@ -1026,7 +1029,7 @@ async function askAstrologer(input) {
   const question = String(input.question || '').trim();
   if (!question) throw Object.assign(new Error('Question chahiye'), { status: 400 });
   if (question.length > 900) throw Object.assign(new Error('Question 900 characters se chhota rakhein'), { status: 400 });
-  const key = `ask|v4|${birthSig(input)}|${todayStr()}|${lang}|${questionKey(question)}`;
+  const key = `ask|v5|${birthSig(input)}|${todayStr()}|${lang}|${questionKey(question)}`;
   return cached(key, 'ask-astrologer', async () => {
     // Pull the user's COMPLETE kundli in parallel: natal chart+dasha+panchang (buildContext),
     // full Vimshottari dasha timeline, live gochar (transits + Sade Sati/Dhaiya), and varga charts.
@@ -1061,10 +1064,12 @@ GROUND RULES:
 
 DIRECT-ANSWER RULES (the user hates vague replies — answer the EXACT question first):
 1. SATURN / SADE SATI / SHANI / DHAIYA / "shani kab lagega/utrega/khatam hoga": Use the "saturnStatus" object as the ONLY source of truth. CRITICAL — DO NOT CONFUSE TWO DIFFERENT THINGS: (a) SADE SATI / DHAIYA is Saturn's TRANSIT (gochar) over the 12th/1st/2nd (or 4th/8th) sign from the natal Moon (~7.5 yrs) — its dates live ONLY in saturnStatus.currentSadeSati / nextSadeSati. (b) The SHANI MAHADASHA is a completely separate Vimshottari dasha period (in dashaTimeline) and has NOTHING to do with Sade Sati dates. If the user asks about SADE SATI, answer ONLY with the Sade Sati transit window from saturnStatus — NEVER answer a Sade Sati question with the Shani Mahadasha years (e.g. do not say Sade Sati ends in 2040 just because the Saturn mahadasha does). State plainly in the FIRST 1-2 sentences: the natal Moon sign, Saturn's CURRENT transit sign, and the exact status. ABSOLUTE DATE RULE (to avoid wrong info): you may ONLY use the dates in saturnStatus.currentSadeSati and saturnStatus.nextSadeSati VERBATIM. NEVER calculate, estimate, round or invent ANY Sade Sati / Dhaiya date yourself. — If saturnStatus.sadeSatiActive is true: say Sade Sati is running and give its window from "currentSadeSati" (e.g. "from X to Y"). — If sadeSatiActive is false but dhaiyaActive is true: clearly say this is SHANI DHAIYA (small panoti), NOT Sade Sati, and that the NEXT Sade Sati is "nextSadeSati". — If both are false: say neither is running now and the next Sade Sati is "nextSadeSati". — If a needed date field is null/missing: say you don't have that exact date here and suggest checking the Kundli's Sade Sati / transit section — do NOT make up a date. Never say "it varies" or give only theory.
-2. DASHA / "kab" timing questions: Use "dashaTimeline" — name the exact mahadasha lord(s) and their start–end dates that answer the question.
-3. ALWAYS state the user's Lagna (ascendant) and Moon sign correctly from the context whenever relevant; never omit or alter them.
-4. MULANK / NUMEROLOGY ("mera mulank/bhagyank kya hai", lucky number): use the "numerology" object ONLY — mulank = numerology.psychic (reduced day-of-birth), bhagyank = numerology.destiny (reduced full DOB). State the number + its meaning. NEVER guess a number; if numerology is null, warmly say you need the exact birth date.
-5. Always directly answer what was asked in the first 2 sentences, THEN explain.
+2. DOSHA questions (Manglik / Kaal Sarp / any dosha): use "doshaStatus" as the ONLY truth. Each entry says present:true or present:false. If present:false, CLEARLY and warmly say the user does NOT have that dosha — reassure them, explain in one line why (from planets, e.g. Mars's house). NEVER say a dosha exists when doshaStatus says present:false, no matter what the user (or "some other astrologer") claims.
+3. NEVER AGREE JUST TO PLEASE (critical): If the user's question ASSUMES something that contradicts this context — e.g. "mera Kaal Sarp dosh hai", "kisi ne bataya main Manglik hoon", a wrong dasha name, a wrong rashi — do NOT go along with it. Politely but confidently correct them using the real data ("aapki kundli ke hisaab se yeh dosha NahiN hai — Mangal teesre bhav mein hai, isliye..."). The chart data always outranks the user's assumption and any other astrologer's claim.
+4. DASHA / "kab" timing questions: Use "dashaTimeline" — name the exact mahadasha lord(s) and their start–end dates that answer the question.
+5. ALWAYS state the user's Lagna (ascendant) and Moon sign correctly from the context whenever relevant; never omit or alter them.
+6. MULANK / NUMEROLOGY ("mera mulank/bhagyank kya hai", lucky number): use the "numerology" object ONLY — mulank = numerology.psychic (reduced day-of-birth), bhagyank = numerology.destiny (reduced full DOB). State the number + its meaning. NEVER guess a number; if numerology is null, warmly say you need the exact birth date.
+7. Always directly answer what was asked in the first 2 sentences, THEN explain.
 
 USER QUESTION:
 ${question}
@@ -1079,6 +1084,7 @@ ${JSON.stringify({
   dashaTimeline: dashaList,
   yogas: ctx.yogas,
   doshas: ctx.doshas,
+  doshaStatus: ctx.doshaStatus || null, // EVERY dosha with present:true/false — absence is verifiable
   planets: ctx.planets,
   saturnStatus,
   currentTransits,
