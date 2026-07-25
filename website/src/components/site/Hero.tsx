@@ -1,11 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type ComponentType,
-  type KeyboardEvent,
-} from 'react'
+import { useEffect, useRef, useState, type ComponentType } from 'react'
 import { AnimatePresence, motion, useScroll, useTransform, type Variants } from 'framer-motion'
 import { useLang } from '@/i18n/LangProvider'
 import { scrollToHash, useReducedMotion } from './hooks/useSiteMotion'
@@ -149,6 +142,22 @@ export function Hero() {
   const { hi } = useLang()
   const reduced = useReducedMotion()
   const sectionRef = useRef<HTMLElement>(null)
+  const screenRef = useRef<HTMLDivElement>(null)
+
+  /* The demo board is authored at 300x630. CSS cannot divide a length by a
+     length, so `scale(calc(width / 300))` was invalid and silently dropped —
+     the board stayed 300px wide inside a narrower screen and spilled over its
+     right edge. Measure the screen and hand the board a plain number. */
+  useEffect(() => {
+    const el = screenRef.current
+    if (!el) return
+    const apply = () => el.style.setProperty('--syh-board-scale', String(el.clientWidth / 300))
+    apply()
+    if (typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(apply)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
   const t = (h: string, e: string) => (hi ? h : e)
 
   /* The carousel ------------------------------------------------------- */
@@ -156,11 +165,6 @@ export function Hero() {
   const [token, setToken] = useState(0) // bumped on every change → restarts the screen
   const [hovering, setHovering] = useState(false)
   const [awake, setAwake] = useState(true)
-
-  const go = useCallback((next: number) => {
-    setIndex((next + SCREENS.length) % SCREENS.length)
-    setToken((n) => n + 1)
-  }, [])
 
   // Pause when the tab is in the background or the hero has scrolled away.
   useEffect(() => {
@@ -192,24 +196,6 @@ export function Hero() {
     return () => window.clearTimeout(id)
   }, [running, index, token])
 
-  const onTabKey = (e: KeyboardEvent<HTMLDivElement>) => {
-    const map: Record<string, number> = {
-      ArrowDown: index + 1,
-      ArrowRight: index + 1,
-      ArrowUp: index - 1,
-      ArrowLeft: index - 1,
-      Home: 0,
-      End: SCREENS.length - 1,
-    }
-    const next = map[e.key]
-    if (next === undefined) return
-    e.preventDefault()
-    const n = (next + SCREENS.length) % SCREENS.length
-    go(n)
-    const el = e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]')[n]
-    el?.focus()
-  }
-
   /* The mandala sinks and dims as the page moves on. */
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start start', 'end start'] })
   const mandalaY = useTransform(scrollYProgress, [0, 1], [0, 90])
@@ -218,47 +204,6 @@ export function Hero() {
   const screen = SCREENS[index]
   const Live = screen.Comp
   const initial = reduced ? false : 'hidden'
-
-  const tabs = (variant: 'rail' | 'row') => (
-    <div
-      className={`syh-tabs syh-tabs--${variant}`}
-      role="tablist"
-      aria-orientation={variant === 'rail' ? 'vertical' : 'horizontal'}
-      aria-label={t('ऐप की स्क्रीन', 'App screens')}
-      onKeyDown={onTabKey}
-    >
-      {SCREENS.map((s, i) => (
-        <button
-          key={s.id}
-          type="button"
-          role="tab"
-          id={`syh-tab-${variant}-${s.id}`}
-          aria-selected={i === index}
-          aria-controls="syh-screen"
-          tabIndex={i === index ? 0 : -1}
-          className={`syh-tab${i === index ? ' is-on' : ''}`}
-          onClick={() => go(i)}
-        >
-          <span className="syh-tab__n sy-num" aria-hidden>
-            {String(i + 1).padStart(2, '0')}
-          </span>
-          <span className="syh-tab__label">{t(s.label.hi, s.label.en)}</span>
-          <span className="syh-tab__track" aria-hidden>
-            {i === index ? (
-              <span
-                key={token}
-                className="syh-tab__fill"
-                style={{
-                  animationDuration: `${s.ms}ms`,
-                  animationPlayState: running ? 'running' : 'paused',
-                }}
-              />
-            ) : null}
-          </span>
-        </button>
-      ))}
-    </div>
-  )
 
   return (
     <section className="syh" id="top" ref={sectionRef} aria-labelledby="syh-title">
@@ -404,6 +349,7 @@ export function Hero() {
                 <div className="syh-phone__frame">
                   <span className="syh-phone__notch" aria-hidden />
                   <div
+                    ref={screenRef}
                     className="syh-phone__screen"
                     id="syh-screen"
                     role="tabpanel"
@@ -415,6 +361,10 @@ export function Hero() {
                         screen — it must sit OUTSIDE the motion element, whose
                         inline transform would otherwise fight the scale. */}
                     <div className="syh-phone__zoom">
+                      {/* one 300x630 board holds the screen AND the app's tab
+                          bar, and the board alone is scaled — so the two can
+                          never fall out of step with each other */}
+                      <div className="syh-phone__board">
                       <AnimatePresence initial={false}>
                         <motion.div
                           key={`${screen.id}-${token}`}
@@ -427,8 +377,12 @@ export function Hero() {
                           <Live hi={hi} play={play} />
                         </motion.div>
                       </AnimatePresence>
+                      {/* the app's own tab bar belongs to the 300px board, so it
+                          scales with it — outside the wrapper it stayed full
+                          size and sat on top of the screen's last rows */}
+                      <PhoneTabBar hi={hi} active={screen.bottom} />
+                      </div>
                     </div>
-                    <PhoneTabBar hi={hi} active={screen.bottom} />
                     {reduced ? null : <span className="syh-phone__glass" aria-hidden />}
                   </div>
                 </div>
@@ -440,8 +394,9 @@ export function Hero() {
             </p>
           </div>
 
-          {tabs('rail')}
-          {tabs('row')}
+          {/* The screen switcher is gone — the phone simply plays through the
+              screens on its own. Anyone who wants to steer them has the full
+              section right below. */}
         </motion.div>
       </div>
     </section>

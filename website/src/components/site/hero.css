@@ -1070,7 +1070,7 @@ body {
   --syh-screen-w: calc(var(--syh-phone-w) * 0.94);
 }
 .syh-phone__slide {
-  scale: calc(var(--syh-screen-w) / 300);
+  transform: scale(var(--syh-board-scale, 0.85));
 }
 
 /* 2 · Below ~760px the copy alone fills the viewport; the device, its caption
@@ -1102,14 +1102,14 @@ body {
   inset: 0;
   overflow: hidden;
 }
-.syh-phone__zoom > * {
+.syh-phone__board {
   position: absolute;
   top: 0;
   left: 0;
   width: 300px;
   height: 630px;
   transform-origin: top left;
-  scale: calc(var(--syh-screen-w, 254px) / 300);
+  transform: scale(var(--syh-board-scale, 0.85));
 }
 .syh-phone__slide {
   position: absolute;
@@ -1117,4 +1117,83 @@ body {
   width: 100%;
   height: 100%;
   scale: 1;
+}
+
+/* ══ The flower ══════════════════════════════════════════════════════════════
+   Replaces the old yantra figure: no square frame, no triangles — a
+   rose-window bloom of petals that draws itself and then keeps living. */
+.syh__mandala-pos {
+  --syh-bloom-1: #fce8a8;
+  --syh-bloom-2: #e9b850;
+  --syh-bloom-3: #a8770f;
+}
+[data-sy-theme='light'] .syh__mandala-pos {
+  --syh-bloom-1: #d9a63a;
+  --syh-bloom-2: #b87f1a;
+  --syh-bloom-3: #7c4a03;
+}
+.syh-bloom {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+/* the whole bloom breathes */
+.syh-bloom.is-live {
+  animation: syh-breathe 9s ease-in-out infinite;
+  transform-origin: center;
+}
+@keyframes syh-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.016); }
+}
+/* alternate rings turn against each other — minutes per revolution */
+.syh-bloom.is-live .syh-bloom__ring--0 { animation: syh-spin 240s linear infinite; }
+.syh-bloom.is-live .syh-bloom__ring--1 { animation: syh-spin-r 180s linear infinite; }
+.syh-bloom.is-live .syh-bloom__ring--2 { animation: syh-spin 140s linear infinite; }
+.syh-bloom.is-live .syh-bloom__ring--3 { animation: syh-spin-r 100s linear infinite; }
+.syh-bloom.is-live .syh-bloom__dash { animation: syh-spin 90s linear infinite; }
+@keyframes syh-spin { to { transform: rotate(360deg); } }
+@keyframes syh-spin-r { to { transform: rotate(-360deg); } }
+/* the heart pulses */
+.syh-bloom.is-live .syh-bloom__heart { animation: syh-pulse 6s ease-in-out infinite; }
+.syh-bloom.is-live .syh-bloom__bindu { animation: syh-pulse 3.4s ease-in-out infinite; }
+@keyframes syh-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .syh-bloom.is-live,
+  .syh-bloom.is-live * { animation: none !important; }
+}
+
+/* ── Phone sizing: the device is 80% of the viewport height ──────────────────
+   Asked for directly. Width follows from the board's 300x630 ratio, so the
+   screen keeps its exact proportions and the app UI inside is never squashed.
+   `--syh-screen-w` (used by the zoom wrapper) follows the frame padding. */
+.syh-phone {
+  --syh-phone-h: min(80vh, 640px);
+  --syh-phone-w: calc(var(--syh-phone-h) * 300 / 630);
+  --syh-screen-w: calc(var(--syh-phone-w) * 0.94);
+  width: var(--syh-phone-w);
+}
+/* the zoom wrapper reads its scale from the screen width — keep them in step */
+.syh-phone__board {
+  transform: scale(var(--syh-board-scale, 0.85));
+}
+/* the tab bar now lives inside the scaled board; it is absolutely positioned
+   against it, so give the board its full 630px height to anchor against */
+/* the demo fills the board, the app's tab bar pins to its foot */
+.syh-phone__board > .syd {
+  position: absolute;
+  inset: 0;
+}
+.syh-phone__board > .sya-tabbar {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 56px;
+}
+@media (max-width: 1280px) {
+  .syh-phone {
+    --syh-phone-h: min(72vh, 560px);
+  }
 }

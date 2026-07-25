@@ -124,6 +124,7 @@ function Skeletons() {
 export function LiveProof() {
   const { hi } = useLang()
   const [city, setCity] = useState('Jaipur')
+  const [typed, setTyped] = useState('')
   const date = useMemo(() => todayDmy(), [])
   const { data, loading, error, refetch } = useLivePanchang(city, date)
   const revealRef = useRevealChildren<HTMLDivElement>()
@@ -161,6 +162,32 @@ export function LiveProof() {
 
         <div className="syj-alm__cities" data-sy-reveal="80">
           <span className="syj-alm__citylabel">{t('अपना शहर चुनिए', 'Pick your city')}</span>
+
+          {/* Type any place — the panchang is computed for whatever the engine
+              can locate, not only for the shortcuts below. */}
+          <form
+            className="syj-alm__search"
+            onSubmit={(e) => {
+              e.preventDefault()
+              const q = typed.trim()
+              if (q) setCity(q)
+            }}
+          >
+            <input
+              type="text"
+              className="syj-alm__input"
+              value={typed}
+              onChange={(e) => setTyped(e.target.value)}
+              placeholder={t('अपना शहर लिखिए — जैसे जोधपुर', 'Type your city — e.g. Jodhpur')}
+              aria-label={t('अपना शहर लिखिए', 'Type your city')}
+              autoComplete="address-level2"
+              enterKeyHint="search"
+            />
+            <button type="submit" className="syj-alm__go">
+              {t('देखें', 'Show')}
+            </button>
+          </form>
+
           <div
             className="flex flex-wrap gap-2"
             role="group"

@@ -1831,3 +1831,43 @@
     transform: none;
   }
 }
+
+/* A place to type any city — the shortcuts below it are only shortcuts. */
+.syj-alm__search {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0 12px;
+  max-width: 420px;
+}
+.syj-alm__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--sy-line);
+  background: var(--sy-card);
+  color: var(--sy-ink);
+  font: inherit;
+  font-size: 0.92rem;
+}
+.syj-alm__input::placeholder {
+  color: var(--sy-ink-muted);
+}
+.syj-alm__input:focus-visible {
+  outline: 2px solid var(--sy-gold-2);
+  outline-offset: 1px;
+}
+.syj-alm__go {
+  flex: 0 0 auto;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--sy-gold-3);
+  background: linear-gradient(180deg, var(--sy-gold-1), var(--sy-gold-3));
+  color: #2a1c00;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+.syj-alm__go:hover { filter: brightness(1.06); }
+.syj-alm__go:focus-visible { outline: 2px solid var(--sy-gold-1); outline-offset: 2px; }
