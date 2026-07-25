@@ -1,194 +1,218 @@
-import { useEffect, useRef } from 'react'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useLang } from '@/i18n/LangProvider'
-import { useReducedMotion } from './hooks/useSiteMotion'
+import { scrollToHash, useReducedMotion, useRevealChildren } from './hooks/useSiteMotion'
+import { TrustArrowUp, TrustGlyph, TrustSeal, TrustTick, type GlyphName } from './parts/trustMarks'
 import './sections.css'
-
-gsap.registerPlugin(ScrollTrigger)
 
 type Bi = { hi: string; en: string }
 
-type Beat = {
-  id: string
-  /** Human sentence first — this is the heading. */
-  title: Bi
-  body: Bi
-  /** The quiet evidence line. The number, if any, sits inside the sentence. */
-  proof: { pre: Bi; n?: number; suffix?: string; post?: Bi }
-  /** Traditional / technical terms, for the people who look for them. */
-  notes: Bi[]
-}
+/* ─────────────────────────────────────────────────────────────
+   Only checked, real facts live in this file. Nothing here is
+   invented, rounded up or dramatised beyond what was measured.
+   ───────────────────────────────────────────────────────────── */
 
-/* Only verified, real facts live here. Nothing is invented. */
-const BEATS: Beat[] = [
+/** The concordance: what we showed, what the panchang says, one row per check. */
+type Row = { id: string; ours: string; theirs: string; what: Bi }
+
+const ROWS: Row[] = [
   {
     id: 'dates',
-    title: {
-      hi: 'हर त्योहार और व्रत की तारीख — पंचांग से मिलाकर जाँची हुई',
-      en: 'Every festival and vrat date — checked against the panchang',
+    ours: '767',
+    theirs: '767',
+    what: {
+      hi: 'त्योहार और व्रत की तारीख़ें — 2026, 2027 और 2050, कई शहरों में अलग-अलग',
+      en: 'Festival and vrat dates — 2026, 2027 and 2050, checked across several cities',
     },
-    body: {
-      hi: 'बहुत से ऐप में त्योहार की तारीख़ एक दिन आगे-पीछे हो जाती है, और व्रत ठीक उसी दिन छूट जाता है। इसलिए हमने एक-एक तारीख़ दृक पंचांग से मिलाकर देखी — और अलग-अलग शहरों के लिए अलग से भी।',
-      en: 'In a lot of apps the festival date slips by a day, and the vrat is missed on exactly that day. So we compared every single date against Drik Panchang — and did it separately for several cities.',
-    },
-    proof: {
-      pre: { hi: '2026, 2027 और 2050 की सभी ', en: 'All ' },
-      n: 767,
-      post: { hi: ' तारीखें सही निकलीं', en: ' dates for 2026, 2027 and 2050 came out right' },
-    },
-    notes: [
-      {
-        hi: '2028 से 2035 तक हर साल अलग से जाँचा — हर साल 22 में से 22',
-        en: '2028 to 2035 checked separately — 22 of 22 every year',
-      },
-      { hi: 'कई शहरों में अलग-अलग मिलान', en: 'Cross-checked across several cities' },
-    ],
   },
   {
-    id: 'maths',
-    title: {
-      hi: 'गणना वही, जो पंडित जी करते हैं',
-      en: 'The same maths a pandit uses',
+    id: 'years',
+    ours: '22',
+    theirs: '22',
+    what: {
+      hi: 'हर साल अलग से — 2028 से 2035 तक, एक-एक साल का पूरा मिलान',
+      en: 'Each year on its own — 2028 through 2035, every year checked separately',
     },
-    body: {
-      hi: 'ग्रहों की जगह, सूर्योदय, सूर्यास्त और तिथि के बदलने का ठीक समय — सब कुछ हर बार नए सिरे से गिना जाता है, आपके अपने शहर के हिसाब से। कोई पहले से बनी तालिका नहीं, कोई अंदाज़ा नहीं।',
-      en: 'Where the planets are, when the sun rises and sets, the exact moment a tithi turns — all of it is worked out fresh every time, for your own city. No pre-made table, no guesswork.',
-    },
-    proof: {
-      pre: {
-        hi: 'ऐप में एक भी तारीख़ या समय पहले से भरा हुआ नहीं है',
-        en: 'Not one date or time in the app is filled in beforehand',
-      },
-    },
-    notes: [
-      { hi: 'लाहिड़ी (चित्रा पक्ष) अयनांश', en: 'Lahiri (Chitra Paksha) ayanamsa' },
-      { hi: 'तिथि सूर्योदय के समय के अनुसार', en: 'Tithi taken at sunrise (udaya)' },
-      { hi: 'सूर्योदय–सूर्यास्त आपके शहर से', en: 'Sunrise and sunset from your own city' },
-    ],
   },
   {
     id: 'choghadiya',
-    title: {
-      hi: 'शुभ समय देखना हो, तो पूरे दिन और रात का चौघड़िया',
-      en: 'Looking for a good hour? The choghadiya for the whole day and night',
+    ours: '16',
+    theirs: '16',
+    what: {
+      hi: 'चौघड़िया — दिन की आठ और रात की आठ, पूरे चौबीस घंटे',
+      en: 'Choghadiya — the eight day windows and the eight night ones, a full day and night',
     },
-    body: {
-      hi: 'नया काम, यात्रा या पूजा — लोग समय चौघड़िया देखकर तय करते हैं। दिन की आठ और रात की आठ अवधियाँ आपके शहर के सूर्योदय और सूर्यास्त से बनती हैं, इसलिए हर शहर में थोड़ी अलग होती हैं।',
-      en: 'A new venture, a journey, a puja — people pick the hour by the choghadiya. The eight day windows and eight night windows are built from your own city’s sunrise and sunset, so they shift a little from city to city.',
-    },
-    proof: {
-      pre: { hi: 'पूरे चौबीस घंटे की सभी ', en: 'All ' },
-      n: 16,
-      post: {
-        hi: ' अवधियाँ मिलान में सही निकलीं',
-        en: ' windows across the full twenty-four hours matched',
-      },
-    },
-    notes: [{ hi: 'स्थानीय सूर्योदय और सूर्यास्त से बनी', en: 'Built from local sunrise and sunset' }],
-  },
-  {
-    id: 'grounded',
-    title: {
-      hi: 'ज्योतिषी वही कहता है, जो आपकी कुंडली में है',
-      en: 'The astrologer says only what your chart says',
-    },
-    body: {
-      hi: 'हर जवाब आपकी अपनी कुंडली, चल रही दशा, नौ ग्रहों के गोचर और साढ़ेसाती की तारीखों को देखकर बनता है। जो बात आपकी कुंडली में है ही नहीं, उसके लिए साफ़ मना कर दिया जाता है — और कोई गलत बात कह दे तो विनम्रता से सुधार भी होता है।',
-      en: 'Every answer is put together after looking at your own chart, the period you are running, where the nine planets are moving and the dates of your Sade Sati. If something simply is not in your chart, you are told so plainly — and a wrong claim is politely corrected instead of echoed.',
-    },
-    proof: {
-      pre: {
-        hi: 'जो आपके अपने आँकड़ों में नहीं है, वह जवाब में भी नहीं आता',
-        en: 'What is not in your own data does not appear in the answer',
-      },
-    },
-    notes: [
-      { hi: 'कुंडली · दशा · गोचर · साढ़ेसाती', en: 'Chart · dasha · gochar · Sade Sati' },
-      { hi: 'हाँ में हाँ नहीं मिलाई जाती', en: 'It will not agree just to please you' },
-    ],
   },
 ]
 
-function Mandala() {
-  return (
-    <svg className="sy-mandala" viewBox="0 0 200 200" fill="none" stroke="currentColor" aria-hidden>
-      <circle cx="100" cy="100" r="96" strokeWidth="0.6" />
-      <circle cx="100" cy="100" r="78" strokeWidth="0.6" />
-      <circle cx="100" cy="100" r="52" strokeWidth="0.6" />
-      <circle cx="100" cy="100" r="26" strokeWidth="0.6" />
-      {Array.from({ length: 16 }).map((_, i) => {
-        const a = (i / 16) * Math.PI * 2
-        return (
-          <line
-            key={i}
-            x1={100 + Math.cos(a) * 26}
-            y1={100 + Math.sin(a) * 26}
-            x2={100 + Math.cos(a) * 96}
-            y2={100 + Math.sin(a) * 96}
-            strokeWidth="0.5"
-          />
-        )
-      })}
-      <polygon points="100,30 161,135 39,135" strokeWidth="0.8" />
-      <polygon points="100,170 39,65 161,65" strokeWidth="0.8" />
-    </svg>
-  )
+/** The four proofs. Heading says what it means for you; the figure sits quietly under it. */
+type Proof = {
+  id: string
+  glyph: GlyphName
+  title: Bi
+  body: Bi
+  stat: Bi
+  note: Bi
 }
 
-function Tick() {
+const PROOFS: Proof[] = [
+  {
+    id: 'dates',
+    glyph: 'calendar',
+    title: {
+      hi: 'तारीख़ एक दिन खिसकी, तो व्रत उसी दिन छूटता है',
+      en: 'If the date slips by a day, the vrat is missed on exactly that day',
+    },
+    body: {
+      hi: 'इसलिए त्योहार और व्रत की एक-एक तारीख़ दृक पंचांग से मिलाकर देखी गई — 2026, 2027 और 2050 की, और कई शहरों के लिए अलग-अलग, क्योंकि शहर बदलने पर तिथि भी बदल सकती है।',
+      en: 'So every festival and vrat date was checked, one at a time, against Drik Panchang — for 2026, 2027 and 2050, and separately for several cities, because the tithi can change when the city does.',
+    },
+    stat: { hi: '767 में से 767', en: '767 of 767' },
+    note: {
+      hi: 'हर त्योहार और व्रत की तारीख़ मिली। फिर 2028 से 2035 तक साल-दर-साल जाँचा गया — हर साल 22 में से 22।',
+      en: 'Every festival and vrat date matched. 2028 to 2035 was then checked year by year — 22 of 22, every year.',
+    },
+  },
+  {
+    id: 'choghadiya',
+    glyph: 'dial',
+    title: {
+      hi: 'शुभ घड़ी वही है जो आपके शहर की हो',
+      en: 'A good hour is only good where you are standing',
+    },
+    body: {
+      hi: 'नया काम, यात्रा या पूजा — लोग समय चौघड़िया देखकर तय करते हैं। दिन की आठ और रात की आठ अवधियाँ आपके अपने सूर्योदय और सूर्यास्त से बनती हैं, इसलिए हर शहर में थोड़ी अलग होती हैं। पूरे चौबीस घंटे की सूची मिलाकर देखी गई।',
+      en: 'A new venture, a journey, a puja — people choose the hour by the choghadiya. The eight day windows and eight night windows are built from your own sunrise and sunset, so they shift from city to city. The full twenty-four hours was compared.',
+    },
+    stat: { hi: '16 में से 16', en: '16 of 16' },
+    note: {
+      hi: 'दिन और रात की हर चौघड़िया दृक पंचांग से मिली — शुभ भी, अशुभ भी।',
+      en: 'Every window of the day and night matched Drik Panchang — the good ones and the ones to avoid.',
+    },
+  },
+  {
+    id: 'computed',
+    glyph: 'sunrise',
+    title: {
+      hi: 'कोई पहले से भरी हुई तालिका नहीं',
+      en: 'Nothing here is read off a stored table',
+    },
+    body: {
+      hi: 'तिथि, नक्षत्र, सूर्योदय और सूर्यास्त हर बार नए सिरे से गिने जाते हैं — आपके अपने शहर के लिए। दिन की तिथि वही मानी जाती है जो सूर्योदय के समय चल रही हो, यानी उदया तिथि — वही नियम जो पंडित जी लगाते हैं।',
+      en: 'Tithi, nakshatra, sunrise and sunset are worked out afresh every time, for your own city. The day’s tithi is the one running at sunrise — the udaya rule, the same one a pandit applies.',
+    },
+    stat: { hi: 'हर बार नई गणना', en: 'Computed every time' },
+    note: {
+      hi: 'लाहिड़ी (चित्रा पक्ष) अयनांश · तिथि सूर्योदय (उदय) के अनुसार · समय आपके शहर के हिसाब से',
+      en: 'Lahiri (Chitra Paksha) ayanamsa · tithi by the sunrise (udaya) rule · timings from your own city',
+    },
+  },
+  {
+    id: 'grounded',
+    glyph: 'chart',
+    title: {
+      hi: 'ज्योतिषी वही कहता है जो आपकी कुंडली में है',
+      en: 'The astrologer says only what your own chart says',
+    },
+    body: {
+      hi: 'हर पाठ आपकी कुंडली, पूरी विंशोत्तरी दशा की समयरेखा, नौ ग्रहों के चल रहे गोचर और आपकी साढ़ेसाती की अवधि — इन्हीं से बनता है। और अगर आपकी कोई धारणा कुंडली से मेल नहीं खाती, तो हाँ में हाँ नहीं मिलाई जाती; विनम्रता से सुधार दिया जाता है।',
+      en: 'Every reading is built from your chart, the full Vimshottari dasha timeline, where the nine planets are moving now and the window of your Sade Sati. And if an assumption of yours does not match the chart, it is not agreed with — it is politely corrected.',
+    },
+    stat: { hi: 'सिर्फ़ आपके अपने आँकड़ों से', en: 'Only from your own data' },
+    note: {
+      hi: 'कुंडली · विंशोत्तरी दशा · नौ ग्रहों का गोचर · साढ़ेसाती',
+      en: 'Chart · Vimshottari dasha · transits of the nine planets · Sade Sati',
+    },
+  },
+]
+
+const STEPS: Bi[] = [
+  {
+    hi: 'जिस पंचांग पर आप भरोसा करते हैं, उसे खोलिए — कोई भी, कागज़ का हो या ऐप का।',
+    en: 'Open whichever panchang you trust — any one, printed or on a screen.',
+  },
+  {
+    hi: 'इसी पन्ने पर ऊपर “आज का पंचांग” खुला हुआ है। वह अभी, आपके शहर के लिए गिना गया है।',
+    en: 'Higher up this same page, today’s panchang is already open. It was worked out just now, for your city.',
+  },
+  {
+    hi: 'आज की तिथि, नक्षत्र और सूर्योदय — दोनों जगह मिलाकर देख लीजिए।',
+    en: 'Compare today’s tithi, nakshatra and sunrise in both.',
+  },
+]
+
+function Ledger({ hi, still }: { hi: boolean; still: boolean }) {
+  const t = (h: string, e: string) => (hi ? h : e)
+
   return (
-    <svg className="syj-mf__tick" viewBox="0 0 16 16" fill="none" aria-hidden>
-      <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.1" opacity="0.75" />
-      <path
-        d="M4.9 8.3l2.1 2.2 4.1-4.6"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
+    <div className="syj-ledger" data-sy-reveal="60">
+      <div className="syj-ledger__crest">
+        <TrustSeal still={still} />
+        <p className="syj-ledger__label">{t('एक-एक करके मिलाया गया', 'Checked one by one')}</p>
+      </div>
 
-function BeatBlock({ beat, index, hi }: { beat: Beat; index: number; hi: boolean }) {
-  return (
-    <article className="sy-beat" aria-labelledby={`sy-beat-${beat.id}`}>
-      {index === 1 && <Mandala />}
+      <div className="syj-ledger__book">
+        <div className="syj-ledger__head" aria-hidden>
+          <span className="syj-ledger__who syj-ledger__who--a">
+            {t('श्री यंत्र ने जो दिखाया', 'What Shree Yantra showed')}
+          </span>
+          <span className="syj-ledger__who syj-ledger__who--mid">{t('मिलान', 'Match')}</span>
+          <span className="syj-ledger__who syj-ledger__who--b">
+            {t('दृक पंचांग में जो लिखा है', 'What Drik Panchang says')}
+          </span>
+        </div>
 
-      <h3 id={`sy-beat-${beat.id}`} className="sy-h3 syj-mf__title">
-        {hi ? beat.title.hi : beat.title.en}
-      </h3>
-      <p className="sy-body" style={{ maxWidth: '58ch' }}>
-        {hi ? beat.body.hi : beat.body.en}
-      </p>
-
-      {/* The evidence line. The figure never leads — it sits inside a sentence
-          an ordinary reader can follow, and it never animates from zero. */}
-      <p className="syj-mf__proof">
-        <Tick />
-        <span>
-          {hi ? beat.proof.pre.hi : beat.proof.pre.en}
-          {beat.proof.n != null ? (
-            <b className="sy-num">
-              {beat.proof.n.toLocaleString('en-US')}
-              {beat.proof.suffix}
-            </b>
-          ) : null}
-          {beat.proof.post ? (hi ? beat.proof.post.hi : beat.proof.post.en) : null}
-        </span>
-      </p>
-
-      <ul className="flex flex-wrap gap-2">
-        {beat.notes.map((n) => (
-          <li key={n.en}>
-            <span className="sy-chip sy-num">
-              <span className="sy-chip__dot" aria-hidden />
-              {hi ? n.hi : n.en}
+        {ROWS.map((row, i) => (
+          <div className="syj-ledger__row" key={row.id} data-sy-reveal={90 + i * 90}>
+            <span className="syj-ledger__n syj-ledger__n--a">
+              <span className="syj-sr">{t('श्री यंत्र — ', 'Shree Yantra — ')}</span>
+              {row.ours}
             </span>
-          </li>
+
+            <span className="syj-ledger__bridge">
+              <i className="syj-ledger__wire syj-ledger__wire--a" aria-hidden />
+              <TrustTick className="syj-ledger__tick" />
+              <i className="syj-ledger__wire syj-ledger__wire--b" aria-hidden />
+            </span>
+
+            <span className="syj-ledger__n syj-ledger__n--b">
+              <span className="syj-sr">{t('दृक पंचांग — ', 'Drik Panchang — ')}</span>
+              {row.theirs}
+            </span>
+
+            <p className="syj-ledger__what">{hi ? row.what.hi : row.what.en}</p>
+          </div>
         ))}
-      </ul>
+      </div>
+
+      <p className="syj-ledger__foot">
+        {t(
+          'तीनों जाँचों में एक भी फ़र्क़ नहीं निकला।',
+          'Across all three checks, not one difference turned up.',
+        )}
+      </p>
+    </div>
+  )
+}
+
+function ProofCard({ proof, index, hi }: { proof: Proof; index: number; hi: boolean }) {
+  return (
+    <article className="syj-trust__card" data-sy-reveal={String(60 + index * 70)}>
+      <header className="syj-trust__cardhead">
+        <span className="syj-trust__glyph" aria-hidden>
+          <TrustGlyph name={proof.glyph} />
+        </span>
+        <span className="syj-trust__idx sy-num" aria-hidden>
+          {String(index + 1).padStart(2, '0')}
+        </span>
+      </header>
+
+      <h3 className="sy-h3 syj-trust__cardtitle">{hi ? proof.title.hi : proof.title.en}</h3>
+      <p className="sy-body syj-trust__cardbody">{hi ? proof.body.hi : proof.body.en}</p>
+
+      <p className="syj-trust__ev">
+        <TrustTick className="syj-trust__evtick" />
+        <b className="sy-num">{hi ? proof.stat.hi : proof.stat.en}</b>
+        <span className="sy-num">{hi ? proof.note.hi : proof.note.en}</span>
+      </p>
     </article>
   )
 }
@@ -196,82 +220,82 @@ function BeatBlock({ beat, index, hi }: { beat: Beat; index: number; hi: boolean
 export function AccuracyManifesto() {
   const { hi } = useLang()
   const reduced = useReducedMotion()
-  const sectionRef = useRef<HTMLElement>(null)
-  const beatsRef = useRef<HTMLDivElement>(null)
-  const railRef = useRef<HTMLSpanElement>(null)
-
-  useEffect(() => {
-    const beats = beatsRef.current
-    const rail = railRef.current
-    if (!beats || !rail) return
-
-    if (reduced) {
-      rail.style.setProperty('--sy-rail', '100%')
-      return
-    }
-
-    const ctx = gsap.context(() => {
-      ScrollTrigger.create({
-        trigger: beats,
-        start: 'top 72%',
-        end: 'bottom 78%',
-        scrub: 0.6,
-        onUpdate: (self) => {
-          rail.style.setProperty('--sy-rail', `${Math.round(self.progress * 100)}%`)
-        },
-      })
-    }, sectionRef)
-
-    return () => ctx.revert()
-  }, [reduced])
+  const rootRef = useRevealChildren<HTMLElement>()
 
   const t = (h: string, e: string) => (hi ? h : e)
 
   return (
     <section
-      className="syj sy-section sy-site"
+      className="syj sy-section sy-site syj-trust"
       id="accuracy"
-      ref={sectionRef}
+      ref={rootRef}
       aria-labelledby="sy-accuracy-title"
     >
-      <div className="sy-container">
-        <div className="sy-manifesto__layout">
-          <div className="sy-manifesto__aside">
-            <p className="sy-eyebrow">{t('भरोसा क्यों करें', 'Why you can trust this')}</p>
-            <h2 id="sy-accuracy-title" className="sy-h2 mt-5">
-              {t('भरोसा कहने से नहीं आता — ', 'Trust does not come from claims. ')}
-              <span className="sy-gold-text">
-                {t('मिलाकर देखने से आता है', 'It comes from checking.')}
-              </span>
-            </h2>
-            <p className="sy-lead mt-5">
-              {t(
-                'ज्योतिष ऐप में सबसे बड़ी गड़बड़ी होती है गलत तारीख़ — और वही सबसे भारी पड़ती है। इसलिए हमने हर त्योहार, हर मुहूर्त और हर गणना अलग से मिलाकर देखी, और नतीजे यहीं खुले रख दिए हैं।',
-                'The worst thing an astrology app can get wrong is a date — and it is the thing that costs you most. So we checked every festival, every muhurat and every calculation independently, and we are leaving the results here in the open.',
-              )}
-            </p>
+      <span className="syj-trust__aura" aria-hidden />
 
-            <div className="mt-8 flex items-stretch gap-4">
-              <span className="sy-manifesto__rail" aria-hidden>
-                <span className="sy-manifesto__rail-fill" ref={railRef} />
-              </span>
-              <p className="sy-micro" style={{ maxWidth: '34ch' }}>
-                {t(
-                  'नीचे चार बातें हैं। हर एक आप खुद जाँच सकते हैं — दृक पंचांग खोलिए और मिलाकर देख लीजिए।',
-                  'Four things follow. You can check every one of them yourself — open Drik Panchang and compare.',
-                )}
-              </p>
-            </div>
-          </div>
-
-          <div ref={beatsRef}>
-            {BEATS.map((beat, i) => (
-              <BeatBlock key={beat.id} beat={beat} index={i} hi={hi} />
-            ))}
-          </div>
+      <div className="sy-container syj-trust__inner">
+        <div className="syj-trust__intro" data-sy-reveal="0">
+          <p className="sy-eyebrow sy-eyebrow--center">
+            {t('मिलान का हिसाब', 'The verification record')}
+          </p>
+          <h2 id="sy-accuracy-title" className="sy-h2 syj-trust__h2">
+            {t('भरोसा कहने से नहीं आता — ', 'Trust does not come from claims. ')}
+            <span className="sy-gold-text">
+              {t('मिलाकर देखने से आता है', 'It comes from checking.')}
+            </span>
+          </h2>
+          <p className="sy-lead syj-trust__lead">
+            {t(
+              'ज्योतिष ऐप की सबसे भारी गलती होती है गलत तारीख़ — व्रत उसी दिन छूटता है, मुहूर्त उसी दिन निकल जाता है। इसलिए हमने अंदाज़े पर कुछ नहीं छोड़ा: हर तारीख़ और हर चौघड़िया दृक पंचांग से एक-एक करके मिलाया, और नतीजा जैसा निकला वैसा ही यहाँ रख दिया है।',
+              'The costliest thing an astrology app can get wrong is a date — the vrat is missed on exactly that day, the muhurat passes on exactly that day. So nothing was left to assumption: every date and every choghadiya was compared with Drik Panchang, one at a time, and the result is set down here exactly as it came out.',
+            )}
+          </p>
         </div>
 
-        <hr className="sy-rule mt-12" />
+        <Ledger hi={hi} still={reduced} />
+
+        <div className="syj-trust__cards">
+          {PROOFS.map((proof, i) => (
+            <ProofCard key={proof.id} proof={proof} index={i} hi={hi} />
+          ))}
+        </div>
+
+        <div className="syj-trust__invite" data-sy-reveal="60">
+          <div>
+            <p className="syj-kicker">{t('खुद जाँचिए', 'Check it yourself')}</p>
+            <h3 className="sy-h3 syj-trust__invitetitle">
+              {t(
+                'हमारी बात मानने की ज़रूरत नहीं — मिलाकर देख लीजिए।',
+                'You do not have to take our word for it — compare.',
+              )}
+            </h3>
+            <ol className="syj-trust__steps">
+              {STEPS.map((step) => (
+                <li key={step.en}>{hi ? step.hi : step.en}</li>
+              ))}
+            </ol>
+          </div>
+
+          <div className="syj-trust__invitecta">
+            <a
+              className="sy-btn-gold"
+              href="#live-proof"
+              onClick={(e) => {
+                e.preventDefault()
+                scrollToHash('#live-proof')
+              }}
+            >
+              <TrustArrowUp />
+              {t('ऊपर आज का पंचांग देखिए', 'See today’s panchang')}
+            </a>
+            <p className="syj-trust__invitenote">
+              {t(
+                'ऊपर जो पंचांग दिख रहा है वह कोई तस्वीर नहीं है — वही गणना है जो ऐप में चलती है। मिलान में फ़र्क़ नहीं आना चाहिए। पूरी बात इतनी ही है।',
+                'The panchang up there is not a screenshot — it is the same engine the app runs on. There should be no difference between the two. That is the whole point.',
+              )}
+            </p>
+          </div>
+        </div>
       </div>
     </section>
   )

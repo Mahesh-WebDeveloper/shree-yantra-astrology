@@ -343,32 +343,459 @@
   line-height: 1.6;
 }
 
-/* --- the manifesto's quiet evidence line (number lives inside a sentence) -- */
-.syj-mf__title {
-  max-width: 32ch;
+/* ============================================================
+   0b. TRUST — the verification record
+   A seal, a concordance of what we showed against what the
+   panchang says, the four proofs, and an invitation to check.
+   ============================================================ */
+.syj-trust {
+  position: relative;
+  overflow: clip;
+}
+.syj-trust__aura {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(720px 420px at 50% 4%, var(--j-glow), transparent 66%),
+    radial-gradient(900px 460px at 50% 100%, var(--j-glow-soft), transparent 70%);
+}
+.syj-trust__inner {
+  position: relative;
+  z-index: 1;
+}
+
+/* screen-reader-only, local to this file so it never depends on a utility */
+.syj-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.syj-trust__intro {
+  max-width: 760px;
+  margin-inline: auto;
+  text-align: center;
+}
+.syj-trust__h2 {
+  margin: 1.1rem 0 0;
+}
+.syj-trust__lead {
+  margin: 1.25rem auto 0;
+  max-width: 60ch;
+}
+
+/* — the concordance plate — */
+.syj-ledger {
+  position: relative;
+  margin: clamp(2.4rem, 6vw, 3.8rem) auto 0;
+  max-width: 720px;
+  padding: clamp(1.5rem, 4vw, 2.3rem) clamp(1rem, 3.5vw, 2.6rem) clamp(1.2rem, 3vw, 1.8rem);
+  border: 1px solid var(--j-line);
+  border-radius: calc(var(--j-radius) + 6px);
+  background:
+    radial-gradient(120% 60% at 50% 0%, var(--j-glow-soft), transparent 62%),
+    linear-gradient(180deg, var(--j-card-2), var(--j-card));
+  box-shadow: var(--j-shadow);
+}
+/* the inner rule — a printed certificate keeps a second frame */
+.syj-ledger::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid var(--j-line);
+  border-radius: var(--j-radius);
+  opacity: 0.5;
+  pointer-events: none;
+}
+.syj-ledger > * {
+  position: relative;
+  z-index: 1;
+}
+
+.syj-ledger__crest {
+  display: grid;
+  justify-items: center;
+  gap: 0.9rem;
+}
+.syj-seal {
+  width: clamp(92px, 17vw, 124px);
+  height: auto;
+  color: var(--j-gold-2);
+}
+[data-sy-theme='light'] .syj-seal {
+  color: var(--j-gold);
+}
+.syj-ledger__label {
+  margin: 0;
+  color: var(--j-gold);
+  font-size: 0.63rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.syj-ledger__book {
+  --bridge: clamp(60px, 16vw, 128px);
+  margin-top: clamp(1.4rem, 3.5vw, 2.1rem);
+}
+.syj-ledger__head,
+.syj-ledger__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--bridge) minmax(0, 1fr);
+  align-items: center;
+  column-gap: clamp(0.4rem, 1.6vw, 1rem);
+}
+.syj-ledger__head {
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--j-line);
+}
+.syj-ledger__who {
+  font-size: 0.58rem;
+  font-weight: 850;
+  letter-spacing: 0.13em;
+  line-height: 1.35;
+  text-transform: uppercase;
+  color: var(--j-muted);
+}
+.syj-ledger__who--a {
+  justify-self: end;
+  text-align: right;
+  color: var(--j-gold);
+}
+.syj-ledger__who--b {
+  justify-self: start;
+}
+.syj-ledger__who--mid {
+  justify-self: center;
+  text-align: center;
+  opacity: 0.7;
+}
+
+.syj-ledger__row {
+  padding-block: clamp(1.05rem, 3vw, 1.6rem);
+  border-top: 1px solid var(--j-line);
+}
+.syj-ledger__row:first-of-type {
+  border-top: 0;
+}
+.syj-ledger__n {
+  justify-self: end;
+  font-family: 'Playfair Display', 'Noto Sans Devanagari', Georgia, serif;
+  font-size: clamp(2.2rem, 6.8vw, 3.55rem);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--j-ink);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.syj-ledger__n--b {
+  justify-self: start;
+}
+.syj-ledger__bridge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+.syj-ledger__wire {
+  display: block;
+  flex: 1 1 auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--j-gold-2));
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+.syj-ledger__wire--b {
+  background: linear-gradient(270deg, transparent, var(--j-gold-2));
+  transform-origin: right center;
+}
+.syj-ledger__tick {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  color: var(--j-gold-2);
+  opacity: 0;
+  transform: scale(0.5);
+}
+[data-sy-theme='light'] .syj-ledger__tick {
+  color: var(--j-gold);
+}
+.syj-ledger__what {
+  grid-column: 1 / -1;
+  margin: 0.75rem 0 0;
+  text-align: center;
+  color: var(--j-muted);
+  font-size: 0.77rem;
+  line-height: 1.6;
+}
+.syj-ledger__foot {
+  margin: 0;
+  padding-top: clamp(0.95rem, 2.4vw, 1.25rem);
+  border-top: 1px solid var(--j-line);
+  text-align: center;
+  color: var(--j-soft);
+  font-size: 0.86rem;
+  font-weight: 650;
+}
+
+@keyframes syj-wire-in {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes syj-tick-in {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.syj-ledger__row.is-in .syj-ledger__wire {
+  animation: syj-wire-in 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.14s forwards;
+}
+.syj-ledger__row.is-in .syj-ledger__tick {
+  animation: syj-tick-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.66s forwards;
+}
+
+/* — the four proofs — */
+.syj-trust__cards {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(0.9rem, 2vw, 1.15rem);
+  margin-top: clamp(2.4rem, 6vw, 3.8rem);
+}
+@media (min-width: 700px) {
+  .syj-trust__cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.syj-trust__card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding: clamp(1.25rem, 2.6vw, 1.75rem);
+  border: 1px solid var(--j-line);
+  border-radius: var(--j-radius);
+  background: var(--j-card);
+  transition:
+    border-color 0.4s ease,
+    box-shadow 0.4s ease;
+}
+[data-sy-theme='light'] .syj-trust__card {
+  box-shadow: 0 18px 44px -36px rgba(60, 40, 6, 0.5);
+}
+.syj-trust__card:hover {
+  border-color: var(--sy-line-strong);
+  box-shadow: 0 24px 60px -40px var(--j-glow);
+}
+[data-sy-theme='light'] .syj-trust__card:hover {
+  box-shadow: 0 24px 52px -34px rgba(60, 40, 6, 0.42);
+}
+.syj-trust__cardhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.syj-trust__glyph {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--j-line);
+  border-radius: 13px;
+  background: var(--j-card-2);
+  color: var(--j-gold);
+}
+.syj-trust__idx {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--j-muted);
+  opacity: 0.75;
+}
+.syj-trust__cardtitle {
+  margin: 0.1rem 0 0;
+  max-width: 26ch;
+  font-size: clamp(1.05rem, 1.7vw, 1.28rem);
   text-wrap: balance;
 }
-.syj-mf__proof {
-  display: grid;
-  grid-template-columns: 16px minmax(0, 1fr);
-  gap: 0.6rem;
-  align-items: start;
+.syj-trust__cardbody {
   margin: 0;
-  max-width: 54ch;
+  color: var(--j-muted);
+  font-size: 0.875rem;
+  line-height: 1.72;
+}
+.syj-trust__ev {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 0.15rem 0.65rem;
+  align-items: start;
+  margin: auto 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--j-line);
+}
+.syj-trust__evtick {
+  grid-row: 1 / 3;
+  width: 16px;
+  height: 16px;
+  margin-top: 0.16rem;
+  color: var(--j-gold-2);
+}
+[data-sy-theme='light'] .syj-trust__evtick {
+  color: var(--j-gold);
+}
+.syj-trust__ev b {
+  color: var(--j-gold);
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: 0.005em;
+  line-height: 1.4;
+}
+.syj-trust__ev span {
+  color: var(--j-muted);
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+
+/* — the invitation to check — */
+.syj-trust__invite {
+  display: grid;
+  gap: clamp(1.3rem, 3vw, 2.6rem);
+  margin-top: clamp(1.6rem, 4vw, 2.6rem);
+  padding: clamp(1.4rem, 3.4vw, 2.4rem);
+  border: 1px solid var(--sy-line-strong);
+  border-radius: calc(var(--j-radius) + 4px);
+  background:
+    linear-gradient(135deg, var(--j-glow), transparent 58%),
+    var(--j-card-2);
+}
+[data-sy-theme='light'] .syj-trust__invite {
+  background:
+    linear-gradient(135deg, rgba(233, 184, 80, 0.26), rgba(233, 184, 80, 0.05) 58%),
+    var(--j-card-2);
+  box-shadow: 0 22px 50px -40px rgba(60, 40, 6, 0.5);
+}
+@media (min-width: 900px) {
+  .syj-trust__invite {
+    grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+    align-items: center;
+  }
+}
+.syj-trust__invitetitle {
+  margin: 1rem 0 0;
+  max-width: 24ch;
+  font-size: clamp(1.15rem, 2vw, 1.5rem);
+  text-wrap: balance;
+}
+.syj-trust__steps {
+  display: grid;
+  gap: 0.8rem;
+  margin: 1.35rem 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: syj-step;
+}
+.syj-trust__steps li {
+  position: relative;
+  padding-inline-start: 2.35rem;
+  counter-increment: syj-step;
   color: var(--j-soft);
   font-size: 0.85rem;
-  line-height: 1.7;
+  line-height: 1.66;
 }
-.syj-mf__proof b {
+.syj-trust__steps li::before {
+  content: counter(syj-step);
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0.05rem;
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 1px solid var(--j-line);
+  border-radius: 999px;
+  background: var(--j-card);
   color: var(--j-gold);
+  font-size: 0.68rem;
   font-weight: 800;
   font-variant-numeric: lining-nums tabular-nums;
 }
-.syj-mf__tick {
-  margin-top: 0.4rem;
-  width: 14px;
-  height: 14px;
-  color: var(--j-gold-2);
+.syj-trust__invitecta {
+  display: grid;
+  justify-items: start;
+  gap: 1rem;
+}
+@media (min-width: 900px) {
+  .syj-trust__invitecta {
+    justify-items: end;
+    text-align: end;
+  }
+}
+.syj-trust__invitenote {
+  margin: 0;
+  max-width: 40ch;
+  color: var(--j-muted);
+  font-size: 0.78rem;
+  line-height: 1.7;
+}
+
+/* Devanagari does not want the wide Latin small-caps tracking. */
+:lang(hi) .syj-ledger__who,
+:lang(hi) .syj-ledger__label {
+  font-family: 'Noto Sans Devanagari', Inter, system-ui, sans-serif;
+  letter-spacing: 0.05em;
+}
+
+@media (max-width: 560px) {
+  .syj-ledger__book {
+    --bridge: clamp(66px, 19vw, 128px);
+  }
+  .syj-ledger__who {
+    font-size: 0.56rem;
+    letter-spacing: 0.07em;
+    text-wrap: balance;
+  }
+  .syj-ledger__tick {
+    width: 18px;
+    height: 18px;
+  }
+  .syj-ledger__what {
+    font-size: 0.74rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .syj-ledger__wire {
+    transform: scaleX(1);
+  }
+  .syj-ledger__tick {
+    opacity: 1;
+    transform: none;
+  }
+  .syj-ledger__row.is-in .syj-ledger__wire,
+  .syj-ledger__row.is-in .syj-ledger__tick {
+    animation: none;
+  }
+  .syj-trust__card {
+    transition: none;
+  }
 }
 
 /* ============================================================
