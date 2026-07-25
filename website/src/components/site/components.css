@@ -628,3 +628,59 @@
     padding-inline: 0.5rem;
   }
 }
+
+/* ── Small-screen overflow guards ────────────────────────────────────────────
+   At 390px the nav's brand lockup plus the language/theme controls measured
+   wider than the viewport (flex items never shrink below their content), which
+   let the whole page scroll sideways. The brand gives up its tagline and some
+   letter-spacing first; the controls tighten; nothing is removed on desktop. */
+@media (max-width: 640px) {
+  .sy-nav__bar {
+    gap: 0.5rem;
+  }
+  .sy-nav__brand {
+    min-width: 0;
+    flex-shrink: 1;
+  }
+  .sy-nav__word {
+    font-size: 0.9rem;
+    letter-spacing: 0.12em;
+    white-space: nowrap;
+  }
+  .sy-nav__tag {
+    display: none;
+  }
+  .sy-nav__icon {
+    min-width: 32px;
+    padding-inline: 0.4rem;
+  }
+}
+
+/* The manifesto's headline figure is set in viewport units; on narrow screens
+   its widest string ("767/767") pushed past the container. Keep it fluid but
+   never wider than the column it lives in. */
+.sy-manifesto__aside,
+.sy-manifesto__figure {
+  max-width: 100%;
+  min-width: 0;
+}
+.sy-manifesto__figure {
+  overflow-wrap: anywhere;
+}
+
+/* Long single-line proof chips (e.g. the out-of-sample years line) were the one
+   element still widening the document on a 390px screen: let every chip wrap
+   and never exceed its column. */
+.sy-beat li,
+.sy-beat .sy-chip,
+.sy-chip {
+  max-width: 100%;
+  white-space: normal;
+}
+
+/* Defensive stop: nothing may scroll the page sideways. `clip` (not `hidden`)
+   keeps position: sticky and the pinned ScrollTrigger sections working. */
+html,
+body {
+  overflow-x: clip;
+}

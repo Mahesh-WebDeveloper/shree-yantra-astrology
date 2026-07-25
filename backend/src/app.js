@@ -23,9 +23,16 @@ const defaultCorsOrigins = [
   env.admin.origin,
   'http://127.0.0.1:5173',
   'http://localhost:5173',
+  // marketing website dev server (Vite picks 5174/5175 when 5173 is taken)
+  'http://localhost:5174',
+  'http://127.0.0.1:5174',
+  'http://localhost:5175',
   'http://localhost:19006',
   'http://localhost:8081',
   'http://localhost:3000',
+  // production website — its LiveProof section reads the panchang straight from here
+  'https://shreeyantra.app',
+  'https://www.shreeyantra.app',
 ];
 const allowedOrigins = env.corsOrigins.length ? env.corsOrigins : defaultCorsOrigins;
 app.use(cors({
