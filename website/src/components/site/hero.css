@@ -1,6 +1,6 @@
 /* ─────────────────────────────────────────────────────────────
    Shree Yantra — HERO + nav polish.
-   Owned by Hero.tsx / SiteNav.tsx / cosmic/YantraScene.tsx.
+   Owned by Hero.tsx (the 3D canvas it replaced is gone).
    Imported from Hero.tsx, so it lands *outside* the `components`
    cascade layer and may safely refine layered defaults.
 
@@ -704,4 +704,417 @@ body {
   .syh__dust {
     display: none;
   }
+}
+
+/* ── The hero phone ──────────────────────────────────────────────────────────
+   These rules were missing entirely, so the demo screens rendered unstyled at
+   full page width and blew the hero to 2045px on a 900px viewport. Geometry
+   mirrors the proven frame in appinaction.css, scaled for the hero and made
+   height-aware so short laptops shrink the device instead of cropping it. */
+.syh__phonewrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.syh__bloom {
+  position: absolute;
+  inset: -12% -18%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(233, 184, 80, 0.22), rgba(233, 184, 80, 0) 72%);
+  filter: blur(18px);
+  pointer-events: none;
+}
+.syh-phone {
+  /* device width follows the viewport's HEIGHT too — a 720px laptop gets a
+     smaller phone rather than an overflowing one */
+  --syh-phone-w: clamp(212px, min(19vw, 30vh), 280px);
+  position: relative;
+  z-index: 1;
+  width: var(--syh-phone-w);
+  max-width: 100%;
+}
+.syh-phone.is-float {
+  animation: syh-float 7s ease-in-out infinite;
+}
+@keyframes syh-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.syh-phone__fit {
+  position: relative;
+}
+.syh-phone__frame {
+  position: relative;
+  display: block;
+  padding: calc(var(--syh-phone-w) * 0.03);
+  border-radius: calc(var(--syh-phone-w) * 0.14);
+  background: linear-gradient(150deg, rgba(252, 232, 168, 0.9), rgba(184, 127, 26, 0.55) 44%, rgba(38, 28, 8, 0.95));
+  box-shadow:
+    0 2px 0 rgba(255, 255, 255, 0.24) inset,
+    0 46px 96px -40px rgba(0, 0, 0, 0.9),
+    0 0 0 1px rgba(233, 184, 80, 0.24);
+}
+[data-sy-theme='light'] .syh-phone__frame {
+  box-shadow:
+    0 2px 0 rgba(255, 255, 255, 0.5) inset,
+    0 40px 80px -44px rgba(92, 58, 16, 0.55),
+    0 0 0 1px rgba(146, 64, 14, 0.22);
+}
+.syh-phone__notch {
+  position: absolute;
+  top: calc(var(--syh-phone-w) * 0.055);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 28%;
+  height: 5px;
+  border-radius: 99px;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 3;
+}
+.syh-phone__screen {
+  position: relative;
+  display: block;
+  /* the app screens are authored at 300x630 — keep that ratio at any width */
+  width: 100%;
+  aspect-ratio: 300 / 630;
+  border-radius: calc(var(--syh-phone-w) * 0.115);
+  overflow: hidden;
+  background: #08070b;
+  isolation: isolate;
+}
+.syh-phone__slide {
+  position: absolute;
+  inset: 0;
+  /* the demos are laid out for a 300px-wide screen; scale the whole board so
+     a narrower hero phone shows the same composition, never a reflowed one */
+  width: 300px;
+  height: 630px;
+  transform-origin: top left;
+  scale: calc(var(--syh-phone-w) / 300);
+}
+.syh-phone__glass {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background: linear-gradient(115deg, rgba(255, 255, 255, 0) 42%, rgba(255, 255, 255, 0.07) 50%, rgba(255, 255, 255, 0) 58%);
+  background-size: 260% 100%;
+  animation: syh-sweep 7.5s ease-in-out infinite;
+}
+@keyframes syh-sweep {
+  0%, 62% { background-position: 130% 0; }
+  100% { background-position: -30% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .syh-phone.is-float,
+  .syh-phone__glass {
+    animation: none;
+  }
+}
+
+/* ── The mandala backdrop ────────────────────────────────────────────────────
+   These rules were never written (the redesign stopped mid-file), so the
+   layer sat in the grid flow at its intrinsic 1440px and stretched the hero
+   to 2045px on a 900px viewport — the exact "height adjust nahi ho raha"
+   the redesign set out to fix. It is a backdrop: take it out of flow. */
+.syh__mandala {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  overflow: hidden;
+}
+.syh__mandala-pos {
+  /* sized against the smaller of width/height so the figure is always framed
+     whole — never cropped on a short laptop, never tiny on a wide one */
+  width: min(78vh, 62vw, 760px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  /* sits behind the copy on wide screens, drifts right so the text column
+     stays over the calmer part of the figure */
+  transform: translateX(14%);
+  opacity: 0.72;
+}
+[data-sy-theme='light'] .syh__mandala-pos {
+  opacity: 0.55;
+}
+@media (max-width: 1100px) {
+  .syh__mandala-pos {
+    transform: none;
+    opacity: 0.5;
+  }
+}
+@media (max-width: 700px) {
+  .syh__mandala-pos {
+    width: min(92vw, 62vh);
+    opacity: 0.4;
+  }
+}
+
+/* ── Headline lines, caption, wash ───────────────────────────────────────────
+   The rest of the redesign's stylesheet was never written — these hooks were
+   in the markup with nothing behind them. */
+.syh__wash {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 80% at 18% 12%, rgba(233, 184, 80, 0.10), transparent 60%),
+    radial-gradient(90% 70% at 86% 82%, rgba(140, 96, 232, 0.06), transparent 62%);
+}
+[data-sy-theme='light'] .syh__wash {
+  background:
+    radial-gradient(120% 80% at 18% 12%, rgba(184, 127, 26, 0.10), transparent 60%),
+    radial-gradient(90% 70% at 86% 82%, rgba(146, 64, 14, 0.05), transparent 62%);
+}
+.syh__line {
+  display: block;
+}
+.syh__caption {
+  margin-top: 0.9rem;
+  text-align: center;
+  font-size: clamp(0.78rem, 1vw, 0.9rem);
+  line-height: 1.45;
+  color: var(--sy-ink-muted, #8f8878);
+  max-width: 32ch;
+  margin-inline: auto;
+  animation: syh-capin 0.5s ease both;
+}
+@keyframes syh-capin {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ── The screen tabs — a real tablist, the hero's one interactive control ──── */
+.syh-tabs {
+  display: flex;
+  gap: 0.35rem;
+}
+.syh-tabs--rail {
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 190px;
+}
+.syh-tabs--row {
+  display: none;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+  gap: 0.4rem;
+}
+.syh-tabs--row::-webkit-scrollbar { display: none; }
+
+.syh-tab {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.7rem 0.62rem;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--sy-ink-muted, #8f8878);
+  font: inherit;
+  font-size: 0.84rem;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+}
+.syh-tab:hover { color: var(--sy-ink-soft, #cfc6b4); }
+.syh-tab:focus-visible {
+  outline: 2px solid var(--sy-gold-2, #e9b850);
+  outline-offset: 2px;
+}
+.syh-tab.is-on {
+  color: var(--sy-ink, #f8f6f0);
+  border-color: var(--sy-line, rgba(233, 184, 80, 0.16));
+  background: rgba(233, 184, 80, 0.06);
+}
+[data-sy-theme='light'] .syh-tab.is-on {
+  background: rgba(184, 127, 26, 0.08);
+}
+.syh-tab__n {
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  color: var(--sy-gold-3, #b87f1a);
+  opacity: 0.75;
+}
+.syh-tab.is-on .syh-tab__n {
+  color: var(--sy-gold-2, #e9b850);
+  opacity: 1;
+}
+.syh-tab__label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* the dwell-time progress line under the active tab */
+.syh-tab__track {
+  grid-column: 1 / -1;
+  height: 2px;
+  margin-top: 0.45rem;
+  border-radius: 99px;
+  background: var(--sy-line, rgba(233, 184, 80, 0.16));
+  overflow: hidden;
+}
+.syh-tab__fill {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--sy-gold-1, #fce8a8), var(--sy-gold-3, #b87f1a));
+  animation-name: syh-tabfill;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+}
+@keyframes syh-tabfill {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@media (max-width: 1100px) {
+  .syh-tabs--rail { display: none; }
+  .syh-tabs--row { display: flex; }
+  .syh-tab { padding-bottom: 0.5rem; }
+  .syh-tab__track { margin-top: 0.35rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .syh-tab__fill,
+  .syh__caption { animation: none; }
+}
+
+/* ── The stage (right column): phone + caption + tabs ────────────────────────
+   `.syh__stage` still carried the PREVIOUS design's rules — `position:absolute;
+   inset:0; pointer-events:none` — from when it was the mandala backdrop. In the
+   new markup it is the right-hand column, so the phone floated over the
+   headline and the tabs could not even be clicked. It is a normal column now. */
+.syh__stage {
+  position: relative;
+  inset: auto;
+  z-index: 2;
+  pointer-events: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(14px, 2vw, 28px);
+  min-width: 0;
+}
+.syh__stage > .syh__phonewrap {
+  grid-column: 1;
+  grid-row: 1;
+}
+.syh__stage > .syh__caption {
+  grid-column: 1;
+  grid-row: 2;
+}
+.syh__stage > .syh-tabs--rail {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+.syh__stage > .syh-tabs--row {
+  grid-column: 1 / -1;
+  grid-row: 3;
+}
+
+/* Below the two-column breakpoint the stage stacks: phone, caption, chip row. */
+@media (max-width: 1100px) {
+  .syh__stage {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+  .syh__stage > .syh__phonewrap,
+  .syh__stage > .syh__caption,
+  .syh__stage > .syh-tabs--row {
+    grid-column: 1;
+  }
+  .syh__stage > .syh-tabs--row {
+    grid-row: 3;
+    max-width: 100%;
+  }
+}
+
+/* ── Give the device room ────────────────────────────────────────────────────
+   The right column was sized for the old backdrop-only stage, so once the
+   phone, its caption and the tab rail shared it the device was squeezed to
+   100px. The column now has a floor, the phone never shrinks, and the caption
+   sits under the phone instead of competing with it for the same row. */
+@media (min-width: 901px) {
+  .syh__grid {
+    grid-template-columns: minmax(0, 1fr) minmax(440px, 0.92fr);
+  }
+}
+.syh__phonewrap {
+  flex-direction: column;
+  min-width: 0;
+}
+.syh-phone {
+  flex: 0 0 auto;
+}
+.syh-tabs--rail {
+  min-width: 168px;
+}
+
+/* ── Final calibration ───────────────────────────────────────────────────────
+   1 · The demo board is authored at 300px; it must be scaled against the
+       SCREEN width (phone minus its frame padding), not the phone width, or
+       the right edge of every screen is clipped. */
+.syh-phone {
+  --syh-screen-w: calc(var(--syh-phone-w) * 0.94);
+}
+.syh-phone__slide {
+  scale: calc(var(--syh-screen-w) / 300);
+}
+
+/* 2 · Below ~760px the copy alone fills the viewport; the device, its caption
+      and the tab row cannot also fit without the hero growing past one screen
+      (it measured 1186px on a 390px phone). The app screens get their own
+      full section immediately below, so here the mandala carries the visual
+      and the hero stays exactly one screen tall. */
+@media (max-width: 760px) {
+  .syh__stage {
+    display: none;
+  }
+  .syh__mandala-pos {
+    opacity: 0.55;
+  }
+}
+
+/* 3 · The figure was drawn too faintly to read as the centrepiece. */
+.syh__mandala-pos {
+  opacity: 0.92;
+}
+[data-sy-theme='light'] .syh__mandala-pos {
+  opacity: 0.7;
+}
+
+/* The scaling wrapper: a plain element framer-motion never writes to, so the
+   300x630 demo board reliably fits the hero's smaller screen. */
+.syh-phone__zoom {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.syh-phone__zoom > * {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 300px;
+  height: 630px;
+  transform-origin: top left;
+  scale: calc(var(--syh-screen-w, 254px) / 300);
+}
+.syh-phone__slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  scale: 1;
 }

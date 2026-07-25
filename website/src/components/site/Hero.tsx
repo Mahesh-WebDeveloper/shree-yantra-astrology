@@ -1,432 +1,448 @@
-import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
-import { motion, useMotionValue, useScroll, useSpring, useTransform, type Variants } from 'framer-motion'
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ComponentType,
+  type KeyboardEvent,
+} from 'react'
+import { AnimatePresence, motion, useScroll, useTransform, type Variants } from 'framer-motion'
 import { useLang } from '@/i18n/LangProvider'
-import { useTheme } from '@/theme/ThemeProvider'
-import { SitePhone } from './SitePhone'
 import { scrollToHash, useReducedMotion } from './hooks/useSiteMotion'
+import { HeroMandala } from './parts/HeroMandala'
+import { PhoneTabBar, type DemoProps } from './parts/demos/chrome'
+import { PanchangDemo } from './parts/demos/PanchangDemo'
+import { ChoghadiyaDemo } from './parts/demos/ChoghadiyaDemo'
+import { KundliDemo } from './parts/demos/KundliDemo'
+import { AskJyotishiDemo } from './parts/demos/AskJyotishiDemo'
+import { RashifalDemo } from './parts/demos/RashifalDemo'
+import './appinaction.css'
 import './hero.css'
 
-const YantraScene = lazy(() => import('./cosmic/YantraScene'))
+/**
+ * The hero.
+ *
+ *   ┌──────────────────────────────────────────────────────────┐
+ *   │            (the Shree Yantra draws itself, behind)       │
+ *   │  eyebrow                                    ┌─────────┐  │
+ *   │  headline, two lines                        │  phone  │  │ tabs
+ *   │  one plain sentence                         │  screen │  │  ·
+ *   │  [ get the app ] [ what's inside ]          │  cycles │  │  ·
+ *   │  chip · chip · chip                         └─────────┘  │  ·
+ *   │                                              caption      │
+ *   └──────────────────────────────────────────────────────────┘
+ *
+ * The right-hand phone is not a screenshot: it runs the same five animated
+ * screen recreations the "app in action" section uses, one after another,
+ * and the list beside it is a real tablist you can click, tab to and steer
+ * with the arrow keys. Hovering the phone or the list pauses the carousel.
+ */
 
-/* ── Copy ──────────────────────────────────────────────────
-   Plain language: what a first-time visitor actually gets.
-   Bilingual everywhere, English numerals only.              */
+type Bi = { hi: string; en: string }
 
-const TRUST = [
-  { hi: 'पंचांग से मिलाकर जाँची हुई तारीखें', en: 'Dates checked against the panchang' },
+type Screen = {
+  id: string
+  label: Bi
+  caption: Bi
+  /** Which of the app's own bottom tabs is lit while this screen runs. */
+  bottom: string
+  ms: number
+  Comp: ComponentType<DemoProps>
+}
+
+const SCREENS: Screen[] = [
+  {
+    id: 'panchang',
+    label: { hi: 'आज का पंचांग', en: "Today's Panchang" },
+    caption: {
+      hi: 'आज की तिथि, नक्षत्र और शुभ-अशुभ समय',
+      en: "Today's tithi, nakshatra and the day's timings",
+    },
+    bottom: 'home',
+    ms: 6200,
+    Comp: PanchangDemo,
+  },
+  {
+    id: 'choghadiya',
+    label: { hi: 'चौघड़िया', en: 'Choghadiya' },
+    caption: {
+      hi: 'अभी कौन-सा चौघड़िया चल रहा है, और अगला शुभ समय कब',
+      en: 'Which window is running now, and when the next good one opens',
+    },
+    bottom: 'choghadiya',
+    ms: 6200,
+    Comp: ChoghadiyaDemo,
+  },
+  {
+    id: 'kundli',
+    label: { hi: 'जन्म कुंडली', en: 'Janam Kundli' },
+    caption: {
+      hi: 'जन्म के समय का आकाश — हर ग्रह अपने भाव में',
+      en: 'The sky at the hour you were born — every planet in its house',
+    },
+    bottom: 'kundli',
+    ms: 7000,
+    Comp: KundliDemo,
+  },
+  {
+    id: 'ask',
+    label: { hi: 'ज्योतिषी से प्रश्न', en: 'Ask the Jyotishi' },
+    caption: {
+      hi: 'प्रश्न पूछिए — उत्तर आपकी अपनी कुंडली से बनता है',
+      en: 'Ask a question — the answer is built from your own chart',
+    },
+    bottom: 'home',
+    ms: 7000,
+    Comp: AskJyotishiDemo,
+  },
+  {
+    id: 'rashifal',
+    label: { hi: 'राशिफल', en: 'Rashifal' },
+    caption: {
+      hi: 'दिन का हाल एक नज़र में, हर क्षेत्र के साथ',
+      en: 'The day at a glance, area by area',
+    },
+    bottom: 'home',
+    ms: 6200,
+    Comp: RashifalDemo,
+  },
+]
+
+const TRUST: Bi[] = [
+  { hi: 'तारीखें पंचांग से मिलाकर जाँची हुई', en: 'Dates checked against the panchang' },
   { hi: '18 पुराण · 4 वेद · गीता · रामायण', en: '18 Puranas · 4 Vedas · Gita · Ramayana' },
-  { hi: 'हिंदी और English दोनों में', en: 'In Hindi and English' },
+  { hi: 'हिंदी और English', en: 'Hindi and English' },
 ]
 
 /* ── Motion ───────────────────────────────────────────────── */
 
+const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1]
+
 const GROUP: Variants = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.085, delayChildren: 0.1 } },
+  show: { transition: { staggerChildren: 0.09, delayChildren: 0.14 } },
 }
 
 const RISE: Variants = {
-  hidden: { opacity: 0, y: 26, filter: 'blur(6px)' },
+  hidden: { opacity: 0, y: 22, filter: 'blur(7px)' },
   show: {
     opacity: 1,
     y: 0,
     filter: 'blur(0px)',
-    transition: { duration: 0.85, ease: [0.16, 1, 0.3, 1] },
+    transition: { duration: 0.9, ease: EASE },
   },
 }
 
-/* ── Static yantra (reduced motion / before the canvas wakes) ──
-   Same figure as the 3D scene: bhupura + gates, two lotus rings,
-   the nine triangles and a glowing bindu.                     */
-
-const U = 62
-const CENTER = 200
-const sx = (x: number) => (CENTER + x * U).toFixed(1)
-const sy = (y: number) => (CENTER - y * U).toFixed(1)
-
-const SVG_UP = [
-  { apex: 1.3, base: -0.3, half: 1.14 },
-  { apex: 1.02, base: -0.62, half: 0.88 },
-  { apex: 0.74, base: -0.9, half: 0.64 },
-  { apex: 0.46, base: -1.14, half: 0.42 },
-]
-const SVG_DOWN = [
-  { apex: -1.36, base: 0.34, half: 1.18 },
-  { apex: -1.08, base: 0.66, half: 0.92 },
-  { apex: -0.8, base: 0.94, half: 0.68 },
-  { apex: -0.52, base: 1.18, half: 0.46 },
-  { apex: -0.26, base: 1.36, half: 0.26 },
-]
-
-function lotusPath(r0: number, amp: number, lobes: number, phase = 0) {
-  const seg = lobes * 16
-  let d = ''
-  for (let i = 0; i <= seg; i += 1) {
-    const a = (i / seg) * Math.PI * 2 + phase
-    const r = r0 + amp * Math.pow(Math.abs(Math.sin((lobes * (a - phase)) / 2)), 0.62)
-    d += `${i ? 'L' : 'M'}${sx(Math.cos(a) * r)} ${sy(Math.sin(a) * r)} `
-  }
-  return `${d}Z`
-}
-
-function triPath(t: { apex: number; base: number; half: number }) {
-  return `M${sx(0)} ${sy(t.apex)} L${sx(-t.half)} ${sy(t.base)} L${sx(t.half)} ${sy(t.base)} Z`
-}
-
-function StaticYantra({ dark }: { dark: boolean }) {
-  const paths = useMemo(
-    () => ({ lotus8: lotusPath(1.5, 0.34, 8), lotus16: lotusPath(1.94, 0.28, 16, Math.PI / 16) }),
-    [],
-  )
-  const gold = dark ? '#f0c469' : '#a9740f'
-  const soft = dark ? '#fdeec2' : '#8a5a10'
-  const r = 2.86 * U
-  const g = 0.26 * U
-
-  return (
-    <svg className="syh__stage-svg" viewBox="0 0 400 400" fill="none" aria-hidden>
-      <defs>
-        <radialGradient id="syh-core">
-          <stop offset="0%" stopColor={soft} stopOpacity={dark ? 0.85 : 0.4} />
-          <stop offset="35%" stopColor={gold} stopOpacity={dark ? 0.28 : 0.16} />
-          <stop offset="100%" stopColor={gold} stopOpacity="0" />
-        </radialGradient>
-      </defs>
-
-      <circle cx={CENTER} cy={CENTER} r={190} fill="url(#syh-core)" />
-
-      <g stroke={gold} strokeWidth="1.1" opacity="0.5">
-        <rect x={CENTER - r} y={CENTER - r} width={r * 2} height={r * 2} />
-        <rect x={CENTER - r + 9} y={CENTER - r + 9} width={r * 2 - 18} height={r * 2 - 18} opacity="0.6" />
-        <path d={`M${CENTER - g} ${CENTER - r} L${CENTER} ${CENTER - r - g} L${CENTER + g} ${CENTER - r}`} />
-        <path d={`M${CENTER - g} ${CENTER + r} L${CENTER} ${CENTER + r + g} L${CENTER + g} ${CENTER + r}`} />
-        <path d={`M${CENTER - r} ${CENTER - g} L${CENTER - r - g} ${CENTER} L${CENTER - r} ${CENTER + g}`} />
-        <path d={`M${CENTER + r} ${CENTER - g} L${CENTER + r + g} ${CENTER} L${CENTER + r} ${CENTER + g}`} />
-      </g>
-
-      <path d={paths.lotus16} stroke={gold} strokeWidth="0.9" opacity="0.4" />
-      <path d={paths.lotus8} stroke={gold} strokeWidth="1" opacity="0.5" />
-      <circle cx={CENTER} cy={CENTER} r={2.26 * U} stroke={gold} strokeWidth="1" opacity="0.44" />
-      <circle cx={CENTER} cy={CENTER} r={1.9 * U} stroke={gold} strokeWidth="0.9" opacity="0.4" />
-      <circle cx={CENTER} cy={CENTER} r={1.44 * U} stroke={soft} strokeWidth="1.1" opacity="0.6" />
-
-      <g strokeWidth="1.15">
-        {SVG_UP.map((t, i) => (
-          <path key={`u${i}`} d={triPath(t)} stroke={i % 2 ? gold : soft} opacity={0.9 - i * 0.08} />
-        ))}
-        {SVG_DOWN.map((t, i) => (
-          <path key={`d${i}`} d={triPath(t)} stroke={i % 2 ? soft : gold} opacity={0.88 - i * 0.08} />
-        ))}
-      </g>
-
-      <circle cx={CENTER} cy={CENTER} r="3" fill={soft} />
-    </svg>
-  )
-}
-
-/* ── Hooks ────────────────────────────────────────────────── */
-
-type IdleWindow = Window & {
-  requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number
-  cancelIdleCallback?: (id: number) => void
-}
-
-/** Mounts the 3D canvas only after first paint, and only when motion is welcome. */
-function useCanvasReady(enabled: boolean) {
-  const [ready, setReady] = useState(false)
-
-  useEffect(() => {
-    if (!enabled) return
-    const w = window as IdleWindow
-    let idleId: number | undefined
-    let timerId: number | undefined
-    if (w.requestIdleCallback) idleId = w.requestIdleCallback(() => setReady(true), { timeout: 900 })
-    else timerId = window.setTimeout(() => setReady(true), 260)
-    return () => {
-      if (idleId != null) w.cancelIdleCallback?.(idleId)
-      if (timerId != null) window.clearTimeout(timerId)
-    }
-  }, [enabled])
-
-  return ready && enabled
-}
-
-/** Live media-query match — used to keep the phone off small screens entirely. */
-function useMediaQuery(query: string) {
-  const [match, setMatch] = useState(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return false
-    return window.matchMedia(query).matches
-  })
-
-  useEffect(() => {
-    if (!window.matchMedia) return
-    const mq = window.matchMedia(query)
-    const onChange = () => setMatch(mq.matches)
-    onChange()
-    mq.addEventListener('change', onChange)
-    return () => mq.removeEventListener('change', onChange)
-  }, [query])
-
-  return match
-}
-
+/** Deterministic drifting motes — no Math.random, so renders stay stable. */
 const DUST = [
-  { left: '12%', top: '72%', duration: 17, delay: 0 },
-  { left: '24%', top: '86%', duration: 21, delay: 3.5 },
-  { left: '38%', top: '64%', duration: 15, delay: 7 },
-  { left: '52%', top: '90%', duration: 24, delay: 1.5 },
-  { left: '67%', top: '70%', duration: 18, delay: 9 },
-  { left: '78%', top: '84%', duration: 22, delay: 5 },
-  { left: '88%', top: '60%', duration: 19, delay: 12 },
+  { left: '9%', top: '74%', dur: 19, delay: 0 },
+  { left: '21%', top: '88%', dur: 23, delay: 4 },
+  { left: '34%', top: '66%', dur: 16, delay: 8 },
+  { left: '58%', top: '92%', dur: 25, delay: 2 },
+  { left: '71%', top: '72%', dur: 20, delay: 11 },
+  { left: '86%', top: '84%', dur: 22, delay: 6 },
 ]
 
 /* ── Hero ─────────────────────────────────────────────────── */
 
 export function Hero() {
   const { hi } = useLang()
-  const { theme } = useTheme()
   const reduced = useReducedMotion()
   const sectionRef = useRef<HTMLElement>(null)
+  const t = (h: string, e: string) => (hi ? h : e)
 
-  const [tabVisible, setTabVisible] = useState(true)
-  const [inView, setInView] = useState(true)
-  const wide = useMediaQuery('(min-width: 901px)')
+  /* The carousel ------------------------------------------------------- */
+  const [index, setIndex] = useState(0)
+  const [token, setToken] = useState(0) // bumped on every change → restarts the screen
+  const [hovering, setHovering] = useState(false)
+  const [awake, setAwake] = useState(true)
 
-  // Stop the render loop when the tab is hidden or the hero has scrolled away.
+  const go = useCallback((next: number) => {
+    setIndex((next + SCREENS.length) % SCREENS.length)
+    setToken((n) => n + 1)
+  }, [])
+
+  // Pause when the tab is in the background or the hero has scrolled away.
   useEffect(() => {
-    const onVis = () => setTabVisible(document.visibilityState === 'visible')
+    const onVis = () => setAwake(document.visibilityState === 'visible')
     document.addEventListener('visibilitychange', onVis)
     return () => document.removeEventListener('visibilitychange', onVis)
   }, [])
 
+  const [onScreen, setOnScreen] = useState(true)
   useEffect(() => {
     const el = sectionRef.current
     if (!el || typeof IntersectionObserver === 'undefined') return
-    const io = new IntersectionObserver((entries) => setInView(entries.some((e) => e.isIntersecting)), {
-      threshold: 0.01,
+    const io = new IntersectionObserver((es) => setOnScreen(es.some((e) => e.isIntersecting)), {
+      threshold: 0.05,
     })
     io.observe(el)
     return () => io.disconnect()
   }, [])
 
-  const canvasOn = useCanvasReady(!reduced)
-
-  // Pointer parallax — a slow spring so it never feels twitchy.
-  const px = useMotionValue(0)
-  const py = useMotionValue(0)
-  const spring = { stiffness: 55, damping: 22, mass: 0.7 }
-  const sxv = useSpring(px, spring)
-  const syv = useSpring(py, spring)
-  const stageX = useTransform(sxv, (v) => v * 26)
-  const stageY = useTransform(syv, (v) => v * 20)
-  const phoneX = useTransform(sxv, (v) => v * -12)
-  const phoneY = useTransform(syv, (v) => v * -9)
+  const play = awake && onScreen && !reduced
+  const running = play && !hovering
 
   useEffect(() => {
-    if (reduced) return
-    const el = sectionRef.current
-    if (!el) return
-    const onMove = (e: PointerEvent) => {
-      const r = el.getBoundingClientRect()
-      px.set((e.clientX - r.left) / r.width - 0.5)
-      py.set((e.clientY - r.top) / r.height - 0.5)
-    }
-    const onLeave = () => {
-      px.set(0)
-      py.set(0)
-    }
-    el.addEventListener('pointermove', onMove, { passive: true })
-    el.addEventListener('pointerleave', onLeave)
-    return () => {
-      el.removeEventListener('pointermove', onMove)
-      el.removeEventListener('pointerleave', onLeave)
-    }
-  }, [px, py, reduced])
+    if (!running) return
+    const id = window.setTimeout(() => {
+      setIndex((p) => (p + 1) % SCREENS.length)
+      setToken((n) => n + 1)
+    }, SCREENS[index].ms)
+    return () => window.clearTimeout(id)
+  }, [running, index, token])
 
-  // Scroll parallax — the yantra sinks and dims as the page moves on.
+  const onTabKey = (e: KeyboardEvent<HTMLDivElement>) => {
+    const map: Record<string, number> = {
+      ArrowDown: index + 1,
+      ArrowRight: index + 1,
+      ArrowUp: index - 1,
+      ArrowLeft: index - 1,
+      Home: 0,
+      End: SCREENS.length - 1,
+    }
+    const next = map[e.key]
+    if (next === undefined) return
+    e.preventDefault()
+    const n = (next + SCREENS.length) % SCREENS.length
+    go(n)
+    const el = e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]')[n]
+    el?.focus()
+  }
+
+  /* The mandala sinks and dims as the page moves on. */
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start start', 'end start'] })
-  const stageScroll = useTransform(scrollYProgress, [0, 1], [0, 110])
-  const stageFade = useTransform(scrollYProgress, [0, 0.85], [1, 0.15])
-  const copyScroll = useTransform(scrollYProgress, [0, 1], [0, 60])
+  const mandalaY = useTransform(scrollYProgress, [0, 1], [0, 90])
+  const mandalaFade = useTransform(scrollYProgress, [0, 0.9], [1, 0.12])
 
-  const t = (h: string, e: string) => (hi ? h : e)
+  const screen = SCREENS[index]
+  const Live = screen.Comp
   const initial = reduced ? false : 'hidden'
-  const paused = !tabVisible || !inView
+
+  const tabs = (variant: 'rail' | 'row') => (
+    <div
+      className={`syh-tabs syh-tabs--${variant}`}
+      role="tablist"
+      aria-orientation={variant === 'rail' ? 'vertical' : 'horizontal'}
+      aria-label={t('ऐप की स्क्रीन', 'App screens')}
+      onKeyDown={onTabKey}
+    >
+      {SCREENS.map((s, i) => (
+        <button
+          key={s.id}
+          type="button"
+          role="tab"
+          id={`syh-tab-${variant}-${s.id}`}
+          aria-selected={i === index}
+          aria-controls="syh-screen"
+          tabIndex={i === index ? 0 : -1}
+          className={`syh-tab${i === index ? ' is-on' : ''}`}
+          onClick={() => go(i)}
+        >
+          <span className="syh-tab__n sy-num" aria-hidden>
+            {String(i + 1).padStart(2, '0')}
+          </span>
+          <span className="syh-tab__label">{t(s.label.hi, s.label.en)}</span>
+          <span className="syh-tab__track" aria-hidden>
+            {i === index ? (
+              <span
+                key={token}
+                className="syh-tab__fill"
+                style={{
+                  animationDuration: `${s.ms}ms`,
+                  animationPlayState: running ? 'running' : 'paused',
+                }}
+              />
+            ) : null}
+          </span>
+        </button>
+      ))}
+    </div>
+  )
 
   return (
-    <section className="syh" id="top" ref={sectionRef} aria-labelledby="sy-hero-title">
-      <div className="syh__bg" aria-hidden />
-      <div className="syh__aurora" aria-hidden>
-        <i />
-        <i />
-      </div>
+    <section className="syh" id="top" ref={sectionRef} aria-labelledby="syh-title">
+      <div className="syh__wash" aria-hidden />
 
-      {/* The light source of the whole composition. */}
       <motion.div
-        className="syh__stage"
+        className="syh__mandala"
         aria-hidden
-        style={reduced ? undefined : { y: stageScroll, opacity: stageFade }}
+        style={reduced ? undefined : { y: mandalaY, opacity: mandalaFade }}
       >
         <motion.div
-          className="syh__stage-pos"
-          style={reduced ? undefined : { x: stageX, y: stageY }}
-          initial={reduced ? false : { opacity: 0, scale: 0.9 }}
+          className="syh__mandala-pos"
+          initial={reduced ? false : { opacity: 0, scale: 0.94 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 1.6, ease: EASE }}
         >
-          {canvasOn ? (
-            <Suspense fallback={<StaticYantra dark={theme.isDark} />}>
-              <YantraScene dark={theme.isDark} paused={paused} />
-            </Suspense>
-          ) : (
-            <StaticYantra dark={theme.isDark} />
-          )}
+          <HeroMandala still={!!reduced} />
         </motion.div>
       </motion.div>
 
-      {!reduced && (
+      <div className="syh__veil" aria-hidden />
+      <div className="syh__vignette" aria-hidden />
+
+      {reduced ? null : (
         <div className="syh__dust" aria-hidden>
-          {DUST.map((d) => (
+          {DUST.map((p) => (
             <i
-              key={d.left}
+              key={p.left}
               style={{
-                left: d.left,
-                top: d.top,
-                animationDuration: `${d.duration}s`,
-                animationDelay: `${d.delay}s`,
+                left: p.left,
+                top: p.top,
+                animationDuration: `${p.dur}s`,
+                animationDelay: `${p.delay}s`,
               }}
             />
           ))}
         </div>
       )}
 
-      <div className="syh__veil" aria-hidden />
-      <div className="syh__vignette" aria-hidden />
-      <div className="syh__fade" aria-hidden />
+      <div className="sy-container syh__grid">
+        {/* ── Copy ───────────────────────────────────────────── */}
+        <motion.div className="syh__copy" variants={GROUP} initial={initial} animate="show">
+          <motion.p variants={RISE} className="sy-eyebrow syh__eyebrow" lang={hi ? 'hi' : 'en'}>
+            {t(
+              'पंचांग · कुंडली · मुहूर्त · पुस्तकालय',
+              'Panchang · Kundli · Muhurat · Library',
+            )}
+          </motion.p>
 
-      <div className="syh__body">
-        <div className="sy-container syh__grid">
-          <motion.div
-            className="syh__copy"
-            variants={GROUP}
-            initial={initial}
-            animate="show"
-            style={reduced ? undefined : { y: copyScroll }}
-          >
-            <motion.p variants={RISE} className="sy-eyebrow syh__eyebrow" lang={hi ? 'hi' : 'en'}>
-              {t('पंचांग · कुंडली · मुहूर्त — एक ही ऐप में', 'Panchang · Kundli · Muhurat — all in one app')}
-            </motion.p>
+          <h1 id="syh-title" className="syh__title" lang={hi ? 'hi' : 'en'}>
+            {hi ? (
+              <>
+                <motion.span className="syh__line" variants={RISE}>
+                  पंडित जी की गणना,
+                </motion.span>
+                <motion.span className="syh__line" variants={RISE}>
+                  <span className="sy-gold-text">अब आपके फ़ोन में</span>
+                </motion.span>
+              </>
+            ) : (
+              <>
+                <motion.span className="syh__line" variants={RISE}>
+                  The pandit&rsquo;s own calculations,
+                </motion.span>
+                <motion.span className="syh__line" variants={RISE}>
+                  <span className="sy-gold-text">now on your phone</span>
+                </motion.span>
+              </>
+            )}
+          </h1>
 
-            <h1 id="sy-hero-title" className="syh__title" lang={hi ? 'hi' : 'en'}>
-              {hi ? (
-                <>
-                  <motion.span className="syh__title-line" variants={RISE}>
-                    आपका अपना <span className="sy-gold-text">ज्योतिषी</span>,
-                  </motion.span>
-                  <motion.span className="syh__title-line" variants={RISE}>
-                    हमेशा साथ
-                  </motion.span>
-                </>
-              ) : (
-                <>
-                  <motion.span className="syh__title-line" variants={RISE}>
-                    Your own <span className="sy-gold-text">astrologer</span>,
-                  </motion.span>
-                  <motion.span className="syh__title-line" variants={RISE}>
-                    always with you
-                  </motion.span>
-                </>
-              )}
-            </h1>
+          <motion.p className="syh__sub" variants={RISE}>
+            {t(
+              'आज की तिथि, शुभ मुहूर्त, अपनी जन्म कुंडली, राशिफल और आरती-पुराण का पूरा संग्रह — सब कुछ हिंदी में, एक ही ऐप में।',
+              "Today's tithi, auspicious timings, your own birth chart, horoscope and a complete library of aartis and scriptures — all in Hindi and English, in one app.",
+            )}
+          </motion.p>
 
-            <motion.p className="syh__sub" variants={RISE}>
-              {t(
-                'जन्म कुंडली, आज का पंचांग, शुभ मुहूर्त, राशिफल, आरती और पूरा धार्मिक पुस्तकालय — सब कुछ एक जगह, आपकी अपनी भाषा में।',
-                "Your birth chart, today's panchang, auspicious timings, horoscope, aartis and a complete sacred library — all in one place, in your own language.",
-              )}
-            </motion.p>
-
-            <motion.div className="syh__cta" variants={RISE}>
-              <a
-                className="sy-btn-gold"
-                href="#download"
-                onClick={(e) => {
-                  e.preventDefault()
-                  scrollToHash('#download')
-                }}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden
-                >
-                  <path d="M12 3v12M7 11l5 5 5-5M4 20h16" />
-                </svg>
-                {t('ऐप डाउनलोड करें', 'Get the app')}
-              </a>
-              <a
-                className="sy-btn-ghost"
-                href="#features"
-                onClick={(e) => {
-                  e.preventDefault()
-                  scrollToHash('#features')
-                }}
-              >
-                {t('क्या-क्या मिलेगा', "See what's inside")}
-              </a>
-            </motion.div>
-
-            <motion.ul
-              className="syh__trust"
-              variants={RISE}
-              aria-label={t('ऐप के बारे में', 'About the app')}
+          <motion.div className="syh__cta" variants={RISE}>
+            <a
+              className="sy-btn-gold"
+              href="#download"
+              onClick={(e) => {
+                e.preventDefault()
+                scrollToHash('#download')
+              }}
             >
-              {TRUST.map((chip) => (
-                <li key={chip.en}>
-                  <span className="syh__chip sy-num">{t(chip.hi, chip.en)}</span>
-                </li>
-              ))}
-            </motion.ul>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M12 3v12M7 11l5 5 5-5M4 20h16" />
+              </svg>
+              {t('ऐप डाउनलोड करें', 'Get the app')}
+            </a>
+            <a
+              className="sy-btn-ghost"
+              href="#features"
+              onClick={(e) => {
+                e.preventDefault()
+                scrollToHash('#features')
+              }}
+            >
+              {t('क्या-क्या मिलेगा', "See what's inside")}
+            </a>
           </motion.div>
 
-          {wide && (
-            <div className="syh__device">
-              <motion.div
-                className="syh__phone"
-                initial={reduced ? false : { opacity: 0, y: 40, scale: 0.96 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 1.1, delay: 0.32, ease: [0.16, 1, 0.3, 1] }}
-                style={reduced ? undefined : { x: phoneX, y: phoneY }}
-              >
-                <motion.div
-                  animate={reduced ? undefined : { y: [0, -12, 0] }}
-                  transition={{ duration: 7.5, repeat: Infinity, ease: 'easeInOut' }}
-                >
-                  <SitePhone id="home" priority width={288} />
-                </motion.div>
-              </motion.div>
-            </div>
-          )}
-        </div>
-      </div>
+          <motion.ul
+            className="syh__trust"
+            variants={RISE}
+            aria-label={t('ऐप के बारे में', 'About the app')}
+          >
+            {TRUST.map((chip) => (
+              <li key={chip.en}>
+                <span className="syh__chip sy-num">{t(chip.hi, chip.en)}</span>
+              </li>
+            ))}
+          </motion.ul>
+        </motion.div>
 
-      <div className="syh__foot">
-        <button
-          type="button"
-          className="syh__cue"
-          onClick={() => scrollToHash('#live-proof')}
-          aria-label={t('आगे स्क्रॉल करें', 'Scroll down')}
-          lang={hi ? 'hi' : 'en'}
+        {/* ── The app, alive ─────────────────────────────────── */}
+        <motion.div
+          className="syh__stage"
+          initial={reduced ? false : { opacity: 0, y: 34 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1.1, delay: 0.34, ease: EASE }}
+          onPointerEnter={() => setHovering(true)}
+          onPointerLeave={() => setHovering(false)}
+          onFocusCapture={() => setHovering(true)}
+          onBlurCapture={() => setHovering(false)}
         >
-          <span className="syh__cue-rail" aria-hidden />
-          <span>{t('नीचे देखें', 'Scroll')}</span>
-        </button>
+          <div className="syh__phonewrap">
+            <span className="syh__bloom" aria-hidden />
+            <div className={`syh-phone${reduced ? '' : ' is-float'}`}>
+              <div className="syh-phone__fit">
+                <div className="syh-phone__frame">
+                  <span className="syh-phone__notch" aria-hidden />
+                  <div
+                    className="syh-phone__screen"
+                    id="syh-screen"
+                    role="tabpanel"
+                    aria-live="off"
+                    aria-label={t(screen.label.hi, screen.label.en)}
+                  >
+                    {/* The demos are authored on a 300x630 board. This plain
+                        wrapper scales that board down to the hero's smaller
+                        screen — it must sit OUTSIDE the motion element, whose
+                        inline transform would otherwise fight the scale. */}
+                    <div className="syh-phone__zoom">
+                      <AnimatePresence initial={false}>
+                        <motion.div
+                          key={`${screen.id}-${token}`}
+                          className="syh-phone__slide"
+                          initial={reduced ? false : { opacity: 0, y: 16, scale: 0.985 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -12, scale: 0.99 }}
+                          transition={{ duration: reduced ? 0 : 0.55, ease: EASE }}
+                        >
+                          <Live hi={hi} play={play} />
+                        </motion.div>
+                      </AnimatePresence>
+                    </div>
+                    <PhoneTabBar hi={hi} active={screen.bottom} />
+                    {reduced ? null : <span className="syh-phone__glass" aria-hidden />}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <p className="syh__caption" key={`cap-${screen.id}`}>
+              {t(screen.caption.hi, screen.caption.en)}
+            </p>
+          </div>
+
+          {tabs('rail')}
+          {tabs('row')}
+        </motion.div>
       </div>
     </section>
   )
