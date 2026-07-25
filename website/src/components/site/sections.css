@@ -131,6 +131,247 @@
 }
 
 /* ============================================================
+   0. THE ALMANAC — today's live panchang, set like a page of one
+   ============================================================ */
+.syj-alm__cities {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.1rem;
+  margin-top: clamp(1.75rem, 3.5vw, 2.25rem);
+}
+.syj-alm__citylabel {
+  color: var(--j-muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.syj-alm {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--j-line);
+  border-radius: var(--j-radius);
+  background:
+    radial-gradient(120% 90% at 50% -20%, var(--j-glow-soft), transparent 62%),
+    var(--j-card);
+  box-shadow: var(--j-shadow);
+}
+[data-sy-theme='light'] .syj-alm {
+  background:
+    radial-gradient(120% 90% at 50% -20%, var(--j-glow-soft), transparent 62%),
+    #fffdf7;
+}
+/* the gold hairline that runs across the top of the page */
+.syj-alm__edge {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--j-gold-3) 12%,
+    var(--j-gold) 50%,
+    var(--j-gold-3) 88%,
+    transparent
+  );
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.syj-alm__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  border-bottom: 1px solid var(--j-line);
+  padding: clamp(1.15rem, 2.6vw, 1.65rem) clamp(1.1rem, 2.6vw, 1.75rem) clamp(1rem, 2.2vw, 1.35rem);
+}
+.syj-alm__when {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+.syj-alm__date {
+  color: var(--j-ink);
+  font-family: 'Playfair Display', 'Noto Sans Devanagari', Georgia, serif;
+  font-size: clamp(1.5rem, 3.4vw, 2.15rem);
+  font-weight: 640;
+  line-height: 1.06;
+  letter-spacing: -0.01em;
+}
+.syj-alm__day {
+  color: var(--j-gold);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.syj-alm__where {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 0.9rem;
+  min-width: 0;
+}
+.syj-alm__city {
+  color: var(--j-ink);
+  font-family: 'Noto Sans Devanagari', system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 720;
+}
+.syj-alm__live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--j-line);
+  border-radius: 999px;
+  background: var(--j-card-2);
+  padding: 0.4rem 0.8rem;
+  color: var(--j-soft);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.syj-alm__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--j-line);
+}
+@media (min-width: 720px) {
+  .syj-alm__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1020px) {
+  .syj-alm__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.syj-alm__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  justify-content: flex-start;
+  min-width: 0;
+  min-height: 122px;
+  background: var(--sy-bg, #0a0b10);
+  padding: 1.05rem clamp(0.9rem, 2vw, 1.15rem) 1.15rem;
+}
+[data-sy-theme='light'] .syj-alm__cell {
+  background: #fffdf7;
+}
+.syj-alm__key {
+  color: var(--j-gold);
+  font-family: 'Noto Sans Devanagari', system-ui, sans-serif;
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.syj-alm__val {
+  color: var(--j-ink);
+  font-family: 'Playfair Display', 'Noto Sans Devanagari', Georgia, serif;
+  font-size: clamp(1.05rem, 2vw, 1.35rem);
+  font-weight: 620;
+  line-height: 1.22;
+  overflow-wrap: anywhere;
+}
+.syj-alm__sub {
+  color: var(--j-soft);
+  font-size: 0.73rem;
+  line-height: 1.45;
+}
+.syj-alm__hint {
+  margin-top: auto;
+  padding-top: 0.45rem;
+  color: var(--j-muted);
+  font-size: 0.7rem;
+  line-height: 1.5;
+  opacity: 0.92;
+}
+
+.syj-alm__fest {
+  border-top: 1px solid var(--j-line);
+  padding: clamp(1rem, 2.4vw, 1.4rem) clamp(1.1rem, 2.6vw, 1.75rem);
+}
+.syj-alm__fest ul {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.syj-alm__fest li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.85rem;
+}
+.syj-alm__fest b {
+  color: var(--j-ink);
+  font-family: 'Noto Sans Devanagari', 'Playfair Display', serif;
+  font-size: 1.02rem;
+  font-weight: 720;
+}
+.syj-alm__fest span {
+  color: var(--j-muted);
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+
+.syj-alm__foot {
+  display: grid;
+  gap: 0.3rem;
+  border-top: 1px solid var(--j-line);
+  background: var(--j-card);
+  padding: clamp(0.9rem, 2.2vw, 1.15rem) clamp(1.1rem, 2.6vw, 1.75rem);
+}
+.syj-alm__foot b {
+  color: var(--j-soft);
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+.syj-alm__foot small {
+  color: var(--j-muted);
+  font-size: 0.72rem;
+  line-height: 1.6;
+}
+
+/* --- the manifesto's quiet evidence line (number lives inside a sentence) -- */
+.syj-mf__title {
+  max-width: 32ch;
+  text-wrap: balance;
+}
+.syj-mf__proof {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 0.6rem;
+  align-items: start;
+  margin: 0;
+  max-width: 54ch;
+  color: var(--j-soft);
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+.syj-mf__proof b {
+  color: var(--j-gold);
+  font-weight: 800;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.syj-mf__tick {
+  margin-top: 0.4rem;
+  width: 14px;
+  height: 14px;
+  color: var(--j-gold-2);
+}
+
+/* ============================================================
    PHONE — device frame with layered, cross-fading screenshots
    ============================================================ */
 .syj-phone {
@@ -883,6 +1124,15 @@
   background: linear-gradient(160deg, var(--j-glow-soft), transparent 70%), var(--j-card);
   color: var(--j-ink);
 }
+/* The typing reveal wraps every word in its own span. Those spans must stay
+   inline runs of a normal paragraph — never flex/grid items — or each word
+   lands on its own line. */
+.syj-msg__bubble {
+  display: block;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.syj-msg__run,
 .syj-msg__word {
   display: inline;
 }
@@ -1025,9 +1275,12 @@
   padding: 0;
   list-style: none;
 }
+/* Exactly two grid items per row: the ::before bullet, then one text span.
+   A third child (an empty marker span) used to push the text into the 18px
+   bullet column, which broke every sentence into one word per line. */
 .syj-demo__points li {
   display: grid;
-  grid-template-columns: 18px 1fr;
+  grid-template-columns: 18px minmax(0, 1fr);
   gap: 0.7rem;
   color: var(--j-soft);
   font-size: 0.84rem;
@@ -1041,122 +1294,220 @@
   border: 1px solid var(--j-gold-2);
   border-radius: 50%;
 }
+.syj-demo__pt {
+  display: block;
+  min-width: 0;
+}
+.syj-demo__pt b {
+  display: block;
+  font-weight: 600;
+}
+.syj-demo__pt small {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--j-muted);
+  font-size: 0.7rem;
+  line-height: 1.5;
+  opacity: 0.9;
+}
 
 /* ============================================================
-   4. WHY DIFFERENT
+   4. WHY DIFFERENT — the honest comparison
    ============================================================ */
-.syj-vs {
+.syj-why {
+  overflow: clip;
+}
+.syj-why__bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(760px 520px at 82% 8%, var(--j-glow-soft), transparent 72%);
+  pointer-events: none;
+}
+
+.syj-vs2 {
+  /* Column widths are percentages (not fr) so the gold overlay can be placed
+     exactly over the last column without measuring anything in JS. */
+  --vs-c1: 26%;
+  --vs-c2: 35%;
+  --vs-c3: 39%;
   position: relative;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-top: clamp(2.5rem, 5vw, 3.5rem);
   border: 1px solid var(--j-line);
   border-radius: var(--j-radius);
   overflow: hidden;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.012), transparent 30%);
 }
-/* gold wash behind the "ours" column only */
-.syj-vs__glow {
+/* one continuous gold column — no per-row banding */
+.syj-vs2__lit {
   position: absolute;
   z-index: 0;
-  inset: 0 0 0 50%;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--vs-c1) + var(--vs-c2));
+  right: 0;
+  border-inline-start: 1px solid var(--j-line);
   background:
-    linear-gradient(180deg, var(--j-glow-soft), transparent 48%),
-    var(--j-card);
-  box-shadow: inset 0 0 70px -14px var(--j-glow);
+    linear-gradient(180deg, var(--j-glow), transparent 42%),
+    var(--j-card-2);
+  box-shadow: inset 0 0 90px -18px var(--j-glow);
   pointer-events: none;
 }
-.syj-vs > .syj-vs__head,
-.syj-vs > .syj-cell {
+[data-sy-theme='light'] .syj-vs2__lit {
+  background:
+    linear-gradient(180deg, rgba(184, 127, 26, 0.14), rgba(184, 127, 26, 0.045) 46%),
+    #fffdf4;
+  box-shadow: inset 0 0 70px -20px rgba(154, 100, 16, 0.22);
+}
+
+.syj-vs2__row {
   position: relative;
   z-index: 1;
-}
-.syj-vs > *:nth-last-child(-n + 2) {
-  border-bottom: 0;
-}
-.syj-vs__head {
   display: grid;
-  gap: 0.3rem;
-  border-bottom: 1px solid var(--j-line);
-  padding: 1.35rem 1.4rem;
+  grid-template-columns: var(--vs-c1) var(--vs-c2) var(--vs-c3);
+  border-top: 1px solid var(--j-line);
 }
-.syj-cell__who {
-  display: none;
-  margin-bottom: 0.45rem;
+.syj-vs2__row:first-child {
+  border-top: 0;
+}
+
+/* — head — */
+.syj-vs2__row--head {
+  border-top: 0;
+}
+.syj-vs2__head {
+  display: grid;
+  align-content: end;
+  gap: 0.28rem;
+  padding: 1.4rem 1.35rem 1.1rem;
+}
+.syj-vs2__head em {
   font-size: 0.6rem;
-  font-weight: 850;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-}
-.syj-vs__head em {
-  font-size: 0.62rem;
   font-style: normal;
   font-weight: 850;
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
-.syj-vs__head b {
+.syj-vs2__head b {
   font-family: 'Noto Sans Devanagari', 'Playfair Display', serif;
-  font-size: clamp(1rem, 1.8vw, 1.3rem);
+  font-size: clamp(1rem, 1.7vw, 1.28rem);
   font-weight: 720;
+  line-height: 1.25;
 }
-.syj-cell {
-  border-bottom: 1px solid var(--j-line);
-  padding: 1.15rem 1.4rem;
-  font-size: 0.86rem;
-  line-height: 1.7;
+.syj-vs2__head--them {
+  border-inline-end: 1px solid var(--j-line);
 }
-.syj-cell:nth-last-child(-n + 2) {
-  border-bottom: 0;
+.syj-vs2__head--them em {
+  color: var(--j-muted);
 }
-.syj-cell__row {
+.syj-vs2__head--them b {
+  color: var(--j-soft);
+}
+.syj-vs2__head--us em {
+  color: var(--j-gold);
+}
+.syj-vs2__head--us b {
+  color: var(--j-ink);
+}
+.syj-vs2__headnote {
+  align-self: end;
+  color: var(--j-muted);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* — topic column — */
+.syj-vs2__topic {
   display: grid;
-  grid-template-columns: 18px 1fr;
-  gap: 0.65rem;
-  align-items: start;
+  align-content: start;
+  gap: 0.4rem;
+  border-inline-end: 1px solid var(--j-line);
+  padding: 1.35rem 1.35rem 1.5rem;
+  min-width: 0;
 }
-.syj-cell__mark {
-  margin-top: 0.42rem;
-  width: 14px;
-  height: 14px;
+.syj-vs2__topic h3 {
+  margin: 0;
+  color: var(--j-ink);
+  font-family: 'Noto Sans Devanagari', 'Playfair Display', serif;
+  font-size: clamp(1rem, 1.5vw, 1.14rem);
+  font-weight: 740;
+  line-height: 1.35;
 }
-/* theirs column */
-.syj-vs__head--them,
-.syj-cell--them {
+.syj-vs2__topic p {
+  margin: 0;
+  color: var(--j-muted);
+  font-size: 0.78rem;
+  line-height: 1.62;
+}
+
+/* — claim cells — */
+.syj-vs2__cell {
+  padding: 1.35rem 1.35rem 1.5rem;
+  min-width: 0;
+  font-size: 0.855rem;
+  line-height: 1.72;
+}
+.syj-vs2__them {
   border-inline-end: 1px solid var(--j-line);
   color: var(--j-muted);
 }
-.syj-vs__head--them em {
-  color: var(--j-muted);
-}
-.syj-vs__head--them b {
+.syj-vs2__us {
   color: var(--j-soft);
 }
-.syj-cell--them .syj-cell__mark {
-  color: var(--j-muted);
-  opacity: 0.8;
-}
-.syj-cell--them .syj-cell__who {
-  color: var(--j-muted);
-}
-/* ours column */
-.syj-vs__head--us em {
-  color: var(--j-gold);
-}
-.syj-vs__head--us b {
+.syj-vs2__us strong {
   color: var(--j-ink);
+  font-weight: 700;
 }
-.syj-cell--us {
-  color: var(--j-soft);
+.syj-vs2__line {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: start;
 }
-.syj-cell--us strong {
-  color: var(--j-ink);
-  font-weight: 750;
+.syj-vs2__mark {
+  margin-top: 0.45rem;
+  width: 14px;
+  height: 14px;
 }
-.syj-cell--us .syj-cell__mark {
+.syj-vs2__them .syj-vs2__mark {
+  color: var(--j-muted);
+  opacity: 0.75;
+}
+.syj-vs2__us .syj-vs2__mark {
   color: var(--j-gold-2);
 }
-.syj-cell--us .syj-cell__who {
+/* per-cell column label — only needed once the columns stack */
+.syj-vs2__who {
+  display: none;
+  margin-bottom: 0.5rem;
+  font-size: 0.58rem;
+  font-weight: 850;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+.syj-vs2__them .syj-vs2__who {
+  color: var(--j-muted);
+}
+.syj-vs2__us .syj-vs2__who {
   color: var(--j-gold);
+}
+
+/* — closing strip — */
+.syj-vs2__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  margin-top: clamp(1.5rem, 3vw, 2rem);
+}
+.syj-vs2__foot p {
+  margin: 0;
+  max-width: 52ch;
+  color: var(--j-muted);
+  font-size: 0.86rem;
+  line-height: 1.7;
 }
 
 /* ============================================================
@@ -1396,30 +1747,50 @@
     justify-self: center;
     order: -1;
   }
-  .syj-vs {
-    grid-template-columns: minmax(0, 1fr);
+}
+
+/* Comparison: below this the three columns stop fitting side by side, so each
+   row becomes its own card with the two claims stacked under the topic. */
+@media (max-width: 900px) {
+  .syj-vs2 {
+    border: 0;
+    border-radius: 0;
+    display: grid;
+    gap: clamp(0.9rem, 2.5vw, 1.15rem);
+    overflow: visible;
+    background: none;
   }
-  .syj-vs__glow {
+  .syj-vs2__lit,
+  .syj-vs2__row--head {
     display: none;
   }
-  .syj-vs__head--them,
-  .syj-cell--them {
+  .syj-vs2__row {
+    grid-template-columns: minmax(0, 1fr);
+    border: 1px solid var(--j-line);
+    border-radius: var(--j-radius);
+    overflow: hidden;
+    background: var(--j-card);
+  }
+  .syj-vs2__topic {
     border-inline-end: 0;
+    border-bottom: 1px solid var(--j-line);
+    padding: 1.15rem 1.15rem 1.2rem;
   }
-  .syj-vs__head--us,
-  .syj-cell--us {
-    background:
-      linear-gradient(180deg, var(--j-glow-soft), transparent 60%),
-      var(--j-card);
+  .syj-vs2__cell {
+    border-inline-end: 0;
+    padding: 1.15rem;
   }
-  .syj-cell__who {
-    display: block;
-  }
-  .syj-vs > *:nth-last-child(-n + 2) {
+  .syj-vs2__them {
     border-bottom: 1px solid var(--j-line);
   }
-  .syj-vs > *:last-child {
-    border-bottom: 0;
+  .syj-vs2__us {
+    background:
+      linear-gradient(180deg, var(--j-glow), transparent 70%),
+      var(--j-card-2);
+    box-shadow: inset 0 0 60px -22px var(--j-glow);
+  }
+  .syj-vs2__who {
+    display: block;
   }
 }
 

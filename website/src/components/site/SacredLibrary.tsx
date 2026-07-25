@@ -130,22 +130,22 @@ export function SacredLibrary() {
 
       <div className="sy-container">
         <div className="syj-intro">
-          <p className="syj-kicker">{hi ? 'दिव्य पुस्तकालय' : 'The sacred library'}</p>
+          <p className="syj-kicker">{hi ? 'पढ़ने और सुनने के लिए' : 'To read and to listen'}</p>
           <h2 id="syj-library-h" className="syj-title">
             {hi ? (
               <>
-                पूरा शास्त्र, <em>ऐप के भीतर</em>
+                घर भर का शास्त्र, <em>आपके फ़ोन में</em>
               </>
             ) : (
               <>
-                The whole corpus, <em>inside the app</em>
+                A whole shelf of scriptures, <em>in your phone</em>
               </>
             )}
           </h2>
           <p className="syj-sub">
             {hi
-              ? 'पुराण, वेद, महाकाव्य और गीता — संस्कृत मूल पाठ के साथ, और कई ग्रंथ सरल हिंदी कथा तथा ऑडियो के साथ। नीचे की हर संख्या वही है जो ऐप में सचमुच मौजूद है।'
-              : 'Puranas, Vedas, epics and the Gita — with the Sanskrit originals, and several texts also as simple Hindi katha and audio. Every number below is what is actually in the app.'}
+              ? 'गीता, रामायण, महाभारत और अठारहों पुराण — पढ़िए भी, और सुनिए भी। संस्कृत श्लोक के साथ उसका हिंदी अर्थ रहता है, इसलिए बात समझ में आती है; और जब पढ़ने का मन न हो, तो आरती, भजन, मंत्र और कथा सुन लीजिए। नीचे की हर संख्या वही है जो ऐप में सचमुच मौजूद है।'
+              : 'The Gita, the Ramayan, the Mahabharat and all eighteen Puranas — to read, and to listen to. Every Sanskrit verse carries its meaning in Hindi, so it actually makes sense; and when you would rather not read, there is aarti, bhajan, mantra and katha to listen to. Every number below is what is really in the app.'}
           </p>
         </div>
       </div>
@@ -221,11 +221,11 @@ export function SacredLibrary() {
 
         <div className="syj-corpus">
           <article className="syj-corpus__card syj-corpus__card--wide">
-            <p className="syj-kicker">{hi ? '18 महापुराण' : '18 Mahapuranas'}</p>
+            <p className="syj-kicker">{hi ? 'अठारह महापुराण' : 'The eighteen Mahapuranas'}</p>
             <h3>
               {hi
-                ? 'अध्यायों की गिनती, जैसी ऐप में है'
-                : 'Adhyaya counts, exactly as they ship'}
+                ? 'हर पुराण में कितने अध्याय हैं — जितने ऐप में सचमुच हैं'
+                : 'How many chapters each one has — exactly as many as the app really has'}
             </h3>
             <ul className="syj-corpus__list syj-corpus__list--cols">
               {PURANAS.map((p) => (
@@ -247,8 +247,8 @@ export function SacredLibrary() {
           </article>
 
           <article className="syj-corpus__card">
-            <p className="syj-kicker">{hi ? 'चार वेद' : 'Four Vedas'}</p>
-            <h3>{hi ? 'मूल संहिता और उपनिषद्' : 'The samhitas and Upanishads'}</h3>
+            <p className="syj-kicker">{hi ? 'चारों वेद' : 'All four Vedas'}</p>
+            <h3>{hi ? 'मूल पाठ, जैसा है वैसा' : 'The original text, just as it is'}</h3>
             <ul className="syj-corpus__list">
               {VEDAS.map((v) => (
                 <li key={v.en}>
@@ -263,7 +263,11 @@ export function SacredLibrary() {
 
           <article className="syj-corpus__card">
             <p className="syj-kicker">{hi ? 'सुनने के लिए' : 'To listen'}</p>
-            <h3>{hi ? 'आरती, मंत्र और कथा' : 'Aarti, mantra and katha'}</h3>
+            <h3>
+              {hi
+                ? 'आरती, भजन और कथा — पूजा के समय चला लीजिए'
+                : 'Aarti, bhajan and katha — put it on while you do the puja'}
+            </h3>
             <ul className="syj-corpus__list">
               {AUDIO.map((a) => (
                 <li key={a.en}>
@@ -279,8 +283,8 @@ export function SacredLibrary() {
           <b aria-hidden>—</b>
           <span>
             {hi
-              ? 'ईमानदारी से: 18 में से 16 पुराण पूरे पाठ के साथ हैं। भविष्य पुराण और लिङ्ग पुराण अभी आंशिक हैं, क्योंकि इनका पूरा मशीन-पठनीय संस्करण कहीं उपलब्ध नहीं है। जैसे ही मिलेगा, जोड़ दिया जाएगा — तब तक इन्हें आंशिक ही लिखा गया है।'
-              : 'Plainly: 16 of the 18 Puranas ship as complete texts. The Bhavishya and Linga Puranas are still partial, because no complete machine-readable source exists for them anywhere. They will be filled in the moment one does — until then they are labelled partial, here and in the app.'}
+              ? 'साफ़-साफ़ बात: 18 में से 16 पुराण पूरे हैं। भविष्य पुराण और लिङ्ग पुराण अभी अधूरे हैं, क्योंकि इनका पूरा डिजिटल पाठ कहीं मिलता ही नहीं। जिस दिन मिल जाएगा, जोड़ दिया जाएगा — तब तक इन पर "आंशिक" ही लिखा रहेगा, यहाँ भी और ऐप में भी।'
+              : 'Said plainly: 16 of the 18 Puranas are complete. The Bhavishya and Linga Puranas are still partial, because no complete digital text of them exists anywhere. The day one turns up, it goes in — until then they stay labelled partial, here and inside the app.'}
           </span>
         </p>
       </div>

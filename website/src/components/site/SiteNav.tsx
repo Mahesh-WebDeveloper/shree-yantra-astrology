@@ -34,6 +34,7 @@ export function SiteNav() {
   const { hi, setLang } = useLang()
   const { name: themeName, toggle: toggleTheme } = useTheme()
   const [solid, setSolid] = useState(false)
+  const [active, setActive] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
@@ -42,6 +43,14 @@ export function SiteNav() {
       if (raf) return
       raf = requestAnimationFrame(() => {
         setSolid(window.scrollY > 28)
+        // Scroll-spy: the last section whose top has passed the upper third.
+        const mark = window.scrollY + window.innerHeight * 0.34
+        let current: string | null = null
+        for (const item of NAV_ITEMS) {
+          const el = document.getElementById(item.id)
+          if (el && el.getBoundingClientRect().top + window.scrollY <= mark) current = item.id
+        }
+        setActive(current)
         raf = 0
       })
     }
@@ -97,12 +106,13 @@ export function SiteNav() {
             </span>
           </a>
 
-          <div className="hidden items-center gap-8 lg:flex">
+          <div className="hidden items-center gap-7 lg:flex">
             {NAV_ITEMS.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 className="sy-nav__link"
+                aria-current={active === item.id ? 'true' : undefined}
                 onClick={() => go(`#${item.id}`)}
               >
                 {t(item.hi, item.en)}
@@ -150,7 +160,7 @@ export function SiteNav() {
                 go('#download')
               }}
             >
-              {t('APK डाउनलोड', 'Download')}
+              {t('ऐप डाउनलोड', 'Get the app')}
             </a>
 
             <button
@@ -213,7 +223,7 @@ export function SiteNav() {
                 go('#download')
               }}
             >
-              {t('APK डाउनलोड करें', 'Download APK')}
+              {t('ऐप डाउनलोड करें', 'Get the app')}
             </a>
             <p className="sy-micro text-center">
               {t('Android के लिए • भारत में बना', 'For Android • Made in India')}

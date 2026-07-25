@@ -2,7 +2,8 @@ import { SiteNav } from '@/components/site/SiteNav'
 import { Hero } from '@/components/site/Hero'
 import { LiveProof } from '@/components/site/LiveProof'
 import { AccuracyManifesto } from '@/components/site/AccuracyManifesto'
-import { FeatureJourneys } from '@/components/site/FeatureJourneys'
+import { AppInAction } from '@/components/site/AppInAction'
+import { ServicesUniverse } from '@/components/site/ServicesUniverse'
 import { SacredLibrary } from '@/components/site/SacredLibrary'
 import { JyotishiDemo } from '@/components/site/JyotishiDemo'
 import { WhyDifferent } from '@/components/site/WhyDifferent'
@@ -22,7 +23,8 @@ export function HomePage() {
         <Hero />
         <LiveProof />
         <AccuracyManifesto />
-        <FeatureJourneys />
+        <AppInAction />
+        <ServicesUniverse />
         <SacredLibrary />
         <JyotishiDemo />
         <WhyDifferent />

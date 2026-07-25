@@ -2,92 +2,110 @@ import { useEffect, useRef } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useLang } from '@/i18n/LangProvider'
-import { useCountUp, useInViewOnce, useReducedMotion } from './hooks/useSiteMotion'
+import { useReducedMotion } from './hooks/useSiteMotion'
+import './sections.css'
 
 gsap.registerPlugin(ScrollTrigger)
 
+type Bi = { hi: string; en: string }
+
 type Beat = {
   id: string
-  /** The number that counts up. */
-  n: number
-  /** Suffix rendered next to the number, e.g. "/767". */
-  suffix?: string
-  unit: { hi: string; en: string }
-  title: { hi: string; en: string }
-  body: { hi: string; en: string }
-  notes: { hi: string; en: string }[]
+  /** Human sentence first — this is the heading. */
+  title: Bi
+  body: Bi
+  /** The quiet evidence line. The number, if any, sits inside the sentence. */
+  proof: { pre: Bi; n?: number; suffix?: string; post?: Bi }
+  /** Traditional / technical terms, for the people who look for them. */
+  notes: Bi[]
 }
 
 /* Only verified, real facts live here. Nothing is invented. */
 const BEATS: Beat[] = [
   {
-    id: 'drik',
-    n: 767,
-    suffix: '/767',
-    unit: { hi: 'तिथियाँ मिलान में सही', en: 'dates matched' },
+    id: 'dates',
     title: {
-      hi: 'हर पर्व, हर व्रत — दृक पंचांग से मिलान किया गया',
-      en: 'Every festival, every vrat — cross-checked against Drik Panchang',
+      hi: 'हर त्योहार और व्रत की तारीख — पंचांग से मिलाकर जाँची हुई',
+      en: 'Every festival and vrat date — checked against the panchang',
     },
     body: {
-      hi: '2026, 2027 और 2050 के पर्व व व्रत की तिथियाँ दृक पंचांग से मिलाई गईं — 767 में से 767 सही, कई शहरों की क्रॉस-जाँच सहित।',
-      en: 'Festival and vrat dates for 2026, 2027 and 2050 were verified against Drik Panchang — 767 out of 767 correct, including multi-city cross-checks.',
+      hi: 'बहुत से ऐप में त्योहार की तारीख़ एक दिन आगे-पीछे हो जाती है, और व्रत ठीक उसी दिन छूट जाता है। इसलिए हमने एक-एक तारीख़ दृक पंचांग से मिलाकर देखी — और अलग-अलग शहरों के लिए अलग से भी।',
+      en: 'In a lot of apps the festival date slips by a day, and the vrat is missed on exactly that day. So we compared every single date against Drik Panchang — and did it separately for several cities.',
+    },
+    proof: {
+      pre: { hi: '2026, 2027 और 2050 की सभी ', en: 'All ' },
+      n: 767,
+      post: { hi: ' तारीखें सही निकलीं', en: ' dates for 2026, 2027 and 2050 came out right' },
     },
     notes: [
       {
-        hi: 'बाहर के वर्ष 2028–2035 अलग से जाँचे गए — हर वर्ष 22/22',
-        en: 'Out-of-sample years 2028–2035 verified separately — 22/22 each',
+        hi: '2028 से 2035 तक हर साल अलग से जाँचा — हर साल 22 में से 22',
+        en: '2028 to 2035 checked separately — 22 of 22 every year',
       },
+      { hi: 'कई शहरों में अलग-अलग मिलान', en: 'Cross-checked across several cities' },
     ],
   },
   {
-    id: 'ephemeris',
-    n: 0,
-    unit: { hi: 'हार्डकोडेड मान', en: 'hardcoded values' },
+    id: 'maths',
     title: {
-      hi: 'ग्रह-स्थिति सटीक इफ़ेमेरिस से — अनुमान से नहीं',
-      en: 'Planetary positions from a precise ephemeris — never estimated',
+      hi: 'गणना वही, जो पंडित जी करते हैं',
+      en: 'The same maths a pandit uses',
     },
     body: {
-      hi: 'ग्रहों की स्थिति स्विस-इफ़ेमेरिस स्तर की सटीकता से निकाली जाती है, लाहिड़ी (चित्रा पक्ष) अयनांश के साथ। सूर्योदय, सूर्यास्त और तिथि–नक्षत्र की संधियाँ हर बार गणना से आती हैं — कभी तालिका से नहीं।',
-      en: 'Positions are computed at Swiss-ephemeris-grade precision using the Lahiri (Chitra Paksha) ayanamsa. Sunrise, sunset and tithi/nakshatra boundaries are calculated every single time — never read from a hardcoded table.',
+      hi: 'ग्रहों की जगह, सूर्योदय, सूर्यास्त और तिथि के बदलने का ठीक समय — सब कुछ हर बार नए सिरे से गिना जाता है, आपके अपने शहर के हिसाब से। कोई पहले से बनी तालिका नहीं, कोई अंदाज़ा नहीं।',
+      en: 'Where the planets are, when the sun rises and sets, the exact moment a tithi turns — all of it is worked out fresh every time, for your own city. No pre-made table, no guesswork.',
+    },
+    proof: {
+      pre: {
+        hi: 'ऐप में एक भी तारीख़ या समय पहले से भरा हुआ नहीं है',
+        en: 'Not one date or time in the app is filled in beforehand',
+      },
     },
     notes: [
       { hi: 'लाहिड़ी (चित्रा पक्ष) अयनांश', en: 'Lahiri (Chitra Paksha) ayanamsa' },
-      { hi: 'स्थान-आधारित सूर्योदय/सूर्यास्त', en: 'Location-based sunrise / sunset' },
+      { hi: 'तिथि सूर्योदय के समय के अनुसार', en: 'Tithi taken at sunrise (udaya)' },
+      { hi: 'सूर्योदय–सूर्यास्त आपके शहर से', en: 'Sunrise and sunset from your own city' },
     ],
   },
   {
     id: 'choghadiya',
-    n: 16,
-    suffix: '/16',
-    unit: { hi: 'चौघड़िया अवधि सत्यापित', en: 'choghadiya periods verified' },
     title: {
-      hi: 'दिन और रात — पूरे 24 घंटे का चौघड़िया मिलान',
-      en: 'Day and night — the full 24-hour choghadiya, matched',
+      hi: 'शुभ समय देखना हो, तो पूरे दिन और रात का चौघड़िया',
+      en: 'Looking for a good hour? The choghadiya for the whole day and night',
     },
     body: {
-      hi: 'दिन के 8 और रात के 8 — कुल 16 चौघड़िया अवधियाँ दृक पंचांग से मिलाई गईं और पूरी तरह सही निकलीं।',
-      en: 'Eight day periods and eight night periods — all 16 choghadiya windows were verified against Drik Panchang and matched exactly.',
+      hi: 'नया काम, यात्रा या पूजा — लोग समय चौघड़िया देखकर तय करते हैं। दिन की आठ और रात की आठ अवधियाँ आपके शहर के सूर्योदय और सूर्यास्त से बनती हैं, इसलिए हर शहर में थोड़ी अलग होती हैं।',
+      en: 'A new venture, a journey, a puja — people pick the hour by the choghadiya. The eight day windows and eight night windows are built from your own city’s sunrise and sunset, so they shift a little from city to city.',
     },
-    notes: [{ hi: 'स्थानीय सूर्योदय–सूर्यास्त से गणना', en: 'Derived from local sunrise and sunset' }],
+    proof: {
+      pre: { hi: 'पूरे चौबीस घंटे की सभी ', en: 'All ' },
+      n: 16,
+      post: {
+        hi: ' अवधियाँ मिलान में सही निकलीं',
+        en: ' windows across the full twenty-four hours matched',
+      },
+    },
+    notes: [{ hi: 'स्थानीय सूर्योदय और सूर्यास्त से बनी', en: 'Built from local sunrise and sunset' }],
   },
   {
     id: 'grounded',
-    n: 100,
-    suffix: '%',
-    unit: { hi: 'कुंडली-आधारित उत्तर', en: 'chart-grounded answers' },
     title: {
-      hi: 'ज्योतिषी जो कभी अपनी ओर से कुछ नहीं गढ़ता',
-      en: 'An astrologer that never invents',
+      hi: 'ज्योतिषी वही कहता है, जो आपकी कुंडली में है',
+      en: 'The astrologer says only what your chart says',
     },
     body: {
-      hi: 'हर उत्तर आपकी अपनी कुंडली पर टिका होता है — जन्म कुंडली, पूरी विंशोत्तरी दशा समयरेखा, नौ ग्रहों का गोचर और साढ़ेसाती की अवधियाँ। जो बात आपके डेटा में नहीं है, ज्योतिषी साफ़ कह देता है कि नहीं है — और गलत दावे पर विनम्रता से सुधार भी करता है, हाँ में हाँ नहीं मिलाता।',
-      en: "Every answer rests on your own chart — your kundli, the full Vimshottari dasha timeline, the 9-planet gochar and your Sade Sati windows. If a fact isn't in your data, the astrologer says so plainly — and will politely correct a wrong claim rather than agree with it.",
+      hi: 'हर जवाब आपकी अपनी कुंडली, चल रही दशा, नौ ग्रहों के गोचर और साढ़ेसाती की तारीखों को देखकर बनता है। जो बात आपकी कुंडली में है ही नहीं, उसके लिए साफ़ मना कर दिया जाता है — और कोई गलत बात कह दे तो विनम्रता से सुधार भी होता है।',
+      en: 'Every answer is put together after looking at your own chart, the period you are running, where the nine planets are moving and the dates of your Sade Sati. If something simply is not in your chart, you are told so plainly — and a wrong claim is politely corrected instead of echoed.',
+    },
+    proof: {
+      pre: {
+        hi: 'जो आपके अपने आँकड़ों में नहीं है, वह जवाब में भी नहीं आता',
+        en: 'What is not in your own data does not appear in the answer',
+      },
     },
     notes: [
-      { hi: 'कुंडली · दशा · गोचर · साढ़ेसाती', en: 'Kundli · Dasha · Gochar · Sade Sati' },
-      { hi: 'डेटा में नहीं? तो उत्तर में भी नहीं', en: 'Not in the data? Not in the answer' },
+      { hi: 'कुंडली · दशा · गोचर · साढ़ेसाती', en: 'Chart · dasha · gochar · Sade Sati' },
+      { hi: 'हाँ में हाँ नहीं मिलाई जाती', en: 'It will not agree just to please you' },
     ],
   },
 ]
@@ -118,26 +136,47 @@ function Mandala() {
   )
 }
 
-function BeatBlock({ beat, index, hi }: { beat: Beat; index: number; hi: boolean }) {
-  const { ref, seen } = useInViewOnce<HTMLElement>('-20% 0px -20% 0px')
-  const value = useCountUp(beat.n, seen, 1400 + index * 120)
-
+function Tick() {
   return (
-    <article className="sy-beat" ref={ref} aria-labelledby={`sy-beat-${beat.id}`}>
-      {index === 1 && <Mandala />}
-      <div className="flex flex-wrap items-baseline gap-x-3">
-        <span className="sy-beat__num sy-gold-text sy-num">
-          {value}
-          {beat.suffix}
-        </span>
-        <span className="sy-beat__unit">{hi ? beat.unit.hi : beat.unit.en}</span>
-      </div>
+    <svg className="syj-mf__tick" viewBox="0 0 16 16" fill="none" aria-hidden>
+      <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.1" opacity="0.75" />
+      <path
+        d="M4.9 8.3l2.1 2.2 4.1-4.6"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
 
-      <h3 id={`sy-beat-${beat.id}`} className="sy-h3">
+function BeatBlock({ beat, index, hi }: { beat: Beat; index: number; hi: boolean }) {
+  return (
+    <article className="sy-beat" aria-labelledby={`sy-beat-${beat.id}`}>
+      {index === 1 && <Mandala />}
+
+      <h3 id={`sy-beat-${beat.id}`} className="sy-h3 syj-mf__title">
         {hi ? beat.title.hi : beat.title.en}
       </h3>
       <p className="sy-body" style={{ maxWidth: '58ch' }}>
         {hi ? beat.body.hi : beat.body.en}
+      </p>
+
+      {/* The evidence line. The figure never leads — it sits inside a sentence
+          an ordinary reader can follow, and it never animates from zero. */}
+      <p className="syj-mf__proof">
+        <Tick />
+        <span>
+          {hi ? beat.proof.pre.hi : beat.proof.pre.en}
+          {beat.proof.n != null ? (
+            <b className="sy-num">
+              {beat.proof.n.toLocaleString('en-US')}
+              {beat.proof.suffix}
+            </b>
+          ) : null}
+          {beat.proof.post ? (hi ? beat.proof.post.hi : beat.proof.post.en) : null}
+        </span>
       </p>
 
       <ul className="flex flex-wrap gap-2">
@@ -190,7 +229,7 @@ export function AccuracyManifesto() {
 
   return (
     <section
-      className="sy-section sy-site"
+      className="syj sy-section sy-site"
       id="accuracy"
       ref={sectionRef}
       aria-labelledby="sy-accuracy-title"
@@ -198,15 +237,17 @@ export function AccuracyManifesto() {
       <div className="sy-container">
         <div className="sy-manifesto__layout">
           <div className="sy-manifesto__aside">
-            <p className="sy-eyebrow">{t('सटीकता का घोषणापत्र', 'The accuracy manifesto')}</p>
+            <p className="sy-eyebrow">{t('भरोसा क्यों करें', 'Why you can trust this')}</p>
             <h2 id="sy-accuracy-title" className="sy-h2 mt-5">
-              {t('भरोसा दावों से नहीं बनता — ', 'Trust is not claimed. ')}
-              <span className="sy-gold-text">{t('जाँच से बनता है', "It's verified")}</span>
+              {t('भरोसा कहने से नहीं आता — ', 'Trust does not come from claims. ')}
+              <span className="sy-gold-text">
+                {t('मिलाकर देखने से आता है', 'It comes from checking.')}
+              </span>
             </h2>
             <p className="sy-lead mt-5">
               {t(
-                'ज्योतिष में सबसे बड़ा धोखा है — गलत तिथि। इसलिए हमने हर पर्व, हर मुहूर्त और हर गणना को स्वतंत्र रूप से मिलाया, और परिणाम यहाँ खुले रखे हैं।',
-                'The deepest failure in astrology apps is a wrong date. So we verified every festival, every muhurat and every calculation independently — and we are publishing the results here.',
+                'ज्योतिष ऐप में सबसे बड़ी गड़बड़ी होती है गलत तारीख़ — और वही सबसे भारी पड़ती है। इसलिए हमने हर त्योहार, हर मुहूर्त और हर गणना अलग से मिलाकर देखी, और नतीजे यहीं खुले रख दिए हैं।',
+                'The worst thing an astrology app can get wrong is a date — and it is the thing that costs you most. So we checked every festival, every muhurat and every calculation independently, and we are leaving the results here in the open.',
               )}
             </p>
 
@@ -216,8 +257,8 @@ export function AccuracyManifesto() {
               </span>
               <p className="sy-micro" style={{ maxWidth: '34ch' }}>
                 {t(
-                  'नीचे चार जाँचें हैं। हर एक स्वतंत्र रूप से दोहराई जा सकती है — दृक पंचांग खोलिए और मिलाइए।',
-                  'Four checks follow. Each one is independently repeatable — open Drik Panchang and compare for yourself.',
+                  'नीचे चार बातें हैं। हर एक आप खुद जाँच सकते हैं — दृक पंचांग खोलिए और मिलाकर देख लीजिए।',
+                  'Four things follow. You can check every one of them yourself — open Drik Panchang and compare.',
                 )}
               </p>
             </div>

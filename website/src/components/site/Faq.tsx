@@ -8,68 +8,76 @@ type Item = { id: string; q: { hi: string; en: string }; a: { hi: string; en: st
 const ITEMS: Item[] = [
   {
     id: 'accuracy',
-    q: { hi: 'गणना कितनी सटीक है?', en: 'How accurate are the calculations?' },
+    q: { hi: 'तारीखें और गणना कितनी सही हैं?', en: 'How right are the dates and calculations?' },
     a: {
-      hi: 'पंचांग और कुंडली दृक-सिद्ध गणना से बनते हैं। त्योहार और व्रत की तारीखें एक-एक करके जाँची गईं — 767 में से 767 सही मिलीं। तिथि उदया तिथि परंपरा से दिखाई जाती है, और हर अंग अपने समाप्ति समय के साथ रहता है।',
-      en: 'The panchang and the charts come from a Drik-siddha calculation. The festival and vrat dates were checked one by one — 767 of 767 matched. Tithi follows the udaya tithi convention, and every limb is shown with its end time.',
+      hi: 'त्योहार और व्रत की हर तारीख़ पंचांग से मिलाकर जाँची गई है — 2026, 2027 और 2050 की सभी 767 तारीखें सही निकलीं, और 2028 से 2035 तक भी हर साल अलग से जाँचा गया। तिथि उसी परंपरा से दिखती है जो पंडित जी मानते हैं: सूर्योदय के समय जो तिथि हो, वही उस दिन की तिथि। और हर तिथि, नक्षत्र या योग के साथ यह भी लिखा रहता है कि वह कब तक है।',
+      en: 'Every festival and vrat date has been compared against the panchang — all 767 across 2026, 2027 and 2050 came out right, and 2028 to 2035 was checked separately as well. The tithi follows the same convention a pandit uses: whichever tithi is running at sunrise is the tithi for that day. And every tithi, nakshatra or yoga is shown along with the time it ends.',
+    },
+  },
+  {
+    id: 'who',
+    q: { hi: 'जवाब कौन देता है?', en: 'Who answers my questions?' },
+    a: {
+      hi: 'जवाब आपकी अपनी कुंडली से बनता है। ज्योतिषी आपकी जन्म कुंडली, अभी चल रही दशा, नौ ग्रहों का गोचर और साढ़ेसाती की तारीखें देखकर बताता है — कोई तैयार लेख कॉपी नहीं किया जाता। और जो बात आपकी कुंडली में है ही नहीं, उसके लिए साफ़ मना कर दिया जाता है, चाहे आपने खुद वही क्यों न कहा हो।',
+      en: 'The answer is built from your own chart. The astrologer looks at your birth chart, the period you are running, where the nine planets are moving and the dates of your Sade Sati — nothing is copied from a ready-made article. And if something simply is not in your chart, you are told so plainly, even when you were the one who said it.',
     },
   },
   {
     id: 'privacy',
-    q: { hi: 'मेरा जन्म विवरण निजी रहता है?', en: 'Is my birth data private?' },
+    q: { hi: 'मेरा जन्म विवरण सुरक्षित है?', en: 'Are my birth details safe?' },
     a: {
-      hi: 'आपकी जन्म तिथि, समय और स्थान का उपयोग केवल आपकी कुंडली और आपके पाठ बनाने के लिए होता है। यही जानकारी ज्योतिषी के उत्तर का आधार भी बनती है। इसे बेचा नहीं जाता।',
-      en: 'Your date, time and place of birth are used only to compute your chart and your readings. That same data is what grounds the astrologer’s answers. It is not sold.',
+      hi: 'आपकी जन्म तारीख़, समय और जगह सिर्फ़ आपकी कुंडली बनाने और आपके पाठ तैयार करने के काम आती है। यही जानकारी ज्योतिषी के जवाब का आधार भी बनती है। इसे न बेचा जाता है, न विज्ञापन के लिए किसी और को दिया जाता है।',
+      en: 'Your date, time and place of birth are used only to work out your chart and prepare your readings. That same information is what the astrologer’s answers rest on. It is never sold, and never handed to anyone so you can be advertised to.',
     },
   },
   {
     id: 'offline',
-    q: { hi: 'क्या यह ऑफ़लाइन चलता है?', en: 'Does it work offline?' },
+    q: { hi: 'क्या यह इंटरनेट के बिना चलेगा?', en: 'Does it work without internet?' },
     a: {
-      hi: 'सीधी बात: ज़्यादातर नहीं। पंचांग, कुंडली, राशिफल और ज्योतिषी के उत्तर हर बार ताज़ा गणना से बनते हैं, इसलिए इनके लिए इंटरनेट चाहिए। ऑडियो भी इंटरनेट से चलता है।',
-      en: 'Plainly: mostly no. The panchang, charts, rashifal and the astrologer’s answers are computed fresh each time, so they need a connection. Audio streams as well.',
+      hi: 'सीधी बात — ज़्यादातर नहीं। पंचांग, कुंडली, राशिफल और ज्योतिषी के जवाब हर बार उसी वक़्त गिने जाते हैं, इसलिए इनके लिए इंटरनेट चाहिए। आरती, भजन और कथा भी इंटरनेट से ही चलते हैं।',
+      en: 'Plainly — mostly no. The panchang, your chart, the rashifal and the astrologer’s answers are worked out fresh each time, so they need a connection. The aartis, bhajans and kathas stream as well.',
     },
   },
   {
     id: 'languages',
-    q: { hi: 'कौन सी भाषाएँ मिलती हैं?', en: 'Which languages does it speak?' },
+    q: { hi: 'ऐप किस भाषा में है?', en: 'What language is the app in?' },
     a: {
-      hi: 'हिंदी और English — पूरा ऐप, दोनों भाषाओं में। शास्त्र संस्कृत मूल पाठ के साथ आते हैं, और कई ग्रंथों का हिंदी अर्थ भी साथ रहता है।',
-      en: 'Hindi and English, across the whole app. The scriptures carry their Sanskrit original, and many texts also carry the meaning in Hindi.',
+      hi: 'पूरा ऐप हिंदी और English दोनों में है — एक बटन दबाइए, भाषा बदल जाती है। शास्त्र संस्कृत में जैसे हैं वैसे ही रहते हैं, और कई ग्रंथों के साथ उनका हिंदी अर्थ भी मिलता है।',
+      en: 'The whole app works in both Hindi and English — one tap switches it. The scriptures stay in their original Sanskrit, and many of them come with the meaning in Hindi alongside.',
     },
   },
   {
     id: 'pricing',
-    q: { hi: 'क्या यह मुफ़्त है? प्रीमियम में क्या है?', en: 'Is it free? What is premium?' },
+    q: { hi: 'क्या यह मुफ़्त है?', en: 'Is it free?' },
     a: {
-      hi: 'ऐप डाउनलोड करने और शुरू करने का कोई शुल्क नहीं है। गहरे विश्लेषण के लिए योजनाएँ हैं, जिनकी कीमत पहले से साफ़ दिखती है — कोई छिपा शुल्क नहीं, कोई अचानक कटौती नहीं।',
-      en: 'There is no charge to download the app and get started. Deeper analysis sits behind plans whose price is shown up front — no hidden charges, no surprise deductions.',
+      hi: 'ऐप डाउनलोड करने और शुरू करने के पैसे नहीं लगते। गहरे विश्लेषण के लिए प्लान हैं, जिनकी कीमत पहले ही साफ़ दिख जाती है — कोई छिपा शुल्क नहीं, और अपने-आप कुछ नहीं कटता।',
+      en: 'Downloading the app and getting started costs nothing. Deeper analysis sits behind plans whose price you can see before you decide — no hidden charges, and nothing is deducted on its own.',
     },
   },
   {
     id: 'sources',
-    q: { hi: 'शास्त्र सामग्री कहाँ से आती है?', en: 'Where does the scripture content come from?' },
+    q: { hi: 'ये ग्रंथ कहाँ से लिए गए हैं?', en: 'Where do the scriptures come from?' },
     a: {
-      hi: 'सार्वजनिक रूप से उपलब्ध पारंपरिक संस्करणों से। संस्कृत मूल पाठ जैसा है वैसा रखा गया है; जहाँ सरल हिंदी कथा या अर्थ जोड़ा गया है, वह मूल के साथ अलग से दिखता है — उसकी जगह नहीं लेता।',
-      en: 'From publicly available traditional editions. The Sanskrit original is kept as it is; where a simple Hindi katha or meaning has been added, it sits beside the original rather than replacing it.',
+      hi: 'सार्वजनिक रूप से उपलब्ध पारंपरिक संस्करणों से। संस्कृत मूल पाठ जैसा का तैसा रखा गया है। जहाँ सरल हिंदी में कथा या अर्थ जोड़ा गया है, वह मूल पाठ के साथ अलग से दिखता है — उसकी जगह नहीं लेता।',
+      en: 'From traditional editions that are publicly available. The Sanskrit original is kept exactly as it is. Where a simple Hindi katha or meaning has been added, it sits beside the original rather than replacing it.',
     },
   },
   {
     id: 'partial',
     q: {
-      hi: 'कुछ पुराणों में कम अध्याय क्यों दिखते हैं?',
-      en: 'Why do some Puranas show fewer chapters?',
+      hi: 'कुछ पुराणों में कम अध्याय क्यों हैं?',
+      en: 'Why do some Puranas have fewer chapters?',
     },
     a: {
-      hi: '18 में से 16 पुराण पूरे पाठ के साथ हैं। भविष्य पुराण और लिङ्ग पुराण अभी आंशिक हैं, क्योंकि इनका पूरा मशीन-पठनीय संस्करण कहीं उपलब्ध नहीं है। ऐप के भीतर भी इन्हें आंशिक ही लिखा गया है — गिनती बढ़ाकर नहीं दिखाई गई।',
-      en: '16 of the 18 ship as complete texts. The Bhavishya and Linga Puranas are still partial, because no complete machine-readable source exists for them anywhere. They are labelled partial inside the app too — the counts are never padded.',
+      hi: '18 में से 16 पुराण पूरे हैं। भविष्य पुराण और लिङ्ग पुराण अभी अधूरे हैं, क्योंकि इनका पूरा डिजिटल पाठ कहीं मिलता ही नहीं। हमने गिनती बढ़ाकर नहीं दिखाई — ऐप के भीतर भी इन पर "आंशिक" लिखा है। जिस दिन पूरा पाठ मिलेगा, जोड़ दिया जाएगा।',
+      en: '16 of the 18 are complete. The Bhavishya and Linga Puranas are still partial, because no complete digital text of them exists anywhere. We have not padded the counts — inside the app they are labelled partial too. The day a complete text turns up, it goes in.',
     },
   },
   {
     id: 'get',
     q: { hi: 'ऐप कैसे मिलेगा?', en: 'How do I get the app?' },
     a: {
-      hi: 'अभी APK सीधे डाउनलोड कर सकते हैं — नीचे बटन दिया गया है। Play Store पर जल्द आ रहा है।',
+      hi: 'अभी APK सीधे डाउनलोड कर सकते हैं — बटन नीचे ही है। Play Store पर जल्द आ रहा है।',
       en: 'For now you can download the APK directly — the button is just below. Play Store is coming soon.',
     },
   },
@@ -101,8 +109,8 @@ export function Faq() {
           </h2>
           <p className="syj-sub">
             {hi
-              ? 'सीधे जवाब — जो नहीं है, उसके बारे में भी साफ़ लिखा है।'
-              : 'Straight answers — including about the things the app does not do.'}
+              ? 'सीधे जवाब — जो ऐप नहीं करता, वह भी साफ़-साफ़ लिखा है।'
+              : 'Straight answers — including the things the app does not do.'}
           </p>
         </div>
 
