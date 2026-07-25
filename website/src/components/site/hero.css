@@ -260,12 +260,13 @@ body {
   pointer-events: none;
   background: radial-gradient(
     124% 96% at 50% 44%,
-    transparent 40%,
-    color-mix(in srgb, var(--sy-bg) 82%, transparent) 100%
+    transparent 48%,
+    color-mix(in srgb, var(--sy-bg) 62%, transparent) 100%
   );
 }
 
-/* Legibility scrim: strongest where the headline sits. */
+/* Legibility scrim: sits *behind* copy (grid is z-index 2), softens the mandala
+   under the headline without washing the type itself. */
 .syh__veil {
   position: absolute;
   inset: 0;
@@ -273,10 +274,10 @@ body {
   pointer-events: none;
   background: linear-gradient(
     93deg,
-    color-mix(in srgb, var(--sy-bg) 88%, transparent) 0%,
-    color-mix(in srgb, var(--sy-bg) 66%, transparent) 26%,
-    color-mix(in srgb, var(--sy-bg) 16%, transparent) 54%,
-    transparent 74%
+    color-mix(in srgb, var(--sy-bg) 58%, transparent) 0%,
+    color-mix(in srgb, var(--sy-bg) 34%, transparent) 30%,
+    color-mix(in srgb, var(--sy-bg) 10%, transparent) 56%,
+    transparent 78%
   );
 }
 /* On one column the yantra sits *behind* the copy, so the scrim runs
@@ -285,10 +286,10 @@ body {
   .syh__veil {
     background: linear-gradient(
       180deg,
-      color-mix(in srgb, var(--sy-bg) 30%, transparent) 0%,
-      color-mix(in srgb, var(--sy-bg) 66%, transparent) 34%,
-      color-mix(in srgb, var(--sy-bg) 58%, transparent) 66%,
-      color-mix(in srgb, var(--sy-bg) 24%, transparent) 100%
+      color-mix(in srgb, var(--sy-bg) 18%, transparent) 0%,
+      color-mix(in srgb, var(--sy-bg) 42%, transparent) 36%,
+      color-mix(in srgb, var(--sy-bg) 36%, transparent) 68%,
+      color-mix(in srgb, var(--sy-bg) 14%, transparent) 100%
     );
   }
 }
@@ -432,6 +433,8 @@ body {
   }
 }
 .syh__grid {
+  position: relative;
+  z-index: 2;
   display: grid;
   gap: clamp(26px, 4vw, 58px);
   align-items: center;
@@ -466,6 +469,7 @@ body {
   letter-spacing: -0.022em;
   color: var(--sy-ink);
   text-wrap: balance;
+  text-shadow: 0 10px 36px rgba(7, 7, 12, 0.42);
 }
 .syh__title:lang(hi) {
   font-family: var(--sy-font-deva);
@@ -486,7 +490,7 @@ body {
   max-width: 44ch;
   font-size: clamp(0.945rem, min(1.12vw, 1.95vh), 1.115rem);
   line-height: 1.63;
-  color: var(--sy-ink-soft);
+  color: color-mix(in srgb, var(--sy-ink) 88%, var(--sy-ink-soft));
   text-wrap: pretty;
 }
 
@@ -517,11 +521,11 @@ body {
   gap: 0.5rem;
   padding: 0.44rem 0.85rem;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--sy-gold-2) 22%, transparent);
-  background: color-mix(in srgb, var(--sy-ink) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--sy-gold-2) 34%, transparent);
+  background: color-mix(in srgb, var(--sy-bg) 48%, transparent);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  color: var(--sy-ink-soft);
+  color: color-mix(in srgb, var(--sy-ink) 78%, var(--sy-ink-soft));
   font-size: 0.775rem;
   font-weight: 600;
   line-height: 1.35;
@@ -714,8 +718,15 @@ body {
 .syh__phonewrap {
   position: relative;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
+  min-width: 0;
+}
+@media (min-width: 901px) {
+  .syh__phonewrap {
+    align-items: flex-end;
+  }
 }
 .syh__bloom {
   position: absolute;
@@ -822,36 +833,39 @@ body {
   position: absolute;
   inset: 0;
   z-index: 0;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   pointer-events: none;
-  overflow: hidden;
+  overflow: visible;
 }
 .syh__mandala-pos {
-  /* sized against the smaller of width/height so the figure is always framed
-     whole — never cropped on a short laptop, never tiny on a wide one */
-  width: min(78vh, 62vw, 760px);
+  /* vmin keeps the bloom square and equally balanced in vh + vw */
+  width: min(76vmin, 760px);
   aspect-ratio: 1;
   display: grid;
   place-items: center;
-  /* sits behind the copy on wide screens, drifts right so the text column
-     stays over the calmer part of the figure */
-  transform: translateX(14%);
-  opacity: 0.72;
+  /* separate from framer-motion scale on transform */
+  translate: clamp(8px, 2vw, 32px) clamp(14px, 4vh, 52px);
+  opacity: 0.88;
+  --syh-bloom-1: #fce8a8;
+  --syh-bloom-2: #e9b850;
+  --syh-bloom-3: #a8770f;
 }
 [data-sy-theme='light'] .syh__mandala-pos {
-  opacity: 0.55;
+  opacity: 0.68;
+  --syh-bloom-1: #d9a63a;
+  --syh-bloom-2: #b87f1a;
+  --syh-bloom-3: #7c4a03;
 }
-@media (max-width: 1100px) {
+@media (max-width: 760px) {
   .syh__mandala-pos {
-    transform: none;
-    opacity: 0.5;
+    width: min(88vmin, 520px);
+    translate: clamp(4px, 1.5vw, 18px) clamp(12px, 3.5vh, 40px);
+    opacity: 0.62;
   }
-}
-@media (max-width: 700px) {
-  .syh__mandala-pos {
-    width: min(92vw, 62vh);
-    opacity: 0.4;
+  [data-sy-theme='light'] .syh__mandala-pos {
+    opacity: 0.52;
   }
 }
 
@@ -884,6 +898,12 @@ body {
   max-width: 32ch;
   margin-inline: auto;
   animation: syh-capin 0.5s ease both;
+}
+@media (min-width: 901px) {
+  .syh__caption {
+    text-align: right;
+    margin-inline: 0;
+  }
 }
 @keyframes syh-capin {
   from { opacity: 0; transform: translateY(6px); }
@@ -991,53 +1011,24 @@ body {
   .syh__caption { animation: none; }
 }
 
-/* ── The stage (right column): phone + caption + tabs ────────────────────────
-   `.syh__stage` still carried the PREVIOUS design's rules — `position:absolute;
-   inset:0; pointer-events:none` — from when it was the mandala backdrop. In the
-   new markup it is the right-hand column, so the phone floated over the
-   headline and the tabs could not even be clicked. It is a normal column now. */
+/* ── The stage (right column): phone + caption ─────────────────────────────── */
 .syh__stage {
   position: relative;
   inset: auto;
   z-index: 2;
   pointer-events: auto;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: clamp(14px, 2vw, 28px);
+  justify-content: center;
   min-width: 0;
 }
-.syh__stage > .syh__phonewrap {
-  grid-column: 1;
-  grid-row: 1;
-}
-.syh__stage > .syh__caption {
-  grid-column: 1;
-  grid-row: 2;
-}
-.syh__stage > .syh-tabs--rail {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-}
-.syh__stage > .syh-tabs--row {
-  grid-column: 1 / -1;
-  grid-row: 3;
-}
-
-/* Below the two-column breakpoint the stage stacks: phone, caption, chip row. */
-@media (max-width: 1100px) {
+@media (min-width: 901px) {
   .syh__stage {
-    grid-template-columns: minmax(0, 1fr);
-    justify-items: center;
-  }
-  .syh__stage > .syh__phonewrap,
-  .syh__stage > .syh__caption,
-  .syh__stage > .syh-tabs--row {
-    grid-column: 1;
-  }
-  .syh__stage > .syh-tabs--row {
-    grid-row: 3;
-    max-width: 100%;
+    align-items: flex-end;
+    justify-content: center;
+    justify-self: end;
+    width: 100%;
   }
 }
 
@@ -1048,15 +1039,13 @@ body {
    sits under the phone instead of competing with it for the same row. */
 @media (min-width: 901px) {
   .syh__grid {
-    grid-template-columns: minmax(0, 1fr) minmax(440px, 0.92fr);
+    grid-template-columns: minmax(0, 1.02fr) minmax(300px, 0.98fr);
+    gap: clamp(20px, 3vw, 48px);
   }
 }
 .syh__phonewrap {
   flex-direction: column;
   min-width: 0;
-}
-.syh-phone {
-  flex: 0 0 auto;
 }
 .syh-tabs--rail {
   min-width: 168px;
@@ -1082,17 +1071,6 @@ body {
   .syh__stage {
     display: none;
   }
-  .syh__mandala-pos {
-    opacity: 0.55;
-  }
-}
-
-/* 3 · The figure was drawn too faintly to read as the centrepiece. */
-.syh__mandala-pos {
-  opacity: 0.92;
-}
-[data-sy-theme='light'] .syh__mandala-pos {
-  opacity: 0.7;
 }
 
 /* The scaling wrapper: a plain element framer-motion never writes to, so the
@@ -1122,16 +1100,6 @@ body {
 /* ══ The flower ══════════════════════════════════════════════════════════════
    Replaces the old yantra figure: no square frame, no triangles — a
    rose-window bloom of petals that draws itself and then keeps living. */
-.syh__mandala-pos {
-  --syh-bloom-1: #fce8a8;
-  --syh-bloom-2: #e9b850;
-  --syh-bloom-3: #a8770f;
-}
-[data-sy-theme='light'] .syh__mandala-pos {
-  --syh-bloom-1: #d9a63a;
-  --syh-bloom-2: #b87f1a;
-  --syh-bloom-3: #7c4a03;
-}
 .syh-bloom {
   width: 100%;
   height: 100%;
@@ -1197,3 +1165,15 @@ body {
     --syh-phone-h: min(72vh, 560px);
   }
 }
+
+
+/* ── Bloom motion ────────────────────────────────────────────────────────────
+   Five rings now, plus the point ring and the travelling light. Rotations use
+   user-unit origins (SVG children default to transform-box: view-box), so the
+   rings turn about the flower's own centre, never the page's. */
+.syh-bloom.is-live .syh-bloom__ring--4 { animation: syh-spin 80s linear infinite; }
+.syh-bloom.is-live .syh-bloom__points { animation: syh-spin-r 300s linear infinite; }
+/* the light that circles the flower */
+.syh-bloom.is-live .syh-bloom__sweep { animation: syh-spin 14s linear infinite; }
+.syh-bloom__hi { mix-blend-mode: screen; }
+[data-sy-theme='light'] .syh-bloom__hi { mix-blend-mode: multiply; opacity: 0.5; }
