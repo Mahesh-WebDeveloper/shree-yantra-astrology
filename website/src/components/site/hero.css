@@ -1177,3 +1177,22 @@ body {
 .syh-bloom.is-live .syh-bloom__sweep { animation: syh-spin 14s linear infinite; }
 .syh-bloom__hi { mix-blend-mode: screen; }
 [data-sy-theme='light'] .syh-bloom__hi { mix-blend-mode: multiply; opacity: 0.5; }
+
+
+/* ── स्वस्तिक चक्र ────────────────────────────────────────────────────────────
+   The wheel turns; the swastika inside it does not. Light mode needs heavier,
+   deeper ink — a gold tuned for black is nearly invisible on cream — so every
+   stroke width is multiplied by `--syh-ink-boost` at once. */
+.syh-bloom.is-live .syh-bloom__ring--0 { animation: syh-spin 150s linear infinite; }
+.syh-bloom.is-live .syh-bloom__points { animation: syh-spin-r 320s linear infinite; }
+.syh-bloom.is-live .syh-bloom__sweep { animation: syh-spin 13s linear infinite; }
+.syh-bloom__swastik { transform-origin: 120px 120px; }
+
+[data-sy-theme='light'] .syh__mandala-pos {
+  --syh-bloom-1: #b8801a;
+  --syh-bloom-2: #8f5f0c;
+  --syh-bloom-3: #5c3a06;
+  --syh-ink-boost: 1.85;
+  opacity: 0.95;
+}
+[data-sy-theme='light'] .syh-bloom__hi { mix-blend-mode: multiply; opacity: 0.35; }
