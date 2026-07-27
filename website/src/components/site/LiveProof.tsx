@@ -145,7 +145,7 @@ export function LiveProof() {
     >
       <div className="sy-container">
         <div data-sy-reveal="0">
-          <p className="sy-eyebrow">{t('आज का पंचांग', "Today's panchang")}</p>
+          <p className="sy-eyebrow">{t('सबसे पहले, सबूत', 'First, the proof')}</p>
           <h2 id="sy-live-title" className="sy-h2 mt-5">
             {t(
               'आज का पंचांग — अभी, आपके शहर के हिसाब से',

@@ -107,23 +107,90 @@ const TRUST: Bi[] = [
   { hi: 'हिंदी और English', en: 'Hindi and English' },
 ]
 
+/* ── The headline's turning word ──────────────────────────────
+   One slot of the headline rotates through what the app actually
+   computes. The Hindi slot carries its own possessive because the
+   words disagree in gender (आपका पंचांग / आपकी कुंडली); the comma
+   travels inside the slot so the reserved width ends the line and
+   nothing ever reflows. */
+
+const SWAP_WORDS: Bi[] = [
+  { hi: 'आपका पंचांग,', en: 'panchang,' },
+  { hi: 'आपकी कुंडली,', en: 'kundli,' },
+  { hi: 'आपका मुहूर्त,', en: 'muhurat,' },
+  { hi: 'आपका राशिफल,', en: 'rashifal,' },
+  { hi: 'आपका चौघड़िया,', en: 'choghadiya,' },
+]
+
+const SWAP_MS = 2800
+
 /* ── Motion ───────────────────────────────────────────────── */
 
 const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1]
 
 const GROUP: Variants = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.09, delayChildren: 0.14 } },
+  show: { transition: { staggerChildren: 0.07, delayChildren: 0.08 } },
 }
 
 const RISE: Variants = {
-  hidden: { opacity: 0, y: 22, filter: 'blur(7px)' },
+  hidden: { opacity: 0, y: 18, filter: 'blur(7px)' },
   show: {
     opacity: 1,
     y: 0,
     filter: 'blur(0px)',
-    transition: { duration: 0.9, ease: EASE },
+    transition: { duration: 0.85, ease: EASE },
   },
+}
+
+/**
+ * The rotating headline word. All candidate words are laid out invisibly in
+ * the same grid cell, so the slot is always exactly as wide as its widest
+ * word — the swap can never reflow the headline. With reduced motion the
+ * first word simply stands.
+ */
+function WordSwap({ words, active, reduced }: { words: string[]; active: boolean; reduced: boolean }) {
+  const [i, setI] = useState(0)
+  useEffect(() => {
+    if (!active || reduced) return
+    const id = window.setInterval(() => setI((p) => (p + 1) % words.length), SWAP_MS)
+    return () => window.clearInterval(id)
+  }, [active, reduced, words.length])
+
+  const word = words[reduced ? 0 : i % words.length]
+
+  return (
+    <span className="syh__swap">
+      {words.map((w) => (
+        <span key={w} className="syh__swap-size" aria-hidden>
+          {w}
+        </span>
+      ))}
+      {reduced ? (
+        <span className="syh__swap-word">
+          <span className="sy-gold-text">{word}</span>
+        </span>
+      ) : (
+        <AnimatePresence initial={false}>
+          {/* sync mode: the old word is still sliding out of the top of the
+              clip while the new one rises in — the slot is never empty.
+              The gradient lives on an inner span: painting `background-clip:
+              text` on the element the transform composites breaks the clip in
+              Chromium and the gradient floods the whole box. */}
+          <motion.span
+            key={word}
+            className="syh__swap-word"
+            initial={{ y: '1.1em', opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: '-1.1em', opacity: 0 }}
+            transition={{ duration: 0.55, ease: EASE }}
+          >
+            <span className="sy-gold-text">{word}</span>
+          </motion.span>
+        </AnimatePresence>
+      )}
+    </span>
+  )
 }
 
 /** Deterministic drifting motes — no Math.random, so renders stay stable. */
@@ -164,6 +231,7 @@ export function Hero() {
   const [index, setIndex] = useState(0)
   const [token, setToken] = useState(0) // bumped on every change → restarts the screen
   const [hovering, setHovering] = useState(false)
+  const [titleHover, setTitleHover] = useState(false) // pauses the word swap
   const [awake, setAwake] = useState(true)
 
   // Pause when the tab is in the background or the hero has scrolled away.
@@ -196,10 +264,13 @@ export function Hero() {
     return () => window.clearTimeout(id)
   }, [running, index, token])
 
-  /* The mandala sinks and dims as the page moves on. */
+  /* The mandala sinks and dims as the page moves on; the copy and the phone
+     lag it by a few pixels, so the whole opening has depth on the way out. */
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start start', 'end start'] })
   const mandalaY = useTransform(scrollYProgress, [0, 1], [0, 90])
   const mandalaFade = useTransform(scrollYProgress, [0, 0.9], [1, 0.12])
+  const copyY = useTransform(scrollYProgress, [0, 1], [0, 44])
+  const stageY = useTransform(scrollYProgress, [0, 1], [0, 26])
 
   const screen = SCREENS[index]
   const Live = screen.Comp
@@ -245,34 +316,45 @@ export function Hero() {
 
       <div className="sy-container syh__grid">
         {/* ── Copy ───────────────────────────────────────────── */}
-        <motion.div className="syh__copy" variants={GROUP} initial={initial} animate="show">
+        <motion.div
+          className="syh__copy"
+          variants={GROUP}
+          initial={initial}
+          animate="show"
+          style={reduced ? undefined : { y: copyY }}
+        >
+          <span className="syh__bleed" aria-hidden />
           <motion.p variants={RISE} className="sy-eyebrow syh__eyebrow" lang={hi ? 'hi' : 'en'}>
-            {t(
-              'पंचांग · कुंडली · मुहूर्त · पुस्तकालय',
-              'Panchang · Kundli · Muhurat · Library',
-            )}
+            {t('पंडित जी की सटीक गणना', 'The pandit’s own calculations')}
           </motion.p>
 
-          <h1 id="syh-title" className="syh__title" lang={hi ? 'hi' : 'en'}>
-            {hi ? (
-              <>
-                <motion.span className="syh__line" variants={RISE}>
-                  पंडित जी की गणना,
-                </motion.span>
-                <motion.span className="syh__line" variants={RISE}>
-                  <span className="sy-gold-text">अब आपके फ़ोन में</span>
-                </motion.span>
-              </>
-            ) : (
-              <>
-                <motion.span className="syh__line" variants={RISE}>
-                  The pandit&rsquo;s own calculations,
-                </motion.span>
-                <motion.span className="syh__line" variants={RISE}>
-                  <span className="sy-gold-text">now on your phone</span>
-                </motion.span>
-              </>
-            )}
+          <h1
+            id="syh-title"
+            className="syh__title"
+            lang={hi ? 'hi' : 'en'}
+            onPointerEnter={() => setTitleHover(true)}
+            onPointerLeave={() => setTitleHover(false)}
+          >
+            {/* screen readers get the whole sentence once, not a slot machine */}
+            <span className="sr-only">
+              {t(
+                'आपका पंचांग, कुंडली, मुहूर्त और राशिफल — बिल्कुल सटीक, अब आपके फ़ोन में',
+                'Your panchang, kundli, muhurat and rashifal — exactly right, now on your phone',
+              )}
+            </span>
+            <span aria-hidden>
+              <motion.span className="syh__line" variants={RISE}>
+                {hi ? null : <>Your&nbsp;</>}
+                <WordSwap
+                  words={SWAP_WORDS.map((w) => (hi ? w.hi : w.en))}
+                  active={play && !titleHover}
+                  reduced={!!reduced}
+                />
+              </motion.span>
+              <motion.span className="syh__line" variants={RISE}>
+                {t('बिल्कुल सटीक — अब आपके फ़ोन में', 'exactly right — now on your phone')}
+              </motion.span>
+            </span>
           </h1>
 
           <motion.p className="syh__sub" variants={RISE}>
@@ -334,15 +416,18 @@ export function Hero() {
         {/* ── The app, alive ─────────────────────────────────── */}
         <motion.div
           className="syh__stage"
-          initial={reduced ? false : { opacity: 0, y: 34 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.1, delay: 0.34, ease: EASE }}
+          style={reduced ? undefined : { y: stageY }}
           onPointerEnter={() => setHovering(true)}
           onPointerLeave={() => setHovering(false)}
           onFocusCapture={() => setHovering(true)}
           onBlurCapture={() => setHovering(false)}
         >
-          <div className="syh__phonewrap">
+          <motion.div
+            className="syh__phonewrap"
+            initial={reduced ? false : { opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1.05, delay: 0.28, ease: EASE }}
+          >
             <span className="syh__bloom" aria-hidden />
             <div className={`syh-phone${reduced ? '' : ' is-float'}`}>
               <div className="syh-phone__fit">
@@ -392,12 +477,27 @@ export function Hero() {
             <p className="syh__caption" key={`cap-${screen.id}`}>
               {t(screen.caption.hi, screen.caption.en)}
             </p>
-          </div>
+          </motion.div>
 
           {/* The screen switcher is gone — the phone simply plays through the
               screens on its own. Anyone who wants to steer them has the full
               section right below. */}
         </motion.div>
+      </div>
+
+      {/* ── Scroll cue ─────────────────────────────────────────
+          Fills the hero's foot (the phone is hidden on small screens, so the
+          composition there is copy + chakra + this quiet invitation). */}
+      <div className="syh__foot">
+        <button
+          type="button"
+          className="syh__cue"
+          lang={hi ? 'hi' : 'en'}
+          onClick={() => scrollToHash('#features')}
+        >
+          <span>{t('और देखिए', 'Scroll')}</span>
+          <span className="syh__cue-rail" aria-hidden />
+        </button>
       </div>
     </section>
   )

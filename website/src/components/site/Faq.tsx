@@ -1,6 +1,7 @@
 import { useId, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useLang } from '@/i18n/LangProvider'
+import { useRevealChildren } from './hooks/useSiteMotion'
 import './sections.css'
 
 type Item = { id: string; q: { hi: string; en: string }; a: { hi: string; en: string } }
@@ -87,14 +88,15 @@ export function Faq() {
   const { hi } = useLang()
   const reduce = useReducedMotion()
   const uid = useId()
+  const revealRef = useRevealChildren<HTMLElement>()
   const [open, setOpen] = useState<string | null>(ITEMS[0].id)
 
   const duration = reduce ? 0 : 0.34
 
   return (
-    <section id="faq" className="syj sy-section syj-faq" aria-labelledby="syj-faq-h">
+    <section id="faq" className="syj sy-section syj-faq" aria-labelledby="syj-faq-h" ref={revealRef}>
       <div className="sy-container syj-faq__layout">
-        <div className="syj-faq__intro">
+        <div className="syj-faq__intro" data-sy-reveal="0">
           <p className="syj-kicker">{hi ? 'सवाल-जवाब' : 'Questions'}</p>
           <h2 id="syj-faq-h" className="syj-title">
             {hi ? (
@@ -115,7 +117,7 @@ export function Faq() {
         </div>
 
         <div className="syj-faq__list">
-          {ITEMS.map((item) => {
+          {ITEMS.map((item, i) => {
             const isOpen = open === item.id
             const btnId = `${uid}-${item.id}-btn`
             const panelId = `${uid}-${item.id}-panel`
@@ -123,6 +125,7 @@ export function Faq() {
               <div
                 className={`syj-faq__item${isOpen ? ' is-open' : ''}`}
                 key={item.id}
+                data-sy-reveal={String(Math.min(40 + i * 45, 360))}
               >
                 <h3 style={{ margin: 0 }}>
                   <button

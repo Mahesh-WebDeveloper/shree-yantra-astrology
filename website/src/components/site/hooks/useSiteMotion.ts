@@ -77,6 +77,19 @@ export function useRevealChildren<T extends HTMLElement>() {
           const delay = Number(el.dataset.syReveal) || 0
           el.style.animationDelay = `${delay}ms`
           el.classList.add('is-in')
+          // Once the entrance finishes, drop the animating class so the
+          // element returns to its natural styles. A `forwards` fill would
+          // otherwise pin `transform: none` for ever and defeat any later
+          // transform (tilt cards, hover lifts).
+          el.addEventListener(
+            'animationend',
+            (ev) => {
+              if (ev.target !== el) return
+              el.classList.remove('sy-reveal')
+              el.style.animationDelay = ''
+            },
+            { once: true },
+          )
           io.unobserve(el)
         })
       },
@@ -125,34 +138,40 @@ export function scrollToHash(hash: string, offset = 76) {
   const id = hash.replace(/^#/, '')
   const el = document.getElementById(id)
   if (!el) return false
-  tweenScrollTo(Math.max(0, el.getBoundingClientRect().top + window.scrollY - offset))
+  // Re-measure every frame: below-fold sections may lazily lay out
+  // (content-visibility, images) while the tween is running, which would
+  // otherwise leave us short of — or past — the target.
+  tweenScrollTo(() => Math.max(0, el.getBoundingClientRect().top + window.scrollY - offset))
   return true
 }
 
 /** Smooth scroll back to the very top of the page. */
 export function scrollToTop() {
-  tweenScrollTo(0)
+  tweenScrollTo(() => 0)
 }
 
-function tweenScrollTo(targetY: number) {
+function tweenScrollTo(getTargetY: () => number) {
   const reduce =
     typeof window.matchMedia === 'function' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
+  const clamp = (y: number) =>
+    Math.max(0, Math.min(y, document.documentElement.scrollHeight - window.innerHeight))
+
   if (reduce) {
-    window.scrollTo(0, targetY)
+    window.scrollTo(0, clamp(getTargetY()))
     return
   }
 
   const startY = window.scrollY
-  const delta = targetY - startY
-  const duration = Math.min(1200, Math.max(420, Math.abs(delta) * 0.45))
+  const duration = Math.min(1200, Math.max(420, Math.abs(getTargetY() - startY) * 0.45))
   const start = performance.now()
 
   const step = (now: number) => {
     const t = Math.min(1, (now - start) / duration)
     const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
-    window.scrollTo(0, startY + delta * eased)
+    const targetY = clamp(getTargetY())
+    window.scrollTo(0, startY + (targetY - startY) * eased)
     if (t < 1) requestAnimationFrame(step)
   }
   requestAnimationFrame(step)

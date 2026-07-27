@@ -1,6 +1,8 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { useLang } from '@/i18n/LangProvider'
+import { useRevealChildren } from './hooks/useSiteMotion'
 import './appinaction.css'
+import './sections.css'
 
 /**
  * The complete map of what the app does — every service, grouped, in plain
@@ -390,12 +392,13 @@ const HIGHLIGHTS = [
 
 export function ServicesUniverse() {
   const { hi } = useLang()
+  const revealRef = useRevealChildren<HTMLElement>()
 
   return (
-    <section id="services" className="sy-section syu" aria-labelledby="syu-h">
+    <section id="services" className="sy-section syu" aria-labelledby="syu-h" ref={revealRef}>
       <span className="syu__bg" aria-hidden />
       <div className="sy-container">
-        <header className="syu__head">
+        <header className="syu__head" data-sy-reveal="0">
           <p className="sy-eyebrow sy-eyebrow--center">{hi ? 'पूरी सूची' : 'The full map'}</p>
           <h2 id="syu-h" className="sy-h2">
             {hi ? (
@@ -416,8 +419,8 @@ export function ServicesUniverse() {
         </header>
 
         <ul className="syu__stats">
-          {HIGHLIGHTS.map((h) => (
-            <li key={h.en}>
+          {HIGHLIGHTS.map((h, i) => (
+            <li key={h.en} data-sy-reveal={String(60 + i * 60)}>
               <b className="sy-num">{h.n}</b>
               <span>{hi ? h.hi : h.en}</span>
             </li>
@@ -425,11 +428,12 @@ export function ServicesUniverse() {
         </ul>
 
         <div className="syu__grid">
-          {GROUPS.map((group) => (
+          {GROUPS.map((group, gi) => (
             <section
               key={group.id}
               className="syu-group"
               style={{ '--acc': group.accent } as CSSProperties}
+              data-sy-reveal={String(60 + gi * 70)}
             >
               <span className="syu-group__hair" aria-hidden />
               <header className="syu-group__top">

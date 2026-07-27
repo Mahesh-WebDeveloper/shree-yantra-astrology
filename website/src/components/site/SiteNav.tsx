@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ShreeYantraLogo } from '@/components/brand/ShreeYantraLogo'
 import { useLang } from '@/i18n/LangProvider'
 import { useTheme } from '@/theme/ThemeProvider'
@@ -36,6 +36,8 @@ export function SiteNav() {
   const [solid, setSolid] = useState(false)
   const [active, setActive] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement | null>(null)
+  const burgerRef = useRef<HTMLButtonElement | null>(null)
 
   useEffect(() => {
     let raf = 0
@@ -62,18 +64,43 @@ export function SiteNav() {
     }
   }, [])
 
-  // Lock the page behind the mobile menu, and close on Escape.
+  // Lock the page behind the mobile menu, close on Escape, keep focus
+  // trapped inside the dialog, and hand focus back to the burger on close.
   useEffect(() => {
     if (!menuOpen) return
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setMenuOpen(false)
+      if (e.key === 'Escape') {
+        setMenuOpen(false)
+        return
+      }
+      if (e.key !== 'Tab') return
+      const root = menuRef.current
+      if (!root) return
+      const focusables = Array.from(
+        root.querySelectorAll<HTMLElement>('a[href], button:not([disabled])'),
+      )
+      if (!focusables.length) return
+      const first = focusables[0]
+      const last = focusables[focusables.length - 1]
+      const current = document.activeElement as HTMLElement | null
+      const inside = !!current && root.contains(current)
+      if (e.shiftKey) {
+        if (!inside || current === first) {
+          e.preventDefault()
+          last.focus()
+        }
+      } else if (!inside || current === last) {
+        e.preventDefault()
+        first.focus()
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => {
       document.body.style.overflow = prev
       window.removeEventListener('keydown', onKey)
+      burgerRef.current?.focus()
     }
   }, [menuOpen])
 
@@ -165,6 +192,7 @@ export function SiteNav() {
 
             <button
               type="button"
+              ref={burgerRef}
               className="sy-nav__icon sy-nav__burger lg:hidden"
               onClick={() => setMenuOpen(true)}
               aria-label={t('मेन्यू खोलें', 'Open menu')}
@@ -180,7 +208,13 @@ export function SiteNav() {
       </header>
 
       {menuOpen && (
-        <div className="sy-menu sy-site" role="dialog" aria-modal="true" aria-label={t('मेन्यू', 'Menu')}>
+        <div
+          className="sy-menu sy-site"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('मेन्यू', 'Menu')}
+          ref={menuRef}
+        >
           <div className="sy-nav__bar">
             <span className="sy-nav__brand">
               <ShreeYantraLogo size={34} pulse={false} />

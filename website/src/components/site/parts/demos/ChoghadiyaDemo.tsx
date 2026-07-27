@@ -2,8 +2,12 @@ import { AppBar, Body, StatusBar, d, root, type DemoProps } from './chrome'
 
 /**
  * चौघड़िया — the window that is running right now fills its own progress bar,
- * the day's eight windows slide in with their quality colour, and the
+ * then the day's EIGHT windows slide in with their quality colour and the
  * "next auspicious time" line lights up at the end.
+ *
+ * Eight is not decoration: a day carries exactly eight choghadiya windows
+ * between sunrise and sunset, and showing all of them is also what carries the
+ * list down to the tab bar with no empty band under it.
  */
 
 type Tone = 'ok' | 'warn' | 'bad'
@@ -22,14 +26,16 @@ const ROWS: {
   { hi: 'काल', en: 'Kaala', from: '11:02', to: '12:44', tone: 'bad', now: true },
   { hi: 'शुभ', en: 'Shubha', from: '12:44', to: '14:25', tone: 'ok' },
   { hi: 'रोग', en: 'Roga', from: '14:25', to: '16:06', tone: 'bad' },
+  { hi: 'उद्वेग', en: 'Udvega', from: '16:06', to: '17:47', tone: 'bad' },
+  { hi: 'चर', en: 'Chara 2', from: '17:47', to: '19:29', tone: 'warn' },
 ]
 
 export function ChoghadiyaDemo({ hi, play }: DemoProps) {
   return (
-    <div className={root(play)}>
+    <div className={root(play, 'syd--chogh')}>
       <StatusBar />
       <AppBar title={hi ? 'चौघड़िया' : 'Choghadiya'} />
-      <Body>
+      <Body className="syd-c-body">
         <div className="syd-seg syd-in" style={d(0.05)}>
           <span className="is-on">{hi ? 'दिन' : 'Day'}</span>
           <span>{hi ? 'रात' : 'Night'}</span>
@@ -55,20 +61,16 @@ export function ChoghadiyaDemo({ hi, play }: DemoProps) {
           </p>
         </div>
 
-        <p className="syd-label syd-in" style={d(0.3)}>
-          {hi ? 'दिन के चौघड़िया' : 'Day windows'}
-        </p>
-
         <ul className="syd-c-list">
           {ROWS.map((r, i) => (
             <li
               className={`syd-c-row syd-in${r.now ? ' is-now' : ''}`}
               key={r.en}
               data-tone={r.tone}
-              style={d(0.42 + i * 0.13)}
+              style={d(0.4 + i * 0.1)}
             >
               <span className="syd-c-row__edge" />
-              <span className="syd-c-row__name">{hi ? r.hi : r.en}</span>
+              <span className="syd-c-row__name">{hi ? r.hi : r.en.replace(' 2', '')}</span>
               <span className="syd-c-row__time">
                 {r.from} – {r.to}
               </span>
@@ -76,7 +78,7 @@ export function ChoghadiyaDemo({ hi, play }: DemoProps) {
           ))}
         </ul>
 
-        <div className="syd-c-next syd-in" style={d(1.34)}>
+        <div className="syd-c-next syd-in" style={d(1.32)}>
           <span className="syd-c-next__k">{hi ? 'अगला शुभ समय' : 'Next auspicious window'}</span>
           <span className="syd-c-next__v">{hi ? 'शुभ · 12:44' : 'Shubha · 12:44'}</span>
         </div>

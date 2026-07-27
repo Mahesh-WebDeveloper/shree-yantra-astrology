@@ -1270,12 +1270,18 @@
   color: var(--j-gold);
   font-style: normal;
 }
-.syj-stats span {
+/* Direct child only: the CountUp span INSIDE <b> must keep the big
+   display size — the bare `span` selector was crushing the numerals. */
+.syj-stats li > span {
   color: var(--j-muted);
   font-size: 0.72rem;
   font-weight: 750;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+.syj-stats b span {
+  font: inherit;
+  color: inherit;
 }
 .syj-stats small {
   color: var(--j-muted);
@@ -2298,3 +2304,180 @@
 }
 .syj-alm__go:hover { filter: brightness(1.06); }
 .syj-alm__go:focus-visible { outline: 2px solid var(--sy-gold-1); outline-offset: 2px; }
+.syj-alm__go:active { transform: scale(0.96); }
+.syj-alm__input,
+.syj-alm__go {
+  min-height: 44px;
+}
+
+/* ============================================================
+   POLISH SWEEP — card interactions, section seams, performance
+   ============================================================ */
+
+/* ---- Section rhythm.
+   The legacy showcase stylesheet (styles/showcase.css, loaded globally)
+   also defines `.sy-section` — unlayered, so it silently beat the
+   marketing site's layered theme.css and inflated every seam to ~9vw.
+   These scoped, unlayered rules give the site back one even breath
+   between sections, and halve the doubled gap where two full sections
+   meet (the long-standing "big gap after the panchang"). ---- */
+.sy-site .sy-section {
+  padding-block: var(--sy-section-y, clamp(80px, 12vh, 140px));
+  scroll-margin-top: 84px;
+}
+.sy-site .sy-section + .sy-section {
+  padding-block-start: clamp(48px, 7vh, 88px);
+}
+
+/* ---- Services universe (visual base lives in appinaction.css;
+        these raise the interaction detail without touching it) ---- */
+.syu__grid .syu-group {
+  transition:
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.4s ease,
+    box-shadow 0.4s ease;
+}
+@media (hover: hover) {
+  .syu__grid .syu-group:hover {
+    box-shadow:
+      var(--sy-shadow),
+      0 18px 44px -30px color-mix(in srgb, var(--acc) 55%, transparent);
+  }
+  .syu__grid .syu-group:hover .syu-group__hair {
+    opacity: 1;
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--acc) 70%, transparent));
+  }
+}
+@media (hover: none) {
+  .syu__grid .syu-group:hover {
+    transform: none;
+    border-color: var(--sy-line);
+  }
+}
+#services .syu__stats li {
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.35s ease;
+}
+@media (hover: hover) {
+  #services .syu__stats li:hover {
+    transform: translateY(-2px);
+    border-color: var(--sy-line-strong);
+  }
+}
+
+/* ---- Library cards ---- */
+.syj-tilt:active .syj-book {
+  transform: scale(0.985);
+}
+@media (hover: none) {
+  .syj-tilt:hover .syj-book {
+    border-color: var(--j-line);
+    box-shadow: none;
+  }
+}
+.syj-corpus__card {
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.35s ease,
+    box-shadow 0.35s ease;
+}
+@media (hover: hover) {
+  .syj-corpus__card:hover {
+    transform: translateY(-2px);
+    border-color: var(--sy-line-strong);
+    box-shadow: 0 26px 56px -44px var(--j-glow);
+  }
+}
+.syj-stats li {
+  transition: background-color 0.3s ease;
+}
+@media (hover: hover) {
+  .syj-stats li:hover {
+    background: var(--j-card-2);
+  }
+}
+
+/* ---- Comparison rows ---- */
+@media (hover: hover) and (min-width: 901px) {
+  .syj-vs2__row:not(.syj-vs2__row--head) {
+    transition: background-color 0.3s ease;
+  }
+  .syj-vs2__row:not(.syj-vs2__row--head):hover {
+    background-color: color-mix(in srgb, var(--j-gold-2) 4.5%, transparent);
+  }
+}
+@media (hover: hover) and (max-width: 900px) {
+  .syj-vs2__row {
+    transition:
+      transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 0.35s ease;
+  }
+  .syj-vs2__row:hover {
+    transform: translateY(-2px);
+    border-color: var(--sy-line-strong);
+  }
+}
+
+/* ---- FAQ rows ---- */
+.syj-faq__item {
+  transition: background-color 0.3s ease;
+}
+@media (hover: hover) {
+  .syj-faq__item:hover {
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--j-gold-2) 4.5%, transparent),
+      transparent 78%
+    );
+  }
+}
+.syj-faq__item.is-open .syj-faq__btn strong {
+  color: var(--j-gold);
+}
+.syj-faq__sign {
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.syj-faq__btn:active .syj-faq__sign {
+  transform: scale(0.82);
+}
+.syj-faq__btn:focus-visible {
+  outline: 2px solid var(--j-gold-2);
+  outline-offset: -2px;
+  border-radius: 8px;
+}
+
+/* ---- Download CTA ---- */
+.syj-chip {
+  transition: border-color 0.3s ease;
+}
+@media (hover: hover) {
+  .syj-chip:hover {
+    border-color: var(--sy-line-strong);
+  }
+}
+
+/* ---- Performance: heavy below-fold sections skip rendering until
+        they approach the viewport. Anchor sections (#library, #faq,
+        #download) are excluded so hash-jumps land exactly. ---- */
+.syj-demo,
+.syj-why {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .syu__grid .syu-group,
+  #services .syu__stats li,
+  .syj-corpus__card,
+  .syj-vs2__row,
+  .syj-faq__sign {
+    transition: none;
+  }
+  .syu__grid .syu-group:hover,
+  #services .syu__stats li:hover,
+  .syj-corpus__card:hover,
+  .syj-vs2__row:hover {
+    transform: none;
+  }
+}

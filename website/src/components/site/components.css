@@ -153,6 +153,13 @@
 .sy-nav__link:hover::after {
   transform: scaleX(1);
 }
+/* Scroll-spy: the section currently on screen keeps its underline lit. */
+.sy-nav__link[aria-current='true'] {
+  color: var(--sy-ink);
+}
+.sy-nav__link[aria-current='true']::after {
+  transform: scaleX(1);
+}
 .sy-nav__icon {
   display: inline-flex;
   align-items: center;
@@ -207,6 +214,17 @@
   padding: 0 clamp(18px, 6vw, 40px) clamp(28px, 6vh, 48px);
   background: var(--sy-bg);
   overflow-y: auto;
+  animation: sy-menu-in 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes sy-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 .sy-menu__item {
   display: flex;
@@ -236,6 +254,9 @@
   font-variant-numeric: lining-nums tabular-nums;
 }
 @media (prefers-reduced-motion: reduce) {
+  .sy-menu {
+    animation: none;
+  }
   .sy-menu__item {
     opacity: 1;
     animation: none;
@@ -683,4 +704,55 @@
 html,
 body {
   overflow-x: clip;
+}
+
+/* ── Touch ergonomics ────────────────────────────────────────────────────────
+   On coarse pointers every small control grows an invisible ≥44px hit area
+   (a pseudo-element, so nothing moves visually), and text links gain a
+   little vertical padding. Hover-only affordances are switched off — a tap
+   should not leave a card stuck in its "hovered" pose. */
+@media (pointer: coarse) {
+  .sy-nav__icon,
+  .sy-city,
+  .sy-social {
+    position: relative;
+  }
+  .sy-nav__icon::before,
+  .sy-city::before,
+  .sy-social::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: inherit;
+  }
+  .sy-footer__link {
+    padding-block: 0.72rem;
+  }
+}
+@media (hover: none) {
+  .sy-btn-gold:hover,
+  .sy-btn-ghost:hover,
+  .sy-card--hover:hover {
+    transform: none;
+  }
+}
+
+/* Pressed feedback everywhere a finger or mouse actually pushes. */
+.sy-btn-gold:active,
+.sy-btn-ghost:active {
+  transform: translateY(0) scale(0.98);
+  transition-duration: 0.12s;
+}
+.sy-nav__icon:active,
+.sy-city:active,
+.sy-social:active {
+  transform: scale(0.94);
+}
+.sy-nav__icon,
+.sy-city,
+.sy-social {
+  transition:
+    border-color 0.25s ease,
+    color 0.25s ease,
+    transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }

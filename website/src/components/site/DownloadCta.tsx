@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { useLang } from '@/i18n/LangProvider'
+import { useRevealChildren } from './hooks/useSiteMotion'
 import './sections.css'
 
 /** Deterministic rising motes — no Math.random, so renders stay stable. */
@@ -95,6 +96,7 @@ function QrPlaceholder() {
 export function DownloadCta() {
   const { hi } = useLang()
   const reduce = useReducedMotion()
+  const revealRef = useRevealChildren<HTMLElement>()
 
   const chips = [
     { hi: 'कोई नकली आँकड़ा नहीं', en: 'No fake data' },
@@ -103,7 +105,12 @@ export function DownloadCta() {
   ]
 
   return (
-    <section id="download" className="syj sy-section syj-cta" aria-labelledby="syj-cta-h">
+    <section
+      id="download"
+      className="syj sy-section syj-cta"
+      aria-labelledby="syj-cta-h"
+      ref={revealRef}
+    >
       <span className="syj-cta__aura" aria-hidden />
       <Mandala still={!!reduce} />
       {reduce ? null : (
@@ -125,10 +132,15 @@ export function DownloadCta() {
       )}
 
       <div className="sy-container syj-cta__inner">
-        <p className="syj-kicker syj-kicker--center">
+        <p className="syj-kicker syj-kicker--center" data-sy-reveal="0">
           {hi ? 'शुरुआत यहीं से' : 'Start here'}
         </p>
-        <h2 id="syj-cta-h" className="syj-title" style={{ fontSize: 'clamp(2.2rem, 5.2vw, 4rem)' }}>
+        <h2
+          id="syj-cta-h"
+          className="syj-title"
+          style={{ fontSize: 'clamp(2.2rem, 5.2vw, 4rem)' }}
+          data-sy-reveal="60"
+        >
           {hi ? (
             <>
               अपनी कुंडली <em>आज ही देखें</em>
@@ -139,13 +151,13 @@ export function DownloadCta() {
             </>
           )}
         </h2>
-        <p className="syj-sub" style={{ marginInline: 'auto' }}>
+        <p className="syj-sub" style={{ marginInline: 'auto' }} data-sy-reveal="120">
           {hi
             ? 'जन्म तिथि, समय और स्थान — बस इतना चाहिए। बाकी गणना कर देती है, और पाठ आपकी अपनी कुंडली से बनता है।'
             : 'Your date, time and place of birth — that is all it needs. The rest is calculated, and every reading is built from your own chart.'}
         </p>
 
-        <div className="syj-cta__actions">
+        <div className="syj-cta__actions" data-sy-reveal="180">
           <a className="sy-btn-gold" href="#" data-sy-download="apk">
             {hi ? 'APK डाउनलोड करें' : 'Download APK'}
           </a>
@@ -155,14 +167,14 @@ export function DownloadCta() {
           </span>
         </div>
 
-        <div className="syj-qr">
+        <div className="syj-qr" data-sy-reveal="240">
           <span className="syj-qr__box" aria-hidden>
             <QrPlaceholder />
           </span>
           <small>{hi ? 'फ़ोन से स्कैन कीजिए — QR जल्द' : 'Scan from your phone — QR coming soon'}</small>
         </div>
 
-        <ul className="syj-cta__chips">
+        <ul className="syj-cta__chips" data-sy-reveal="300">
           {chips.map((chip) => (
             <li className="syj-chip" key={chip.en}>
               <i aria-hidden />

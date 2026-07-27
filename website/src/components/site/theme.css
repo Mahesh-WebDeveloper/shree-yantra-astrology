@@ -106,8 +106,29 @@ body {
   padding-block: var(--sy-section-y);
 }
 
+/* Two full sections back to back would breathe twice (140px + 140px).
+   The follower gives up part of its top padding so every seam on the
+   page measures roughly the same — this was the "big gap after the
+   panchang" people noticed. */
+.sy-section + .sy-section {
+  padding-block-start: clamp(48px, 7vh, 88px);
+}
+
 .sy-section--tight {
   padding-block: clamp(52px, 8vh, 96px);
+}
+
+/* Anchor targets clear the fixed bar even on browser-native jumps
+   (initial #hash load, find-in-page). */
+#top,
+#live-proof,
+#accuracy,
+#features,
+#services,
+#library,
+#faq,
+#download {
+  scroll-margin-top: 84px;
 }
 
 /* ── Type ───────────────────────────────────────────────── */

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { useLang } from '@/i18n/LangProvider'
+import { useRevealChildren } from './hooks/useSiteMotion'
 import './sections.css'
 
 /**
@@ -101,6 +102,7 @@ const POINTS: { hi: string; en: string; noteHi?: string; noteEn?: string }[] = [
 export function JyotishiDemo() {
   const { hi } = useLang()
   const reduce = useReducedMotion()
+  const revealRef = useRevealChildren<HTMLElement>()
   const ref = useRef<HTMLDivElement>(null)
   const inView = useInView(ref, { once: true, margin: '0px 0px -18% 0px' })
   const [step, setStep] = useState(0)
@@ -124,9 +126,9 @@ export function JyotishiDemo() {
   const animate = !reduce
 
   return (
-    <section className="syj sy-section syj-demo" aria-labelledby="syj-demo-h">
+    <section className="syj sy-section syj-demo" aria-labelledby="syj-demo-h" ref={revealRef}>
       <div className="sy-container">
-        <div className="syj-intro">
+        <div className="syj-intro" data-sy-reveal="0">
           <p className="syj-kicker">{hi ? 'ज्योतिषी से पूछिए' : 'Ask the astrologer'}</p>
           <h2 id="syj-demo-h" className="syj-title">
             {hi ? (
@@ -142,7 +144,7 @@ export function JyotishiDemo() {
         </div>
 
         <div className="syj-demo__layout" ref={ref}>
-          <div className="syj-chatwrap">
+          <div className="syj-chatwrap" data-sy-reveal="80">
             <div className="syj-chat">
               <div className="syj-chat__bar">
                 <span className="syj-chat__avatar" aria-hidden>
@@ -223,7 +225,7 @@ export function JyotishiDemo() {
             </div>
           </div>
 
-          <div className="syj-demo__aside">
+          <div className="syj-demo__aside" data-sy-reveal="160">
             <p className="syj-sub" style={{ marginTop: 0 }}>
               {hi
                 ? 'यह जवाब किसी लेख से उठाया हुआ नहीं है। हर बात आपकी अपनी कुंडली देखकर कही जाती है — और अगर कोई बात आपकी कुंडली में है ही नहीं, तो ज्योतिषी विनम्रता से मना कर देता है।'

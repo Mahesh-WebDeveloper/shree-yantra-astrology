@@ -1,4 +1,5 @@
 import { useLang } from '@/i18n/LangProvider'
+import { scrollToHash, useRevealChildren } from './hooks/useSiteMotion'
 import './sections.css'
 
 /**
@@ -166,15 +167,16 @@ function MarkCheck() {
 
 export function WhyDifferent() {
   const { hi } = useLang()
+  const revealRef = useRevealChildren<HTMLElement>()
 
   const themLabel = hi ? 'आम ज्योतिष ऐप' : 'Typical astrology apps'
   const usLabel = hi ? 'श्री यंत्र' : 'Shree Yantra'
 
   return (
-    <section className="syj sy-section syj-why" aria-labelledby="syj-why-h">
+    <section className="syj sy-section syj-why" aria-labelledby="syj-why-h" ref={revealRef}>
       <span className="syj-why__bg" aria-hidden />
       <div className="sy-container">
-        <div className="syj-intro">
+        <div className="syj-intro" data-sy-reveal="0">
           <p className="syj-kicker">{hi ? 'फ़र्क़ क्या है' : 'What is different'}</p>
           <h2 id="syj-why-h" className="syj-title">
             {hi ? (
@@ -213,8 +215,8 @@ export function WhyDifferent() {
             </div>
           </div>
 
-          {ROWS.map((row) => (
-            <div className="syj-vs2__row" role="row" key={row.id}>
+          {ROWS.map((row, i) => (
+            <div className="syj-vs2__row" role="row" key={row.id} data-sy-reveal={String(40 + i * 60)}>
               <div className="syj-vs2__topic" role="rowheader">
                 <h3>{hi ? row.topic.hi : row.topic.en}</h3>
                 <p>{hi ? row.why.hi : row.why.en}</p>
@@ -239,13 +241,20 @@ export function WhyDifferent() {
           ))}
         </div>
 
-        <div className="syj-vs2__foot">
+        <div className="syj-vs2__foot" data-sy-reveal="0">
           <p>
             {hi
               ? 'ऊपर लिखी एक भी बात मान लेने की ज़रूरत नहीं — ऐप खोलिए और खुद मिलाकर देख लीजिए।'
               : 'You do not have to take a single line above on trust — open the app and check it yourself.'}
           </p>
-          <a className="sy-btn-gold sy-btn-sm" href="#download">
+          <a
+            className="sy-btn-gold sy-btn-sm"
+            href="#download"
+            onClick={(e) => {
+              e.preventDefault()
+              scrollToHash('#download')
+            }}
+          >
             {hi ? 'ऐप डाउनलोड कीजिए' : 'Download the app'}
           </a>
         </div>

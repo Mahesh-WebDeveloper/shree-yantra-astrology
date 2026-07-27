@@ -1,9 +1,11 @@
+import type { CSSProperties } from 'react'
 import { AppBar, Body, StatusBar, d, root, type DemoProps } from './chrome'
 
 /**
  * जन्म कुंडली — the North-Indian chart draws itself (stroke-dash), the rashi
- * numbers fade up, the planets settle into their houses, and the
- * लग्न / राशि / नक्षत्र chips pop in last.
+ * numbers fade up, the planets settle into their houses, then the
+ * लग्न / राशि / नक्षत्र chips, the dosha pair and the running mahadasha
+ * arrive — so the screen reaches the tab bar with no dead band under it.
  */
 
 type House = { n: number; x: number; y: number; planets: string[]; planetsEn: string[] }
@@ -26,16 +28,21 @@ const HOUSES: House[] = [
 
 const CHIPS = [
   { kHi: 'लग्न', kEn: 'Lagna', vHi: 'वृश्चिक', vEn: 'Vrishchik' },
-  { kHi: 'चंद्र राशि', kEn: 'Moon sign', vHi: 'मीन', vEn: 'Meen' },
+  { kHi: 'चंद्र राशि', kEn: 'Rashi', vHi: 'मीन', vEn: 'Meen' },
   { kHi: 'नक्षत्र', kEn: 'Nakshatra', vHi: 'रेवती', vEn: 'Revati' },
+]
+
+const FLAGS = [
+  { kHi: 'मंगल दोष', kEn: 'Mangal dosha', vHi: 'नहीं', vEn: 'No', tone: 'ok' },
+  { kHi: 'साढ़े साती', kEn: 'Sade Sati', vHi: 'चल रही है', vEn: 'Running', tone: 'warn' },
 ]
 
 export function KundliDemo({ hi, play }: DemoProps) {
   return (
-    <div className={root(play)}>
+    <div className={root(play, 'syd--kundli')}>
       <StatusBar />
       <AppBar title={hi ? 'जन्म कुंडली' : 'Janam Kundli'} />
-      <Body>
+      <Body className="syd-k-body">
         <div className="syd-seg syd-seg--3 syd-in" style={d(0.05)}>
           <span className="is-on">{hi ? 'उत्तर' : 'North'}</span>
           <span>{hi ? 'दक्षिण' : 'South'}</span>
@@ -97,17 +104,38 @@ export function KundliDemo({ hi, play }: DemoProps) {
 
         <ul className="syd-k-chips">
           {CHIPS.map((c, i) => (
-            <li className="syd-k-chip syd-pop" key={c.kEn} style={d(2.5 + i * 0.16)}>
+            <li className="syd-k-chip syd-pop" key={c.kEn} style={d(2.5 + i * 0.14)}>
               <span>{hi ? c.kHi : c.kEn}</span>
               <b>{hi ? c.vHi : c.vEn}</b>
             </li>
           ))}
         </ul>
 
-        <p className="syd-k-foot syd-in" style={d(3.1)}>
-          {hi
-            ? 'किसी भी खाने या ग्रह पर टैप करके समझिए'
-            : 'Tap any house or planet to understand it'}
+        <ul className="syd-k-flags">
+          {FLAGS.map((f, i) => (
+            <li className="syd-in" key={f.kEn} data-tone={f.tone} style={d(2.94 + i * 0.12)}>
+              <span>{hi ? f.kHi : f.kEn}</span>
+              <b>{hi ? f.vHi : f.vEn}</b>
+            </li>
+          ))}
+        </ul>
+
+        <div className="syd-k-dasha syd-in" style={d(3.2)}>
+          <div className="syd-k-dasha__top">
+            <span>{hi ? 'महादशा' : 'Mahadasha'}</span>
+            <em>2019 – 2039</em>
+          </div>
+          <div className="syd-k-dasha__mid">
+            <b>{hi ? 'शुक्र' : 'Shukra'}</b>
+            <span>{hi ? 'अंतर्दशा — चंद्र' : 'Antardasha — Chandra'}</span>
+          </div>
+          <span className="syd-r-track syd-r-track--thin">
+            <b className="syd-r-fill" style={{ '--w': '35%', '--d': '3.45s' } as CSSProperties} />
+          </span>
+        </div>
+
+        <p className="syd-k-foot syd-in" style={d(3.6)}>
+          {hi ? 'किसी भी खाने या ग्रह पर टैप करके समझिए' : 'Tap any house or planet to understand it'}
         </p>
       </Body>
     </div>

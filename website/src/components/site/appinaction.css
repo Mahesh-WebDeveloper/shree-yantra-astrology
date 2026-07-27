@@ -11,13 +11,17 @@
    ───────────────────────────────────────────────────────────── */
 
 /* ═══════════════════════════════════════════════════════════
-   1 · Section shell
+   1 · Section shell — "the console"
+   A step rail, the phone, and a panel of words: one screen tall.
+   The device is sized from the VIEWPORT HEIGHT so it is never
+   the thing you have to scroll to find.
    ═══════════════════════════════════════════════════════════ */
 
 .sya {
   position: relative;
   overflow: clip;
   isolation: isolate;
+  padding-block: clamp(46px, 6.5vh, 92px);
 }
 .sya__bg {
   position: absolute;
@@ -25,80 +29,172 @@
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(68% 46% at 50% 0%, color-mix(in srgb, var(--sy-gold-3) 14%, transparent), transparent 70%),
-    radial-gradient(50% 40% at 50% 100%, color-mix(in srgb, var(--sy-gold-3) 9%, transparent), transparent 72%);
+    radial-gradient(64% 44% at 22% 0%, color-mix(in srgb, var(--sy-gold-3) 13%, transparent), transparent 70%),
+    radial-gradient(46% 40% at 78% 100%, color-mix(in srgb, var(--sy-gold-3) 9%, transparent), transparent 72%);
 }
+
+.sya__inner {
+  display: grid;
+  gap: clamp(1.3rem, 3vh, 2.1rem);
+}
+
+/* ── Head: title left, promise right — a band, not a tower ── */
 
 .sya__head {
   display: grid;
+  gap: 0.85rem;
   justify-items: center;
-  gap: 0.9rem;
   text-align: center;
-  margin-bottom: clamp(1.6rem, 3.4vw, 2.6rem);
+}
+.sya__head-l {
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+}
+.sya__h2 {
+  margin: 0;
 }
 .sya__lead {
-  margin-inline: auto;
-  max-width: 56ch;
+  font-size: clamp(0.94rem, 1.05vw, 1.06rem);
+  line-height: 1.62;
+  color: var(--sy-ink-soft);
+  max-width: 48ch;
+  text-wrap: pretty;
 }
 
-/* ── Tab bar ─────────────────────────────────────────────── */
+@media (min-width: 900px) {
+  .sya__head {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 44ch);
+    align-items: end;
+    gap: clamp(1.4rem, 4vw, 3rem);
+    justify-items: stretch;
+    text-align: left;
+  }
+  .sya__head-l {
+    justify-items: start;
+  }
+  .sya__lead {
+    justify-self: end;
+    padding-bottom: 0.3rem;
+  }
+}
 
-.sya__tabs {
+/* ── Stage ───────────────────────────────────────────────── */
+
+.sya__stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(1.1rem, 2.6vh, 1.9rem);
+  align-items: center;
+}
+.sya__stage > * {
+  min-width: 0;
+}
+
+/* ── The step rail ───────────────────────────────────────── */
+/* Compact screens: a centred strip that WRAPS — nothing hides off the right
+   edge where a scroller would put it. Desktop: a column of cards, each one a
+   chapter heading for the screen it plays. */
+
+.sya__railwrap {
+  order: 1;
+  display: grid;
+  gap: 0.55rem;
+  justify-items: center;
+}
+.sya__rail {
   display: flex;
-  gap: 0.5rem;
-  justify-content: center;
   flex-wrap: wrap;
-  margin-bottom: clamp(1.6rem, 3.4vw, 2.6rem);
+  justify-content: center;
+  gap: 0.45rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
-.sya-tab {
+.sya__rail > li {
+  flex: none;
+}
+.sya__rail-k,
+.sya__rail-hint {
+  display: none;
+}
+
+.sya-step {
   position: relative;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.6rem 1rem 0.66rem;
+  padding: 0.58rem 0.9rem 0.64rem;
   border-radius: 999px;
   border: 1px solid var(--sy-line);
   background: var(--sy-card);
   color: var(--sy-ink-muted);
   font-family: inherit;
-  font-size: 0.84rem;
-  font-weight: 600;
   line-height: 1;
+  text-align: left;
   cursor: pointer;
   overflow: hidden;
   transition:
     color 0.3s ease,
     border-color 0.3s ease,
+    background-color 0.3s ease,
     transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.sya-tab:hover {
+.sya-step:hover {
   color: var(--sy-ink);
   border-color: var(--sy-line-strong);
   transform: translateY(-1px);
 }
-.sya-tab.is-on {
+.sya-step:focus-visible {
+  outline: 2px solid var(--sy-gold-2);
+  outline-offset: 2px;
+}
+.sya-step.is-on {
   color: var(--sy-ink);
   border-color: var(--sy-line-strong);
   background: color-mix(in srgb, var(--sy-gold-2) 12%, var(--sy-card));
 }
-.sya-tab__num {
+.sya-step__n {
+  flex: none;
   font-size: 0.62rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   color: var(--sy-gold-ink);
-  opacity: 0.75;
+  opacity: 0.7;
 }
-.sya-tab__fill {
+.sya-step.is-on .sya-step__n {
+  opacity: 1;
+}
+.sya-step__body {
+  display: grid;
+  min-width: 0;
+}
+.sya-step__name {
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.sya-step__sub {
+  display: none;
+}
+.sya-step__bar {
   position: absolute;
   left: 0;
   bottom: 0;
   height: 2px;
   width: 100%;
+  pointer-events: none;
+}
+.sya-step__bar i {
+  display: block;
+  height: 100%;
+  width: 100%;
   transform-origin: left;
   background: linear-gradient(90deg, var(--sy-gold-1), var(--sy-gold-2) 60%, var(--sy-gold-3));
-  animation: sya-tabfill linear forwards;
+  animation: sya-fill linear forwards;
 }
-@keyframes sya-tabfill {
+@keyframes sya-fill {
   from {
     transform: scaleX(0);
   }
@@ -107,56 +203,175 @@
   }
 }
 
-/* ── Stage ───────────────────────────────────────────────── */
+/* ── The phone ───────────────────────────────────────────── */
 
-/* Single column on compact screens. Every child gets a DEFINITE width —
-   a shrink-to-fit column made `max-width: 100%` on the 300px phone resolve
-   against an indefinite size and collapsed the frame to a sliver. */
-.sya__stage {
+.sya__phonewrap {
+  order: 2;
+  position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: clamp(1.4rem, 3vw, 2rem);
+  justify-items: center;
+  padding-bottom: 16px;
 }
-.sya__stage > * {
-  width: 100%;
-  min-width: 0;
+.sya__glow {
+  position: absolute;
+  top: 46%;
+  left: 50%;
+  translate: -50% -50%;
+  width: min(150%, 560px);
+  aspect-ratio: 1 / 1.2;
+  border-radius: 999px;
+  pointer-events: none;
+  background: radial-gradient(circle, color-mix(in srgb, var(--sy-gold-2) 20%, transparent), transparent 62%);
+  filter: blur(8px);
+  z-index: 0;
 }
-.sya__side {
-  max-width: 34ch;
+
+.sya-phone {
+  --sya-screen-h: clamp(392px, min(60vh, 560px), 560px);
+  --sya-screen-w: calc(var(--sya-screen-h) * 300 / 630);
+  --sya-pad: calc(var(--sya-screen-w) * 0.033);
+
+  position: relative;
+  z-index: 1;
+  width: calc(var(--sya-screen-w) + var(--sya-pad) * 2);
+}
+.sya-phone__frame {
+  position: relative;
+  display: block;
+  padding: var(--sya-pad);
+  border-radius: calc(var(--sya-screen-w) * 0.155);
+  background: linear-gradient(150deg, rgba(252, 232, 168, 0.9), rgba(184, 127, 26, 0.55) 44%, rgba(38, 28, 8, 0.95));
+  box-shadow:
+    0 2px 0 rgba(255, 255, 255, 0.24) inset,
+    0 46px 96px -40px rgba(0, 0, 0, 0.9),
+    0 0 0 1px rgba(233, 184, 80, 0.24);
+}
+[data-theme='light'] .sya-phone__frame,
+[data-sy-theme='light'] .sya-phone__frame {
+  background: linear-gradient(150deg, #f7e4b0, #c99a3c 46%, #8a5a10);
+  box-shadow:
+    0 2px 0 rgba(255, 255, 255, 0.55) inset,
+    0 34px 68px -34px rgba(80, 55, 10, 0.45),
+    0 0 0 1px rgba(124, 74, 3, 0.2);
+}
+.sya-phone__notch {
+  position: absolute;
+  top: calc(var(--sya-pad) * 1.9);
+  left: 50%;
+  translate: -50% 0;
+  width: 22%;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 3;
+}
+/* The screen is a window on to a board authored at exactly 300x630; the board
+   is scaled by a factor measured in JS (CSS cannot divide a length by a
+   length), so every demo keeps its true proportions at any device size. */
+.sya-phone__screen {
+  position: relative;
+  display: block;
+  width: var(--sya-screen-w);
+  height: var(--sya-screen-h);
+  border-radius: calc(var(--sya-screen-w) * 0.125);
+  overflow: hidden;
+  background: #08070b;
+  isolation: isolate;
+}
+.sya-phone__board {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 300px;
+  height: 630px;
+  transform-origin: top left;
+  transform: scale(var(--sya-board-scale, 1));
+}
+.sya-phone__sweep {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background: linear-gradient(112deg, transparent 36%, rgba(255, 255, 255, 0.07) 48%, transparent 60%);
+  transform: translateX(-110%);
+  animation: sya-sweep 7s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+@keyframes sya-sweep {
+  0%,
+  62% {
+    transform: translateX(-110%);
+  }
+  100% {
+    transform: translateX(110%);
+  }
+}
+
+/* A badge clipped to the foot of the device — proof it is running, with no
+   row of its own to pay for. */
+.sya__rec {
+  position: absolute;
+  left: 50%;
+  bottom: -13px;
+  translate: -50% 0;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  padding: 0.3rem 0.72rem;
+  border-radius: 999px;
+  border: 1px solid var(--sy-line-strong);
+  background: var(--sy-bg-2);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--sy-ink-soft);
+  box-shadow: 0 10px 26px -14px rgba(0, 0, 0, 0.8);
+}
+:lang(hi) .sya__rec {
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: var(--sy-font-deva);
+}
+
+/* ── The panel of words ──────────────────────────────────── */
+
+.sya__detail {
+  order: 3;
+  display: grid;
+  gap: 0.45rem;
+  align-content: center;
+  justify-items: center;
+  text-align: center;
+  max-width: 46ch;
   margin-inline: auto;
 }
-.sya__facts {
-  order: 3;
-}
-.sya__note {
-  display: none;
-}
-.sya__note-k {
+.sya__detail-k {
   font-family: var(--sy-font-caps);
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--sy-gold-ink);
-  margin-bottom: 0.7rem;
 }
-:lang(hi) .sya__note-k {
+:lang(hi) .sya__detail-k {
   font-family: var(--sy-font-deva);
   letter-spacing: 0.06em;
 }
-.sya__note-h {
+.sya__detail-h {
   font-family: var(--sy-font-display);
-  font-size: clamp(1.35rem, 2.3vw, 1.85rem);
+  font-size: clamp(1.35rem, 2.2vw, 1.85rem);
   font-weight: 600;
   line-height: 1.2;
   color: var(--sy-ink);
   animation: sya-swap 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
-.sya__note-p {
-  margin-top: 0.6rem;
+.sya__detail-p {
   font-size: 0.92rem;
   line-height: 1.62;
   color: var(--sy-ink-soft);
+  text-wrap: pretty;
   animation: sya-swap 0.55s 0.06s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 @keyframes sya-swap {
@@ -170,23 +385,25 @@
   }
 }
 
-.sya__facts ul {
-  display: grid;
-  gap: 0.5rem;
+.sya__facts {
+  display: none;
+  gap: 0.45rem;
   list-style: none;
   padding: 0;
-  margin: 0;
+  margin: 0.45rem 0 0;
+  width: 100%;
 }
 .sya-fact {
   display: flex;
   align-items: flex-start;
-  gap: 0.6rem;
-  padding: 0.62rem 0.85rem;
+  gap: 0.55rem;
+  padding: 0.56rem 0.8rem;
   border-radius: 12px;
   border: 1px solid var(--sy-line);
   background: var(--sy-card);
-  font-size: 0.84rem;
+  font-size: 0.82rem;
   line-height: 1.45;
+  text-align: left;
   color: var(--sy-ink-soft);
   animation: sya-swap 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -205,181 +422,112 @@
   background: linear-gradient(135deg, var(--sy-gold-1), var(--sy-gold-3));
 }
 
-.sya__caption {
-  order: 2;
-  display: grid;
-  gap: 0.35rem;
-  text-align: center;
-  justify-items: center;
-  animation: sya-swap 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-.sya__caption b {
-  font-family: var(--sy-font-display);
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: var(--sy-ink);
-}
-.sya__caption span {
-  font-size: 0.9rem;
-  line-height: 1.6;
-  color: var(--sy-ink-soft);
-  max-width: 46ch;
-}
+/* ── Tablet: the facts come back, three across ───────────── */
 
-/* ── Dots (compact viewports) ────────────────────────────── */
-
-.sya__dots {
-  display: flex;
-  gap: 0.45rem;
-  justify-content: center;
-  margin-top: 1rem;
-}
-.sya-dot {
-  width: 7px;
-  height: 7px;
-  padding: 0;
-  border-radius: 999px;
-  border: 1px solid var(--sy-line-strong);
-  background: transparent;
-  cursor: pointer;
-  transition:
-    width 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-    background-color 0.3s ease;
-}
-.sya-dot.is-on {
-  width: 22px;
-  border-color: transparent;
-  background-image: linear-gradient(90deg, var(--sy-gold-1), var(--sy-gold-3));
-}
-
-/* ── The phone ───────────────────────────────────────────── */
-
-.sya__phonewrap {
-  position: relative;
-  display: grid;
-  justify-items: center;
-}
-.sya__glow {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  translate: -50% -50%;
-  width: 150%;
-  aspect-ratio: 1 / 1.25;
-  max-width: 520px;
-  border-radius: 999px;
-  pointer-events: none;
-  background: radial-gradient(circle, color-mix(in srgb, var(--sy-gold-2) 20%, transparent), transparent 62%);
-  filter: blur(6px);
-  z-index: 0;
-}
-.sya__rec {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  margin-bottom: 0.85rem;
-  padding: 0.34rem 0.8rem;
-  border-radius: 999px;
-  border: 1px solid var(--sy-line);
-  background: var(--sy-card);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--sy-ink-soft);
-}
-:lang(hi) .sya__rec {
-  text-transform: none;
-  letter-spacing: 0;
-  font-family: var(--sy-font-deva);
-}
-
-.sya-phone {
-  position: relative;
-  z-index: 1;
-  width: 300px;
-  max-width: 100%;
-}
-.sya-phone__frame {
-  position: relative;
-  display: block;
-  padding: 9px;
-  border-radius: 42px;
-  background: linear-gradient(150deg, rgba(252, 232, 168, 0.9), rgba(184, 127, 26, 0.55) 44%, rgba(38, 28, 8, 0.95));
-  box-shadow:
-    0 2px 0 rgba(255, 255, 255, 0.24) inset,
-    0 46px 96px -40px rgba(0, 0, 0, 0.9),
-    0 0 0 1px rgba(233, 184, 80, 0.24);
-}
-[data-theme='light'] .sya-phone__frame,
-[data-sy-theme='light'] .sya-phone__frame {
-  background: linear-gradient(150deg, #f7e4b0, #c99a3c 46%, #8a5a10);
-  box-shadow:
-    0 2px 0 rgba(255, 255, 255, 0.55) inset,
-    0 34px 68px -34px rgba(80, 55, 10, 0.45),
-    0 0 0 1px rgba(124, 74, 3, 0.2);
-}
-.sya-phone__notch {
-  position: absolute;
-  top: 17px;
-  left: 50%;
-  translate: -50% 0;
-  width: 58px;
-  height: 5px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.6);
-  z-index: 3;
-}
-.sya-phone__screen {
-  position: relative;
-  display: block;
-  height: 630px;
-  border-radius: 34px;
-  overflow: hidden;
-  background: #08070b;
-  isolation: isolate;
-}
-.sya-phone__sweep {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  background: linear-gradient(112deg, transparent 36%, rgba(255, 255, 255, 0.07) 48%, transparent 60%);
-  transform: translateX(-110%);
-  animation: sya-sweep 7s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-}
-@keyframes sya-sweep {
-  0%,
-  62% {
-    transform: translateX(-110%);
+@media (min-width: 760px) {
+  .sya__detail {
+    max-width: 64ch;
   }
-  100% {
-    transform: translateX(110%);
+  .sya__facts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* ── Desktop: rail · phone · panel, side by side ─────────── */
 
 @media (min-width: 1080px) {
   .sya__stage {
-    grid-template-columns: minmax(0, 1fr) 300px minmax(0, 1fr);
-    align-items: center;
-    gap: clamp(1.5rem, 3.4vw, 3rem);
+    grid-template-columns: minmax(190px, 0.95fr) auto minmax(210px, 1fr);
+    gap: clamp(1.2rem, 3vw, 2.8rem);
   }
-  .sya__note {
+
+  .sya__railwrap {
+    order: 0;
+    justify-items: stretch;
+    gap: 0.75rem;
+  }
+  .sya__rail {
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .sya__rail > li {
+    width: 100%;
+  }
+  .sya__rail-k {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--sy-font-caps);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--sy-gold-ink);
+  }
+  .sya__rail-k::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--sy-gold-2), transparent);
+    opacity: 0.55;
+  }
+  :lang(hi) .sya__rail-k {
+    font-family: var(--sy-font-deva);
+    letter-spacing: 0.06em;
+    text-transform: none;
+  }
+  .sya__rail-hint {
     display: block;
-    justify-self: end;
-    text-align: right;
+    font-size: 0.73rem;
+    line-height: 1.4;
+    color: var(--sy-ink-muted);
+  }
+  .sya-step {
+    width: 100%;
+    align-items: flex-start;
+    gap: 0.62rem;
+    padding: 0.74rem 0.9rem 0.82rem;
+    border-radius: 14px;
+  }
+  .sya-step__n {
+    margin-top: 0.2rem;
+  }
+  .sya-step__body {
+    gap: 0.2rem;
+  }
+  .sya-step__name {
+    font-size: 0.94rem;
+    white-space: normal;
+  }
+  .sya-step__sub {
+    display: block;
+    font-style: normal;
+    font-size: 0.72rem;
+    font-weight: 500;
+    line-height: 1.3;
+    color: var(--sy-ink-muted);
+  }
+  .sya-step.is-on .sya-step__sub {
+    color: var(--sy-ink-soft);
+  }
+
+  .sya__phonewrap {
+    order: 0;
+    justify-self: center;
+  }
+
+  .sya__detail {
+    order: 0;
+    justify-items: start;
+    text-align: left;
+    max-width: 38ch;
     margin-inline: 0;
+    gap: 0.5rem;
   }
   .sya__facts {
-    order: 0;
-    justify-self: start;
-    margin-inline: 0;
-  }
-  .sya__dots,
-  .sya__caption {
-    display: none;
+    grid-template-columns: minmax(0, 1fr);
+    margin-top: 0.6rem;
   }
 }
 
@@ -403,8 +551,12 @@
   --warn: #e9b850;
   --bad: #ef8080;
 
+  /* The demo owns the WHOLE 300x630 board and reserves the tab bar's 56px
+     itself (see .syd-body's bottom padding). Anchoring to the board rather
+     than to "the board minus the bar" is what keeps a screen identical here
+     and in the hero, which scales the same board. */
   position: absolute;
-  inset: 0 0 56px 0;
+  inset: 0;
   z-index: 1;
   display: flex;
   flex-direction: column;
@@ -505,13 +657,16 @@
   opacity: 0.55;
 }
 
+/* 56px for the app's tab bar + 12px of air above it. Content therefore has
+   ~487px of column to fill — every demo is budgeted against that number, so
+   there is never a dead band above the bar and nothing is ever cut off. */
 .syd-body {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 10px 12px 12px;
+  padding: 10px 12px calc(56px + 12px);
   overflow: hidden;
 }
 
@@ -786,9 +941,14 @@
    4 · Choghadiya demo
    ═══════════════════════════════════════════════════════════ */
 
+/* Eight windows now fill the day, so the list is tightened to keep the whole
+   screen inside the board. */
+.syd-c-body {
+  gap: 7px;
+}
 .syd-c-now {
   display: grid;
-  gap: 7px;
+  gap: 6px;
   padding: 10px 12px;
   border-radius: 14px;
   border: 1px solid var(--line);
@@ -836,7 +996,7 @@
 }
 .syd-c-now__name b {
   font-family: var(--sy-font-display);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 600;
   line-height: 1;
   color: var(--bad);
@@ -880,7 +1040,7 @@
 
 .syd-c-list {
   display: grid;
-  gap: 4px;
+  gap: 3px;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -892,7 +1052,7 @@
   grid-template-columns: 3px minmax(0, 1fr) auto;
   align-items: center;
   gap: 9px;
-  padding: 7px 10px 7px 8px;
+  padding: 6px 10px 6px 8px;
   border-radius: 11px;
   border: 1px solid var(--line);
   background: var(--card);
@@ -957,9 +1117,17 @@
    5 · Kundli demo
    ═══════════════════════════════════════════════════════════ */
 
+.syd-k-body {
+  gap: 7px;
+}
+/* The chart is capped rather than full-bleed: the 40px it gives back is what
+   the dosha pair and the running mahadasha stand in, so the screen reaches
+   the tab bar instead of trailing off. */
 .syd-k-chart {
   position: relative;
   width: 100%;
+  max-width: 220px;
+  margin-inline: auto;
   aspect-ratio: 1;
   flex: none;
   color: var(--g2);
@@ -1057,9 +1225,13 @@
   }
 }
 
+/* Stacked in a three-column grid rather than an inline row: "Lagna
+   Vrishchik · Rashi Meen · Nakshatra Revati" is far wider in English than in
+   Hindi and wrapped to a second line, which pushed the screen past the board.
+   Stacked, both languages occupy exactly one row at any label length. */
 .syd-k-chips {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 5px;
   list-style: none;
   margin: 0;
@@ -1067,27 +1239,113 @@
   flex: none;
 }
 .syd-k-chip {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 5px;
-  padding: 5px 9px;
-  border-radius: 999px;
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  padding: 5px 6px 6px;
+  border-radius: 11px;
   border: 1px solid var(--line);
   background: var(--card);
 }
 .syd-k-chip span {
   font-size: 9px;
   color: var(--mut);
+  white-space: nowrap;
 }
 .syd-k-chip b {
   font-size: 11.5px;
   font-weight: 700;
   color: var(--g1);
+  white-space: nowrap;
 }
 .syd-k-foot {
   font-size: 9.5px;
   color: var(--mut);
   text-align: center;
+  margin-top: auto;
+}
+
+/* Dosha / Sade Sati pair — a straight answer, the way the app gives it. */
+.syd-k-flags {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: none;
+}
+.syd-k-flags li {
+  display: grid;
+  gap: 2px;
+  padding: 6px 9px;
+  border-radius: 11px;
+  border: 1px solid var(--line);
+  background: var(--card);
+}
+.syd-k-flags span {
+  font-size: 9px;
+  color: var(--mut);
+}
+.syd-k-flags b {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.syd-k-flags li[data-tone='ok'] {
+  border-color: rgba(99, 212, 146, 0.3);
+}
+.syd-k-flags li[data-tone='ok'] b {
+  color: #9fe6bd;
+}
+.syd-k-flags li[data-tone='warn'] {
+  border-color: rgba(233, 184, 80, 0.34);
+}
+.syd-k-flags li[data-tone='warn'] b {
+  color: var(--g2);
+}
+
+/* The mahadasha now running, with how far through it you are. */
+.syd-k-dasha {
+  display: grid;
+  gap: 5px;
+  padding: 8px 11px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(233, 184, 80, 0.08), transparent);
+  flex: none;
+}
+.syd-k-dasha__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 9.5px;
+  color: var(--mut);
+}
+.syd-k-dasha__top span {
+  font-weight: 700;
+  color: var(--g2);
+}
+.syd-k-dasha__top em {
+  font-style: normal;
+}
+.syd-k-dasha__mid {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.syd-k-dasha__mid b {
+  font-family: var(--sy-font-display);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--g1);
+}
+.syd-k-dasha__mid span {
+  font-size: 9.5px;
+  color: var(--soft);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1225,7 +1483,79 @@
   }
 }
 
+/* Same three-column grid as the kundli chips, and for the same reason: the
+   placements must occupy one row in Hindi and in English alike. */
 .syd-a-ev {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.syd-a-ev li {
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  padding: 4px 5px 5px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(233, 184, 80, 0.07);
+}
+.syd-a-ev span {
+  font-size: 9px;
+  color: var(--mut);
+  white-space: nowrap;
+}
+.syd-a-ev b {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--g1);
+  white-space: nowrap;
+}
+
+/* The verdict, said once and plainly — a yes/no you can read at a glance. */
+.syd-a-verdict {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 5px 11px 5px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(99, 212, 146, 0.36);
+  background: linear-gradient(100deg, rgba(99, 212, 146, 0.16), rgba(99, 212, 146, 0.04));
+}
+.syd-a-verdict i {
+  display: inline-flex;
+  width: 13px;
+  height: 13px;
+  color: var(--ok);
+}
+.syd-a-verdict svg {
+  width: 100%;
+  height: 100%;
+}
+.syd-a-verdict b {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #9fe6bd;
+}
+
+/* Where the conversation goes next — the app's own suggested questions.
+   These follow the answer; only the input box takes the free space, so the
+   chat reads top-down the way a chat does. */
+.syd-a-next {
+  display: grid;
+  gap: 5px;
+  flex: none;
+}
+.syd-a-next__k {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--g2);
+  opacity: 0.85;
+}
+.syd-a-next ul {
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
@@ -1233,27 +1563,17 @@
   margin: 0;
   padding: 0;
 }
-.syd-a-ev li {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 5px;
-  padding: 4px 9px;
+.syd-a-next li {
+  padding: 5px 10px;
   border-radius: 999px;
-  border: 1px solid var(--line);
-  background: rgba(233, 184, 80, 0.07);
-}
-.syd-a-ev span {
-  font-size: 9px;
-  color: var(--mut);
-}
-.syd-a-ev b {
+  border: 1px dashed rgba(233, 184, 80, 0.32);
+  background: rgba(233, 184, 80, 0.05);
   font-size: 10.5px;
-  font-weight: 700;
-  color: var(--g1);
+  font-weight: 600;
+  color: var(--soft);
 }
 
 .syd-a-input {
-  margin-top: auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1284,7 +1604,15 @@
 
 /* ═══════════════════════════════════════════════════════════
    7 · Rashifal demo
+   A complete daily reading, budgeted to the 487px column: the
+   headline and the day's score, four mood meters, three areas
+   each with a line of advice, the lucky trio, and the button
+   into the full text.
    ═══════════════════════════════════════════════════════════ */
+
+.syd-r-body {
+  gap: 7px;
+}
 
 .syd-r-head {
   display: flex;
@@ -1304,9 +1632,50 @@
   color: var(--mut);
 }
 
+/* The headline — what today is about, with the day's score beside it. */
+.syd-r-lede {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 11px;
+  border-radius: 13px;
+  border: 1px solid var(--line);
+  background: linear-gradient(110deg, rgba(233, 184, 80, 0.13), rgba(233, 184, 80, 0.03));
+  flex: none;
+}
+.syd-r-lede__score {
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  flex: none;
+  padding-right: 10px;
+  border-right: 1px solid var(--line);
+}
+.syd-r-lede__score b {
+  font-family: var(--sy-font-display);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--g1);
+}
+.syd-r-lede__score i {
+  font-style: normal;
+  font-size: 8px;
+  color: var(--mut);
+  white-space: nowrap;
+}
+.syd-r-lede p {
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--soft);
+  white-space: normal;
+}
+
+/* The day's mood — four meters that fill from zero. */
 .syd-r-meters {
   display: grid;
-  gap: 7px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -1314,31 +1683,40 @@
 }
 .syd-r-meters li {
   display: grid;
-  grid-template-columns: 52px minmax(0, 1fr) 22px;
-  align-items: center;
-  gap: 8px;
+  justify-items: center;
+  gap: 4px;
+  padding: 7px 4px 8px;
+  border-radius: 11px;
+  border: 1px solid var(--line);
+  background: var(--card);
 }
 .syd-r-meters__k {
-  font-size: 10.5px;
-  font-weight: 600;
-  color: var(--soft);
+  font-size: 9px;
+  color: var(--mut);
+  white-space: nowrap;
 }
 .syd-r-meters__v {
-  font-size: 10.5px;
-  font-weight: 700;
+  font-family: var(--sy-font-display);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
   color: var(--g2);
-  text-align: right;
 }
+.syd-r-meters .syd-r-track {
+  width: 100%;
+  height: 4px;
+}
+
 .syd-r-track {
   position: relative;
   display: block;
-  height: 7px;
+  height: 6px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.07);
   overflow: hidden;
 }
 .syd-r-track--thin {
-  height: 5px;
+  height: 4px;
 }
 .syd-r-fill {
   position: absolute;
@@ -1353,9 +1731,10 @@
   animation-delay: var(--d, 0s);
 }
 
+/* Three areas, each with its score and the one thing to do about it. */
 .syd-r-areas {
   display: grid;
-  gap: 7px;
+  gap: 5px;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -1363,9 +1742,9 @@
 }
 .syd-r-areas li {
   display: grid;
-  gap: 6px;
-  padding: 9px 11px;
-  border-radius: 13px;
+  gap: 5px;
+  padding: 7px 10px 8px;
+  border-radius: 12px;
   border: 1px solid var(--line);
   background: var(--card);
 }
@@ -1376,63 +1755,75 @@
   gap: 8px;
 }
 .syd-r-areas__top b {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--ink);
 }
 .syd-r-areas__top span {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   color: var(--g2);
 }
 .syd-r-areas p {
-  font-size: 10.5px;
-  line-height: 1.5;
+  font-size: 10px;
+  line-height: 1.4;
   color: var(--soft);
   white-space: normal;
 }
 
-.syd-r-size {
+/* Colour, number, hour. */
+.syd-r-lucky {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: none;
+}
+.syd-r-lucky li {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 6px 4px 7px;
+  border-radius: 11px;
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(233, 184, 80, 0.07), transparent);
+}
+.syd-r-lucky span {
+  font-size: 8.5px;
+  color: var(--mut);
+  white-space: nowrap;
+}
+.syd-r-lucky b {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--g1);
+  white-space: nowrap;
+}
+
+.syd-r-cta {
   margin-top: auto;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 8px 11px;
-  border-radius: 12px;
-  border: 1px solid var(--line);
-  background: var(--card);
-  font-size: 10.5px;
-  color: var(--mut);
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 12px;
+  border-radius: 999px;
+  color: #241800;
+  font-size: 11.5px;
+  font-weight: 700;
+  background-image: linear-gradient(135deg, var(--g1), var(--g2) 60%, var(--g3));
   flex: none;
 }
-.syd-r-size__set {
+.syd-r-cta i {
   display: inline-flex;
-  gap: 4px;
+  width: 12px;
+  height: 12px;
 }
-.syd-r-size__set i {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 20px;
-  border-radius: 7px;
-  border: 1px solid var(--line);
-  font-style: normal;
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--soft);
-}
-.syd-r-size__set i:nth-child(2) {
-  font-size: 12px;
-}
-.syd-r-size__set i:nth-child(3) {
-  font-size: 14px;
-}
-.syd-r-size__set .is-on {
-  color: #241800;
-  border-color: transparent;
-  background-image: linear-gradient(135deg, var(--g1), var(--g2) 60%, var(--g3));
+.syd-r-cta svg {
+  width: 100%;
+  height: 100%;
 }
 
 /* ── Bottom tab bar (shared, lives outside the demos) ────── */
@@ -1730,28 +2121,34 @@
    ═══════════════════════════════════════════════════════════ */
 
 @media (max-width: 460px) {
-  .sya__tabs {
-    gap: 0.4rem;
+  .sya-phone {
+    --sya-screen-h: clamp(392px, min(56vh, 500px), 500px);
   }
-  .sya-tab {
-    padding: 0.52rem 0.72rem 0.58rem;
-    font-size: 0.78rem;
+  .sya-step {
+    gap: 0.42rem;
+    padding: 0.5rem 0.76rem 0.56rem;
   }
-  .sya-tab__num {
-    display: none;
+  .sya-step__name {
+    font-size: 0.8rem;
+  }
+}
+
+/* Short laptops: the phone gives up height before the section does. */
+@media (min-width: 1080px) and (max-height: 760px) {
+  .sya-phone {
+    --sya-screen-h: clamp(360px, 58vh, 560px);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .sya-phone__sweep,
-  .sya-tab__fill {
+  .sya-step__bar i {
     animation: none;
     display: none;
   }
-  .sya__note-h,
-  .sya__note-p,
+  .sya__detail-h,
+  .sya__detail-p,
   .sya-fact,
-  .sya__caption,
   .syd {
     animation: none;
   }
@@ -1761,7 +2158,7 @@
     animation: none !important;
   }
   .syu-group:hover,
-  .sya-tab:hover {
+  .sya-step:hover {
     transform: none;
   }
 }

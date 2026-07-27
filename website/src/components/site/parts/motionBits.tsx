@@ -61,10 +61,13 @@ export function TiltCard({
   children,
   className,
   max = 6,
+  reveal,
 }: {
   children: ReactNode
   className?: string
   max?: number
+  /** Optional stagger delay (ms) for the shared scroll-reveal choreography. */
+  reveal?: number
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const frame = useRef(0)
@@ -98,6 +101,7 @@ export function TiltCard({
     <div
       ref={ref}
       className={['syj-tilt', className ?? ''].filter(Boolean).join(' ')}
+      data-sy-reveal={reveal != null ? String(reveal) : undefined}
       onPointerMove={onMove}
       onPointerLeave={reset}
     >

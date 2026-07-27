@@ -1,5 +1,6 @@
 import { useLang } from '@/i18n/LangProvider'
 import { CountUp, Marquee, TiltCard, type MarqueeItem } from './parts/motionBits'
+import { useRevealChildren } from './hooks/useSiteMotion'
 import './sections.css'
 
 /**
@@ -96,6 +97,7 @@ const BOOKS = [
 
 export function SacredLibrary() {
   const { hi } = useLang()
+  const revealRef = useRevealChildren<HTMLElement>()
 
   const rowOne: MarqueeItem[] = PURANAS.map((p) => ({
     key: p.en,
@@ -125,11 +127,16 @@ export function SacredLibrary() {
   ]
 
   return (
-    <section id="library" className="syj sy-section syj-library" aria-labelledby="syj-library-h">
+    <section
+      id="library"
+      className="syj sy-section syj-library"
+      aria-labelledby="syj-library-h"
+      ref={revealRef}
+    >
       <span className="syj-library__bg" aria-hidden />
 
       <div className="sy-container">
-        <div className="syj-intro">
+        <div className="syj-intro" data-sy-reveal="0">
           <p className="syj-kicker">{hi ? 'पढ़ने और सुनने के लिए' : 'To read and to listen'}</p>
           <h2 id="syj-library-h" className="syj-title">
             {hi ? (
@@ -150,7 +157,7 @@ export function SacredLibrary() {
         </div>
       </div>
 
-      <div style={{ marginTop: 'clamp(2.5rem, 5vw, 3.5rem)' }}>
+      <div style={{ marginTop: 'clamp(2.5rem, 5vw, 3.5rem)' }} data-sy-reveal="120">
         <Marquee
           items={rowOne}
           seconds={64}
@@ -165,7 +172,7 @@ export function SacredLibrary() {
       </div>
 
       <div className="sy-container">
-        <ul className="syj-stats">
+        <ul className="syj-stats" data-sy-reveal="60">
           <li>
             <b>
               <CountUp value={18} />
@@ -205,8 +212,8 @@ export function SacredLibrary() {
         </ul>
 
         <div className="syj-books">
-          {BOOKS.map((book) => (
-            <TiltCard key={book.id}>
+          {BOOKS.map((book, i) => (
+            <TiltCard key={book.id} reveal={60 + i * 70}>
               <article className="syj-book">
                 <span className="syj-book__glyph" aria-hidden>
                   {book.glyph}
@@ -220,7 +227,7 @@ export function SacredLibrary() {
         </div>
 
         <div className="syj-corpus">
-          <article className="syj-corpus__card syj-corpus__card--wide">
+          <article className="syj-corpus__card syj-corpus__card--wide" data-sy-reveal="60">
             <p className="syj-kicker">{hi ? 'अठारह महापुराण' : 'The eighteen Mahapuranas'}</p>
             <h3>
               {hi
@@ -246,7 +253,7 @@ export function SacredLibrary() {
             </ul>
           </article>
 
-          <article className="syj-corpus__card">
+          <article className="syj-corpus__card" data-sy-reveal="120">
             <p className="syj-kicker">{hi ? 'चारों वेद' : 'All four Vedas'}</p>
             <h3>{hi ? 'मूल पाठ, जैसा है वैसा' : 'The original text, just as it is'}</h3>
             <ul className="syj-corpus__list">
@@ -261,7 +268,7 @@ export function SacredLibrary() {
             </ul>
           </article>
 
-          <article className="syj-corpus__card">
+          <article className="syj-corpus__card" data-sy-reveal="180">
             <p className="syj-kicker">{hi ? 'सुनने के लिए' : 'To listen'}</p>
             <h3>
               {hi
@@ -279,7 +286,7 @@ export function SacredLibrary() {
           </article>
         </div>
 
-        <p className="syj-note">
+        <p className="syj-note" data-sy-reveal="0">
           <b aria-hidden>—</b>
           <span>
             {hi

@@ -410,8 +410,8 @@ body {
   height: 100%;
   opacity: 0.62;
 }
-[data-theme='light'] .syh__stage,
-[data-sy-theme='light'] .syh__stage {
+[data-theme='light'] .syh__stage-svg,
+[data-sy-theme='light'] .syh__stage-svg {
   opacity: 0.78;
 }
 
@@ -717,11 +717,13 @@ body {
    height-aware so short laptops shrink the device instead of cropping it. */
 .syh__phonewrap {
   position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   min-width: 0;
+  opacity: 1;
 }
 @media (min-width: 901px) {
   .syh__phonewrap {
@@ -731,19 +733,25 @@ body {
 .syh__bloom {
   position: absolute;
   inset: -12% -18%;
+  z-index: 0;
   border-radius: 50%;
   background: radial-gradient(closest-side, rgba(233, 184, 80, 0.22), rgba(233, 184, 80, 0) 72%);
   filter: blur(18px);
   pointer-events: none;
+}
+[data-sy-theme='light'] .syh__bloom {
+  background: radial-gradient(closest-side, rgba(184, 127, 26, 0.12), transparent 70%);
+  filter: blur(10px);
 }
 .syh-phone {
   /* device width follows the viewport's HEIGHT too — a 720px laptop gets a
      smaller phone rather than an overflowing one */
   --syh-phone-w: clamp(212px, min(19vw, 30vh), 280px);
   position: relative;
-  z-index: 1;
+  z-index: 2;
   width: var(--syh-phone-w);
   max-width: 100%;
+  opacity: 1;
 }
 .syh-phone.is-float {
   animation: syh-float 7s ease-in-out infinite;
@@ -793,6 +801,12 @@ body {
   overflow: hidden;
   background: #08070b;
   isolation: isolate;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+[data-sy-theme='light'] .syh-phone__screen {
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.35) inset;
 }
 .syh-phone__slide {
   position: absolute;
@@ -812,6 +826,10 @@ body {
   background: linear-gradient(115deg, rgba(255, 255, 255, 0) 42%, rgba(255, 255, 255, 0.07) 50%, rgba(255, 255, 255, 0) 58%);
   background-size: 260% 100%;
   animation: syh-sweep 7.5s ease-in-out infinite;
+}
+[data-sy-theme='light'] .syh-phone__glass {
+  opacity: 0.32;
+  background: linear-gradient(115deg, rgba(255, 255, 255, 0) 44%, rgba(255, 255, 255, 0.035) 50%, rgba(255, 255, 255, 0) 56%);
 }
 @keyframes syh-sweep {
   0%, 62% { background-position: 130% 0; }
@@ -898,6 +916,9 @@ body {
   max-width: 32ch;
   margin-inline: auto;
   animation: syh-capin 0.5s ease both;
+}
+[data-sy-theme='light'] .syh__caption {
+  color: color-mix(in srgb, var(--sy-ink) 62%, var(--sy-ink-muted));
 }
 @media (min-width: 901px) {
   .syh__caption {
@@ -1022,6 +1043,7 @@ body {
   align-items: center;
   justify-content: center;
   min-width: 0;
+  opacity: 1;
 }
 @media (min-width: 901px) {
   .syh__stage {
@@ -1042,10 +1064,6 @@ body {
     grid-template-columns: minmax(0, 1.02fr) minmax(300px, 0.98fr);
     gap: clamp(20px, 3vw, 48px);
   }
-}
-.syh__phonewrap {
-  flex-direction: column;
-  min-width: 0;
 }
 .syh-tabs--rail {
   min-width: 168px;
@@ -1196,3 +1214,136 @@ body {
   opacity: 0.95;
 }
 [data-sy-theme='light'] .syh-bloom__hi { mix-blend-mode: multiply; opacity: 0.35; }
+
+/* ═══ Hero polish pass ════════════════════════════════════════
+   The chakra's new engraving, the headline's turning word, and
+   the opening choreography. */
+
+/* ── Chakra: halo breath + orbiting sparks ───────────────────
+   The halo breathes on an 11s cycle offset from the heart's 6s
+   pulse (negative delay = already mid-breath on arrival), so the
+   figure never "beats" — it swells and settles like a lamp. */
+.syh-bloom.is-live .syh-bloom__halo {
+  animation: syh-halo 11s ease-in-out -2.6s infinite;
+}
+@keyframes syh-halo {
+  0%, 100% { opacity: 0.5; transform: scale(0.988); }
+  50% { opacity: 0.95; transform: scale(1.028); }
+}
+.syh-bloom.is-live .syh-bloom__orbit--a { animation: syh-spin 84s linear infinite; }
+.syh-bloom.is-live .syh-bloom__orbit--b { animation: syh-spin-r 126s linear infinite; }
+.syh-bloom.is-live .syh-bloom__orbit--c { animation: syh-spin 104s linear infinite; }
+
+/* ── The headline's turning word ─────────────────────────────
+   Every candidate word is stacked invisibly in the same grid
+   cell, so the slot's width is the widest word's width and a
+   swap can never reflow the headline. `overflow: clip` turns the
+   slide into a clip-reveal; the padding/margin pair gives the
+   clip box room for ascenders and Devanagari matras without
+   moving the text an inch. */
+.syh__swap {
+  position: relative;
+  display: inline-grid;
+  justify-items: start;
+  white-space: nowrap;
+  /* `overflow: clip` alone lets the composited (transformed) word escape the
+     box in Chromium — clip-path is honoured by the compositor and cannot be
+     escaped. It clips at the border box, so the padding/margin pair below
+     still buys headroom for ascenders and Devanagari matras. */
+  overflow: clip;
+  clip-path: inset(0);
+  padding: 0.18em 0.12em 0.22em 0;
+  margin: -0.18em -0.12em -0.22em 0;
+  vertical-align: baseline;
+}
+.syh__swap-size,
+.syh__swap-word {
+  grid-area: 1 / 1;
+}
+.syh__swap-size {
+  visibility: hidden;
+}
+
+/* ── Light-bleed behind the headline on load ────────────────── */
+.syh__copy {
+  position: relative;
+}
+.syh__bleed {
+  position: absolute;
+  left: -16%;
+  top: -14%;
+  width: 118%;
+  height: 72%;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(
+    52% 52% at 38% 42%,
+    color-mix(in srgb, var(--sy-gold-2) 15%, transparent),
+    transparent 72%
+  );
+  filter: blur(36px);
+  animation: syh-bleed 2.4s ease 0.1s both;
+}
+[data-sy-theme='light'] .syh__bleed {
+  background: radial-gradient(
+    52% 52% at 38% 42%,
+    color-mix(in srgb, var(--sy-gold-3) 14%, transparent),
+    transparent 72%
+  );
+}
+@keyframes syh-bleed {
+  from {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ── Chips: hover lift on a gold hairline ───────────────────── */
+.syh__chip {
+  transition:
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.3s ease,
+    box-shadow 0.3s ease,
+    color 0.3s ease;
+}
+.syh__chip:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--sy-gold-2) 62%, transparent);
+  color: var(--sy-ink);
+  box-shadow: 0 8px 22px -12px color-mix(in srgb, var(--sy-gold-2) 55%, transparent);
+}
+[data-sy-theme='light'] .syh__chip:hover {
+  border-color: color-mix(in srgb, var(--sy-gold-3) 55%, transparent);
+  box-shadow: 0 8px 20px -12px color-mix(in srgb, var(--sy-gold-3) 45%, transparent);
+}
+
+/* ── The scroll cue arrives after the headline has landed ───── */
+.syh__cue {
+  animation: syh-capin 0.9s ease 1.5s both;
+}
+
+/* ── Small screens: the chakra carries the composition ───────
+   The stage is hidden below 760px, so the figure gets more light
+   and a little more room — copy above, wheel glowing beneath,
+   cue at the foot. */
+@media (max-width: 760px) {
+  .syh__mandala-pos {
+    width: min(96vmin, 560px);
+    opacity: 0.8;
+  }
+  [data-sy-theme='light'] .syh__mandala-pos {
+    opacity: 0.66;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .syh__bleed,
+  .syh__cue {
+    animation: none;
+  }
+}
