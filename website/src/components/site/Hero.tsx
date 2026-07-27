@@ -357,11 +357,21 @@ export function Hero() {
             </span>
           </h1>
 
+          {/* The middle clause steps out on phones, where four lines of body
+              copy push the device off the first screen. What is left is still
+              a whole sentence — the tail carries the full stop. */}
           <motion.p className="syh__sub" variants={RISE}>
             {t(
-              'आज की तिथि, शुभ मुहूर्त, अपनी जन्म कुंडली, राशिफल और आरती-पुराण का पूरा संग्रह — सब कुछ हिंदी में, एक ही ऐप में।',
-              "Today's tithi, auspicious timings, your own birth chart, horoscope and a complete library of aartis and scriptures — all in Hindi and English, in one app.",
+              'आज की तिथि, शुभ मुहूर्त, अपनी जन्म कुंडली और राशिफल',
+              "Today's tithi, auspicious timings, your own birth chart and horoscope",
             )}
+            <span className="syh__sub-more">
+              {t(
+                ', साथ ही आरती और पुराणों का पूरा संग्रह',
+                ', plus a complete library of aartis and scriptures',
+              )}
+            </span>
+            {t(' — सब कुछ हिंदी और English में, एक ही ऐप में।', ' — all in Hindi and English, in one app.')}
           </motion.p>
 
           <motion.div className="syh__cta" variants={RISE}>
@@ -486,8 +496,9 @@ export function Hero() {
       </div>
 
       {/* ── Scroll cue ─────────────────────────────────────────
-          Fills the hero's foot (the phone is hidden on small screens, so the
-          composition there is copy + chakra + this quiet invitation). */}
+          Desktop only. On phones the device rises out of the fold and
+          dissolves into it, which says "there is more below" far better
+          than a word can — and it buys the device that much more room. */}
       <div className="syh__foot">
         <button
           type="button"

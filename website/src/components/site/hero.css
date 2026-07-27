@@ -152,7 +152,10 @@ body {
   position: relative;
   isolation: isolate;
   display: grid;
-  grid-template-rows: 1fr auto;
+  /* minmax(0,…), not a bare 1fr: `1fr` is minmax(auto,1fr), and that auto
+     minimum lets a tall child (the phone, which is deliberately taller than
+     the fold) push the row — and the hero — past one screen. */
+  grid-template-rows: minmax(0, 1fr) auto;
   min-height: 100vh; /* fallback */
   min-height: 100svh;
   padding-top: var(--syh-nav);
@@ -1327,17 +1330,228 @@ body {
   animation: syh-capin 0.9s ease 1.5s both;
 }
 
-/* ── Small screens: the chakra carries the composition ───────
-   The stage is hidden below 760px, so the figure gets more light
-   and a little more room — copy above, wheel glowing beneath,
-   cue at the foot. */
-@media (max-width: 760px) {
+/* ═══ Phones: a different composition, not a smaller one ══════
+   The desktop hero reads left-to-right — copy, then device, with
+   the wheel between them. Squeezed into one column that stacked
+   badly: the wheel sat directly behind the headline (linework
+   crossing the words, so neither read), and the device was hidden
+   altogether, leaving the first screen with nothing of the app in
+   it. So the phone layout is rebuilt rather than scaled:
+
+     ┌──────────────────────┐
+     │ eyebrow              │  copy sits on a real scrim —
+     │ HEADLINE, turning    │  clean background, nothing behind
+     │ one plain sentence   │  the type
+     │ [ get the app ]      │
+     │ [ what's inside ]    │
+     │ · trust · trust      │
+     │      ╭────────╮      │  the wheel rises from the foot,
+     │   ◜  │ live   │  ◝   │  the device rises out of the fold
+     │  ◜   │ screen │   ◝  │  and dissolves into it
+     └──────┴────────┴──────┘
+
+   The band runs to 900px — everywhere the grid is one column. Left at
+   760 the tablet-portrait sizes kept the old stacked layout and the hero
+   measured 1242px against a 1000px window.
+   ───────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  /* 1 · Copy takes the room it needs; the device gets everything left
+         over and is cropped by the fold rather than shrinking the type.
+         The height must be *definite* (not min-height): against an auto
+         height the leftover row has no size to resolve against and sizes
+         itself to the phone instead — which put the hero at 1053px on an
+         844px screen. */
+  .syh {
+    height: 100svh;
+    min-height: 560px;
+  }
+  .syh__grid {
+    grid-template-rows: auto minmax(0, 1fr);
+    align-items: stretch;
+    align-content: start;
+    gap: clamp(8px, 1.8vh, 20px);
+    height: 100%;
+  }
+  .syh__copy {
+    max-width: 34rem;
+  }
+
+  /* 2 · The wheel gets out of the text's way. Anchored to the foot and
+         pushed a quarter of itself past it, it reads as a chakra rising
+         behind the device — and the words above it sit on clean ground. */
+  .syh__mandala {
+    align-items: flex-end;
+  }
   .syh__mandala-pos {
-    width: min(96vmin, 560px);
-    opacity: 0.8;
+    /* pushed far enough that the swastika's own strokes stay below the fold:
+       what frames the device is the outer bezel — rings and teeth — not hard
+       linework crossing the app's rows */
+    width: min(124vw, 660px);
+    translate: 0 52%;
+    opacity: 0.62;
   }
   [data-sy-theme='light'] .syh__mandala-pos {
-    opacity: 0.66;
+    opacity: 0.44;
+  }
+
+  /* 3 · …and under the copy there is now an actual scrim. This, not the
+         figure's opacity, is what makes the headline legible on every
+         phone in both themes. */
+  .syh__veil {
+    background: linear-gradient(
+      180deg,
+      var(--sy-bg) 0%,
+      color-mix(in srgb, var(--sy-bg) 94%, transparent) 26%,
+      color-mix(in srgb, var(--sy-bg) 68%, transparent) 46%,
+      color-mix(in srgb, var(--sy-bg) 22%, transparent) 62%,
+      transparent 76%
+    );
+  }
+  .syh__vignette {
+    background: radial-gradient(
+      120% 70% at 50% 88%,
+      transparent 42%,
+      color-mix(in srgb, var(--sy-bg) 55%, transparent) 100%
+    );
+  }
+
+  /* 4 · Type, tuned for the hand rather than clamped down from the desk. */
+  .syh__eyebrow {
+    font-size: 9.5px;
+    letter-spacing: 0.22em;
+  }
+  .syh__eyebrow:lang(hi) {
+    font-size: 10.5px;
+  }
+  .syh__title {
+    margin-top: 10px;
+    font-size: clamp(2.05rem, 8.6vw, 2.8rem);
+    line-height: 1.08;
+  }
+  .syh__title:lang(hi) {
+    font-size: clamp(1.9rem, 7.8vw, 2.55rem);
+    line-height: 1.3;
+  }
+  .syh__sub {
+    margin-top: 10px;
+    max-width: 33ch;
+    font-size: 0.95rem;
+    line-height: 1.55;
+  }
+  .syh__sub-more {
+    display: none;
+  }
+
+  /* 5 · Two full-width buttons — a thumb should never have to aim. */
+  .syh__cta {
+    margin-top: clamp(14px, 2.4vh, 22px);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  .syh__cta .sy-btn-gold,
+  .syh__cta .sy-btn-ghost {
+    width: 100%;
+    justify-content: center;
+    padding: 0.82rem 1.1rem;
+    font-size: 0.92rem;
+  }
+
+  /* 6 · The trust pills become a quiet line of type. Three glass chips
+         wrapped to three rows and ate the device's room; the same words
+         set plain cost two. */
+  .syh__trust {
+    margin-top: clamp(11px, 1.9vh, 18px);
+    gap: 0.28rem 0.85rem;
+  }
+  .syh__chip {
+    padding: 0;
+    border: 0;
+    background: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    font-size: 0.745rem;
+    color: var(--sy-ink-muted);
+  }
+  [data-sy-theme='light'] .syh__chip {
+    background: none;
+    border: 0;
+  }
+  .syh__chip::before {
+    width: 4px;
+    height: 4px;
+  }
+  .syh__chip:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* 7 · The device comes back. It is taller than the space left for it on
+         purpose: the cell crops it and the mask dissolves its foot into the
+         page, so the app appears to be rising out of the fold. A flex box
+         does the centring — framer-motion writes `transform` on the wrapper
+         and would overwrite a translate-based centre. */
+  .syh__stage {
+    display: flex;
+    /* the desktop rule stacks this column and centres it vertically — left
+       alone here that centring crops the phone at BOTH ends, so the screen
+       showed its middle and the dissolve never appeared */
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    min-height: 0;
+    overflow: clip;
+    /* the dissolve starts late — begun early, the backdrop reads straight
+       through the screen and the wheel's lines cross the app's own rows */
+    -webkit-mask-image: linear-gradient(180deg, #000 74%, rgba(0, 0, 0, 0.55) 90%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 74%, rgba(0, 0, 0, 0.55) 90%, transparent 100%);
+  }
+  .syh__phonewrap {
+    flex: none;
+    justify-content: flex-start;
+  }
+  .syh-phone {
+    --syh-phone-h: min(74svh, 560px);
+  }
+  /* tablets have both the width and the height for a fuller device */
+  @media (min-width: 601px) {
+    .syh-phone {
+      --syh-phone-h: min(72svh, 660px);
+    }
+    .syh__copy {
+      max-width: 38rem;
+    }
+  }
+  /* the caption belongs to the desktop stage, where there is a column to
+     put it in; here the screen speaks for itself */
+  .syh__caption {
+    display: none;
+  }
+  /* the cropped device is the scroll invitation */
+  .syh__foot {
+    display: none;
+  }
+}
+
+/* Short phones (a 640px-tall screen): the copy alone was taking three
+   quarters of the fold, leaving the device a 149px sliver and pushing the
+   wheel up into the trust line. The three trust points step out — they are
+   said again, at length, further down the page — and everything breathes. */
+@media (max-width: 900px) and (max-height: 700px) {
+  .syh-phone {
+    --syh-phone-h: min(66svh, 460px);
+  }
+  .syh__title {
+    font-size: clamp(1.95rem, 8vw, 2.4rem);
+  }
+  .syh__title:lang(hi) {
+    font-size: clamp(1.8rem, 7.2vw, 2.2rem);
+  }
+  .syh__trust {
+    display: none;
+  }
+  .syh__cta {
+    margin-top: clamp(12px, 2vh, 18px);
   }
 }
 
