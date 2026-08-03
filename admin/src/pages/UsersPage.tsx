@@ -291,7 +291,7 @@ export default function UsersPage() {
             <>
               <div className="grid gap-3 md:hidden">
                 <div className="flex items-center justify-between rounded-md border border-border bg-muted/40 px-3 py-2">
-                  <button type="button" className="flex items-center gap-2 text-sm font-medium" onClick={toggleAllOnPage}>
+                  <button type="button" className="flex cursor-pointer items-center gap-2 text-sm font-medium" onClick={toggleAllOnPage}>
                     {allPageSelected ? <CheckSquare className="size-4 text-primary" /> : <Square className="size-4" />}
                     Select page ({selectableOnPage.length})
                   </button>
@@ -310,7 +310,7 @@ export default function UsersPage() {
                           type="button"
                           disabled={!selectable}
                           onClick={() => toggleRow(user)}
-                          className="mt-0.5 shrink-0 disabled:opacity-30"
+                          className="mt-0.5 shrink-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-30"
                           aria-label={selectable ? 'Select user' : 'Cannot select admin or your account'}
                         >
                           {checked ? <CheckSquare className="size-4 text-primary" /> : <Square className="size-4" />}
@@ -341,7 +341,7 @@ export default function UsersPage() {
                   <thead>
                     <tr className="border-b border-border text-xs text-muted-foreground">
                       <th className="border-b border-border px-2 py-2 font-medium w-10">
-                        <button type="button" onClick={toggleAllOnPage} aria-label="Select all on page" className="grid place-items-center">
+                        <button type="button" onClick={toggleAllOnPage} aria-label="Select all on page" className="grid cursor-pointer place-items-center">
                           {allPageSelected ? <CheckSquare className="size-4 text-primary" /> : <Square className="size-4" />}
                         </button>
                       </th>
@@ -370,7 +370,7 @@ export default function UsersPage() {
                               type="button"
                               disabled={!selectable}
                               onClick={() => toggleRow(user)}
-                              className="grid place-items-center disabled:opacity-30"
+                              className="grid cursor-pointer place-items-center disabled:cursor-not-allowed disabled:opacity-30"
                               aria-label={selectable ? 'Select user' : 'Cannot select'}
                             >
                               {checked ? <CheckSquare className="size-4 text-primary" /> : <Square className="size-4" />}
