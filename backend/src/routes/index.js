@@ -45,6 +45,7 @@ const vedaCtrl = require('../controllers/veda.controller');
 const dailyCtrl = require('../controllers/daily.controller');
 const vastuCtrl = require('../controllers/vastu.controller');
 const paymentCtrl = require('../controllers/payment.controller');
+const env = require('../config/env');
 const requireAuth = require('../middleware/auth');
 const optionalAuth = require('../middleware/optionalAuth');
 const requireAdmin = require('../middleware/admin');
@@ -68,17 +69,20 @@ const aiLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Too many requests. Please wait a moment and try again. · बहुत अधिक अनुरोध — कृपया थोड़ी देर बाद प्रयास करें।' },
 });
-const PREMIUM_ROUTES = [
-  '/ai', '/baby-names', '/name-ask', '/name-suggestions', '/kundli', '/varga', '/dasha', '/yoga',
-  '/choghadiya', '/sunrise', '/panchang', '/muhurat', '/match', '/gochar', '/remedies', '/vedic-reading',
-  '/life-timeline', '/transit-forecast', '/brihat-kundli', '/numerology', '/horoscope', '/vastu',
-  '/library', '/media', '/gita', '/ramayan', '/ramcharitmanas', '/rigveda', '/veda', '/daily-shloka',
-  '/notifications', '/me/data', '/chat',
-];
 const COSTLY_ROUTES = ['/ai', '/baby-names', '/name-ask', '/match', '/gochar', '/remedies', '/vedic-reading', '/life-timeline', '/transit-forecast', '/name-suggestions', '/brihat-kundli', '/numerology/interpret', '/vastu/ask'];
-// Authentication alone is not an entitlement. All paid data is checked against the
-// server-side subscription record before a controller is reached.
-router.use(PREMIUM_ROUTES, requireAuth, requirePremium);
+// Subscription gate is OFF unless PAYMENTS_ENABLED=true.
+// Live VPS historically ran without this gate; enabling it with zero PaymentSubscription
+// records blocks AI/kundli/panchang for every non-admin user (HTTP 402).
+if (env.payments.enabled) {
+  const PREMIUM_ROUTES = [
+    '/ai', '/baby-names', '/name-ask', '/name-suggestions', '/kundli', '/varga', '/dasha', '/yoga',
+    '/choghadiya', '/sunrise', '/panchang', '/muhurat', '/match', '/gochar', '/remedies', '/vedic-reading',
+    '/life-timeline', '/transit-forecast', '/brihat-kundli', '/numerology', '/horoscope', '/vastu',
+    '/library', '/media', '/gita', '/ramayan', '/ramcharitmanas', '/rigveda', '/veda', '/daily-shloka',
+    '/notifications', '/me/data', '/chat',
+  ];
+  router.use(PREMIUM_ROUTES, requireAuth, requirePremium);
+}
 router.use(COSTLY_ROUTES, aiLimiter);
 
 router.get('/health', health);
