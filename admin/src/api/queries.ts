@@ -18,6 +18,7 @@ export const queryKeys = {
   activityUsers: (q: string, page: number) => ['activity-users', q, page] as const,
   activityUser: (id: string) => ['activity-user', id] as const,
   activityLive: ['activity-live'] as const,
+  serverMonitor: ['server-monitor'] as const,
 }
 
 export function useStats() {
@@ -91,5 +92,14 @@ export function useActivityLive() {
     queryFn: () => endpoints.activityLive(),
     refetchInterval: 5_000,
     staleTime: 0,
+  })
+}
+
+export function useServerMonitor() {
+  return useQuery({
+    queryKey: queryKeys.serverMonitor,
+    queryFn: endpoints.serverMonitor,
+    refetchInterval: 4_000,
+    placeholderData: keepPreviousData,
   })
 }

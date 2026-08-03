@@ -19,6 +19,7 @@ import {
   Settings,
   SlidersHorizontal,
   Sun,
+  Server,
   Users,
   X,
 } from 'lucide-react'
@@ -29,6 +30,7 @@ import { cn } from '@/lib/utils'
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/server-monitor', label: 'Server Monitor', icon: Server },
   { to: '/analytics', label: 'Analytics', icon: LineChart },
   { to: '/activity', label: 'User Activity', icon: Radar },
   { to: '/users', label: 'Users', icon: Users },

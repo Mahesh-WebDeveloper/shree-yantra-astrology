@@ -31,6 +31,7 @@ const notificationsCtrl = require('../controllers/notifications.controller');
 const appConfigCtrl = require('../controllers/appConfig.controller');
 const faqCtrl = require('../controllers/faq.controller');
 const analyticsCtrl = require('../controllers/analytics.controller');
+const serverMetricsCtrl = require('../controllers/serverMetrics.controller');
 const userDataCtrl = require('../controllers/userData.controller');
 const screensCtrl = require('../controllers/screens.controller');
 const mediaCtrl = require('../controllers/media.controller');
@@ -231,6 +232,8 @@ router.get('/admin/analytics', adminOnly, analyticsCtrl.stats);
 router.get('/admin/activity/users', adminOnly, analyticsCtrl.activityUsers);
 router.get('/admin/activity/user/:id', adminOnly, analyticsCtrl.activityUser);
 router.get('/admin/activity/live', adminOnly, analyticsCtrl.activityLive);
+
+router.get('/admin/server-monitor', adminOnly, serverMetricsCtrl.get);
 
 router.get('/admin/screens', adminOnly, screensCtrl.adminList);
 router.get('/admin/screens/:page', adminOnly, screensCtrl.adminGet);

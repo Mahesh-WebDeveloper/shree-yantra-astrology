@@ -188,6 +188,10 @@ export const endpoints = {
     })
     return data
   },
+  async serverMonitor() {
+    const { data } = await apiClient.get<import('./serverMonitor.types').ServerMonitorResponse>('/admin/server-monitor')
+    return data
+  },
   async updateScreen(page: string, payload: { label?: string; fields?: ScreenContent['fields'] }) {
     const { data } = await apiClient.put<{ screen: ScreenContent }>(`/admin/screens/${page}`, payload)
     return data.screen

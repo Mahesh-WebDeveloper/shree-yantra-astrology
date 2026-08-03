@@ -21,6 +21,7 @@ const SettingsPage = lazy(() => import('@/pages/SettingsPage'))
 const AiCachePage = lazy(() => import('@/pages/AiCachePage'))
 const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'))
 const UserActivityPage = lazy(() => import('@/pages/UserActivityPage'))
+const ServerMonitorPage = lazy(() => import('@/pages/ServerMonitorPage'))
 const ScreensPage = lazy(() => import('@/pages/ScreensPage'))
 
 const queryClient = new QueryClient({
@@ -75,6 +76,7 @@ export function App() {
                 <Route path="ai-cache" element={<AiCachePage />} />
                 <Route path="analytics" element={<AnalyticsPage />} />
                 <Route path="activity" element={<UserActivityPage />} />
+                <Route path="server-monitor" element={<ServerMonitorPage />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

@@ -1,0 +1,1 @@
+var e=`/api`.replace(/\/api\/?$/,``);function t(t){return t?/^https?:\/\//i.test(t)?t:`${e}${t.startsWith(`/`)?t:`/${t}`}`:``}export{t};
