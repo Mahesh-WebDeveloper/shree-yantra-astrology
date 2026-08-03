@@ -204,8 +204,16 @@ export function SubscriptionActivatedScreen({ navigation }: any) {
   const rawName = (user?.name || '').trim();
   const firstName = rawName && rawName !== 'Friend' ? rawName.split(/\s+/)[0] : '';
   // Trial-ends date computed live (today + 7 days) — never a stale hardcoded date
-  const endD = new Date(Date.now() + 7 * 86400000);
+  const isTrial = user?.subscription?.initialPeriodType !== 'paid';
+  const savedTrialEnd = isTrial ? user?.subscription?.trialEndsAt : user?.subscription?.currentPeriodEnd;
+  const endD = savedTrialEnd ? new Date(savedTrialEnd) : new Date(Date.now() + (isTrial ? 7 : 30) * 86400000);
   const TRIAL = [...TRIAL_BASE, { k: 'Trial Ends', kHi: 'ट्रायल समाप्ति', v: `${endD.getDate()} ${TRIAL_MON[endD.getMonth()]} ${endD.getFullYear()}`, vHi: `${endD.getDate()} ${TRIAL_MON[endD.getMonth()]} ${endD.getFullYear()}`, icon: 'ends' }];
+  const PAID: typeof TRIAL_BASE = [
+    { k: 'Plan', kHi: 'प्लान', v: 'Premium Astrology', vHi: 'Premium ज्योतिष', icon: 'plan' },
+    { k: 'Paid Today', kHi: 'आज का भुगतान', v: '₹499', vHi: '₹499', icon: 'amount', green: true },
+    { k: 'Access Until', kHi: 'सदस्यता अवधि', v: `${endD.getDate()} ${TRIAL_MON[endD.getMonth()]} ${endD.getFullYear()}`, vHi: `${endD.getDate()} ${TRIAL_MON[endD.getMonth()]} ${endD.getFullYear()}`, icon: 'ends' },
+  ];
+  const details = isTrial ? TRIAL : PAID;
   const insets = useSafeAreaInsets();
 
   // After activation: collect personal details (name/DOB/birth time/location) unless they are
@@ -300,7 +308,9 @@ export function SubscriptionActivatedScreen({ navigation }: any) {
           {hi ? 'बधाई हो' : 'Congratulations'}{firstName ? <Text style={{ fontFamily: fonts.interSemi, color: theme.goldText }}> {firstName}</Text> : ''}{hi ? ' — आपकी दिव्य मार्गदर्शन यात्रा आज से आरंभ होती है।' : ' — your divine guidance journey begins today.'}
         </Text>
         <Text style={[styles.leadAccent, { color: theme.green }]}>
-          {hi ? 'अपनी ' : 'Enjoy your '}<Text style={{ fontFamily: fonts.interBold }}>{hi ? '₹1 में 7 दिन' : '₹1 for 7 Days'}</Text>{hi ? ' की ट्रायल पहुँच का आनंद लें।' : ' trial access.'}
+          {isTrial
+            ? <>{hi ? 'अपनी ' : 'Enjoy your '}<Text style={{ fontFamily: fonts.interBold }}>{hi ? '₹1 में 7 दिन' : '₹1 for 7 Days'}</Text>{hi ? ' की ट्रायल पहुँच का आनंद लें।' : ' trial access.'}</>
+            : <>{hi ? 'आपकी ' : 'Your '}<Text style={{ fontFamily: fonts.interBold }}>{hi ? 'Premium सदस्यता' : 'Premium membership'}</Text>{hi ? ' फिर से सक्रिय हो गई है।' : ' is active again.'}</>}
         </Text>
 
         {/* Trial details */}
@@ -308,12 +318,12 @@ export function SubscriptionActivatedScreen({ navigation }: any) {
           <View style={styles.cardTitleRow}>
             <View style={[styles.ornLineShort, { backgroundColor: theme.line }]} />
             <Text style={[styles.diamondSm, { color: theme.gold2 }]}>◆</Text>
-            <Text style={[styles.cardTitle, { color: dim }]}>{hi ? 'ट्रायल विवरण' : 'TRIAL DETAILS'}</Text>
+            <Text style={[styles.cardTitle, { color: dim }]}>{isTrial ? (hi ? 'ट्रायल विवरण' : 'TRIAL DETAILS') : (hi ? 'सदस्यता विवरण' : 'MEMBERSHIP DETAILS')}</Text>
             <Text style={[styles.diamondSm, { color: theme.gold2 }]}>◆</Text>
             <View style={[styles.ornLineShort, { backgroundColor: theme.line }]} />
           </View>
-          {TRIAL.map((it, i) => (
-            <View key={it.k} style={[styles.row, { borderBottomColor: theme.line }, i === TRIAL.length - 1 && styles.noBorder]}>
+          {details.map((it, i) => (
+            <View key={it.k} style={[styles.row, { borderBottomColor: theme.line }, i === details.length - 1 && styles.noBorder]}>
               <View style={[styles.rowIc, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.4)' : '#ffffff' }]}>
                 <RowIcon kind={it.icon} color={theme.gold1} />
               </View>

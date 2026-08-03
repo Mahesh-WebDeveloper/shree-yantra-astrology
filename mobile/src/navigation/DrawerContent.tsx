@@ -15,7 +15,6 @@ import { GradientText } from '../components/GradientText';
 import { hTap, hSelect } from '../lib/haptics';
 import { clearAuth, getStoredUser } from '../lib/auth';
 import { logoutServer } from '../lib/api';
-import { usePremium } from '../lib/premiumStore';
 import { useLang } from '../i18n/LanguageProvider';
 
 const NAV_KEY: Record<string, string> = {
@@ -273,8 +272,7 @@ export function DrawerContent({ close, progress }: { close: () => void; progress
   // logged-in user (drawer har open par remount hota hai → mount par fresh load)
   const [firstName, setFirstName] = useState('Guest');
   const [planPremium, setPlanPremium] = useState(false);
-  const localPrem = usePremium();
-  const isPremium = planPremium || localPrem;
+  const isPremium = planPremium;
   useEffect(() => {
     getStoredUser().then((u) => {
       if (u?.name) setFirstName(u.name.trim().split(/\s+/)[0]);

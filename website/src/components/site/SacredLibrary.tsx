@@ -1,55 +1,57 @@
 import { useLang } from '@/i18n/LangProvider'
-import { CountUp, Marquee, TiltCard, type MarqueeItem } from './parts/motionBits'
+import { Marquee, TiltCard, type MarqueeItem } from './parts/motionBits'
 import { useRevealChildren } from './hooks/useSiteMotion'
 import './sections.css'
 
 /**
- * The corpus that actually ships inside the app. Every number here is real —
- * nothing is rounded up, and the two partial Puranas are named as partial.
+ * Sacred reading and listening copy for the public website.
+ * Keep it devotional, useful and premium without turning the section into
+ * a table of counts.
  */
 
-type Purana = { hi: string; en: string; adhyaya: number | null; katha?: boolean }
+type Bi = { hi: string; en: string }
+type Purana = { hi: string; en: string; meta: Bi; katha?: boolean }
 
 const PURANAS: Purana[] = [
-  { hi: 'स्कन्द पुराण', en: 'Skanda Purana', adhyaya: 1748 },
-  { hi: 'पद्म पुराण', en: 'Padma Purana', adhyaya: 693 },
-  { hi: 'शिव पुराण', en: 'Shiva Purana', adhyaya: 457, katha: true },
-  { hi: 'अग्नि पुराण', en: 'Agni Purana', adhyaya: 383 },
-  { hi: 'श्रीमद् भागवत', en: 'Bhagavata Purana', adhyaya: 335, katha: true },
-  { hi: 'गरुड़ पुराण', en: 'Garuda Purana', adhyaya: 318, katha: true },
-  { hi: 'मत्स्य पुराण', en: 'Matsya Purana', adhyaya: 291 },
-  { hi: 'ब्रह्मवैवर्त पुराण', en: 'Brahmavaivarta Purana', adhyaya: 275 },
-  { hi: 'ब्रह्म पुराण', en: 'Brahma Purana', adhyaya: 246 },
-  { hi: 'वराह पुराण', en: 'Varaha Purana', adhyaya: 218 },
-  { hi: 'नारद पुराण', en: 'Narada Purana', adhyaya: 195 },
-  { hi: 'ब्रह्माण्ड पुराण', en: 'Brahmanda Purana', adhyaya: 156 },
-  { hi: 'मार्कण्डेय पुराण', en: 'Markandeya Purana', adhyaya: 134 },
-  { hi: 'विष्णु पुराण', en: 'Vishnu Purana', adhyaya: 126, katha: true },
-  { hi: 'वामन पुराण', en: 'Vamana Purana', adhyaya: 96 },
-  { hi: 'कूर्म पुराण', en: 'Kurma Purana', adhyaya: 95 },
-  { hi: 'भविष्य पुराण', en: 'Bhavishya Purana', adhyaya: null },
-  { hi: 'लिङ्ग पुराण', en: 'Linga Purana', adhyaya: null },
+  { hi: 'स्कन्द पुराण', en: 'Skanda Purana', meta: { hi: 'अध्याय-वार पाठ', en: 'chapter-wise reading' } },
+  { hi: 'पद्म पुराण', en: 'Padma Purana', meta: { hi: 'धार्मिक कथा', en: 'sacred narrative' } },
+  { hi: 'शिव पुराण', en: 'Shiva Purana', meta: { hi: 'कथा सहित', en: 'with katha' }, katha: true },
+  { hi: 'अग्नि पुराण', en: 'Agni Purana', meta: { hi: 'विषय-आधारित ज्ञान', en: 'thematic knowledge text' } },
+  { hi: 'श्रीमद् भागवत', en: 'Bhagavata Purana', meta: { hi: 'भक्ति कथा', en: 'devotional katha' }, katha: true },
+  { hi: 'गरुड़ पुराण', en: 'Garuda Purana', meta: { hi: 'धर्म और नीति', en: 'dharma and guidance' }, katha: true },
+  { hi: 'मत्स्य पुराण', en: 'Matsya Purana', meta: { hi: 'पुराण पाठ', en: 'purana reading' } },
+  { hi: 'ब्रह्मवैवर्त पुराण', en: 'Brahmavaivarta Purana', meta: { hi: 'लीला और भक्ति', en: 'leela and bhakti' } },
+  { hi: 'ब्रह्म पुराण', en: 'Brahma Purana', meta: { hi: 'तीर्थ और कथा', en: 'tirtha and katha' } },
+  { hi: 'वराह पुराण', en: 'Varaha Purana', meta: { hi: 'धार्मिक पाठ', en: 'devotional text' } },
+  { hi: 'नारद पुराण', en: 'Narada Purana', meta: { hi: 'भक्ति मार्ग', en: 'path of bhakti' } },
+  { hi: 'ब्रह्माण्ड पुराण', en: 'Brahmanda Purana', meta: { hi: 'सृष्टि कथा', en: 'cosmic narrative' } },
+  { hi: 'मार्कण्डेय पुराण', en: 'Markandeya Purana', meta: { hi: 'देवी महिमा', en: 'Devi tradition' } },
+  { hi: 'विष्णु पुराण', en: 'Vishnu Purana', meta: { hi: 'विष्णु कथा', en: 'Vishnu katha' }, katha: true },
+  { hi: 'वामन पुराण', en: 'Vamana Purana', meta: { hi: 'अवतार कथा', en: 'avatar katha' } },
+  { hi: 'कूर्म पुराण', en: 'Kurma Purana', meta: { hi: 'पुराण पाठ', en: 'purana reading' } },
+  { hi: 'भविष्य पुराण', en: 'Bhavishya Purana', meta: { hi: 'अध्याय-वार पाठ', en: 'chapter-wise reading' } },
+  { hi: 'लिङ्ग पुराण', en: 'Linga Purana', meta: { hi: 'शिव परंपरा', en: 'Shaiva tradition' } },
 ]
 
 const VEDAS = [
-  { hi: 'ऋग्वेद', en: 'Rigveda', count: '1,028', unitHi: 'सूक्त', unitEn: 'suktas' },
-  { hi: 'अथर्ववेद', en: 'Atharvaveda', count: '736', unitHi: 'सूक्त', unitEn: 'suktas' },
-  { hi: 'सामवेद', en: 'Samaveda', count: '189', unitHi: 'सूक्त', unitEn: 'suktas' },
-  { hi: 'यजुर्वेद', en: 'Yajurveda', count: '40', unitHi: 'खंड', unitEn: 'sections' },
-  { hi: 'उपनिषद्', en: 'Upanishads', count: '8', unitHi: 'ग्रंथ', unitEn: 'texts' },
+  { hi: 'ऋग्वेद', en: 'Rigveda', meta: { hi: 'सूक्त पाठ', en: 'sukta reading' } },
+  { hi: 'अथर्ववेद', en: 'Atharvaveda', meta: { hi: 'मंत्र और सूक्त', en: 'mantra and sukta' } },
+  { hi: 'सामवेद', en: 'Samaveda', meta: { hi: 'स्वर परंपरा', en: 'chant tradition' } },
+  { hi: 'यजुर्वेद', en: 'Yajurveda', meta: { hi: 'यज्ञ परंपरा', en: 'yajna tradition' } },
+  { hi: 'उपनिषद्', en: 'Upanishads', meta: { hi: 'दार्शनिक पाठ', en: 'philosophical texts' } },
 ]
 
 const AUDIO = [
-  { hi: 'आरती संग्रह', en: 'Aarti sangrah', meta: { hi: '18 आरती', en: '18 aartis' } },
+  { hi: 'आरती संग्रह', en: 'Aarti collection', meta: { hi: 'दैनिक पूजा के लिए', en: 'for daily puja' } },
   {
     hi: 'मंत्र और भजन',
     en: 'Mantras and bhajans',
-    meta: { hi: 'महामृत्युंजय 108 सहित', en: 'incl. Mahamrityunjay 108' },
+    meta: { hi: 'सुनने और जप के लिए', en: 'for listening and chanting' },
   },
-  { hi: 'ध्यान संगीत', en: 'Meditation instrumentals', meta: { hi: 'वादन', en: 'instrumental' } },
-  { hi: 'रामायण कथा', en: 'Ramayan katha', meta: { hi: '120 भाग', en: '120 episodes' } },
-  { hi: 'महाभारत कथा', en: 'Mahabharat katha', meta: { hi: '100 भाग', en: '100 episodes' } },
-  { hi: 'यथार्थ गीता', en: 'Yatharth Geeta', meta: { hi: '20 अध्याय', en: '20 chapters' } },
+  { hi: 'ध्यान संगीत', en: 'Meditation music', meta: { hi: 'वाद्य संगीत', en: 'instrumental audio' } },
+  { hi: 'रामायण कथा', en: 'Ramayan katha', meta: { hi: 'भाग-दर-भाग', en: 'episode-wise' } },
+  { hi: 'महाभारत कथा', en: 'Mahabharat katha', meta: { hi: 'कथा श्रवण', en: 'katha audio' } },
+  { hi: 'यथार्थ गीता', en: 'Yatharth Geeta', meta: { hi: 'श्रवण पाठ', en: 'audio paath' } },
 ]
 
 const BOOKS = [
@@ -58,70 +60,66 @@ const BOOKS = [
     glyph: 'ॐ',
     hi: 'भगवद्गीता',
     en: 'Bhagavad Gita',
-    metaHi: '18 अध्याय',
-    metaEn: '18 chapters',
-    descHi: 'संस्कृत श्लोक, हिंदी अर्थ और अध्याय-वार पाठ।',
-    descEn: 'Sanskrit verse, Hindi meaning, chapter-by-chapter reading.',
+    metaHi: 'अध्याय-वार पाठ',
+    metaEn: 'chapter-wise reading',
+    descHi: 'अध्याय के अनुसार संस्कृत श्लोक और उपलब्ध हिंदी अर्थ।',
+    descEn: 'Sanskrit verses organised by chapter, with available Hindi meaning.',
   },
   {
     id: 'ramayan',
     glyph: 'श्री',
     hi: 'वाल्मीकि रामायण',
     en: 'Valmiki Ramayana',
-    metaHi: '648 सर्ग',
-    metaEn: '648 sargas',
-    descHi: 'सातों कांड, सर्ग-दर-सर्ग मूल पाठ के साथ।',
-    descEn: 'All seven kandas, sarga by sarga, with the original text.',
+    metaHi: 'सर्ग-दर-सर्ग',
+    metaEn: 'sarga by sarga',
+    descHi: 'कांड और सर्ग के अनुसार व्यवस्थित वाल्मीकि रामायण पाठ।',
+    descEn: 'Valmiki Ramayana organised by kanda and sarga.',
   },
   {
     id: 'manas',
     glyph: 'रा',
     hi: 'रामचरितमानस',
     en: 'Ramcharitmanas',
-    metaHi: '7 कांड',
-    metaEn: '7 kandas',
-    descHi: 'तुलसीदास की चौपाइयाँ, हिंदी अर्थ के साथ।',
-    descEn: 'Tulsidas in full, with the meaning in Hindi.',
+    metaHi: 'कांड-वार',
+    metaEn: 'kanda-wise',
+    descHi: 'कांड के अनुसार तुलसीदास की चौपाइयाँ और उपलब्ध हिंदी अर्थ।',
+    descEn: 'Tulsidas’s verses organised by kanda, with available Hindi meaning.',
   },
   {
     id: 'mahabharat',
     glyph: 'भा',
     hi: 'महाभारत',
     en: 'Mahabharata',
-    metaHi: '1,995 खंड',
-    metaEn: '1,995 sections',
-    descHi: 'पर्व-दर-पर्व, खंडों में बँटा हुआ पाठ।',
-    descEn: 'Parva by parva, divided into readable sections.',
+    metaHi: 'पर्व-वार पाठ',
+    metaEn: 'parva-wise reading',
+    descHi: 'पर्व और खंड के अनुसार व्यवस्थित महाभारत पाठ।',
+    descEn: 'Mahabharata organised by parva and readable sections.',
   },
 ]
 
 export function SacredLibrary() {
-  const { hi } = useLang()
+  const { hi, lang } = useLang()
   const revealRef = useRevealChildren<HTMLElement>()
 
   const rowOne: MarqueeItem[] = PURANAS.map((p) => ({
     key: p.en,
     label: hi ? p.hi : p.en,
-    meta: p.adhyaya
-      ? `${p.adhyaya.toLocaleString('en-US')} ${hi ? 'अध्याय' : 'adhyayas'}`
-      : hi
-        ? 'आंशिक'
-        : 'partial',
+    meta: hi ? p.meta.hi : p.meta.en,
   }))
 
   const rowTwo: MarqueeItem[] = [
-    { key: 'gita', label: hi ? 'भगवद्गीता' : 'Bhagavad Gita', meta: hi ? '18 अध्याय' : '18 chapters' },
-    { key: 'ramayan', label: hi ? 'वाल्मीकि रामायण' : 'Valmiki Ramayana', meta: hi ? '648 सर्ग' : '648 sargas' },
-    { key: 'manas', label: hi ? 'रामचरितमानस' : 'Ramcharitmanas', meta: hi ? '7 कांड' : '7 kandas' },
-    { key: 'mb', label: hi ? 'महाभारत' : 'Mahabharata', meta: hi ? '1,995 खंड' : '1,995 sections' },
-    { key: 'rig', label: hi ? 'ऋग्वेद' : 'Rigveda', meta: hi ? '1,028 सूक्त' : '1,028 suktas' },
-    { key: 'atharva', label: hi ? 'अथर्ववेद' : 'Atharvaveda', meta: hi ? '736 सूक्त' : '736 suktas' },
-    { key: 'sama', label: hi ? 'सामवेद' : 'Samaveda', meta: hi ? '189 सूक्त' : '189 suktas' },
-    { key: 'yajur', label: hi ? 'यजुर्वेद' : 'Yajurveda', meta: hi ? '40 खंड' : '40 sections' },
-    { key: 'upanishad', label: hi ? 'उपनिषद्' : 'Upanishads', meta: hi ? '8 ग्रंथ' : '8 texts' },
-    { key: 'aarti', label: hi ? 'आरती संग्रह' : 'Aarti sangrah', meta: hi ? '18 आरती' : '18 aartis' },
-    { key: 'mantra', label: hi ? 'मंत्र संग्रह' : 'Mantra sangrah', meta: hi ? 'ऑडियो' : 'with audio' },
-    { key: 'stotra', label: hi ? 'स्तोत्र संग्रह' : 'Stotra sangrah', meta: hi ? 'ऑडियो' : 'with audio' },
+    { key: 'gita', label: hi ? 'भगवद्गीता' : 'Bhagavad Gita', meta: hi ? 'अर्थ सहित' : 'with meaning' },
+    { key: 'ramayan', label: hi ? 'वाल्मीकि रामायण' : 'Valmiki Ramayana', meta: hi ? 'सर्ग-दर-सर्ग' : 'sarga-wise' },
+    { key: 'manas', label: hi ? 'रामचरितमानस' : 'Ramcharitmanas', meta: hi ? 'कांड-वार' : 'kanda-wise' },
+    { key: 'mb', label: hi ? 'महाभारत' : 'Mahabharata', meta: hi ? 'पर्व-वार' : 'parva-wise' },
+    { key: 'rig', label: hi ? 'ऋग्वेद' : 'Rigveda', meta: hi ? 'सूक्त पाठ' : 'sukta reading' },
+    { key: 'atharva', label: hi ? 'अथर्ववेद' : 'Atharvaveda', meta: hi ? 'मंत्र और सूक्त' : 'mantra and sukta' },
+    { key: 'sama', label: hi ? 'सामवेद' : 'Samaveda', meta: hi ? 'स्वर परंपरा' : 'chant tradition' },
+    { key: 'yajur', label: hi ? 'यजुर्वेद' : 'Yajurveda', meta: hi ? 'यज्ञ परंपरा' : 'yajna tradition' },
+    { key: 'upanishad', label: hi ? 'उपनिषद्' : 'Upanishads', meta: hi ? 'ज्ञान पाठ' : 'wisdom texts' },
+    { key: 'aarti', label: hi ? 'आरती संग्रह' : 'Aarti collection', meta: hi ? 'पूजा के लिए' : 'for puja' },
+    { key: 'mantra', label: hi ? 'मंत्र संग्रह' : 'Mantra collection', meta: hi ? 'ऑडियो' : 'with audio' },
+    { key: 'stotra', label: hi ? 'स्तोत्र संग्रह' : 'Stotra collection', meta: hi ? 'ऑडियो' : 'with audio' },
     { key: 'chalisa', label: hi ? 'हनुमान चालीसा' : 'Hanuman Chalisa', meta: hi ? 'ऑडियो' : 'with audio' },
     { key: 'yatharth', label: hi ? 'यथार्थ गीता' : 'Yatharth Geeta', meta: hi ? '20 अध्याय' : '20 chapters' },
   ]
@@ -137,33 +135,35 @@ export function SacredLibrary() {
 
       <div className="sy-container">
         <div className="syj-intro" data-sy-reveal="0">
-          <p className="syj-kicker">{hi ? 'पढ़ने और सुनने के लिए' : 'To read and to listen'}</p>
+          <p className="syj-kicker">{hi ? 'धार्मिक ग्रंथ और भक्ति सामग्री' : 'Scriptures and devotional content'}</p>
           <h2 id="syj-library-h" className="syj-title">
             {hi ? (
               <>
-                घर भर का शास्त्र, <em>आपके फ़ोन में</em>
+                पढ़ें, अर्थ समझें <em>और सुविधानुसार सुनें</em>
               </>
             ) : (
               <>
-                A whole shelf of scriptures, <em>in your phone</em>
+                Read the text, understand the meaning, <em>or listen at your convenience</em>
               </>
             )}
           </h2>
           <p className="syj-sub">
             {hi
-              ? 'गीता, रामायण, महाभारत और अठारहों पुराण — पढ़िए भी, और सुनिए भी। संस्कृत श्लोक के साथ उसका हिंदी अर्थ रहता है, इसलिए बात समझ में आती है; और जब पढ़ने का मन न हो, तो आरती, भजन, मंत्र और कथा सुन लीजिए। नीचे की हर संख्या वही है जो ऐप में सचमुच मौजूद है।'
-              : 'The Gita, the Ramayan, the Mahabharat and all eighteen Puranas — to read, and to listen to. Every Sanskrit verse carries its meaning in Hindi, so it actually makes sense; and when you would rather not read, there is aarti, bhajan, mantra and katha to listen to. Every number below is what is really in the app.'}
+              ? 'भगवद्गीता, रामायण, रामचरितमानस, महाभारत, वेद, पुराण, आरती, मंत्र और स्तोत्र — दैनिक पाठ, स्वाध्याय और परिवार के साथ सुनने के लिए एक व्यवस्थित संग्रह।'
+              : 'An organised collection of the Bhagavad Gita, Ramayana, Ramcharitmanas, Mahabharata, Vedas, Puranas, aarti, mantras and stotras for daily reading, study and family listening.'}
           </p>
         </div>
       </div>
 
       <div style={{ marginTop: 'clamp(2.5rem, 5vw, 3.5rem)' }} data-sy-reveal="120">
         <Marquee
+          key={`puranas-${lang}`}
           items={rowOne}
           seconds={64}
           ariaLabel={hi ? 'पुराणों की सूची' : 'List of Puranas'}
         />
         <Marquee
+          key={`epics-${lang}`}
           items={rowTwo}
           reverse
           seconds={58}
@@ -174,40 +174,28 @@ export function SacredLibrary() {
       <div className="sy-container">
         <ul className="syj-stats" data-sy-reveal="60">
           <li>
-            <b>
-              <CountUp value={18} />
-            </b>
-            <span>{hi ? 'पुराण' : 'Puranas'}</span>
+            <b>{hi ? 'शास्त्र' : 'Scriptures'}</b>
+            <span>{hi ? 'गीता, रामायण, वेद और पुराण' : 'Gita, Ramayan, Vedas and Puranas'}</span>
           </li>
           <li>
-            <b>
-              <CountUp value={5750} suffix="+" />
-            </b>
-            <span>{hi ? 'अध्याय' : 'Adhyayas'}</span>
+            <b>{hi ? 'अर्थ' : 'Meaning'}</b>
+            <span>{hi ? 'संस्कृत के साथ सरल हिंदी व्याख्या' : 'Simple Hindi explanation with Sanskrit text'}</span>
           </li>
           <li>
-            <b>
-              <CountUp value={334000} />
-            </b>
-            <span>{hi ? 'श्लोक' : 'Shlokas'}</span>
+            <b>{hi ? 'श्रवण' : 'Audio'}</b>
+            <span>{hi ? 'आरती, मंत्र, भजन और कथा' : 'Aarti, mantra, bhajan and katha'}</span>
           </li>
           <li>
-            <b>
-              <CountUp value={4} />
-            </b>
-            <span>{hi ? 'वेद' : 'Vedas'}</span>
+            <b>{hi ? 'प्रगति' : 'Progress'}</b>
+            <span>{hi ? 'पढ़ने और सुनने की प्रगति सहेजें' : 'Save your reading and listening progress'}</span>
           </li>
           <li>
-            <b>
-              <CountUp value={648} />
-            </b>
-            <span>{hi ? 'रामायण सर्ग' : 'Ramayana sargas'}</span>
+            <b>{hi ? 'दैनिक' : 'Daily'}</b>
+            <span>{hi ? 'आज का श्लोक और भक्ति सामग्री' : 'Verse of the day and devotional content'}</span>
           </li>
           <li>
-            <b>
-              <CountUp value={1995} />
-            </b>
-            <span>{hi ? 'महाभारत खंड' : 'Mahabharata sections'}</span>
+            <b>{hi ? 'परिवार' : 'Family use'}</b>
+            <span>{hi ? 'परिवार के साथ पढ़ने और सुनने के लिए' : 'Designed for reading and listening together'}</span>
           </li>
         </ul>
 
@@ -228,11 +216,11 @@ export function SacredLibrary() {
 
         <div className="syj-corpus">
           <article className="syj-corpus__card syj-corpus__card--wide" data-sy-reveal="60">
-            <p className="syj-kicker">{hi ? 'अठारह महापुराण' : 'The eighteen Mahapuranas'}</p>
+            <p className="syj-kicker">{hi ? 'महापुराणों का संग्रह' : 'Collection of Mahapuranas'}</p>
             <h3>
               {hi
-                ? 'हर पुराण में कितने अध्याय हैं — जितने ऐप में सचमुच हैं'
-                : 'How many chapters each one has — exactly as many as the app really has'}
+                ? 'पुराणों को अध्याय के अनुसार खोजने और पढ़ने के लिए व्यवस्थित किया गया है'
+                : 'The Puranas are organised by chapter for easier browsing and reading'}
             </h3>
             <ul className="syj-corpus__list syj-corpus__list--cols">
               {PURANAS.map((p) => (
@@ -242,11 +230,7 @@ export function SacredLibrary() {
                     {p.katha ? <em>{hi ? 'कथा' : 'katha'}</em> : null}
                   </b>
                   <span>
-                    {p.adhyaya
-                      ? `${p.adhyaya.toLocaleString('en-US')} ${hi ? 'अध्याय' : 'adhyayas'}`
-                      : hi
-                        ? 'आंशिक'
-                        : 'partial'}
+                    {hi ? p.meta.hi : p.meta.en}
                   </span>
                 </li>
               ))}
@@ -254,26 +238,24 @@ export function SacredLibrary() {
           </article>
 
           <article className="syj-corpus__card" data-sy-reveal="120">
-            <p className="syj-kicker">{hi ? 'चारों वेद' : 'All four Vedas'}</p>
-            <h3>{hi ? 'मूल पाठ, जैसा है वैसा' : 'The original text, just as it is'}</h3>
+            <p className="syj-kicker">{hi ? 'वेद और उपनिषद्' : 'Vedas and Upanishads'}</p>
+            <h3>{hi ? 'सूक्त और खंड के अनुसार व्यवस्थित वैदिक पाठ' : 'Vedic texts organised by sukta and section'}</h3>
             <ul className="syj-corpus__list">
               {VEDAS.map((v) => (
                 <li key={v.en}>
                   <b>{hi ? v.hi : v.en}</b>
-                  <span>
-                    {v.count} {hi ? v.unitHi : v.unitEn}
-                  </span>
+                  <span>{hi ? v.meta.hi : v.meta.en}</span>
                 </li>
               ))}
             </ul>
           </article>
 
           <article className="syj-corpus__card" data-sy-reveal="180">
-            <p className="syj-kicker">{hi ? 'सुनने के लिए' : 'To listen'}</p>
+            <p className="syj-kicker">{hi ? 'भक्ति ऑडियो' : 'Devotional audio'}</p>
             <h3>
               {hi
-                ? 'आरती, भजन और कथा — पूजा के समय चला लीजिए'
-                : 'Aarti, bhajan and katha — put it on while you do the puja'}
+                ? 'पूजा, जप और ध्यान के लिए आरती, भजन, मंत्र और कथाएँ'
+                : 'Aarti, bhajans, mantras and devotional stories for puja, chanting and meditation'}
             </h3>
             <ul className="syj-corpus__list">
               {AUDIO.map((a) => (
@@ -290,8 +272,8 @@ export function SacredLibrary() {
           <b aria-hidden>—</b>
           <span>
             {hi
-              ? 'साफ़-साफ़ बात: 18 में से 16 पुराण पूरे हैं। भविष्य पुराण और लिङ्ग पुराण अभी अधूरे हैं, क्योंकि इनका पूरा डिजिटल पाठ कहीं मिलता ही नहीं। जिस दिन मिल जाएगा, जोड़ दिया जाएगा — तब तक इन पर "आंशिक" ही लिखा रहेगा, यहाँ भी और ऐप में भी।'
-              : 'Said plainly: 16 of the 18 Puranas are complete. The Bhavishya and Linga Puranas are still partial, because no complete digital text of them exists anywhere. The day one turns up, it goes in — until then they stay labelled partial, here and inside the app.'}
+              ? 'जहाँ सरल अर्थ या कथा उपलब्ध है, उसे मूल पाठ से अलग दिखाया जाता है। इससे पाठक मूल ग्रंथ और उसकी व्याख्या, दोनों को स्पष्ट रूप से समझ सकता है।'
+              : 'Where a simplified meaning or retelling is available, it is clearly separated from the source text so readers can distinguish the original from its explanation.'}
           </span>
         </p>
       </div>

@@ -16,7 +16,7 @@ import { secureGet, secureSet, secureDelete, migrateToSecure } from './secureSto
 import { syncUserData, clearUserData } from './userDataSync';
 
 const TOKEN_KEY = 'sy.token';
-const PREMIUM_KEY = 'sy.premium'; // entitlement — backup se restore hokar paywall bypass na ho
+const LEGACY_PREMIUM_KEY = 'sy.premium';
 const USER_KEY = 'sy.user';
 const PROFILE_KEY = 'sy.profile'; // birth.ts isi se padhta hai
 
@@ -46,6 +46,7 @@ export async function clearAuth() {
   const prev = await getStoredUser().catch(() => null);
   setAuthToken(null);
   await secureDelete(TOKEN_KEY);
+  await secureDelete(LEGACY_PREMIUM_KEY);
   await AsyncStorage.removeItem(USER_KEY);
   if (prev?.id) await AsyncStorage.removeItem(`sy.chat.${prev.id}`).catch(() => {});
   await clearUserData(); // agle user ko pichle user ke jaap/bookmarks na dikhein
@@ -63,7 +64,8 @@ export async function getStoredUser(): Promise<AuthUser | null> {
 /** App start par token storage se load karke api client ko de do. */
 export async function bootstrapAuth(): Promise<boolean> {
   try {
-    await migrateToSecure([TOKEN_KEY, PREMIUM_KEY]); // purane plaintext token ko Keystore me le jao
+    await migrateToSecure([TOKEN_KEY]);
+    await secureDelete(LEGACY_PREMIUM_KEY);
     const token = await secureGet(TOKEN_KEY);
     if (token) { setAuthToken(token); return true; }
   } catch {}
@@ -87,7 +89,8 @@ export function isProfileComplete(user: AuthUser | null): boolean {
  */
 export async function getStartRoute(): Promise<'LanguageSelect' | 'Subscribe' | 'BirthDetails' | 'Main'> {
   try {
-    await migrateToSecure([TOKEN_KEY, PREMIUM_KEY]); // pehle launch par plaintext → Keystore
+    await migrateToSecure([TOKEN_KEY]);
+    await secureDelete(LEGACY_PREMIUM_KEY);
     const token = await secureGet(TOKEN_KEY);
     if (!token) return 'LanguageSelect'; // fresh: pick language → login → subscribe → …
     setAuthToken(token);
@@ -125,9 +128,10 @@ export async function getStartRoute(): Promise<'LanguageSelect' | 'Subscribe' | 
     // jaap counts / bookmarks / progress server se pull (background — splash na roke)
     syncUserData().catch(() => {});
 
-    const [prem, stored] = await Promise.all([secureGet(PREMIUM_KEY), getStoredUser()]);
-    const user = fresh || stored;
-    const subscribed = prem === '1' || user?.plan === 'premium';
+    // Cached device state is not proof of payment. Paid content unlocks only when
+    // /auth/me returns a fresh, active server entitlement.
+    const user = fresh;
+    const subscribed = user?.plan === 'premium' && user.subscription?.entitlementActive === true;
     if (!subscribed) return 'Subscribe';
     return isProfileComplete(user) ? 'Main' : 'BirthDetails';
   } catch {

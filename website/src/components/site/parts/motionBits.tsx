@@ -152,9 +152,7 @@ export function Marquee({
     >
       <div className="syj-marquee__track" style={{ '--dur': `${seconds}s` } as CSSProperties}>
         {half(0)}
-        <span aria-hidden style={{ display: 'contents' }}>
-          {half(1)}
-        </span>
+        {half(1)}
       </div>
     </div>
   )

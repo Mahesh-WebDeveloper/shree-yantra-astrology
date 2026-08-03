@@ -2,150 +2,129 @@ import { useLang } from '@/i18n/LangProvider'
 import { scrollToHash, useRevealChildren } from './hooks/useSiteMotion'
 import './sections.css'
 
-/**
- * The trust-clincher: an honest, plain-words comparison.
- * No competitor is ever named — the other column is simply "typical
- * astrology apps". Each row leads with the thing an ordinary person cares
- * about, then says in one line why it matters, and only then compares.
- *
- * Desktop is three columns (topic · them · us) with the "us" column lit in
- * gold by a single continuous overlay, so there is no banding between rows.
- * Below 860px every row becomes its own card and the two claims stack.
- */
-
-type Row = {
-  id: string
-  topic: { hi: string; en: string }
-  why: { hi: string; en: string }
-  them: { hi: string; en: string }
-  us: { hi: string; en: string }
-}
+type Bi = { hi: string; en: string }
+type Row = { id: string; topic: Bi; why: Bi; need: Bi; approach: Bi }
 
 const ROWS: Row[] = [
   {
-    id: 'rashifal',
-    topic: { hi: 'आपका राशिफल', en: 'Your rashifal' },
+    id: 'personal',
+    topic: { hi: 'व्यक्तिगत जन्म कुंडली', en: 'A chart personal to you' },
     why: {
-      hi: 'एक ही राशिफल करोड़ों लोगों पर सही नहीं बैठ सकता।',
-      en: 'One rashifal cannot possibly fit crores of people.',
+      hi: 'हर व्यक्ति की कुंडली उसके अपने जन्म विवरण से बनती है।',
+      en: 'Every birth chart should begin with the individual’s own birth details.',
     },
-    them: {
-      hi: 'सिर्फ़ सूर्य-राशि देखकर लिखा गया एक जैसा टेक्स्ट — सबके लिए वही।',
-      en: 'The same text for everyone, written from the sun sign alone.',
+    need: {
+      hi: 'जन्म तिथि, सटीक समय और जन्म स्थान',
+      en: 'Date of birth, exact time and place of birth',
     },
-    us: {
-      hi: 'आपकी अपनी जन्म कुंडली से बनी भविष्यवाणी — आपके भाव, ग्रह और चल रही दशा के हिसाब से।',
-      en: 'A reading built from your own birth chart — your houses, your planets, the period you are actually in.',
+    approach: {
+      hi: 'इन्हीं विवरणों के आधार पर कुंडली, दशा और संबंधित विश्लेषण',
+      en: 'Kundli, dasha and related analysis based on those details',
     },
   },
   {
-    id: 'dates',
-    topic: { hi: 'त्योहार और व्रत की तारीख', en: 'Festival and vrat dates' },
+    id: 'location',
+    topic: { hi: 'शहर के अनुसार पंचांग', en: 'Panchang for your city' },
     why: {
-      hi: 'व्रत एक दिन आगे-पीछे रह जाए तो पूरा दिन बेकार चला जाता है।',
-      en: 'A vrat kept a day early is a whole day wasted.',
+      hi: 'सूर्योदय, सूर्यास्त और उनसे जुड़े शुभ समय स्थान के अनुसार बदलते हैं।',
+      en: 'Sunrise, sunset and the timings derived from them vary by location.',
     },
-    them: {
-      hi: 'तारीख़ कभी-कभी पंचांग से अलग निकल आती है।',
-      en: 'Dates that sometimes disagree with the panchang.',
+    need: {
+      hi: 'चुने गए शहर का स्थानीय सूर्योदय और सूर्यास्त',
+      en: 'Local sunrise and sunset for the selected city',
     },
-    us: {
-      hi: 'हर तारीख़ पंचांग से मिलाकर जाँची हुई — 2026, 2027 और 2050 की सभी 767 तारीखें सही निकलीं।',
-      en: 'Every date checked against the panchang — all 767 across 2026, 2027 and 2050 came out right.',
+    approach: {
+      hi: 'उसी स्थान के अनुसार पंचांग, चौघड़िया और दैनिक शुभ समय',
+      en: 'Panchang, Choghadiya and daily auspicious timings for that location',
     },
   },
   {
-    id: 'answer',
-    topic: { hi: 'सवाल का जवाब', en: 'When you ask a question' },
+    id: 'method',
+    topic: { hi: 'स्पष्ट गणना-पद्धति', en: 'Clearly stated methodology' },
     why: {
-      hi: 'जो सुनने में अच्छा लगे, ज़रूरी नहीं कि वही सच हो।',
-      en: 'What is pleasant to hear is not always what is true.',
+      hi: 'परिणाम के साथ उसकी गणना का आधार जानना भी महत्वपूर्ण है।',
+      en: 'It is important to know the calculation basis behind a result.',
     },
-    them: {
-      hi: 'आप जो कह दें, चैट उसी में हाँ मिला देती है।',
-      en: 'Whatever you claim, the chat simply agrees with it.',
+    need: {
+      hi: 'जन्म विवरण, गणना और ज्योतिषीय व्याख्या की अलग पहचान',
+      en: 'A clear distinction between inputs, calculations and interpretation',
     },
-    us: {
-      hi: 'जवाब आपकी कुंडली के आधार पर — और ज़रूरत हो तो विनम्रता से सुधार भी कर दिया जाता है।',
-      en: 'The answer comes from your chart — and where you are wrong, you are politely corrected.',
+    approach: {
+      hi: 'लाहिड़ी अयनांश, उदय तिथि और स्थान-आधारित समय की स्पष्ट जानकारी',
+      en: 'Clear information on Lahiri ayanamsa, Udaya Tithi and location-based timings',
     },
   },
   {
-    id: 'granth',
-    topic: { hi: 'ग्रंथ और पाठ', en: 'Scriptures to read' },
+    id: 'language',
+    topic: { hi: 'सरल और उपयोगी भाषा', en: 'Clear, useful language' },
     why: {
-      hi: 'पढ़ने या सुनने का मन करे तो सब कुछ एक ही जगह मिलना चाहिए।',
-      en: 'When you feel like reading or listening, it should all be in one place.',
+      hi: 'ज्योतिषीय शब्दों के साथ उनका सामान्य अर्थ समझना भी आवश्यक है।',
+      en: 'Astrological terms are more useful when their everyday meaning is explained.',
     },
-    them: {
-      hi: 'थोड़ा-बहुत — कुछ पन्ने पढ़े और खत्म।',
-      en: 'A little of everything — a few pages, and then nothing.',
+    need: {
+      hi: 'हिंदी और English में स्पष्ट तथा पढ़ने योग्य जानकारी',
+      en: 'Readable information in both Hindi and English',
     },
-    us: {
-      hi: '18 पुराण, 4 वेद, गीता, रामायण और महाभारत — मूल पाठ के साथ, और सुनने के लिए ऑडियो भी।',
-      en: '18 Puranas, 4 Vedas, the Gita, Ramayan and Mahabharat — with the original text, and audio to listen to.',
+    approach: {
+      hi: 'कुंडली, दशा और पंचांग की जानकारी सरल व्याख्या और उदाहरणों के साथ',
+      en: 'Kundli, dasha and Panchang explained with clear language and examples',
     },
   },
   {
-    id: 'lang',
-    topic: { hi: 'भाषा', en: 'Language' },
+    id: 'responsibility',
+    topic: { hi: 'संतुलित ज्योतिषीय जानकारी', en: 'Balanced astrological guidance' },
     why: {
-      hi: 'जो बात पढ़ने में ही समझ न आए, उस पर भरोसा कैसे हो।',
-      en: 'You cannot trust what you cannot comfortably read.',
+      hi: 'ज्योतिष का उद्देश्य समझ बढ़ाना है, डर या भ्रम पैदा करना नहीं।',
+      en: 'Astrology should support understanding, not create fear or confusion.',
     },
-    them: {
-      hi: 'ज़्यादातर सिर्फ़ English में।',
-      en: 'Mostly English, and only English.',
+    need: {
+      hi: 'व्याख्या का आधार और उसकी सीमाएँ स्पष्ट हों',
+      en: 'A clear explanation of the basis and limitations',
     },
-    us: {
-      hi: 'पूरा ऐप हिंदी और English दोनों में — एक बटन दबाइए, भाषा बदल जाती है।',
-      en: 'The whole app in both Hindi and English — one tap switches it.',
+    approach: {
+      hi: 'ज्योतिषीय जानकारी को संकेत के रूप में प्रस्तुत किया जाता है, निश्चित परिणाम के रूप में नहीं',
+      en: 'Astrological information is presented as guidance, not as a guaranteed outcome',
     },
   },
   {
-    id: 'cost',
-    topic: { hi: 'खर्च', en: 'What it costs' },
+    id: 'library',
+    topic: { hi: 'ग्रंथ और दैनिक भक्ति', en: 'Scripture and daily devotion' },
     why: {
-      hi: 'पैसे की बात पहले साफ़ होनी चाहिए, बाद में नहीं।',
-      en: 'Money should be clear before you pay, not after.',
+      hi: 'पाठ, पूजा और स्वाध्याय के लिए सामग्री आसानी से उपलब्ध होनी चाहिए।',
+      en: 'Reading, worship and self-study content should be easy to access.',
     },
-    them: {
-      hi: 'छिपे हुए चार्ज, जो बाद में पता चलते हैं।',
-      en: 'Hidden charges that you only find out about later.',
+    need: {
+      hi: 'मूल पाठ, उपलब्ध सरल अर्थ और ऑडियो का व्यवस्थित संग्रह',
+      en: 'An organised collection of source text, available meanings and audio',
     },
-    us: {
-      hi: 'साफ़-साफ़ प्लान — कीमत पहले ही दिख जाती है, कोई छिपा शुल्क नहीं।',
-      en: 'Plain plans — the price is shown up front, and nothing is hidden.',
+    approach: {
+      hi: 'गीता, रामायण, वेद, पुराण, आरती, मंत्र और स्तोत्र एक ही ऐप में',
+      en: 'Gita, Ramayana, Vedas, Puranas, aarti, mantras and stotras in one app',
     },
   },
   {
-    id: 'data',
-    topic: { hi: 'आपका जन्म विवरण', en: 'Your birth details' },
+    id: 'privacy',
+    topic: { hi: 'गोपनीयता और नियंत्रण', en: 'Privacy and control' },
     why: {
-      hi: 'जन्म की तारीख, समय और जगह बहुत निजी बात है।',
-      en: 'Your date, time and place of birth are deeply personal.',
+      hi: 'जन्म तिथि, समय और स्थान अत्यंत निजी जानकारी है।',
+      en: 'Date, time and place of birth are deeply personal details.',
     },
-    them: {
-      hi: 'विज्ञापन के लिए आगे साझा कर दिया जाता है।',
-      en: 'Passed along to others so you can be advertised to.',
+    need: {
+      hi: 'जानकारी क्यों ली जाती है, कहाँ उपयोग होती है और क्या नियंत्रण उपलब्ध हैं',
+      en: 'A clear explanation of why data is needed, how it is used and what controls are available',
     },
-    us: {
-      hi: 'आपका जन्म विवरण आपका ही रहता है — सिर्फ़ आपकी कुंडली बनाने के काम आता है।',
-      en: 'Your birth details stay yours — they are used only to work out your own chart.',
+    approach: {
+      hi: 'गोपनीयता नीति में उपयोग और सेवा-प्रदाताओं की जानकारी, साथ में ऐप के भीतर नियंत्रण',
+      en: 'Uses and service providers disclosed in the Privacy Policy, with controls available in the app',
     },
   },
 ]
 
-function MarkCross() {
+function MarkFocus() {
   return (
     <svg className="syj-vs2__mark" viewBox="0 0 16 16" fill="none" aria-hidden>
       <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
-      <path
-        d="M5.6 5.6l4.8 4.8M10.4 5.6l-4.8 4.8"
-        stroke="currentColor"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-      />
+      <circle cx="8" cy="8" r="2.2" stroke="currentColor" strokeWidth="1.2" />
     </svg>
   )
 }
@@ -168,50 +147,44 @@ function MarkCheck() {
 export function WhyDifferent() {
   const { hi } = useLang()
   const revealRef = useRevealChildren<HTMLElement>()
-
-  const themLabel = hi ? 'आम ज्योतिष ऐप' : 'Typical astrology apps'
-  const usLabel = hi ? 'श्री यंत्र' : 'Shree Yantra'
+  const needLabel = hi ? 'आपके लिए आवश्यक' : 'What you need'
+  const approachLabel = hi ? 'श्री यंत्र में उपलब्ध' : 'What Shree Yantra provides'
 
   return (
     <section className="syj sy-section syj-why" aria-labelledby="syj-why-h" ref={revealRef}>
       <span className="syj-why__bg" aria-hidden />
       <div className="sy-container">
         <div className="syj-intro" data-sy-reveal="0">
-          <p className="syj-kicker">{hi ? 'फ़र्क़ क्या है' : 'What is different'}</p>
+          <p className="syj-kicker">{hi ? 'श्री यंत्र की विशेषता' : 'Why choose Shree Yantra'}</p>
           <h2 id="syj-why-h" className="syj-title">
             {hi ? (
-              <>
-                देखने में एक जैसा। <em>अंदर से बिलकुल नहीं।</em>
-              </>
+              <>श्री यंत्र को <em>अन्य ज्योतिष ऐप्स से क्या अलग बनाता है</em></>
             ) : (
-              <>
-                It looks the same. <em>Inside, it is not.</em>
-              </>
+              <>What sets Shree Yantra <em>apart</em></>
             )}
           </h2>
           <p className="syj-sub">
             {hi
-              ? 'नीचे सात बातें हैं — वही सात, जिनकी वजह से लोग ऐप छोड़ देते हैं। हर एक आप खुद ऐप खोलकर मिला सकते हैं।'
-              : 'Seven things below — the same seven that make people give up on an astrology app. You can open the app and check every one of them.'}
+              ? 'व्यक्तिगत कुंडली, शहर के अनुसार पंचांग, स्पष्ट गणना-पद्धति, सरल भाषा और गोपनीयता — ये सभी बातें ऐप को उपयोगी और भरोसेमंद बनाती हैं।'
+              : 'Personal charts, location-based Panchang, clear methodology, understandable language and privacy make the app useful in everyday life.'}
           </p>
         </div>
 
-        <div className="syj-vs2" role="table" aria-label={hi ? 'तुलना' : 'Comparison'}>
+        <div className="syj-vs2" role="table" aria-label={hi ? 'उत्पाद सिद्धांत' : 'Product principles'}>
           <span className="syj-vs2__lit" aria-hidden />
-
           <div className="syj-vs2__row syj-vs2__row--head" role="row">
             <div className="syj-vs2__topic" role="columnheader">
               <span className="syj-vs2__headnote">
-                {hi ? 'सात बातें, आमने-सामने' : 'Seven things, side by side'}
+                {hi ? 'सात प्रमुख विशेषताएँ' : 'Seven product principles'}
               </span>
             </div>
             <div className="syj-vs2__head syj-vs2__head--them" role="columnheader">
-              <em>{hi ? 'दूसरी जगह' : 'Elsewhere'}</em>
-              <b>{themLabel}</b>
+              <em>{hi ? 'आपकी अपेक्षा' : 'Your expectation'}</em>
+              <b>{needLabel}</b>
             </div>
             <div className="syj-vs2__head syj-vs2__head--us" role="columnheader">
-              <em>{hi ? 'यहाँ' : 'Here'}</em>
-              <b>{usLabel}</b>
+              <em>{hi ? 'ऐप में सुविधा' : 'In the app'}</em>
+              <b>{approachLabel}</b>
             </div>
           </div>
 
@@ -221,20 +194,18 @@ export function WhyDifferent() {
                 <h3>{hi ? row.topic.hi : row.topic.en}</h3>
                 <p>{hi ? row.why.hi : row.why.en}</p>
               </div>
-
               <div className="syj-vs2__cell syj-vs2__them" role="cell">
-                <span className="syj-vs2__who">{themLabel}</span>
+                <span className="syj-vs2__who">{needLabel}</span>
                 <span className="syj-vs2__line">
-                  <MarkCross />
-                  <span>{hi ? row.them.hi : row.them.en}</span>
+                  <MarkFocus />
+                  <span>{hi ? row.need.hi : row.need.en}</span>
                 </span>
               </div>
-
               <div className="syj-vs2__cell syj-vs2__us" role="cell">
-                <span className="syj-vs2__who">{usLabel}</span>
+                <span className="syj-vs2__who">{approachLabel}</span>
                 <span className="syj-vs2__line">
                   <MarkCheck />
-                  <strong>{hi ? row.us.hi : row.us.en}</strong>
+                  <strong>{hi ? row.approach.hi : row.approach.en}</strong>
                 </span>
               </div>
             </div>
@@ -244,8 +215,8 @@ export function WhyDifferent() {
         <div className="syj-vs2__foot" data-sy-reveal="0">
           <p>
             {hi
-              ? 'ऊपर लिखी एक भी बात मान लेने की ज़रूरत नहीं — ऐप खोलिए और खुद मिलाकर देख लीजिए।'
-              : 'You do not have to take a single line above on trust — open the app and check it yourself.'}
+              ? 'श्री यंत्र का उद्देश्य वैदिक ज्योतिष की जानकारी को स्पष्ट, उपयोगी और आसानी से समझने योग्य बनाना है।'
+              : 'Shree Yantra is designed to make Vedic astrology clear, useful and easier to understand.'}
           </p>
           <a
             className="sy-btn-gold sy-btn-sm"
@@ -255,7 +226,7 @@ export function WhyDifferent() {
               scrollToHash('#download')
             }}
           >
-            {hi ? 'ऐप डाउनलोड कीजिए' : 'Download the app'}
+            {hi ? 'Android ऐप डाउनलोड करें' : 'Download the Android app'}
           </a>
         </div>
       </div>

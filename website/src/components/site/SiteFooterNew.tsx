@@ -11,13 +11,13 @@ const COLUMNS: Col[] = [
     head: { hi: 'उत्पाद', en: 'Product' },
     links: [
       { label: { hi: 'विशेषताएँ', en: 'Features' }, hash: '#features' },
-      { label: { hi: 'सटीकता', en: 'Accuracy' }, hash: '#accuracy' },
+      { label: { hi: 'गणना का आधार', en: 'Methodology' }, hash: '#accuracy' },
       { label: { hi: 'आज का पंचांग', en: "Today's Panchang" }, hash: '#live-proof' },
-      { label: { hi: 'APK डाउनलोड', en: 'Download APK' }, hash: '#download' },
+      { label: { hi: 'Android ऐप डाउनलोड करें', en: 'Download the Android app' }, hash: '#download' },
     ],
   },
   {
-    head: { hi: 'पवित्र पुस्तकालय', en: 'Sacred Library' },
+    head: { hi: 'धार्मिक पुस्तकालय', en: 'Spiritual Library' },
     links: [
       { label: { hi: 'भगवद्गीता', en: 'Bhagavad Gita' }, hash: '#library' },
       { label: { hi: 'रामायण · रामचरितमानस', en: 'Ramayan · Ramcharitmanas' }, hash: '#library' },
@@ -98,8 +98,8 @@ export function SiteFooterNew() {
 
             <p className="sy-body mt-5" style={{ maxWidth: '34ch' }}>
               {t(
-                'सटीक खगोलीय गणना पर टिका वैदिक ज्योतिष — कोई अनुमान नहीं, कोई नकली डेटा नहीं।',
-                'Vedic astrology built on precise astronomical computation — no guesswork, no fake data.',
+                'श्री यंत्र एक आधुनिक वैदिक ज्योतिष ऐप है, जिसमें व्यक्तिगत कुंडली, शहर के अनुसार पंचांग, सरल ज्योतिषीय व्याख्या और सुव्यवस्थित धार्मिक पुस्तकालय उपलब्ध हैं।',
+                'Shree Yantra is a modern Vedic astrology app with personalised Kundli, location-based Panchang, clear astrological explanations and an organised spiritual library.',
               )}
             </p>
 

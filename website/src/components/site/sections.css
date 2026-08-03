@@ -488,16 +488,22 @@
 }
 .syj-ledger__n {
   justify-self: end;
+  max-width: 100%;
   font-family: 'Playfair Display', 'Noto Sans Devanagari', Georgia, serif;
-  font-size: clamp(2.2rem, 6.8vw, 3.55rem);
+  font-size: clamp(1rem, 2.1vw, 1.38rem);
   font-weight: 600;
-  line-height: 1;
-  letter-spacing: -0.02em;
+  line-height: 1.22;
+  letter-spacing: -0.01em;
   color: var(--j-ink);
+  text-wrap: balance;
   font-variant-numeric: lining-nums tabular-nums;
 }
 .syj-ledger__n--b {
   justify-self: start;
+  text-align: start;
+}
+.syj-ledger__n--a {
+  text-align: end;
 }
 .syj-ledger__bridge {
   display: flex;
@@ -534,8 +540,9 @@
   margin: 0.75rem 0 0;
   text-align: center;
   color: var(--j-muted);
-  font-size: 0.77rem;
+  font-size: clamp(0.72rem, 1.8vw, 0.77rem);
   line-height: 1.6;
+  text-wrap: pretty;
 }
 .syj-ledger__foot {
   margin: 0;
@@ -543,8 +550,10 @@
   border-top: 1px solid var(--j-line);
   text-align: center;
   color: var(--j-soft);
-  font-size: 0.86rem;
+  font-size: clamp(0.76rem, 1.9vw, 0.86rem);
   font-weight: 650;
+  line-height: 1.55;
+  text-wrap: pretty;
 }
 
 @keyframes syj-wire-in {
@@ -565,11 +574,37 @@
     transform: scale(1);
   }
 }
+.syj-ledger.is-in .syj-ledger__row .syj-ledger__wire,
 .syj-ledger__row.is-in .syj-ledger__wire {
-  animation: syj-wire-in 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.14s forwards;
+  animation: syj-wire-in 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
+.syj-ledger.is-in .syj-ledger__book .syj-ledger__row:nth-child(2) .syj-ledger__wire,
+.syj-ledger__row.is-in:nth-child(2) .syj-ledger__wire {
+  animation-delay: 0.14s;
+}
+.syj-ledger.is-in .syj-ledger__book .syj-ledger__row:nth-child(3) .syj-ledger__wire,
+.syj-ledger__row.is-in:nth-child(3) .syj-ledger__wire {
+  animation-delay: 0.28s;
+}
+.syj-ledger.is-in .syj-ledger__book .syj-ledger__row:nth-child(4) .syj-ledger__wire,
+.syj-ledger__row.is-in:nth-child(4) .syj-ledger__wire {
+  animation-delay: 0.42s;
+}
+.syj-ledger.is-in .syj-ledger__row .syj-ledger__tick,
 .syj-ledger__row.is-in .syj-ledger__tick {
-  animation: syj-tick-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.66s forwards;
+  animation: syj-tick-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.syj-ledger.is-in .syj-ledger__book .syj-ledger__row:nth-child(2) .syj-ledger__tick,
+.syj-ledger__row.is-in:nth-child(2) .syj-ledger__tick {
+  animation-delay: 0.66s;
+}
+.syj-ledger.is-in .syj-ledger__book .syj-ledger__row:nth-child(3) .syj-ledger__tick,
+.syj-ledger__row.is-in:nth-child(3) .syj-ledger__tick {
+  animation-delay: 0.8s;
+}
+.syj-ledger.is-in .syj-ledger__book .syj-ledger__row:nth-child(4) .syj-ledger__tick,
+.syj-ledger__row.is-in:nth-child(4) .syj-ledger__tick {
+  animation-delay: 0.94s;
 }
 
 /* — the four proofs — */
@@ -762,22 +797,109 @@
   font-family: 'Noto Sans Devanagari', Inter, system-ui, sans-serif;
   letter-spacing: 0.05em;
 }
+:lang(hi) .syj-ledger__n {
+  font-family: 'Noto Sans Devanagari', 'Playfair Display', Georgia, serif;
+  letter-spacing: 0;
+  line-height: 1.32;
+}
 
-@media (max-width: 560px) {
+/* Tablet — tighten the concordance plate */
+@media (max-width: 900px) {
+  .syj-ledger {
+    padding: clamp(1.2rem, 3.2vw, 1.75rem) clamp(0.85rem, 3vw, 1.5rem);
+  }
+  .syj-seal {
+    width: clamp(76px, 14vw, 104px);
+  }
   .syj-ledger__book {
-    --bridge: clamp(66px, 19vw, 128px);
+    --bridge: clamp(48px, 12vw, 80px);
+  }
+  .syj-ledger__n {
+    font-size: clamp(0.88rem, 2.5vw, 1.08rem);
+    line-height: 1.26;
   }
   .syj-ledger__who {
-    font-size: 0.56rem;
+    font-size: 0.54rem;
+    letter-spacing: 0.1em;
+  }
+  .syj-ledger__row {
+    padding-block: clamp(0.85rem, 2.4vw, 1.2rem);
+  }
+  .syj-ledger__what {
+    margin-top: 0.6rem;
+    font-size: 0.72rem;
+  }
+  .syj-ledger__foot {
+    font-size: 0.78rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .syj-ledger {
+    padding: 1.1rem 0.85rem 1rem;
+  }
+  .syj-ledger__book {
+    --bridge: clamp(40px, 11vw, 56px);
+  }
+  .syj-ledger__head,
+  .syj-ledger__row {
+    column-gap: 0.35rem;
+  }
+  .syj-ledger__who {
+    font-size: 0.52rem;
     letter-spacing: 0.07em;
     text-wrap: balance;
   }
+  .syj-ledger__n {
+    font-size: clamp(0.74rem, 3.1vw, 0.88rem);
+    line-height: 1.3;
+  }
+  :lang(hi) .syj-ledger__n {
+    font-size: clamp(0.76rem, 3.2vw, 0.9rem);
+    line-height: 1.34;
+  }
   .syj-ledger__tick {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
+  }
+  .syj-ledger__bridge {
+    gap: 0.2rem;
   }
   .syj-ledger__what {
-    font-size: 0.74rem;
+    font-size: 0.68rem;
+    line-height: 1.55;
+    padding-inline: 0.15rem;
+  }
+  .syj-ledger__foot {
+    font-size: 0.72rem;
+    line-height: 1.5;
+  }
+}
+
+/* Very small phones — stack each comparison row for readability */
+@media (max-width: 420px) {
+  .syj-ledger__head {
+    display: none;
+  }
+  .syj-ledger__row {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 0.45rem;
+    padding-block: 1rem;
+    text-align: center;
+  }
+  .syj-ledger__n--a,
+  .syj-ledger__n--b {
+    justify-self: center;
+    text-align: center;
+    max-width: 18rem;
+  }
+  .syj-ledger__bridge {
+    width: min(100%, 11rem);
+  }
+  .syj-ledger__what {
+    margin-top: 0.35rem;
+    max-width: 22rem;
   }
 }
 
@@ -789,7 +911,9 @@
     opacity: 1;
     transform: none;
   }
+  .syj-ledger.is-in .syj-ledger__row .syj-ledger__wire,
   .syj-ledger__row.is-in .syj-ledger__wire,
+  .syj-ledger.is-in .syj-ledger__row .syj-ledger__tick,
   .syj-ledger__row.is-in .syj-ledger__tick {
     animation: none;
   }
@@ -1202,9 +1326,10 @@
 .syj-marquee--rev .syj-marquee__track {
   animation-direction: reverse;
 }
-.syj-marquee:hover .syj-marquee__track,
-.syj-marquee:focus-within .syj-marquee__track {
-  animation-play-state: paused;
+@media (hover: hover) {
+  .syj-marquee:hover .syj-marquee__track {
+    animation-play-state: paused;
+  }
 }
 .syj-marquee__item {
   display: inline-flex;
@@ -2327,6 +2452,13 @@
 }
 .sy-site .sy-section + .sy-section {
   padding-block-start: clamp(48px, 7vh, 88px);
+}
+
+@media (max-width: 900px) {
+  /* Hero ends tight — don't double-breathe before live panchang. */
+  .syh + #live-proof.sy-section {
+    padding-block-start: clamp(16px, 3vh, 28px);
+  }
 }
 
 /* ---- Services universe (visual base lives in appinaction.css;

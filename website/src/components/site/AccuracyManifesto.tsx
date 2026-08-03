@@ -6,39 +6,39 @@ import './sections.css'
 type Bi = { hi: string; en: string }
 
 /* ─────────────────────────────────────────────────────────────
-   Only checked, real facts live in this file. Nothing here is
-   invented, rounded up or dramatised beyond what was measured.
+   Trust copy for the public website. Keep it professional:
+   explain the method and user benefit without noisy test-counts.
    ───────────────────────────────────────────────────────────── */
 
 /** The concordance: what we showed, what the panchang says, one row per check. */
-type Row = { id: string; ours: string; theirs: string; what: Bi }
+type Row = { id: string; ours: Bi; theirs: Bi; what: Bi }
 
 const ROWS: Row[] = [
   {
     id: 'dates',
-    ours: '767',
-    theirs: '767',
+    ours: { hi: 'जन्म विवरण', en: 'Birth details' },
+    theirs: { hi: 'ग्रह-स्थिति की गणना', en: 'Planetary calculation' },
     what: {
-      hi: 'त्योहार और व्रत की तारीख़ें — 2026, 2027 और 2050, कई शहरों में अलग-अलग',
-      en: 'Festival and vrat dates — 2026, 2027 and 2050, checked across several cities',
+      hi: 'जन्म तिथि, सटीक समय और स्थान से व्यक्तिगत कुंडली तैयार होती है',
+      en: 'Date, exact time and place of birth are used to prepare a personal chart',
     },
   },
   {
     id: 'years',
-    ours: '22',
-    theirs: '22',
+    ours: { hi: 'स्थान-आधारित पंचांग', en: 'Location-based Panchang' },
+    theirs: { hi: 'स्थानीय सूर्योदय', en: 'Local sunrise' },
     what: {
-      hi: 'हर साल अलग से — 2028 से 2035 तक, एक-एक साल का पूरा मिलान',
-      en: 'Each year on its own — 2028 through 2035, every year checked separately',
+      hi: 'शहर बदलने पर सूर्योदय, सूर्यास्त और उनसे जुड़े पंचांग समय भी बदलते हैं',
+      en: 'Changing the city updates sunrise, sunset and the Panchang timings derived from them',
     },
   },
   {
     id: 'choghadiya',
-    ours: '16',
-    theirs: '16',
+    ours: { hi: 'तिथि और मुहूर्त', en: 'Tithi and Muhurat' },
+    theirs: { hi: 'लाहिड़ी अयनांश व उदय तिथि', en: 'Lahiri ayanamsa and Udaya Tithi' },
     what: {
-      hi: 'चौघड़िया — दिन की आठ और रात की आठ, पूरे चौबीस घंटे',
-      en: 'Choghadiya — the eight day windows and the eight night ones, a full day and night',
+      hi: 'परिणाम को प्रभावित करने वाली प्रमुख गणना-पद्धतियाँ स्पष्ट बताई जाती हैं',
+      en: 'The key conventions that affect a result are stated clearly',
     },
   },
 ]
@@ -58,84 +58,84 @@ const PROOFS: Proof[] = [
     id: 'dates',
     glyph: 'calendar',
     title: {
-      hi: 'तारीख़ एक दिन खिसकी, तो व्रत उसी दिन छूटता है',
-      en: 'If the date slips by a day, the vrat is missed on exactly that day',
+      hi: 'कुंडली की सही शुरुआत आपके जन्म विवरण से होती है',
+      en: 'A reliable birth chart begins with accurate birth details',
     },
     body: {
-      hi: 'इसलिए त्योहार और व्रत की एक-एक तारीख़ दृक पंचांग से मिलाकर देखी गई — 2026, 2027 और 2050 की, और कई शहरों के लिए अलग-अलग, क्योंकि शहर बदलने पर तिथि भी बदल सकती है।',
-      en: 'So every festival and vrat date was checked, one at a time, against Drik Panchang — for 2026, 2027 and 2050, and separately for several cities, because the tithi can change when the city does.',
+      hi: 'जन्म समय या स्थान में छोटा अंतर भी लग्न और भावों की स्थिति बदल सकता है। इसलिए ऐप कुंडली बनाने से पहले जन्म तिथि, समय और स्थान को आधार बनाता है।',
+      en: 'Even a small difference in birth time or place can change the lagna and house positions. The app therefore uses your date, time and place of birth as the foundation of the chart.',
     },
-    stat: { hi: '767 में से 767', en: '767 of 767' },
+    stat: { hi: 'जन्म विवरण', en: 'Birth details' },
     note: {
-      hi: 'हर त्योहार और व्रत की तारीख़ मिली। फिर 2028 से 2035 तक साल-दर-साल जाँचा गया — हर साल 22 में से 22।',
-      en: 'Every festival and vrat date matched. 2028 to 2035 was then checked year by year — 22 of 22, every year.',
+      hi: 'जन्म तिथि · सटीक समय · जन्म स्थान',
+      en: 'Date of birth · exact time · place of birth',
     },
   },
   {
     id: 'choghadiya',
     glyph: 'dial',
     title: {
-      hi: 'शुभ घड़ी वही है जो आपके शहर की हो',
-      en: 'A good hour is only good where you are standing',
+      hi: 'पंचांग का समय आपके शहर के अनुसार बदलता है',
+      en: 'Panchang timings should match your location',
     },
     body: {
-      hi: 'नया काम, यात्रा या पूजा — लोग समय चौघड़िया देखकर तय करते हैं। दिन की आठ और रात की आठ अवधियाँ आपके अपने सूर्योदय और सूर्यास्त से बनती हैं, इसलिए हर शहर में थोड़ी अलग होती हैं। पूरे चौबीस घंटे की सूची मिलाकर देखी गई।',
-      en: 'A new venture, a journey, a puja — people choose the hour by the choghadiya. The eight day windows and eight night windows are built from your own sunrise and sunset, so they shift from city to city. The full twenty-four hours was compared.',
+      hi: 'हर शहर में सूर्योदय और सूर्यास्त का समय अलग होता है। इसी कारण पंचांग, चौघड़िया और दैनिक शुभ समय चुने गए स्थान के अनुसार दिखाए जाते हैं।',
+      en: 'Sunrise and sunset vary by location. Panchang, Choghadiya and daily auspicious timings are therefore shown for the city you select.',
     },
-    stat: { hi: '16 में से 16', en: '16 of 16' },
+    stat: { hi: 'स्थान अनुसार', en: 'Location-aware' },
     note: {
-      hi: 'दिन और रात की हर चौघड़िया दृक पंचांग से मिली — शुभ भी, अशुभ भी।',
-      en: 'Every window of the day and night matched Drik Panchang — the good ones and the ones to avoid.',
+      hi: 'शुभ, लाभ, अमृत, काल, रोग, उद्वेग — हर अवधि स्पष्ट रंग और अर्थ के साथ।',
+      en: 'Shubh, Labh, Amrit, Kaal, Rog and Udveg are shown with clear meaning and visual priority.',
     },
   },
   {
     id: 'computed',
     glyph: 'sunrise',
     title: {
-      hi: 'कोई पहले से भरी हुई तालिका नहीं',
-      en: 'Nothing here is read off a stored table',
+      hi: 'गणना-पद्धति की जानकारी स्पष्ट रूप से दी जाती है',
+      en: 'The calculation method is explained clearly',
     },
     body: {
-      hi: 'तिथि, नक्षत्र, सूर्योदय और सूर्यास्त हर बार नए सिरे से गिने जाते हैं — आपके अपने शहर के लिए। दिन की तिथि वही मानी जाती है जो सूर्योदय के समय चल रही हो, यानी उदया तिथि — वही नियम जो पंडित जी लगाते हैं।',
-      en: 'Tithi, nakshatra, sunrise and sunset are worked out afresh every time, for your own city. The day’s tithi is the one running at sunrise — the udaya rule, the same one a pandit applies.',
+      hi: 'लाहिड़ी अयनांश, उदय तिथि और स्थान के अनुसार सूर्योदय जैसी पद्धतियाँ परिणाम को प्रभावित करती हैं। ऐप इन प्रमुख आधारों को स्पष्ट रूप से बताता है।',
+      en: 'Conventions such as Lahiri ayanamsa, Udaya Tithi and local sunrise affect the result. The app identifies these important calculation choices clearly.',
     },
-    stat: { hi: 'हर बार नई गणना', en: 'Computed every time' },
+    stat: { hi: 'स्पष्ट पद्धति', en: 'Clear methodology' },
     note: {
-      hi: 'लाहिड़ी (चित्रा पक्ष) अयनांश · तिथि सूर्योदय (उदय) के अनुसार · समय आपके शहर के हिसाब से',
-      en: 'Lahiri (Chitra Paksha) ayanamsa · tithi by the sunrise (udaya) rule · timings from your own city',
+      hi: 'गणना और ज्योतिषीय व्याख्या को अलग-अलग समझाया जाता है।',
+      en: 'Calculation and astrological interpretation are presented separately.',
     },
   },
   {
     id: 'grounded',
     glyph: 'chart',
     title: {
-      hi: 'ज्योतिषी वही कहता है जो आपकी कुंडली में है',
-      en: 'The astrologer says only what your own chart says',
+      hi: 'कुंडली की जानकारी सरल भाषा में समझाई जाती है',
+      en: 'Birth-chart insights are explained in plain language',
     },
     body: {
-      hi: 'हर पाठ आपकी कुंडली, पूरी विंशोत्तरी दशा की समयरेखा, नौ ग्रहों के चल रहे गोचर और आपकी साढ़ेसाती की अवधि — इन्हीं से बनता है। और अगर आपकी कोई धारणा कुंडली से मेल नहीं खाती, तो हाँ में हाँ नहीं मिलाई जाती; विनम्रता से सुधार दिया जाता है।',
-      en: 'Every reading is built from your chart, the full Vimshottari dasha timeline, where the nine planets are moving now and the window of your Sade Sati. And if an assumption of yours does not match the chart, it is not agreed with — it is politely corrected.',
+      hi: 'व्यक्तिगत व्याख्या तैयार करते समय जन्म कुंडली, दशा और वर्तमान गोचर को ध्यान में रखा जाता है। इससे तकनीकी ज्योतिषीय संकेतों को सामान्य भाषा में समझना आसान होता है।',
+      en: 'Personal explanations consider the birth chart, dasha and current transits, making technical astrological indications easier to understand.',
     },
-    stat: { hi: 'सिर्फ़ आपके अपने आँकड़ों से', en: 'Only from your own data' },
+    stat: { hi: 'सरल व्याख्या', en: 'Clear explanation' },
     note: {
-      hi: 'कुंडली · विंशोत्तरी दशा · नौ ग्रहों का गोचर · साढ़ेसाती',
-      en: 'Chart · Vimshottari dasha · transits of the nine planets · Sade Sati',
+      hi: 'कुंडली · दशा · गोचर · संबंधित उपाय',
+      en: 'Kundli · dasha · transits · relevant remedies',
     },
   },
 ]
 
 const STEPS: Bi[] = [
   {
-    hi: 'जिस पंचांग पर आप भरोसा करते हैं, उसे खोलिए — कोई भी, कागज़ का हो या ऐप का।',
-    en: 'Open whichever panchang you trust — any one, printed or on a screen.',
+    hi: 'अपना शहर चुनें और आज का पंचांग खोलें।',
+    en: 'Choose your city and open today’s panchang.',
   },
   {
-    hi: 'इसी पन्ने पर ऊपर “आज का पंचांग” खुला हुआ है। वह अभी, आपके शहर के लिए गिना गया है।',
-    en: 'Higher up this same page, today’s panchang is already open. It was worked out just now, for your city.',
+    hi: 'तिथि, नक्षत्र, सूर्योदय और शुभ समय एक साथ देखें।',
+    en: 'View tithi, nakshatra, sunrise and auspicious timings together.',
   },
   {
-    hi: 'आज की तिथि, नक्षत्र और सूर्योदय — दोनों जगह मिलाकर देख लीजिए।',
-    en: 'Compare today’s tithi, nakshatra and sunrise in both.',
+    hi: 'महत्वपूर्ण संस्कार के लिए अपने स्थानीय पंचांग या पुरोहित से भी पुष्टि कर सकते हैं।',
+    en: 'For an important ceremony, you can still confirm with your local panchang or family purohit.',
   },
 ]
 
@@ -146,17 +146,17 @@ function Ledger({ hi, still }: { hi: boolean; still: boolean }) {
     <div className="syj-ledger" data-sy-reveal="60">
       <div className="syj-ledger__crest">
         <TrustSeal still={still} />
-        <p className="syj-ledger__label">{t('एक-एक करके मिलाया गया', 'Checked one by one')}</p>
+        <p className="syj-ledger__label">{t('गणना के प्रमुख आधार', 'Key calculation principles')}</p>
       </div>
 
       <div className="syj-ledger__book">
         <div className="syj-ledger__head" aria-hidden>
           <span className="syj-ledger__who syj-ledger__who--a">
-            {t('श्री यंत्र ने जो दिखाया', 'What Shree Yantra showed')}
+            {t('श्री यंत्र क्या दिखाता है', 'What Shree Yantra shows')}
           </span>
-          <span className="syj-ledger__who syj-ledger__who--mid">{t('मिलान', 'Match')}</span>
+          <span className="syj-ledger__who syj-ledger__who--mid">{t('आधार', 'Basis')}</span>
           <span className="syj-ledger__who syj-ledger__who--b">
-            {t('दृक पंचांग में जो लिखा है', 'What Drik Panchang says')}
+            {t('पंचांग की परंपरा', 'Panchang tradition')}
           </span>
         </div>
 
@@ -164,7 +164,7 @@ function Ledger({ hi, still }: { hi: boolean; still: boolean }) {
           <div className="syj-ledger__row" key={row.id} data-sy-reveal={90 + i * 90}>
             <span className="syj-ledger__n syj-ledger__n--a">
               <span className="syj-sr">{t('श्री यंत्र — ', 'Shree Yantra — ')}</span>
-              {row.ours}
+              {hi ? row.ours.hi : row.ours.en}
             </span>
 
             <span className="syj-ledger__bridge">
@@ -174,8 +174,8 @@ function Ledger({ hi, still }: { hi: boolean; still: boolean }) {
             </span>
 
             <span className="syj-ledger__n syj-ledger__n--b">
-              <span className="syj-sr">{t('दृक पंचांग — ', 'Drik Panchang — ')}</span>
-              {row.theirs}
+              <span className="syj-sr">{t('परंपरा — ', 'Tradition — ')}</span>
+              {hi ? row.theirs.hi : row.theirs.en}
             </span>
 
             <p className="syj-ledger__what">{hi ? row.what.hi : row.what.en}</p>
@@ -185,8 +185,8 @@ function Ledger({ hi, still }: { hi: boolean; still: boolean }) {
 
       <p className="syj-ledger__foot">
         {t(
-          'तीनों जाँचों में एक भी फ़र्क़ नहीं निकला।',
-          'Across all three checks, not one difference turned up.',
+          'हर परिणाम के साथ उसके आवश्यक विवरण और गणना-पद्धति को समझना आसान रखा गया है।',
+          'The essential inputs and calculation method behind each result are kept easy to understand.',
         )}
       </p>
     </div>
@@ -236,18 +236,18 @@ export function AccuracyManifesto() {
       <div className="sy-container syj-trust__inner">
         <div className="syj-trust__intro" data-sy-reveal="0">
           <p className="sy-eyebrow sy-eyebrow--center">
-            {t('मिलान का हिसाब', 'The verification record')}
+            {t('गणना और व्याख्या', 'Calculation and interpretation')}
           </p>
           <h2 id="sy-accuracy-title" className="sy-h2 syj-trust__h2">
-            {t('भरोसा कहने से नहीं आता — ', 'Trust does not come from claims. ')}
+            {t('पारंपरिक वैदिक गणना, ', 'Traditional Vedic calculations, ')}
             <span className="sy-gold-text">
-              {t('मिलाकर देखने से आता है', 'It comes from checking.')}
+              {t('सरल भाषा में स्पष्ट जानकारी', 'explained in language you can understand')}
             </span>
           </h2>
           <p className="sy-lead syj-trust__lead">
             {t(
-              'ज्योतिष ऐप की सबसे भारी गलती होती है गलत तारीख़ — व्रत उसी दिन छूटता है, मुहूर्त उसी दिन निकल जाता है। इसलिए हमने अंदाज़े पर कुछ नहीं छोड़ा: हर तारीख़ और हर चौघड़िया दृक पंचांग से एक-एक करके मिलाया, और नतीजा जैसा निकला वैसा ही यहाँ रख दिया है।',
-              'The costliest thing an astrology app can get wrong is a date — the vrat is missed on exactly that day, the muhurat passes on exactly that day. So nothing was left to assumption: every date and every choghadiya was compared with Drik Panchang, one at a time, and the result is set down here exactly as it came out.',
+              'श्री यंत्र खगोलीय ग्रह-स्थितियों, स्थान के अनुसार पंचांग और प्रचलित वैदिक ज्योतिष पद्धतियों के आधार पर गणना करता है। तकनीकी परिणामों को सरल भाषा में प्रस्तुत किया जाता है, ताकि सामान्य उपयोगकर्ता भी उन्हें आसानी से समझ सके।',
+              'Shree Yantra uses astronomical planetary positions, location-based Panchang rules and established Vedic astrology methods. Technical results are presented in clear language so they are easier for anyone to understand.',
             )}
           </p>
         </div>
@@ -262,11 +262,11 @@ export function AccuracyManifesto() {
 
         <div className="syj-trust__invite" data-sy-reveal="60">
           <div>
-            <p className="syj-kicker">{t('खुद जाँचिए', 'Check it yourself')}</p>
+            <p className="syj-kicker">{t('आज का उदाहरण देखें', 'View a live example')}</p>
             <h3 className="sy-h3 syj-trust__invitetitle">
               {t(
-                'हमारी बात मानने की ज़रूरत नहीं — मिलाकर देख लीजिए।',
-                'You do not have to take our word for it — compare.',
+                'अपने शहर का आज का पंचांग देखें',
+                'See today’s Panchang for your city',
               )}
             </h3>
             <ol className="syj-trust__steps">
@@ -286,12 +286,12 @@ export function AccuracyManifesto() {
               }}
             >
               <TrustArrowUp />
-              {t('ऊपर आज का पंचांग देखिए', 'See today’s panchang')}
+              {t('आज का पंचांग देखें', 'View today’s Panchang')}
             </a>
             <p className="syj-trust__invitenote">
               {t(
-                'ऊपर जो पंचांग दिख रहा है वह कोई तस्वीर नहीं है — वही गणना है जो ऐप में चलती है। मिलान में फ़र्क़ नहीं आना चाहिए। पूरी बात इतनी ही है।',
-                'The panchang up there is not a screenshot — it is the same engine the app runs on. There should be no difference between the two. That is the whole point.',
+                'विवाह, गृह प्रवेश या अन्य महत्वपूर्ण संस्कार के लिए अंतिम समय तय करने से पहले स्थानीय पंचांग या योग्य ज्योतिषाचार्य से पुष्टि करना उचित है।',
+                'Before finalising the time for a wedding, griha pravesh or another important ceremony, it is appropriate to confirm with a local Panchang or qualified astrologer.',
               )}
             </p>
           </div>

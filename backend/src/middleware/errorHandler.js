@@ -89,7 +89,11 @@ function errorHandler(err, req, res, next) {
   const raw = String(err.message || '');
   console.error('💥', status, raw); // full detail stays in server logs only
   const f = friendly(raw, status, reqLang(req));
-  res.status(status >= 400 && status < 600 ? status : 500).json({ error: f.msg, retriable: f.retriable });
+  res.status(status >= 400 && status < 600 ? status : 500).json({
+    error: f.msg,
+    retriable: f.retriable,
+    ...(err.code ? { code: err.code } : {}),
+  });
 }
 
 module.exports = { notFound, errorHandler, sanitizeResponses, friendly };

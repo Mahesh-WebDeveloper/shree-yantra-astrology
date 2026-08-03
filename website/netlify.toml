@@ -1,0 +1,23 @@
+# Use this file when Netlify "Base directory" is set to `website`.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Same-origin API proxy — avoids mixed-content (HTTPS page → HTTP backend) and CORS.
+[[redirects]]
+  from = "/api/*"
+  to = "http://168.144.185.66:4000/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/uploads/*"
+  to = "http://168.144.185.66:4000/uploads/:splat"
+  status = 200
+  force = true
+
+# SPA fallback (must be last)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -24,6 +24,22 @@ const profileSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const subscriptionMirrorSchema = new mongoose.Schema(
+  {
+    provider: { type: String, enum: ['razorpay'] },
+    status: String,
+    entitlementActive: { type: Boolean, default: false },
+    cancelAtCycleEnd: { type: Boolean, default: false },
+    trialEligible: { type: Boolean, default: true },
+    initialPeriodType: { type: String, enum: ['trial', 'paid'] },
+    trialEndsAt: Date,
+    currentPeriodEnd: Date,
+    nextChargeAt: Date,
+    accessUntil: Date,
+  },
+  { _id: false }
+);
+
 const userSchema = new mongoose.Schema(
   {
     name: { type: String, trim: true, required: true },
@@ -55,6 +71,7 @@ const userSchema = new mongoose.Schema(
 
     // subscription mirror (payment se update hoga)
     plan: { type: String, enum: ['free', 'premium'], default: 'free' },
+    subscription: { type: subscriptionMirrorSchema, default: undefined },
 
     // admin dashboard access + moderation
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
@@ -85,6 +102,7 @@ userSchema.methods.toPublic = function () {
     interests: this.interests,
     profile: this.profile || {},
     plan: this.plan,
+    subscription: this.subscription || null,
     role: this.role,
     blocked: !!this.blocked,
     createdAt: this.createdAt,

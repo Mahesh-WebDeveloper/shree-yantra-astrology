@@ -19,7 +19,7 @@ export function HomePage() {
   return (
     <div className="sy-site min-h-screen">
       <SiteNav />
-      <main>
+      <main id="main-content">
         <Hero />
         <LiveProof />
         <AccuracyManifesto />

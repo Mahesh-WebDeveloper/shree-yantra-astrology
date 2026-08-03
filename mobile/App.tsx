@@ -21,7 +21,7 @@ import { AppConfigProvider } from './src/context/AppConfigProvider';
 import { LanguageProvider } from './src/i18n/LanguageProvider';
 import { initAnalytics, trackScreen } from './src/lib/analytics';
 import { addTapListener, addReceivedListener, registerForPush } from './src/lib/notifications';
-import { getAuthToken, setSessionRevokedHandler } from './src/lib/api';
+import { getAuthToken, setSessionRevokedHandler, setSubscriptionRequiredHandler } from './src/lib/api';
 import { clearAuth } from './src/lib/auth';
 import { refreshUnread, bumpUnread } from './src/lib/notificationStore';
 
@@ -70,6 +70,23 @@ function Root() {
       });
     });
     return () => setSessionRevokedHandler(null);
+  }, []);
+
+  // Backend entitlement is authoritative. If a paid request returns 402, move the
+  // user back to the subscription screen instead of trusting stale local state.
+  useEffect(() => {
+    let firing = false;
+    setSubscriptionRequiredHandler(() => {
+      if (firing) return;
+      firing = true;
+      resetTo('Subscribe');
+      Alert.alert(
+        'सदस्यता आवश्यक · Subscription required',
+        'इस सुविधा का उपयोग करने के लिए सक्रिय सदस्यता आवश्यक है।\n\nAn active subscription is required to use this feature.',
+      );
+      setTimeout(() => { firing = false; }, 2500);
+    });
+    return () => setSubscriptionRequiredHandler(null);
   }, []);
 
   // Notifications: deep-link when the user taps one, and (if already logged in) register the

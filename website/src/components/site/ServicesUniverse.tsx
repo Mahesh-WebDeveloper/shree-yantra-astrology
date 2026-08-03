@@ -74,8 +74,8 @@ const G = {
 const GROUPS: Group[] = [
   {
     id: 'chart',
-    hi: 'कुंडली व विश्लेषण',
-    en: 'Chart & analysis',
+    hi: 'कुंडली और ग्रह-विश्लेषण',
+    en: 'Kundli and planetary analysis',
     accent: '#e9b850',
     glyph: G.chart,
     items: [
@@ -83,74 +83,74 @@ const GROUPS: Group[] = [
         hi: 'जन्म कुंडली',
         en: 'Janam Kundli',
         what: {
-          hi: 'ग्रह, भाव, योग और दोष — सब एक ही चार्ट में',
-          en: 'Grahas, bhavas, yogas and doshas in one chart',
+          hi: 'लग्न, राशि, नक्षत्र, ग्रह, भाव, योग और दोष की विस्तृत जानकारी',
+          en: 'Detailed information on lagna, rashi, nakshatra, planets, houses, yogas and doshas',
         },
-        stat: { hi: '12 भाव', en: '12 houses' },
+        stat: { hi: 'विस्तृत कुंडली', en: 'Detailed chart' },
       },
       {
         hi: 'बृहत् कुंडली रिपोर्ट',
         en: 'Brihat Kundli report',
         what: {
-          hi: 'पूरी कुंडली का विस्तृत पाठ, एक जगह',
-          en: 'The long-form reading of the whole chart, in one place',
+          hi: 'जीवन के प्रमुख क्षेत्रों पर विस्तृत कुंडली रिपोर्ट',
+          en: 'A detailed Kundli report covering the major areas of life',
         },
       },
       {
         hi: 'जन्म पत्री + नामकरण',
         en: 'Janam Patri + naming',
         what: {
-          hi: 'जन्म का पूरा विवरण और नाम का शुभ अक्षर',
-          en: 'The full birth record, plus the naming syllable',
+          hi: 'जन्म विवरण के साथ नक्षत्र के अनुसार नाम का शुभ अक्षर',
+          en: 'Birth details with a naming syllable based on the nakshatra',
         },
       },
       {
         hi: 'कुंडली मिलान',
         en: 'Kundli Milan',
         what: {
-          hi: 'दो कुंडलियों का मिलान, दोष की जाँच के साथ',
-          en: 'Two charts matched, with the dosha checks',
+          hi: '36 गुणों का अष्टकूट मिलान और प्रमुख वैवाहिक अनुकूलता संकेत',
+          en: '36-guna Ashtakoot matching with key marriage compatibility indicators',
         },
-        stat: { hi: '36 गुण', en: '36 gunas' },
+        stat: { hi: 'अष्टकूट', en: 'Ashtakoot' },
       },
       {
         hi: 'वैदिक विश्लेषण',
         en: 'Vedic analysis',
         what: {
-          hi: 'गण, योनि, नाड़ी, गण्डमूल और राजयोग',
-          en: 'Gana, yoni, nadi, gandmool and rajyogas',
+          hi: 'गण, योनि, नाड़ी, गण्डमूल, राजयोग और अन्य वैदिक संकेत',
+          en: 'Gana, yoni, nadi, gandmool, rajyogas and other Vedic indicators',
         },
       },
       {
-        hi: 'जीवन समय-रेखा',
+        hi: 'दशा समयरेखा',
         en: 'Life timeline',
         what: {
-          hi: 'कौन-सी दशा कब चली और आगे कब आएगी',
-          en: 'Which dasha ran when, and what comes next',
+          hi: 'पिछली, वर्तमान और आने वाली महादशा-अंतर्दशा की समयरेखा',
+          en: 'A timeline of past, current and upcoming mahadasha-antardasha periods',
         },
       },
       {
-        hi: 'गोचर व भविष्यवाणी',
-        en: 'Transit & forecast',
+        hi: 'गोचर और फलादेश',
+        en: 'Transits and forecast',
         what: {
-          hi: 'ग्रह अभी कहाँ हैं और आपकी कुंडली पर उनका असर',
-          en: 'Where the planets are now, and what they touch in your chart',
+          hi: 'वर्तमान ग्रह-स्थितियों का आपकी जन्म कुंडली पर संभावित प्रभाव',
+          en: 'How current planetary positions may relate to your birth chart',
         },
       },
       {
         hi: 'उपाय',
         en: 'Remedies',
         what: {
-          hi: 'सरल उपाय, जो आपकी अपनी कुंडली से निकले हों',
-          en: 'Simple remedies, drawn from your own chart',
+          hi: 'कुंडली के संकेतों के अनुसार सरल और व्यावहारिक पारंपरिक उपाय',
+          en: 'Simple, practical traditional remedies based on chart indications',
         },
       },
     ],
   },
   {
     id: 'timing',
-    hi: 'समय व मुहूर्त',
-    en: 'Timing',
+    hi: 'पंचांग और शुभ समय',
+    en: 'Panchang and auspicious timings',
     accent: '#d8a45f',
     glyph: G.clock,
     items: [
@@ -158,43 +158,43 @@ const GROUPS: Group[] = [
         hi: 'आज का पंचांग',
         en: "Today's Panchang",
         what: {
-          hi: 'पाँचों अंग, हर एक के समाप्ति समय के साथ',
-          en: 'All five limbs, each with the time it ends',
+          hi: 'तिथि, नक्षत्र, योग, करण और वार के साथ समाप्ति समय',
+          en: 'Tithi, nakshatra, yoga, karana and vaara with end times',
         },
-        stat: { hi: '5 अंग', en: '5 limbs' },
+        stat: { hi: 'दैनिक', en: 'Daily' },
       },
       {
         hi: 'चौघड़िया',
         en: 'Choghadiya',
         what: {
-          hi: 'दिन और रात का पूरा मुहूर्त, चालू समय के साथ',
-          en: 'The full day and night muhurat, with the running window',
+          hi: 'दिन और रात के चौघड़िया के साथ वर्तमान शुभ-अशुभ अवधि',
+          en: 'Day and night Choghadiya with the current auspicious or inauspicious period',
         },
-        stat: { hi: '24 घंटे', en: '24 hours' },
+        stat: { hi: 'लाइव समय', en: 'Live window' },
       },
       {
         hi: 'शुभ मुहूर्त खोजें',
         en: 'Find a shubh muhurat',
         what: {
-          hi: 'गृह प्रवेश, विवाह, वाहन — हर खिड़की समय के साथ',
-          en: 'Griha pravesh, marriage, a vehicle — every window, timed',
+          hi: 'विवाह, गृह प्रवेश, वाहन और अन्य महत्वपूर्ण कार्यों के लिए शुभ समय',
+          en: 'Auspicious timings for marriage, griha pravesh, vehicles and other important occasions',
         },
       },
       {
         hi: 'व्रत व त्योहार',
         en: 'Vrat & festivals',
         what: {
-          hi: 'हर पर्व की तिथि, विधि और महत्व — पूरे साल का कैलेंडर',
-          en: 'Every festival with its date, method and meaning — a full-year calendar',
+          hi: 'वर्षभर के व्रत-त्योहार की तिथि, पूजा विधि और धार्मिक महत्व',
+          en: 'Dates, puja guidance and significance for vrat and festivals throughout the year',
         },
-        stat: { hi: '230+ पर्व', en: '230+ festivals' },
+        stat: { hi: 'विधि सहित', en: 'With vidhi' },
       },
     ],
   },
   {
     id: 'readings',
-    hi: 'भविष्यवाणी',
-    en: 'Readings',
+    hi: 'राशिफल और व्यक्तिगत ज्योतिष',
+    en: 'Rashifal and personal astrology',
     accent: '#cbb469',
     glyph: G.sun,
     items: [
@@ -202,31 +202,31 @@ const GROUPS: Group[] = [
         hi: 'आपका राशिफल',
         en: 'Your Rashifal',
         what: {
-          hi: 'दैनिक, साप्ताहिक, मासिक और वार्षिक — आपकी कुंडली से',
-          en: 'Daily, weekly, monthly and yearly — from your own chart',
+          hi: 'आपकी कुंडली के आधार पर दैनिक, साप्ताहिक, मासिक और वार्षिक राशिफल',
+          en: 'Daily, weekly, monthly and yearly Rashifal informed by your chart',
         },
-        stat: { hi: '4 अवधि', en: '4 spans' },
+        stat: { hi: 'व्यक्तिगत', en: 'Personal' },
       },
       {
         hi: '12 राशियों का राशिफल',
         en: 'All twelve signs',
-        what: { hi: 'हर राशि का आज का हाल', en: 'How the day stands for every sign' },
-        stat: { hi: '12 राशियाँ', en: '12 signs' },
+        what: { hi: 'सभी बारह राशियों के लिए आज का राशिफल', en: 'Today’s Rashifal for all twelve signs' },
+        stat: { hi: 'दैनिक अपडेट', en: 'Daily update' },
       },
       {
         hi: 'ज्योतिषी से प्रश्न',
         en: 'Ask the Jyotishi',
         what: {
-          hi: 'प्रश्न पूछिए — उत्तर आपकी अपनी कुंडली से बनता है',
-          en: 'Ask a question — the answer is built from your own kundli',
+          hi: 'कुंडली, दशा और वर्तमान गोचर को ध्यान में रखकर प्रश्नों के उत्तर',
+          en: 'Answers that consider your chart, dasha and current transits',
         },
       },
     ],
   },
   {
     id: 'vidya',
-    hi: 'अन्य विद्याएँ',
-    en: 'More vidyas',
+    hi: 'घर, परिवार और अंक ज्योतिष',
+    en: 'Home, family and numerology',
     accent: '#c99a4a',
     glyph: G.lotus,
     items: [
@@ -234,85 +234,85 @@ const GROUPS: Group[] = [
         hi: 'अंक ज्योतिष',
         en: 'Numerology',
         what: {
-          hi: 'मूलांक, भाग्यांक और लो-शु ग्रिड, अर्थ के साथ',
-          en: 'Mulank, bhagyank and the Lo Shu grid, explained',
+          hi: 'मूलांक, भाग्यांक और लो-शु ग्रिड का सरल विश्लेषण',
+          en: 'A clear analysis of Mulank, Bhagyank and the Lo Shu grid',
         },
       },
       {
         hi: 'वास्तु शास्त्र',
         en: 'Vastu Shastra',
         what: {
-          hi: 'घर का ऑडिट, वास्तु दिशा-यंत्र और सुधार के उपाय',
-          en: 'A home audit, the vastu compass, and fixes you can act on',
+          hi: 'घर का वास्तु परीक्षण, दिशा-यंत्र और सुधार के व्यावहारिक सुझाव',
+          en: 'A home Vastu review, direction compass and practical improvement suggestions',
         },
       },
       {
         hi: 'शिशु के शुभ नाम',
         en: 'Baby names',
         what: {
-          hi: 'नक्षत्र के अक्षर से नाम, हर नाम का अर्थ सहित',
-          en: 'Names from the nakshatra syllable, each with its meaning',
+          hi: 'जन्म नक्षत्र के शुभ अक्षर से नाम और प्रत्येक नाम का अर्थ',
+          en: 'Names based on the birth nakshatra syllable, with a meaning for each name',
         },
       },
       {
         hi: 'कुंडली सीखें',
         en: 'Learn Kundli',
         what: {
-          hi: 'बिलकुल शुरुआत से, उदाहरण कुंडली के साथ',
-          en: 'From the very beginning, with a worked example chart',
+          hi: 'मूल अवधारणाओं से उन्नत विषयों तक, उदाहरण कुंडली के साथ',
+          en: 'From basic concepts to advanced topics, supported by an example chart',
         },
       },
       {
         hi: 'वास्तु सीखें',
         en: 'Learn Vastu',
         what: {
-          hi: 'दिशा और हर कोने का सरल पाठ',
-          en: 'A plain lesson in direction and what each corner holds',
+          hi: 'दिशाओं और घर के प्रत्येक भाग का वास्तु महत्व सरल भाषा में',
+          en: 'The Vastu significance of directions and areas of the home, explained clearly',
         },
       },
     ],
   },
   {
     id: 'library',
-    hi: 'दिव्य पुस्तकालय',
-    en: 'Sacred library',
+    hi: 'धार्मिक ग्रंथ और भक्ति',
+    en: 'Scriptures and devotion',
     accent: '#dfb877',
     glyph: G.book,
     items: [
       {
         hi: 'भगवद्गीता',
         en: 'Bhagavad Gita',
-        what: { hi: 'हर श्लोक, हिंदी अर्थ के साथ', en: 'Every verse, with its Hindi meaning' },
-        stat: { hi: '18 अध्याय', en: '18 chapters' },
+        what: { hi: 'अध्याय-वार संस्कृत श्लोक और उपलब्ध हिंदी अर्थ', en: 'Chapter-wise Sanskrit verses with available Hindi meaning' },
+        stat: { hi: 'अर्थ सहित', en: 'With meaning' },
       },
       {
         hi: 'वाल्मीकि रामायण',
         en: 'Valmiki Ramayana',
-        what: { hi: 'पूरा काव्य, सर्ग दर सर्ग', en: 'The whole epic, sarga by sarga' },
-        stat: { hi: '648 सर्ग', en: '648 sargas' },
+        what: { hi: 'कांड और सर्ग के अनुसार व्यवस्थित वाल्मीकि रामायण पाठ', en: 'Valmiki Ramayana organised by kanda and sarga' },
+        stat: { hi: 'सर्ग-वार', en: 'Sarga-wise' },
       },
       {
         hi: 'रामचरितमानस',
         en: 'Ramcharitmanas',
-        what: { hi: 'सातों कांड, हिंदी अर्थ के साथ', en: 'All seven kandas, with Hindi meaning' },
-        stat: { hi: '7 कांड', en: '7 kandas' },
+        what: { hi: 'कांड-वार पाठ, उपलब्ध हिंदी अर्थ के साथ', en: 'Kanda-wise reading, with Hindi meaning where available' },
+        stat: { hi: 'कांड-वार', en: 'Kanda-wise' },
       },
       {
         hi: 'पुराण',
         en: 'The Puranas',
-        what: { hi: 'अध्याय दर अध्याय, पढ़ने के लिए', en: 'Chapter by chapter, ready to read' },
-        stat: { hi: '18 पुराण', en: '18 Puranas' },
+        what: { hi: 'अध्याय के अनुसार व्यवस्थित पुराण संग्रह', en: 'A Purana collection organised by chapter' },
+        stat: { hi: 'संग्रह', en: 'Collection' },
       },
       {
         hi: 'वेद व उपनिषद्',
         en: 'Vedas & Upanishads',
         what: { hi: 'सूक्त और खंड, मूल पाठ के साथ', en: 'Suktas and sections, with the source text' },
-        stat: { hi: '4 वेद', en: '4 Vedas' },
+        stat: { hi: 'मूल पाठ', en: 'Source text' },
       },
       {
         hi: 'आरती, मंत्र, स्तोत्र संग्रह',
         en: 'Aarti, mantra & stotra',
-        what: { hi: 'पढ़िए भी, और सुनिए भी', en: 'Read them, or listen to them' },
+        what: { hi: 'पाठ और उपलब्ध ऑडियो, दोनों विकल्प', en: 'Text and available audio in one place' },
       },
       {
         hi: 'हनुमान चालीसा',
@@ -322,11 +322,11 @@ const GROUPS: Group[] = [
       {
         hi: 'आज का श्लोक',
         en: 'Verse of the day',
-        what: { hi: 'रोज़ एक श्लोक, अर्थ सहित', en: 'One verse each day, explained' },
+        what: { hi: 'प्रतिदिन एक श्लोक और उसका सरल अर्थ', en: 'A verse each day with a clear meaning' },
       },
       {
-        hi: 'सुनने के लिए',
-        en: 'To listen',
+        hi: 'भक्ति ऑडियो',
+        en: 'Devotional audio',
         what: {
           hi: 'आरती, भजन, मंत्र और ध्यान संगीत',
           en: 'Aartis, bhajans, mantras and meditation music',
@@ -335,59 +335,71 @@ const GROUPS: Group[] = [
       {
         hi: 'रामायण कथा',
         en: 'Ramayan katha',
-        what: { hi: 'सुनने के लिए, भाग दर भाग', en: 'To listen to, episode by episode' },
-        stat: { hi: '120 भाग', en: '120 episodes' },
+        what: { hi: 'भागों में व्यवस्थित रामायण कथा ऑडियो', en: 'Ramayan katha audio organised by episode' },
+        stat: { hi: 'श्रवण', en: 'Audio' },
       },
       {
         hi: 'महाभारत कथा',
         en: 'Mahabharat katha',
-        what: { hi: 'सुनने के लिए, भाग दर भाग', en: 'To listen to, episode by episode' },
-        stat: { hi: '100 भाग', en: '100 episodes' },
+        what: { hi: 'भागों में व्यवस्थित महाभारत कथा ऑडियो', en: 'Mahabharat katha audio organised by episode' },
+        stat: { hi: 'श्रवण', en: 'Audio' },
       },
       {
         hi: 'यथार्थ गीता',
         en: 'Yatharth Geeta',
-        what: { hi: 'सुनने के लिए', en: 'To listen to' },
-        stat: { hi: '20 भाग', en: '20 episodes' },
+        what: { hi: 'अध्याय-वार श्रवण पाठ', en: 'Chapter-wise audio recitation' },
+        stat: { hi: 'श्रवण', en: 'Audio' },
       },
     ],
   },
   {
     id: 'daily',
-    hi: 'रोज़ का साथ',
-    en: 'Everyday',
+    hi: 'प्रतिदिन उपयोगी सुविधाएँ',
+    en: 'Useful every day',
     accent: '#c9a05e',
     glyph: G.bell,
     items: [
       {
         hi: 'सुबह का राशिफल रिमाइंडर',
         en: 'Morning rashifal reminder',
-        what: { hi: 'हर सुबह आपका राशिफल, सूचना में', en: 'Your reading, every morning, as a notification' },
+        what: { hi: 'हर सुबह सूचना के माध्यम से आपका राशिफल', en: 'Your Rashifal delivered as a morning notification' },
       },
       {
         hi: 'व्रत-त्योहार की सूचना',
         en: 'Festival reminders',
-        what: { hi: 'पर्व आने से पहले याद दिला देता है', en: 'A reminder before the day arrives' },
+        what: { hi: 'आने वाले व्रत और त्योहार की समय पर सूचना', en: 'Timely reminders for upcoming vrat and festivals' },
       },
       {
         hi: 'सहेजा हुआ पुस्तकालय',
         en: 'Saved library',
-        what: { hi: 'जो पढ़ा या सुना, वह सहेजा रहता है', en: 'Whatever you read or hear stays saved' },
+        what: { hi: 'पढ़ने और सुनने की प्रगति आपके खाते में सुरक्षित', en: 'Your reading and listening progress stays saved' },
       },
       {
         hi: 'हिंदी और English',
         en: 'Hindi and English',
-        what: { hi: 'पूरा ऐप, दोनों भाषाओं में', en: 'The whole app, in both languages' },
+        what: { hi: 'ऐप की प्रमुख सुविधाएँ दोनों भाषाओं में उपलब्ध', en: 'The main app features are available in both languages' },
       },
     ],
   },
 ]
 
-const HIGHLIGHTS = [
-  { n: '230+', hi: 'व्रत व त्योहार', en: 'vrats & festivals' },
-  { n: '648', hi: 'रामायण सर्ग', en: 'Ramayana sargas' },
-  { n: '18', hi: 'पुराण', en: 'Puranas' },
-  { n: '36', hi: 'गुण मिलान', en: 'guna matching' },
+const HIGHLIGHTS: { label: Bi; desc: Bi }[] = [
+  {
+    label: { hi: 'पंचांग', en: 'Panchang' },
+    desc: { hi: 'व्रत, त्योहार और शुभ समय', en: 'Vrat, festivals and shubh time' },
+  },
+  {
+    label: { hi: 'कुंडली', en: 'Kundli' },
+    desc: { hi: 'जन्म कुंडली से व्यक्तिगत पाठ', en: 'Personal readings from your chart' },
+  },
+  {
+    label: { hi: 'ग्रंथ', en: 'Granth' },
+    desc: { hi: 'गीता, रामायण, वेद और पुराण', en: 'Gita, Ramayan, Vedas and Puranas' },
+  },
+  {
+    label: { hi: 'भक्ति', en: 'Bhakti' },
+    desc: { hi: 'आरती, मंत्र, स्तोत्र और कथा', en: 'Aarti, mantra, stotra and katha' },
+  },
 ]
 
 export function ServicesUniverse() {
@@ -399,30 +411,30 @@ export function ServicesUniverse() {
       <span className="syu__bg" aria-hidden />
       <div className="sy-container">
         <header className="syu__head" data-sy-reveal="0">
-          <p className="sy-eyebrow sy-eyebrow--center">{hi ? 'पूरी सूची' : 'The full map'}</p>
+          <p className="sy-eyebrow sy-eyebrow--center">{hi ? 'श्री यंत्र में क्या मिलेगा' : 'What you will find in Shree Yantra'}</p>
           <h2 id="syu-h" className="sy-h2">
             {hi ? (
               <>
-                एक ही ऐप में, <span className="sy-gold-text">सब कुछ</span>
+                दैनिक पंचांग से <span className="sy-gold-text">विस्तृत जन्म कुंडली तक</span>
               </>
             ) : (
               <>
-                Everything, <span className="sy-gold-text">in one app</span>
+                From daily Panchang to <span className="sy-gold-text">detailed Kundli analysis</span>
               </>
             )}
           </h2>
           <p className="sy-lead syu__lead">
             {hi
-              ? 'छोटी सेवाएँ भी यहीं गिनी हैं — जो ऐप में है, बस वही लिखा है।'
-              : 'The small services are counted here too — this lists what the app actually has, and nothing else.'}
+              ? 'जन्म कुंडली, पंचांग, चौघड़िया, शुभ मुहूर्त, राशिफल, कुंडली मिलान, वास्तु, अंक ज्योतिष और धार्मिक पुस्तकालय — सभी प्रमुख सुविधाएँ एक ही ऐप में।'
+              : 'Kundli, Panchang, Choghadiya, Muhurat, Rashifal, Kundli Milan, Vastu, Numerology and a spiritual library, all within one app.'}
           </p>
         </header>
 
         <ul className="syu__stats">
           {HIGHLIGHTS.map((h, i) => (
-            <li key={h.en} data-sy-reveal={String(60 + i * 60)}>
-              <b className="sy-num">{h.n}</b>
-              <span>{hi ? h.hi : h.en}</span>
+            <li key={h.label.en} data-sy-reveal={String(60 + i * 60)}>
+              <b className="sy-num">{hi ? h.label.hi : h.label.en}</b>
+              <span>{hi ? h.desc.hi : h.desc.en}</span>
             </li>
           ))}
         </ul>
@@ -440,7 +452,7 @@ export function ServicesUniverse() {
                 <span className="syu-group__glyph">{group.glyph}</span>
                 <span className="syu-group__titles">
                   <b>{hi ? group.hi : group.en}</b>
-                  <em>{hi ? group.en : group.hi}</em>
+                  {hi ? null : <em>{group.hi}</em>}
                 </span>
                 <span className="syu-group__count sy-num">
                   {group.items.length}

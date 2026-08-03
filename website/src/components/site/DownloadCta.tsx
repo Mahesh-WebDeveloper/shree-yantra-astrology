@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { useRef } from 'react'
+import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { useLang } from '@/i18n/LangProvider'
 import { useRevealChildren } from './hooks/useSiteMotion'
 import './sections.css'
@@ -15,6 +16,9 @@ const PARTICLES = Array.from({ length: 22 }, (_, i) => ({
 const PETALS = Array.from({ length: 12 }, (_, i) => i * 30)
 
 function Mandala({ still }: { still: boolean }) {
+  const ref = useRef<SVGSVGElement>(null)
+  const inView = useInView(ref, { once: false, amount: 0.2, margin: '0px 0px -8% 0px' })
+
   const draw = {
     hidden: { pathLength: 0, opacity: 0 },
     show: (i: number) => ({
@@ -31,14 +35,14 @@ function Mandala({ still }: { still: boolean }) {
     ? { initial: false as const }
     : {
         initial: 'hidden' as const,
-        whileInView: 'show' as const,
-        viewport: { once: true, amount: 0.25 },
+        animate: inView ? ('show' as const) : ('hidden' as const),
         variants: draw,
       }
 
   return (
-    <svg className="syj-cta__mandala" viewBox="0 0 200 200" fill="none" aria-hidden>
-      <g stroke="currentColor" strokeWidth="0.5" vectorEffect="non-scaling-stroke">
+    <svg ref={ref} className="syj-cta__mandala" viewBox="0 0 200 200" fill="none" aria-hidden>
+      {/* non-scaling-stroke breaks pathLength draw — see HeroMandala */}
+      <g stroke="currentColor" strokeWidth="0.5">
         {PETALS.map((deg, i) => (
           <motion.ellipse
             key={deg}
@@ -70,38 +74,19 @@ function Mandala({ still }: { still: boolean }) {
   )
 }
 
-function QrPlaceholder() {
-  const cells = [
-    [1, 1, 1, 0, 1, 0, 1, 1, 1],
-    [1, 0, 1, 0, 0, 1, 1, 0, 1],
-    [1, 1, 1, 1, 0, 0, 1, 1, 1],
-    [0, 0, 0, 1, 1, 1, 0, 0, 0],
-    [1, 0, 1, 0, 1, 0, 1, 1, 0],
-    [0, 1, 1, 1, 0, 1, 0, 0, 1],
-    [1, 1, 1, 0, 1, 1, 1, 0, 1],
-    [1, 0, 1, 1, 0, 0, 1, 1, 0],
-    [1, 1, 1, 0, 1, 0, 0, 1, 1],
-  ]
-  return (
-    <svg viewBox="0 0 9 9" aria-hidden>
-      {cells.map((row, y) =>
-        row.map((on, x) =>
-          on ? <rect key={`${x}-${y}`} x={x} y={y} width="0.86" height="0.86" fill="currentColor" rx="0.14" /> : null,
-        ),
-      )}
-    </svg>
-  )
-}
-
 export function DownloadCta() {
   const { hi } = useLang()
   const reduce = useReducedMotion()
   const revealRef = useRevealChildren<HTMLElement>()
+  const apkUrl = import.meta.env.VITE_APK_DOWNLOAD_URL?.trim()
+  const downloadHref =
+    apkUrl ||
+    `mailto:support@shreeyantra.app?subject=${encodeURIComponent('Shree Yantra Android download link')}`
 
   const chips = [
-    { hi: 'कोई नकली आँकड़ा नहीं', en: 'No fake data' },
-    { hi: 'आपका विवरण आपका ही रहता है', en: 'Your data stays private' },
-    { hi: 'हिंदी और English, दोनों में', en: 'Works in Hindi and English' },
+    { hi: 'जन्म विवरण के अनुसार व्यक्तिगत कुंडली', en: 'A birth chart based on your details' },
+    { hi: 'शहर के अनुसार पंचांग और शुभ समय', en: 'Panchang and timings for your city' },
+    { hi: 'हिंदी और English में सरल जानकारी', en: 'Easy-to-understand Hindi and English' },
   ]
 
   return (
@@ -133,7 +118,7 @@ export function DownloadCta() {
 
       <div className="sy-container syj-cta__inner">
         <p className="syj-kicker syj-kicker--center" data-sy-reveal="0">
-          {hi ? 'शुरुआत यहीं से' : 'Start here'}
+          {hi ? 'कुंडली, पंचांग और आध्यात्मिक ज्ञान — एक ही ऐप में' : 'Kundli, Panchang and spiritual wisdom in one app'}
         </p>
         <h2
           id="syj-cta-h"
@@ -143,38 +128,36 @@ export function DownloadCta() {
         >
           {hi ? (
             <>
-              अपनी कुंडली <em>आज ही देखें</em>
+              वैदिक ज्योतिष को <em>अपने दैनिक जीवन का हिस्सा बनाइए</em>
             </>
           ) : (
             <>
-              See your own kundli <em>today</em>
+              Make Vedic astrology <em>part of your everyday life</em>
             </>
           )}
         </h2>
         <p className="syj-sub" style={{ marginInline: 'auto' }} data-sy-reveal="120">
           {hi
-            ? 'जन्म तिथि, समय और स्थान — बस इतना चाहिए। बाकी गणना कर देती है, और पाठ आपकी अपनी कुंडली से बनता है।'
-            : 'Your date, time and place of birth — that is all it needs. The rest is calculated, and every reading is built from your own chart.'}
+            ? 'जन्म विवरण एक बार जोड़ें और व्यक्तिगत कुंडली, शहर के अनुसार पंचांग, राशिफल, शुभ मुहूर्त, ज्योतिषीय जानकारी तथा धार्मिक पुस्तकालय का उपयोग हिंदी और English में करें।'
+            : 'Add your birth details once to access personalised Kundli, location-based Panchang, Rashifal, Muhurat, astrological guidance and a spiritual library in Hindi and English.'}
         </p>
 
         <div className="syj-cta__actions" data-sy-reveal="180">
-          <a className="sy-btn-gold" href="#" data-sy-download="apk">
-            {hi ? 'APK डाउनलोड करें' : 'Download APK'}
+          <a
+            className="sy-btn-gold"
+            href={downloadHref}
+            {...(apkUrl ? { download: true } : {})}
+            data-sy-download="apk"
+          >
+            {hi ? 'Android ऐप डाउनलोड करें' : 'Download the Android app'}
           </a>
           <span className="syj-badge">
             <i aria-hidden />
-            {hi ? 'Play Store पर जल्द' : 'Coming soon to Play Store'}
+            {hi ? 'Play Store पर जल्द उपलब्ध' : 'Coming soon to Google Play'}
           </span>
         </div>
 
-        <div className="syj-qr" data-sy-reveal="240">
-          <span className="syj-qr__box" aria-hidden>
-            <QrPlaceholder />
-          </span>
-          <small>{hi ? 'फ़ोन से स्कैन कीजिए — QR जल्द' : 'Scan from your phone — QR coming soon'}</small>
-        </div>
-
-        <ul className="syj-cta__chips" data-sy-reveal="300">
+        <ul className="syj-cta__chips" data-sy-reveal="240">
           {chips.map((chip) => (
             <li className="syj-chip" key={chip.en}>
               <i aria-hidden />

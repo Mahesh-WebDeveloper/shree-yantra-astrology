@@ -453,6 +453,16 @@ body {
   max-width: 40rem;
 }
 
+.syh__mobile-cosmos {
+  display: none;
+}
+
+.syh__eyebrow-mobile,
+.syh__cta-label-mobile,
+.syh__sub-mobile {
+  display: none;
+}
+
 .syh__eyebrow {
   font-size: clamp(9.5px, 1vw, 11px);
   letter-spacing: 0.26em;
@@ -468,7 +478,7 @@ body {
   font-family: var(--sy-font-display);
   font-weight: 500;
   font-size: clamp(2.05rem, min(5.6vw, 8vh), 4.35rem);
-  line-height: 1.06;
+  line-height: 1.26;
   letter-spacing: -0.022em;
   color: var(--sy-ink);
   text-wrap: balance;
@@ -477,8 +487,22 @@ body {
 .syh__title:lang(hi) {
   font-family: var(--sy-font-deva);
   font-size: clamp(1.9rem, min(5vw, 7.1vh), 3.85rem);
-  line-height: 1.24;
+  line-height: 1.26;
   letter-spacing: -0.005em;
+}
+.syh__title > span[aria-hidden] {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.24em;
+}
+.syh__line {
+  display: block;
+  line-height: 1.26;
+  margin: 0;
+}
+.syh__line + .syh__line {
+  margin-top: 0;
 }
 .syh__title-line {
   display: block;
@@ -644,54 +668,74 @@ body {
 }
 .syh__cue {
   display: inline-flex;
-  flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
-  border: 0;
-  background: none;
+  gap: 0.55rem;
+  padding: 0.48rem 0.72rem 0.48rem 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--sy-gold-2) 34%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sy-bg) 76%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow:
+    0 6px 22px -10px color-mix(in srgb, var(--sy-gold-2) 32%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 14%, transparent);
   cursor: pointer;
   color: var(--sy-ink-muted);
   font-family: inherit;
-  font-size: 0.58rem;
+  font-size: 0.62rem;
   font-weight: 700;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  transition: color 0.25s ease;
+  transition:
+    color 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    transform 0.25s ease;
 }
 .syh__cue:lang(hi) {
   letter-spacing: 0.08em;
   font-family: var(--sy-font-deva);
+  text-transform: none;
+  font-size: 0.68rem;
+}
+.syh__cue-label {
+  line-height: 1;
+}
+.syh__cue-icon {
+  display: grid;
+  place-items: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  border-radius: 50%;
+  color: var(--sy-gold-ink);
+  background: color-mix(in srgb, var(--sy-gold-2) 16%, transparent);
+  animation: syh-cue-bob 2.2s ease-in-out infinite;
 }
 .syh__cue:hover {
   color: var(--sy-gold-ink);
+  border-color: color-mix(in srgb, var(--sy-gold-2) 52%, transparent);
+  box-shadow:
+    0 8px 26px -8px color-mix(in srgb, var(--sy-gold-2) 38%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 18%, transparent);
+  transform: translateY(-1px);
 }
-.syh__cue-rail {
-  position: relative;
-  width: 1px;
-  height: clamp(26px, 4.4vh, 42px);
-  overflow: hidden;
-  background: linear-gradient(180deg, var(--sy-line-strong), transparent);
+.syh__cue:active {
+  transform: translateY(0);
 }
-.syh__cue-rail::after {
-  content: '';
-  position: absolute;
-  inset-inline: 0;
-  height: 40%;
-  background: var(--sy-gold-2);
-  animation: syh-cue 2.4s ease-in-out infinite;
-}
-@keyframes syh-cue {
-  0% {
-    transform: translateY(-100%);
-    opacity: 0;
-  }
-  40% {
-    opacity: 1;
-  }
+@keyframes syh-cue-bob {
+  0%,
   100% {
-    transform: translateY(260%);
-    opacity: 0;
+    transform: translateY(0);
   }
+  50% {
+    transform: translateY(2px);
+  }
+}
+[data-sy-theme='light'] .syh__cue {
+  background: color-mix(in srgb, var(--sy-bg) 88%, transparent);
+  box-shadow:
+    0 6px 20px -10px color-mix(in srgb, var(--sy-gold-3) 28%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 55%, transparent);
 }
 /* Very short windows: the cue is the first thing to go. */
 @media (max-height: 620px) {
@@ -705,7 +749,7 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .syh__aurora i,
   .syh__dust,
-  .syh__cue-rail::after {
+  .syh__cue-icon {
     animation: none;
   }
   .syh__dust {
@@ -727,6 +771,9 @@ body {
   align-items: center;
   min-width: 0;
   opacity: 1;
+}
+.syh__mobile-mandala {
+  display: none;
 }
 @media (min-width: 901px) {
   .syh__phonewrap {
@@ -769,8 +816,8 @@ body {
 .syh-phone__frame {
   position: relative;
   display: block;
-  padding: calc(var(--syh-phone-w) * 0.03);
-  border-radius: calc(var(--syh-phone-w) * 0.14);
+  padding: var(--syh-frame-pad);
+  border-radius: var(--syh-frame-r);
   background: linear-gradient(150deg, rgba(252, 232, 168, 0.9), rgba(184, 127, 26, 0.55) 44%, rgba(38, 28, 8, 0.95));
   box-shadow:
     0 2px 0 rgba(255, 255, 255, 0.24) inset,
@@ -785,10 +832,10 @@ body {
 }
 .syh-phone__notch {
   position: absolute;
-  top: calc(var(--syh-phone-w) * 0.055);
+  top: calc(var(--syh-frame-pad) * 1.9);
   left: 50%;
   transform: translateX(-50%);
-  width: 28%;
+  width: 22%;
   height: 5px;
   border-radius: 99px;
   background: rgba(0, 0, 0, 0.55);
@@ -800,7 +847,7 @@ body {
   /* the app screens are authored at 300x630 — keep that ratio at any width */
   width: 100%;
   aspect-ratio: 300 / 630;
-  border-radius: calc(var(--syh-phone-w) * 0.115);
+  border-radius: var(--syh-screen-r);
   overflow: hidden;
   background: #08070b;
   isolation: isolate;
@@ -826,6 +873,7 @@ body {
   inset: 0;
   z-index: 4;
   pointer-events: none;
+  border-radius: inherit;
   background: linear-gradient(115deg, rgba(255, 255, 255, 0) 42%, rgba(255, 255, 255, 0.07) 50%, rgba(255, 255, 255, 0) 58%);
   background-size: 260% 100%;
   animation: syh-sweep 7.5s ease-in-out infinite;
@@ -1078,18 +1126,18 @@ body {
        the right edge of every screen is clipped. */
 .syh-phone {
   --syh-screen-w: calc(var(--syh-phone-w) * 0.94);
+  --syh-frame-pad: calc(var(--syh-screen-w) * 0.033);
+  --syh-frame-r: calc(var(--syh-screen-w) * 0.155);
+  --syh-screen-r: calc(var(--syh-screen-w) * 0.125);
 }
 .syh-phone__slide {
   transform: scale(var(--syh-board-scale, 0.85));
 }
 
-/* 2 · Below ~760px the copy alone fills the viewport; the device, its caption
-      and the tab row cannot also fit without the hero growing past one screen
-      (it measured 1186px on a 390px phone). The app screens get their own
-      full section immediately below, so here the mandala carries the visual
-      and the hero stays exactly one screen tall. */
+/* 2 · Below ~760px the hero grows with its content — the phone is scaled to
+      fit and shown whole, not cropped at the fold. */
 @media (max-width: 760px) {
-  .syh__stage {
+  .syh__caption {
     display: none;
   }
 }
@@ -1100,6 +1148,7 @@ body {
   position: absolute;
   inset: 0;
   overflow: hidden;
+  border-radius: inherit;
 }
 .syh-phone__board {
   position: absolute;
@@ -1162,7 +1211,6 @@ body {
 .syh-phone {
   --syh-phone-h: min(80vh, 640px);
   --syh-phone-w: calc(var(--syh-phone-h) * 300 / 630);
-  --syh-screen-w: calc(var(--syh-phone-w) * 0.94);
   width: var(--syh-phone-w);
 }
 /* the zoom wrapper reads its scale from the screen width — keep them in step */
@@ -1267,6 +1315,29 @@ body {
   visibility: hidden;
 }
 
+/* Mobile: CSS-only swap — transform/opacity only, no filter shadows. */
+@keyframes syh-swap-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.62em, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+.syh__swap--lite {
+  contain: layout style;
+  filter: none;
+}
+.syh__swap-word--lite {
+  animation: syh-swap-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: transform, opacity;
+}
+.syh__swap--lite .sy-gold-text {
+  filter: none;
+}
+
 /* ── Light-bleed behind the headline on load ────────────────── */
 .syh__copy {
   position: relative;
@@ -1338,57 +1409,64 @@ body {
    altogether, leaving the first screen with nothing of the app in
    it. So the phone layout is rebuilt rather than scaled:
 
-     ┌──────────────────────┐
-     │ eyebrow              │  copy sits on a real scrim —
-     │ HEADLINE, turning    │  clean background, nothing behind
-     │ one plain sentence   │  the type
-     │ [ get the app ]      │
-     │ [ what's inside ]    │
-     │ · trust · trust      │
-     │      ╭────────╮      │  the wheel rises from the foot,
-     │   ◜  │ live   │  ◝   │  the device rises out of the fold
-     │  ◜   │ screen │   ◝  │  and dissolves into it
-     └──────┴────────┴──────┘
+      ┌──────────────────────┐
+      │ eyebrow              │  copy sits on a real scrim —
+      │ HEADLINE, turning    │  clean background, nothing behind
+      │ one plain sentence   │  the type
+      │ [ get the app ]      │
+      │ [ what's inside ]    │
+      │ · trust · trust      │
+      │      ╭────────╮      │  the wheel rises from the foot,
+      │   ◜  │ live   │  ◝   │  the device rises out of the fold
+      │  ◜   │ screen │   ◝  │  and dissolves into it
+      └──────┴────────┴──────┘
 
-   The band runs to 900px — everywhere the grid is one column. Left at
-   760 the tablet-portrait sizes kept the old stacked layout and the hero
-   measured 1242px against a 1000px window.
-   ───────────────────────────────────────────────────────────── */
+    The band runs to 900px — everywhere the grid is one column. Left at
+    760 the tablet-portrait sizes kept the old stacked layout and the hero
+    measured 1242px against a 1000px window.
+    ───────────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
-  /* 1 · Copy takes the room it needs; the device gets everything left
-         over and is cropped by the fold rather than shrinking the type.
-         The height must be *definite* (not min-height): against an auto
-         height the leftover row has no size to resolve against and sizes
-         itself to the phone instead — which put the hero at 1053px on an
-         844px screen. */
+  /* 1 · Both rows size to content — the old 1fr row + overflow:clip squeezed
+         the phone and scroll cue into each other on short screens. */
   .syh {
-    height: 100svh;
-    min-height: 560px;
+    grid-template-rows: auto auto;
+    min-height: auto;
+    height: auto;
+    overflow-x: clip;
+    overflow-y: visible;
+    padding-bottom: 0;
+    /* Add proper gap after fixed nav/header */
+    padding-top: calc(var(--syh-nav) + clamp(20px, 3.3vh, 33px));
   }
   .syh__grid {
-    grid-template-rows: auto minmax(0, 1fr);
-    align-items: stretch;
+    grid-template-rows: auto auto;
+    align-items: center;
     align-content: start;
-    gap: clamp(8px, 1.8vh, 20px);
-    height: 100%;
+    gap: clamp(18px, 3.5vh, 32px);
+    height: auto;
+    padding-inline: clamp(16px, 4vw, 24px);
   }
   .syh__copy {
+    position: relative;
+    z-index: 3;
     max-width: 34rem;
+    padding-bottom: clamp(4px, 1vh, 10px);
+    text-align: center;
   }
 
-  /* 2 · The wheel gets out of the text's way. Anchored to the foot and
-         pushed a quarter of itself past it, it reads as a chakra rising
-         behind the device — and the words above it sit on clean ground. */
+  /* 2 · Keep the wheel in the device band only — not behind the buttons. */
   .syh__mandala {
-    align-items: flex-end;
+    top: auto;
+    bottom: clamp(56px, 11vh, 88px);
+    height: min(68svh, 580px);
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
   }
   .syh__mandala-pos {
-    /* pushed far enough that the swastika's own strokes stay below the fold:
-       what frames the device is the outer bezel — rings and teeth — not hard
-       linework crossing the app's rows */
-    width: min(124vw, 660px);
-    translate: 0 52%;
-    opacity: 0.62;
+    width: min(88vmin, 480px);
+    translate: 0 0;
+    opacity: 0.56;
   }
   [data-sy-theme='light'] .syh__mandala-pos {
     opacity: 0.44;
@@ -1401,10 +1479,11 @@ body {
     background: linear-gradient(
       180deg,
       var(--sy-bg) 0%,
-      color-mix(in srgb, var(--sy-bg) 94%, transparent) 26%,
-      color-mix(in srgb, var(--sy-bg) 68%, transparent) 46%,
-      color-mix(in srgb, var(--sy-bg) 22%, transparent) 62%,
-      transparent 76%
+      var(--sy-bg) 42%,
+      color-mix(in srgb, var(--sy-bg) 96%, transparent) 54%,
+      color-mix(in srgb, var(--sy-bg) 72%, transparent) 66%,
+      color-mix(in srgb, var(--sy-bg) 28%, transparent) 78%,
+      transparent 88%
     );
   }
   .syh__vignette {
@@ -1417,117 +1496,453 @@ body {
 
   /* 4 · Type, tuned for the hand rather than clamped down from the desk. */
   .syh__eyebrow {
-    font-size: 9.5px;
-    letter-spacing: 0.22em;
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--sy-glass) 90%, transparent);
+    border: 1px solid color-mix(in srgb, var(--sy-gold-2) 25%, transparent);
+    backdrop-filter: blur(16px) saturate(1.2);
+    -webkit-backdrop-filter: blur(16px) saturate(1.2);
+    box-shadow: 
+      0 8px 24px -16px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 color-mix(in srgb, white 10%, transparent);
+    margin-bottom: clamp(8px, 1.5vh, 14px);
   }
   .syh__eyebrow:lang(hi) {
-    font-size: 10.5px;
+    font-size: 11px;
+    letter-spacing: 0.14em;
   }
+  .syh__eyebrow::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--sy-gold-1), var(--sy-gold-3));
+    box-shadow: 0 0 12px 2px color-mix(in srgb, var(--sy-gold-2) 40%, transparent);
+    animation: syh-eyebrow-pulse 3s ease-in-out infinite;
+  }
+  @keyframes syh-eyebrow-pulse {
+    0%, 100% { opacity: 0.8; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.1); }
+  }
+
   .syh__title {
-    margin-top: 10px;
-    font-size: clamp(2.05rem, 8.6vw, 2.8rem);
-    line-height: 1.08;
+    margin-top: clamp(12px, 2vh, 18px);
+    font-size: clamp(2rem, 8.4vw, 3rem);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    text-shadow: none;
   }
   .syh__title:lang(hi) {
-    font-size: clamp(1.9rem, 7.8vw, 2.55rem);
-    line-height: 1.3;
+    font-size: clamp(1.82rem, 7.6vw, 2.55rem);
+    line-height: 1.26;
+    letter-spacing: -0.01em;
   }
+  .syh__title > span[aria-hidden] {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.24em;
+  }
+  .syh__line {
+    display: block;
+    line-height: 1.26;
+  }
+  .syh__line + .syh__line {
+    margin-top: 0;
+    max-width: none;
+  }
+  /* No drop-shadow on the swap — it paints a boxy glow behind gradient text. */
+  .syh__swap {
+    filter: none;
+    padding: 0;
+    margin: 0;
+    line-height: inherit;
+    vertical-align: baseline;
+  }
+  .syh__swap-word .sy-gold-text {
+    filter: none;
+  }
+  /* Mobile copy should sit on a clean scrim — no gold bleed behind the type. */
+  .syh__bleed {
+    display: none;
+  }
+
   .syh__sub {
-    margin-top: 10px;
-    max-width: 33ch;
-    font-size: 0.95rem;
-    line-height: 1.55;
+    margin-top: clamp(12px, 2vh, 18px);
+    max-width: 36ch;
+    font-size: clamp(0.95rem, 2.8vw, 1.05rem);
+    line-height: 1.65;
+    color: color-mix(in srgb, var(--sy-ink) 85%, var(--sy-ink-soft));
+    margin-inline: auto;
   }
   .syh__sub-more {
-    display: none;
+    display: inline;
   }
 
   /* 5 · Two full-width buttons — a thumb should never have to aim. */
   .syh__cta {
-    margin-top: clamp(14px, 2.4vh, 22px);
+    margin-top: clamp(18px, 3vh, 28px);
     display: grid;
     grid-template-columns: 1fr;
-    gap: 0.5rem;
+    gap: 0.75rem;
+    max-width: 320px;
+    margin-inline: auto;
   }
   .syh__cta .sy-btn-gold,
   .syh__cta .sy-btn-ghost {
     width: 100%;
     justify-content: center;
-    padding: 0.82rem 1.1rem;
-    font-size: 0.92rem;
+    padding: 1rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    border-radius: 16px;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .syh__cta .sy-btn-gold {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--sy-gold-1) 0%, var(--sy-gold-2) 50%, var(--sy-gold-3) 100%);
+    box-shadow: 
+      0 8px 32px -12px color-mix(in srgb, var(--sy-gold-2) 50%, transparent),
+      inset 0 1px 0 color-mix(in srgb, white 20%, transparent);
+    border: 1px solid color-mix(in srgb, var(--sy-gold-2) 30%, transparent);
+  }
+  .syh__cta .sy-btn-gold::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 40%, color-mix(in srgb, white 15%, transparent) 50%, transparent 60%);
+    transform: translateX(-100%);
+    transition: transform 0.5s ease;
+  }
+  .syh__cta .sy-btn-gold:hover::before,
+  .syh__cta .sy-btn-gold:active::before {
+    transform: translateX(100%);
+  }
+  .syh__cta .sy-btn-gold:active {
+    transform: scale(0.98);
+  }
+  .syh__cta .sy-btn-gold svg {
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
+    transition: transform 0.2s ease;
+  }
+  .syh__cta .sy-btn-gold:hover svg {
+    transform: translateY(1px);
+  }
+  .syh__cta .sy-btn-ghost {
+    background: color-mix(in srgb, var(--sy-glass) 80%, transparent);
+    border: 1px solid color-mix(in srgb, var(--sy-gold-2) 35%, transparent);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    color: var(--sy-ink);
+    box-shadow: 
+      0 4px 20px -8px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 color-mix(in srgb, white 8%, transparent);
+  }
+  .syh__cta .sy-btn-ghost:hover {
+    background: color-mix(in srgb, var(--sy-gold-1) 12%, transparent);
+    border-color: color-mix(in srgb, var(--sy-gold-2) 55%, transparent);
+    box-shadow: 
+      0 8px 28px -10px color-mix(in srgb, var(--sy-gold-2) 25%, transparent),
+      inset 0 1px 0 color-mix(in srgb, white 12%, transparent);
+    transform: translateY(-1px);
   }
 
-  /* 6 · The trust pills become a quiet line of type. Three glass chips
-         wrapped to three rows and ate the device's room; the same words
-         set plain cost two. */
+  /* 6 · Trust chips — infinite marquee on mobile (desktop stays wrapped pills). */
+  .syh__trust-marquee {
+    position: relative;
+    overflow: hidden;
+    margin-top: clamp(18px, 3.5vh, 28px);
+    margin-bottom: clamp(8px, 1.5vh, 14px);
+    width: calc(100% + 15px);
+    margin-inline: 0 -15px 0 0;
+    padding-block: 0.2rem;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+  }
+  .syh__trust-marquee .syj-marquee__track {
+    display: flex;
+    width: max-content;
+    animation: syh-trust-marq var(--dur, 34s) linear infinite;
+  }
+  .syh__trust-marquee .syj-marquee__item {
+    display: inline-flex;
+    padding-inline-end: 0.65rem;
+    white-space: nowrap;
+  }
+  .syh__trust-marquee .syj-marquee__item b {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.58rem;
+    min-height: 58px;
+    padding: 0.68rem 0.85rem;
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--sy-gold-2) 25%, transparent);
+    background:
+      linear-gradient(135deg, color-mix(in srgb, var(--sy-gold-1) 7%, transparent), transparent 54%),
+      linear-gradient(145deg,
+        color-mix(in srgb, var(--sy-glass) 85%, transparent) 0%,
+        color-mix(in srgb, var(--sy-glass) 55%, transparent) 100%
+      );
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    color: var(--sy-ink);
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 650;
+    font-style: normal;
+    line-height: 1.32;
+    opacity: 1;
+    box-shadow:
+      0 4px 20px -8px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 color-mix(in srgb, white 10%, transparent),
+      inset 0 -1px 0 color-mix(in srgb, var(--sy-gold-2) 8%, transparent);
+  }
+  .syh__trust-marquee .syj-marquee__item b::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--sy-gold-1), var(--sy-gold-3));
+    box-shadow: 0 0 12px 2px color-mix(in srgb, var(--sy-gold-2) 40%, transparent);
+    flex-shrink: 0;
+  }
+  [data-sy-theme='light'] .syh__trust-marquee .syj-marquee__item b {
+    background:
+      linear-gradient(135deg, color-mix(in srgb, var(--sy-gold-1) 7%, transparent), transparent 54%),
+      linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 250, 240, 0.85) 100%);
+    border-color: color-mix(in srgb, var(--sy-gold-3) 25%, transparent);
+    color: #1a1a2e;
+    box-shadow:
+      0 4px 20px -8px rgba(15, 23, 42, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8),
+      inset 0 -1px 0 color-mix(in srgb, var(--sy-gold-3) 10%, transparent);
+  }
+  @keyframes syh-trust-marq {
+    to {
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
+
+  /* Legacy static trust list — desktop only; kept for reference if markup reverts. */
   .syh__trust {
-    margin-top: clamp(11px, 1.9vh, 18px);
-    gap: 0.28rem 0.85rem;
+    margin-top: clamp(18px, 3.5vh, 28px);
+    margin-bottom: clamp(8px, 1.5vh, 14px);
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    align-items: center;
+    padding-inline: clamp(8px, 2vw, 16px);
+  }
+  .syh__trust li {
+    width: 100%;
+    max-width: 340px;
   }
   .syh__chip {
-    padding: 0;
-    border: 0;
-    background: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    font-size: 0.745rem;
-    color: var(--sy-ink-muted);
-  }
-  [data-sy-theme='light'] .syh__chip {
-    background: none;
-    border: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--sy-gold-2) 25%, transparent);
+    background: linear-gradient(145deg, 
+      color-mix(in srgb, var(--sy-glass) 85%, transparent) 0%,
+      color-mix(in srgb, var(--sy-glass) 55%, transparent) 100%
+    );
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    color: var(--sy-ink);
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.4;
+    box-shadow: 
+      0 4px 20px -8px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 color-mix(in srgb, white 10%, transparent),
+      inset 0 -1px 0 color-mix(in srgb, var(--sy-gold-2) 8%, transparent);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
   }
   .syh__chip::before {
-    width: 4px;
-    height: 4px;
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--sy-gold-1), var(--sy-gold-3));
+    box-shadow: 0 0 12px 2px color-mix(in srgb, var(--sy-gold-2) 40%, transparent);
+    flex-shrink: 0;
+    animation: syh-trust-pulse 2.5s ease-in-out infinite;
+  }
+  .syh__chip:nth-child(2)::before { animation-delay: 0.3s; }
+  .syh__chip:nth-child(3)::before { animation-delay: 0.6s; }
+  @keyframes syh-trust-pulse {
+    0%, 100% { opacity: 0.85; transform: scale(1); box-shadow: 0 0 12px 2px color-mix(in srgb, var(--sy-gold-2) 40%, transparent); }
+    50% { opacity: 1; transform: scale(1.1); box-shadow: 0 0 18px 4px color-mix(in srgb, var(--sy-gold-2) 55%, transparent); }
+  }
+  .syh__chip::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, 
+      color-mix(in srgb, var(--sy-gold-1) 8%, transparent) 0%,
+      transparent 50%,
+      color-mix(in srgb, var(--sy-gold-3) 4%, transparent) 100%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
   }
   .syh__chip:hover {
-    transform: none;
-    box-shadow: none;
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--sy-gold-2) 50%, transparent);
+    box-shadow: 
+      0 12px 32px -12px color-mix(in srgb, var(--sy-gold-2) 35%, transparent),
+      inset 0 1px 0 color-mix(in srgb, white 15%, transparent),
+      inset 0 -1px 0 color-mix(in srgb, var(--sy-gold-2) 12%, transparent);
+  }
+  .syh__chip:hover::after {
+    opacity: 1;
+  }
+  [data-sy-theme='light'] .syh__chip {
+    background: linear-gradient(145deg, 
+      rgba(255, 255, 255, 0.9) 0%,
+      rgba(255, 250, 240, 0.85) 100%
+    );
+    border-color: color-mix(in srgb, var(--sy-gold-3) 25%, transparent);
+    box-shadow: 
+      0 4px 20px -8px rgba(15, 23, 42, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8),
+      inset 0 -1px 0 color-mix(in srgb, var(--sy-gold-3) 10%, transparent);
+    color: #1a1a2e;
+  }
+  [data-sy-theme='light'] .syh__chip:hover {
+    box-shadow: 
+      0 12px 32px -12px color-mix(in srgb, var(--sy-gold-3) 30%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      inset 0 -1px 0 color-mix(in srgb, var(--sy-gold-3) 15%, transparent);
   }
 
-  /* 7 · The device comes back. It is taller than the space left for it on
-         purpose: the cell crops it and the mask dissolves its foot into the
-         page, so the app appears to be rising out of the fold. A flex box
-         does the centring — framer-motion writes `transform` on the wrapper
-         and would overwrite a translate-based centre. */
+  /* 7 · Show the full device — spaced clear of copy above and scroll below. */
   .syh__stage {
     display: flex;
-    /* the desktop rule stacks this column and centres it vertically — left
-       alone here that centring crops the phone at BOTH ends, so the screen
-       showed its middle and the dissolve never appeared */
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
+    width: 100%;
+    position: relative;
+    z-index: 2;
+    margin-top: clamp(4px, 1vh, 10px);
+    padding-top: clamp(6px, 1.2vh, 12px);
+    padding-bottom: clamp(2px, 0.6vh, 6px);
     min-height: 0;
-    overflow: clip;
-    /* the dissolve starts late — begun early, the backdrop reads straight
-       through the screen and the wheel's lines cross the app's own rows */
-    -webkit-mask-image: linear-gradient(180deg, #000 74%, rgba(0, 0, 0, 0.55) 90%, transparent 100%);
-    mask-image: linear-gradient(180deg, #000 74%, rgba(0, 0, 0, 0.55) 90%, transparent 100%);
+    overflow: visible;
+    -webkit-mask-image: none;
+    mask-image: none;
   }
   .syh__phonewrap {
     flex: none;
     justify-content: flex-start;
+    width: 100%;
+    max-width: 100%;
+    position: relative;
+    z-index: 2;
+  }
+  .syh__mobile-mandala {
+    --syh-bloom-1: #fce8a8;
+    --syh-bloom-2: #e9b850;
+    --syh-bloom-3: #a8770f;
+    position: absolute;
+    z-index: 0;
+    top: 50%;
+    left: 50%;
+    display: grid;
+    width: min(92vmin, 520px);
+    aspect-ratio: 1;
+    place-items: center;
+    overflow: visible;
+    pointer-events: none;
+    opacity: 0.52;
+    transform: translate(-50%, -50%);
+    filter: drop-shadow(0 20px 40px color-mix(in srgb, var(--sy-gold-2) 15%, transparent));
+  }
+  [data-sy-theme='light'] .syh__mobile-mandala {
+    --syh-bloom-1: #b8801a;
+    --syh-bloom-2: #8f5f0c;
+    --syh-bloom-3: #5c3a06;
+    --syh-ink-boost: 1.85;
+    opacity: 0.4;
+  }
+  .syh__bloom {
+    inset: -8% -10%;
+    filter: blur(14px);
   }
   .syh-phone {
-    --syh-phone-h: min(74svh, 560px);
+    --syh-phone-h: clamp(300px, 48svh, 440px);
+    position: relative;
+    z-index: 3;
+  }
+  .syh-phone.is-float {
+    animation: none;
+  }
+  /* Phone frame glow enhancement */
+  .syh-phone__frame {
+    box-shadow: 
+      0 2px 0 rgba(255, 255, 255, 0.24) inset,
+      0 46px 96px -40px rgba(0, 0, 0, 0.9),
+      0 0 0 1px rgba(233, 184, 80, 0.24),
+      0 0 60px -20px color-mix(in srgb, var(--sy-gold-2) 40%, transparent),
+      inset 0 0 40px -10px color-mix(in srgb, var(--sy-gold-1) 15%, transparent);
+  }
+  [data-sy-theme='light'] .syh-phone__frame {
+    box-shadow: 
+      0 2px 0 rgba(255, 255, 255, 0.5) inset,
+      0 40px 80px -44px rgba(92, 58, 16, 0.55),
+      0 0 0 1px rgba(146, 64, 14, 0.22),
+      0 0 50px -18px color-mix(in srgb, var(--sy-gold-3) 35%, transparent),
+      inset 0 0 30px -8px color-mix(in srgb, var(--sy-gold-1) 12%, transparent);
+  }
+  /* Premium phone screen inner glow — radius tracks the screen, never a fixed px. */
+  .syh-phone__screen::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--sy-gold-1) 20%, transparent) 0%,
+      transparent 40%,
+      color-mix(in srgb, var(--sy-gold-3) 10%, transparent) 100%
+    );
+    opacity: 0.6;
+    pointer-events: none;
+    z-index: 1;
+    animation: syh-screen-glow 4s ease-in-out infinite;
+  }
+  @keyframes syh-screen-glow {
+    0%,
+    100% {
+      opacity: 0.5;
+    }
+    50% {
+      opacity: 0.75;
+    }
   }
   /* tablets have both the width and the height for a fuller device */
   @media (min-width: 601px) {
     .syh-phone {
-      --syh-phone-h: min(72svh, 660px);
+      --syh-phone-h: clamp(340px, 54svh, 520px);
     }
     .syh__copy {
       max-width: 38rem;
     }
   }
-  /* the caption belongs to the desktop stage, where there is a column to
-     put it in; here the screen speaks for itself */
   .syh__caption {
     display: none;
   }
-  /* the cropped device is the scroll invitation */
   .syh__foot {
     display: none;
   }
@@ -1539,7 +1954,14 @@ body {
    said again, at length, further down the page — and everything breathes. */
 @media (max-width: 900px) and (max-height: 700px) {
   .syh-phone {
-    --syh-phone-h: min(66svh, 460px);
+    --syh-phone-h: clamp(240px, 38svh, 320px);
+  }
+  .syh__mandala {
+    height: min(58svh, 480px);
+    bottom: clamp(48px, 9vh, 72px);
+  }
+  .syh__grid {
+    gap: clamp(22px, 5vh, 36px);
   }
   .syh__title {
     font-size: clamp(1.95rem, 8vw, 2.4rem);
@@ -1559,5 +1981,580 @@ body {
   .syh__bleed,
   .syh__cue {
     animation: none;
+  }
+  .syh__swap-word--lite {
+    animation: none;
+    will-change: auto;
+  }
+}
+
+/* Keep the centered mobile mandala clear of the next section during parallax. */
+@media (max-width: 900px) and (max-height: 700px) and (min-aspect-ratio: 4/5) {
+  .syh {
+    padding-bottom: 0;
+  }
+}
+
+/* Phone-only art direction. Tablet and desktop keep the established hero. */
+@media (max-width: 600px) {
+  .syh__eyebrow-full,
+  .syh__cta-label-full,
+  .syh__sub-full {
+    display: none;
+  }
+
+  .syh__eyebrow-mobile,
+  .syh__cta-label-mobile,
+  .syh__sub-mobile {
+    display: inline;
+  }
+
+  .syh {
+    isolation: isolate;
+    min-height: auto;
+    padding-top: calc(var(--syh-nav) + 11px);
+    padding-bottom: 0;
+    background:
+      radial-gradient(circle at 86% 18%, rgba(231, 177, 68, 0.11), transparent 27%),
+      radial-gradient(circle at 8% 44%, rgba(116, 82, 203, 0.1), transparent 30%),
+      var(--sy-bg);
+  }
+
+  .syh__wash {
+    opacity: 1;
+    background:
+      linear-gradient(rgba(236, 188, 86, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(236, 188, 86, 0.025) 1px, transparent 1px),
+      radial-gradient(circle at 78% 23%, rgba(242, 199, 104, 0.16), transparent 21%),
+      radial-gradient(circle at 16% 58%, rgba(122, 91, 205, 0.1), transparent 24%);
+    background-size: 28px 28px, 28px 28px, auto, auto;
+    mask-image: linear-gradient(to bottom, black 0%, black 76%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 0%, black 76%, transparent 100%);
+  }
+
+  [data-sy-theme='light'] .syh__wash {
+    background:
+      linear-gradient(rgba(126, 76, 12, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(126, 76, 12, 0.035) 1px, transparent 1px),
+      radial-gradient(circle at 78% 23%, rgba(205, 143, 31, 0.15), transparent 22%),
+      radial-gradient(circle at 16% 58%, rgba(119, 82, 185, 0.07), transparent 26%);
+    background-size: 28px 28px, 28px 28px, auto, auto;
+  }
+
+  .syh__mandala {
+    display: none;
+  }
+
+  .syh__veil {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--sy-bg) 96%, transparent) 0%,
+      color-mix(in srgb, var(--sy-bg) 78%, transparent) 58%,
+      transparent 88%
+    );
+  }
+
+  .syh__vignette {
+    background: radial-gradient(
+      115% 78% at 50% 38%,
+      transparent 42%,
+      color-mix(in srgb, var(--sy-bg) 70%, transparent) 100%
+    );
+  }
+
+  .syh__grid {
+    align-items: start;
+    gap: 18px;
+    padding-inline: 14px;
+  }
+
+  .syh__copy {
+    width: 100%;
+    max-width: none;
+    padding: 16px 15px 15px;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--sy-gold-2) 24%, transparent);
+    border-radius: 30px;
+    background:
+      linear-gradient(145deg, color-mix(in srgb, var(--sy-glass) 76%, transparent), transparent 58%),
+      color-mix(in srgb, var(--sy-bg) 74%, transparent);
+    box-shadow:
+      0 24px 70px -42px rgba(0, 0, 0, 0.96),
+      inset 0 1px 0 color-mix(in srgb, white 9%, transparent),
+      inset 0 -1px 0 color-mix(in srgb, var(--sy-gold-2) 8%, transparent);
+    text-align: left;
+    backdrop-filter: blur(22px) saturate(1.25);
+    -webkit-backdrop-filter: blur(22px) saturate(1.25);
+  }
+
+  .syh__copy::before,
+  .syh__copy::after {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .syh__copy::before {
+    top: 0;
+    right: 22px;
+    width: 76px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--sy-gold-1), transparent);
+    box-shadow: 0 0 16px color-mix(in srgb, var(--sy-gold-2) 62%, transparent);
+  }
+
+  .syh__copy::after {
+    right: -58px;
+    top: 36px;
+    width: 190px;
+    aspect-ratio: 1;
+    border-radius: 999px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--sy-gold-2) 12%, transparent), transparent 66%);
+    filter: blur(8px);
+  }
+
+  [data-sy-theme='light'] .syh__copy {
+    border-color: color-mix(in srgb, var(--sy-gold-3) 20%, transparent);
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.8), rgba(255, 248, 232, 0.42) 58%),
+      color-mix(in srgb, var(--sy-bg) 86%, transparent);
+    box-shadow:
+      0 24px 64px -42px rgba(76, 45, 8, 0.34),
+      inset 0 1px 0 rgba(255, 255, 255, 0.92),
+      inset 0 -1px 0 color-mix(in srgb, var(--sy-gold-3) 9%, transparent);
+  }
+
+  .syh__bleed {
+    left: auto;
+    right: -22%;
+    top: -8%;
+    width: 74%;
+    height: 58%;
+    opacity: 0.72;
+    filter: blur(28px);
+  }
+
+  .syh__eyebrow,
+  .syh__title,
+  .syh__sub,
+  .syh__cta,
+  .syh__trust {
+    position: relative;
+    z-index: 3;
+  }
+
+  .syh__eyebrow {
+    max-width: calc(100% - 54px);
+    margin: 0;
+    padding: 0.42rem 0.7rem 0.42rem 0.55rem;
+    gap: 0.42rem;
+    border-color: color-mix(in srgb, var(--sy-gold-2) 30%, transparent);
+    background: color-mix(in srgb, var(--sy-bg) 52%, transparent);
+    font-size: 8.5px;
+    letter-spacing: 0.18em;
+    line-height: 1.25;
+    text-align: left;
+    box-shadow: inset 0 1px 0 color-mix(in srgb, white 7%, transparent);
+  }
+
+  .syh__eyebrow:lang(hi) {
+    font-size: 9.5px;
+    letter-spacing: 0.09em;
+  }
+
+  .syh__eyebrow::before {
+    width: 6px;
+    height: 6px;
+    animation-duration: 2.4s;
+  }
+}
+
+@media (max-width: 600px) {
+  .syh__mobile-cosmos {
+    position: absolute;
+    z-index: 1;
+    top: 43px;
+    right: -24px;
+    display: grid;
+    width: 166px;
+    aspect-ratio: 1;
+    place-items: center;
+    pointer-events: none;
+    opacity: 0.92;
+    filter: drop-shadow(0 18px 32px rgba(0, 0, 0, 0.38));
+  }
+
+  .syh__mobile-cosmos-glow {
+    position: absolute;
+    inset: 15%;
+    border-radius: 999px;
+    background: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--sy-gold-1) 24%, transparent),
+      color-mix(in srgb, var(--sy-gold-2) 8%, transparent) 48%,
+      transparent 72%
+    );
+    filter: blur(10px);
+    animation: syh-mobile-breathe 4.8s ease-in-out infinite;
+  }
+
+  .syh__mobile-cosmos svg {
+    position: relative;
+    z-index: 2;
+    width: 72%;
+    overflow: visible;
+    fill: none;
+    stroke: color-mix(in srgb, var(--sy-gold-1) 72%, transparent);
+    stroke-width: 0.72;
+    filter: drop-shadow(0 0 8px color-mix(in srgb, var(--sy-gold-2) 28%, transparent));
+  }
+
+  .syh__mobile-cosmos svg circle:first-child {
+    stroke-dasharray: 2 5;
+  }
+
+  .syh__mobile-cosmos .syh__mobile-bindu {
+    fill: var(--sy-gold-1);
+    stroke: color-mix(in srgb, var(--sy-bg) 68%, transparent);
+    stroke-width: 2;
+  }
+
+  .syh__mobile-orbit {
+    position: absolute;
+    z-index: 1;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--sy-gold-2) 20%, transparent);
+  }
+
+  .syh__mobile-orbit--outer {
+    inset: 7%;
+    border-style: dashed;
+    animation: syh-mobile-spin 26s linear infinite;
+  }
+
+  .syh__mobile-orbit--inner {
+    inset: 22%;
+    border-color: color-mix(in srgb, var(--sy-gold-1) 27%, transparent);
+    box-shadow: inset 0 0 18px color-mix(in srgb, var(--sy-gold-2) 8%, transparent);
+    animation: syh-mobile-spin 18s linear infinite reverse;
+  }
+
+  .syh__mobile-orbit--outer i {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--sy-gold-1);
+    box-shadow: 0 0 10px 2px color-mix(in srgb, var(--sy-gold-2) 45%, transparent);
+  }
+
+  .syh__mobile-orbit--outer i:nth-child(1) {
+    left: 13%;
+    top: 12%;
+  }
+
+  .syh__mobile-orbit--outer i:nth-child(2) {
+    right: -1px;
+    top: 52%;
+  }
+
+  .syh__mobile-orbit--outer i:nth-child(3) {
+    left: 28%;
+    bottom: 2%;
+    width: 4px;
+    height: 4px;
+  }
+
+  [data-sy-theme='light'] .syh__mobile-cosmos {
+    opacity: 0.72;
+    filter: drop-shadow(0 16px 26px rgba(112, 67, 8, 0.18));
+  }
+
+  [data-sy-theme='light'] .syh__mobile-cosmos svg {
+    stroke: color-mix(in srgb, var(--sy-gold-3) 70%, transparent);
+  }
+
+  .syh__title {
+    max-width: 100%;
+    margin-top: 22px;
+    padding-right: 18px;
+    font-size: clamp(1.95rem, 9.8vw, 2.55rem);
+    line-height: 1.26;
+    letter-spacing: -0.038em;
+    text-align: left;
+    text-shadow: none;
+  }
+
+  .syh__title:lang(hi) {
+    font-size: clamp(1.78rem, 8.8vw, 2.22rem);
+    line-height: 1.26;
+  }
+
+  .syh__title > span[aria-hidden] {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.24em;
+  }
+  .syh__line {
+    display: block;
+    line-height: 1.26;
+  }
+  .syh__line:first-of-type,
+  .syh__line--lead {
+    padding-right: 22px;
+  }
+
+  .syh__line + .syh__line {
+    margin-top: 0;
+    max-width: none;
+  }
+
+  .syh__swap {
+    filter: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .syh__sub {
+    max-width: 31ch;
+    margin: 14px 0 0;
+    font-size: 0.875rem;
+    line-height: 1.56;
+    text-align: left;
+    color: color-mix(in srgb, var(--sy-ink) 82%, var(--sy-ink-soft));
+  }
+
+  .syh__sub-more {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .syh__cta {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: 8px;
+    width: 100%;
+    max-width: none;
+    margin: 17px 0 0;
+  }
+
+  .syh__cta .sy-btn-gold,
+  .syh__cta .sy-btn-ghost {
+    min-height: 48px;
+    padding: 0.78rem 0.65rem;
+    border-radius: 15px;
+    font-size: 0.78rem;
+    line-height: 1.15;
+    text-align: center;
+  }
+
+  .syh__cta .sy-btn-gold {
+    box-shadow:
+      0 12px 30px -15px color-mix(in srgb, var(--sy-gold-2) 66%, transparent),
+      inset 0 1px 0 color-mix(in srgb, white 24%, transparent);
+  }
+
+  .syh__cta .sy-btn-ghost {
+    border-color: color-mix(in srgb, var(--sy-gold-2) 28%, transparent);
+    background: color-mix(in srgb, var(--sy-bg) 46%, transparent);
+  }
+
+  .syh__trust {
+    display: grid;
+    grid-auto-columns: minmax(148px, 66%);
+    grid-auto-flow: column;
+    align-items: stretch;
+    gap: 8px;
+    width: calc(100% + 15px);
+    margin: 13px -15px 0 0;
+    padding: 0 15px 1px 0;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: inline mandatory;
+    scrollbar-width: none;
+  }
+
+  .syh__trust::-webkit-scrollbar {
+    display: none;
+  }
+
+  .syh__trust li {
+    width: auto;
+    max-width: none;
+    scroll-snap-align: start;
+  }
+
+  .syh__chip {
+    min-height: 58px;
+    height: 100%;
+    padding: 0.68rem 0.72rem;
+    gap: 0.58rem;
+    border-radius: 16px;
+    font-size: 0.72rem;
+    font-weight: 650;
+    line-height: 1.32;
+    background:
+      linear-gradient(135deg, color-mix(in srgb, var(--sy-gold-1) 7%, transparent), transparent 54%),
+      color-mix(in srgb, var(--sy-bg) 48%, transparent);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, white 7%, transparent),
+      0 10px 26px -22px rgba(0, 0, 0, 0.9);
+  }
+
+  .syh__chip::before {
+    width: 7px;
+    height: 7px;
+  }
+
+  .syh__chip::after {
+    display: none;
+  }
+
+  .syh__stage {
+    margin-top: 0;
+    padding-top: 8px;
+  }
+}
+
+@media (max-width: 380px) {
+  .syh__copy {
+    padding-inline: 13px;
+    border-radius: 26px;
+  }
+
+  .syh__mobile-cosmos {
+    right: -34px;
+    width: 154px;
+  }
+
+  .syh__title {
+    padding-right: 8px;
+    font-size: clamp(1.72rem, 9.8vw, 2.08rem);
+  }
+
+  .syh__title:lang(hi) {
+    font-size: clamp(1.62rem, 9.2vw, 1.98rem);
+  }
+
+  .syh__cta .sy-btn-gold,
+  .syh__cta .sy-btn-ghost {
+    font-size: 0.735rem;
+  }
+}
+
+@media (max-width: 600px) and (max-height: 700px) {
+  .syh {
+    padding-bottom: 0;
+  }
+
+  .syh__copy {
+    padding-top: 13px;
+  }
+
+  .syh__eyebrow {
+    max-width: calc(100% - 34px);
+    padding-block: 0.36rem;
+  }
+
+  .syh__mobile-cosmos {
+    top: 37px;
+    width: 150px;
+  }
+
+  .syh__title {
+    margin-top: 13px;
+    font-size: clamp(1.72rem, 8.6vw, 2.05rem);
+    line-height: 1.1;
+  }
+
+  .syh__title > span[aria-hidden] {
+    gap: 0.12em;
+  }
+
+  .syh__line {
+    line-height: 1.1;
+  }
+
+  .syh__sub {
+    margin-top: 10px;
+    font-size: 0.82rem;
+    line-height: 1.48;
+  }
+
+  .syh__cta {
+    margin-top: 12px;
+  }
+
+  .syh__trust-marquee {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) and (prefers-reduced-motion: reduce) {
+  .syh__mobile-cosmos-glow,
+  .syh__mobile-orbit,
+  .syh__eyebrow::before,
+  .syh__chip::before,
+  .syh__trust-marquee .syj-marquee__track {
+    animation: none;
+  }
+}
+
+@keyframes syh-mobile-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@keyframes syh-mobile-breathe {
+  0%,
+  100% {
+    opacity: 0.62;
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+/* Desktop composition: keep the chakra between the copy and the device.
+   The base 76vmin artwork becomes wider than the content gap on laptop-sized
+   screens, so its strokes cross both the heading and body copy. */
+@media (min-width: 901px) {
+  .syh__mandala-pos {
+    width: min(50vmin, 540px);
+    translate: 0 0;
+    opacity: 0.78;
+  }
+
+  [data-sy-theme='light'] .syh__mandala-pos {
+    opacity: 0.74;
+  }
+
+  .syh__copy {
+    max-width: min(100%, 34rem);
+  }
+
+  .syh__title {
+    font-size: clamp(2.2rem, 4.1vw, 3.7rem);
+    line-height: 1.2;
+  }
+
+  .syh__title:lang(hi) {
+    font-size: clamp(2rem, 3.9vw, 3.25rem);
+    line-height: 1.2;
+  }
+
+  .syh__title > span[aria-hidden] {
+    gap: 0.16em;
+  }
+
+  .syh__sub {
+    max-width: 42ch;
+    font-size: clamp(0.94rem, 1.05vw, 1.04rem);
+    line-height: 1.58;
   }
 }

@@ -55,15 +55,15 @@ const DEMOS: Demo[] = [
   {
     id: 'panchang',
     tab: { hi: 'पंचांग', en: 'Panchang' },
-    rail: { hi: 'आज के पाँच अंग', en: "Today's five limbs" },
+    rail: { hi: 'आज की तिथि और पंचांग', en: "Today's date and Panchang" },
     title: { hi: 'आज का पंचांग', en: "Today's Panchang" },
     caption: {
-      hi: 'पाँचों अंग, हर एक अपने समाप्ति समय के साथ — और साथ में सूर्योदय, सूर्यास्त तथा राहु काल।',
-      en: 'All five limbs, each with the time it ends — plus sunrise, sunset and Rahu Kaal.',
+      hi: 'अपने शहर के अनुसार तिथि, नक्षत्र, योग, करण और वार के साथ उनके समाप्ति समय, सूर्योदय, सूर्यास्त और राहु काल देखें।',
+      en: 'View tithi, nakshatra, yoga, karana and vaara for your city, along with end times, sunrise, sunset and Rahu Kaal.',
     },
     facts: [
       { hi: 'तिथि, नक्षत्र, योग, करण, वार', en: 'Tithi, nakshatra, yoga, karana, vaara' },
-      { hi: 'हर अंग का समाप्ति समय', en: 'End time for every limb' },
+      { hi: 'प्रत्येक अंग का समाप्ति समय', en: 'End time for each Panchang element' },
       { hi: 'आपके शहर के अनुसार', en: 'Calculated for your city' },
     ],
     bottom: 'home',
@@ -73,16 +73,16 @@ const DEMOS: Demo[] = [
   {
     id: 'choghadiya',
     tab: { hi: 'चौघड़िया', en: 'Choghadiya' },
-    rail: { hi: 'अभी शुभ है या नहीं', en: 'Is this hour auspicious' },
+    rail: { hi: 'वर्तमान और अगला शुभ समय', en: 'Current and next auspicious period' },
     title: { hi: 'चौघड़िया', en: 'Choghadiya' },
     caption: {
-      hi: 'अभी कौन-सा चौघड़िया चल रहा है, कितना बचा है, और अगला शुभ समय कब खुलेगा।',
-      en: 'Which window is running right now, how much of it is left, and when the next auspicious one opens.',
+      hi: 'जानें कि अभी कौन-सा चौघड़िया चल रहा है, इसमें कितना समय शेष है और अगला शुभ चौघड़िया कब शुरू होगा।',
+      en: 'See which Choghadiya is active, how much time remains and when the next auspicious period begins.',
     },
     facts: [
       { hi: 'दिन और रात — पूरे 24 घंटे', en: 'Day and night — a full 24 hours' },
-      { hi: 'चालू समय की जीवित प्रगति', en: 'Live progress of the running window' },
-      { hi: 'अगला शुभ समय, सामने', en: 'Next auspicious window, up front' },
+      { hi: 'वर्तमान अवधि का शेष समय', en: 'Time remaining in the current period' },
+      { hi: 'अगले शुभ चौघड़िया की जानकारी', en: 'Details of the next auspicious period' },
     ],
     bottom: 'choghadiya',
     ms: 7600,
@@ -91,16 +91,16 @@ const DEMOS: Demo[] = [
   {
     id: 'kundli',
     tab: { hi: 'कुंडली', en: 'Kundli' },
-    rail: { hi: 'जन्म के समय का आकाश', en: 'The sky at your birth' },
+    rail: { hi: 'अपनी जन्म कुंडली समझें', en: 'Understand your birth chart' },
     title: { hi: 'जन्म कुंडली', en: 'Janam Kundli' },
     caption: {
-      hi: 'जन्म के समय आकाश जैसा था — हर ग्रह अपने भाव में, लग्न, राशि, नक्षत्र और चलती महादशा के साथ।',
-      en: 'The sky as it stood at your birth — every planet in its house, with lagna, rashi, nakshatra and the mahadasha now running.',
+      hi: 'लग्न, राशि, नक्षत्र, ग्रह, भाव, दशा, योग और दोष के माध्यम से अपनी जन्म कुंडली की विस्तृत जानकारी समझें।',
+      en: 'Explore your birth chart through lagna, rashi, nakshatra, planets, houses, dasha, yogas and doshas.',
     },
     facts: [
       { hi: 'उत्तर, दक्षिण और पूर्व शैली', en: 'North, South and East styles' },
       { hi: 'ग्रह, भाव, योग और दोष', en: 'Grahas, bhavas, yogas and doshas' },
-      { hi: 'हर खाने पर टैप करके समझिए', en: 'Tap any house to understand it' },
+      { hi: 'प्रत्येक भाव की सरल व्याख्या', en: 'A clear explanation of every house' },
     ],
     bottom: 'kundli',
     ms: 9600,
@@ -109,15 +109,15 @@ const DEMOS: Demo[] = [
   {
     id: 'ask',
     tab: { hi: 'ज्योतिषी', en: 'Jyotishi' },
-    rail: { hi: 'अपनी कुंडली से उत्तर', en: 'Answers from your chart' },
+    rail: { hi: 'कुंडली के आधार पर उत्तर', en: 'Answers informed by your chart' },
     title: { hi: 'ज्योतिषी से प्रश्न', en: 'Ask the Jyotishi' },
     caption: {
-      hi: 'प्रश्न पूछिए — उत्तर आपकी अपनी कुंडली से बनता है, और जिस ग्रह पर आधारित है वह भी दिखता है।',
-      en: 'Ask anything — the answer is built from your own chart, and it shows you the placement it rests on.',
+      hi: 'अपना प्रश्न सामान्य भाषा में पूछें। उत्तर तैयार करते समय आपकी कुंडली, दशा और वर्तमान गोचर को ध्यान में रखा जाता है।',
+      en: 'Ask in your own words. Responses consider your birth chart, dasha and current transits.',
     },
     facts: [
-      { hi: 'आपकी कुंडली पर आधारित', en: 'Grounded in your kundli' },
-      { hi: 'हाँ या ना, साफ़ शब्दों में', en: 'A clear yes or no, in plain words' },
+      { hi: 'आपकी जन्म कुंडली के आधार पर', en: 'Based on your birth chart' },
+      { hi: 'सरल भाषा में कारण सहित जानकारी', en: 'Clear explanations with supporting details' },
       { hi: 'हिंदी और English', en: 'Hindi and English' },
     ],
     bottom: 'home',
@@ -127,11 +127,11 @@ const DEMOS: Demo[] = [
   {
     id: 'rashifal',
     tab: { hi: 'राशिफल', en: 'Rashifal' },
-    rail: { hi: 'दिन का मिज़ाज', en: "The day's mood" },
+    rail: { hi: 'आज का व्यक्तिगत राशिफल', en: "Today's personalised Rashifal" },
     title: { hi: 'आपका राशिफल', en: 'Your Rashifal' },
     caption: {
-      hi: 'दिन का मिज़ाज एक नज़र में, हर क्षेत्र का हाल और शुभ रंग, अंक तथा समय — आपकी अपनी कुंडली से।',
-      en: "The day's mood at a glance, how each area stands, and the lucky colour, number and hour — read from your own chart.",
+      hi: 'प्रेम, करियर, धन और स्वास्थ्य से जुड़ी दैनिक जानकारी के साथ शुभ रंग, अंक और समय देखें।',
+      en: 'View daily insights for relationships, career, finances and health, along with a favourable colour, number and time.',
     },
     facts: [
       { hi: 'दैनिक, साप्ताहिक, मासिक, वार्षिक', en: 'Daily, weekly, monthly, yearly' },
@@ -251,29 +251,29 @@ export function AppInAction() {
       <div className="sy-container sya__inner">
         <header className="sya__head">
           <div className="sya__head-l" data-sya-in>
-            <p className="sy-eyebrow">{hi ? 'ऐप के अंदर' : 'Inside the app'}</p>
+            <p className="sy-eyebrow">{hi ? 'ऐप की प्रमुख स्क्रीन देखें' : 'Preview the app'}</p>
             <h2 id="sya-h" className="sy-h2 sya__h2">
               {hi ? (
                 <>
-                  देखिए ऐप <span className="sy-gold-text">चलते हुए</span>
+                  वैदिक ज्योतिष की जानकारी, <span className="sy-gold-text">आसान और व्यवस्थित रूप में</span>
                 </>
               ) : (
                 <>
-                  Watch the app <span className="sy-gold-text">in motion</span>
+                  Vedic astrology, <span className="sy-gold-text">made easier to understand</span>
                 </>
               )}
             </h2>
           </div>
           <p className="sya__lead" data-sya-in>
             {hi
-              ? 'पाँच स्क्रीन, वैसी ही जैसी फ़ोन में चलती हैं — अपने आप बदलती हुईं। किसी भी नाम पर टैप कीजिए।'
-              : 'Five screens, running the way they run on a phone — and moving on by themselves. Tap any name to jump.'}
+              ? 'ऐप की प्रमुख स्क्रीन देखें और जानें कि पंचांग, चौघड़िया, जन्म कुंडली, ज्योतिषीय प्रश्नोत्तर और राशिफल का उपयोग कैसे किया जा सकता है।'
+              : 'Preview the app’s key screens and see how Panchang, Choghadiya, Kundli, personalised questions and Rashifal work.'}
           </p>
         </header>
 
         <div className="sya__stage">
           <div className="sya__railwrap" data-sya-in>
-            <p className="sya__rail-k">{hi ? 'पाँच स्क्रीन' : 'Five screens'}</p>
+            <p className="sya__rail-k">{hi ? 'प्रमुख स्क्रीन' : 'Key app screens'}</p>
             <ol className="sya__rail" role="tablist" aria-label={hi ? 'ऐप की स्क्रीन' : 'App screens'}>
               {DEMOS.map((item, i) => (
                 <li key={item.id}>
@@ -308,8 +308,8 @@ export function AppInAction() {
             </ol>
             <p className="sya__rail-hint">
               {hi
-                ? 'अपने आप बदलती रहती हैं — या किसी पर टैप कीजिए'
-                : 'They move on by themselves — or tap any one'}
+                ? 'स्क्रीन अपने आप बदलेंगी; किसी भी विकल्प पर टैप करके सीधे देख सकते हैं।'
+                : 'Screens advance automatically, or select any option to view it directly.'}
             </p>
           </div>
 
@@ -332,7 +332,7 @@ export function AppInAction() {
             <div className="sya-phone" data-sya-phone>
               <span className="sya__rec">
                 <i className="sy-live-dot" />
-                {hi ? 'चल रहा है' : 'Running'}
+                {hi ? 'लाइव डेमो' : 'Live demo'}
               </span>
               <span className="sya-phone__frame">
                 <span className="sya-phone__notch" aria-hidden />
@@ -348,7 +348,7 @@ export function AppInAction() {
           </div>
 
           <aside className="sya__detail" data-sya-in>
-            <p className="sya__detail-k">{hi ? 'यह स्क्रीन' : 'On screen now'}</p>
+            <p className="sya__detail-k">{hi ? 'वर्तमान स्क्रीन' : 'Currently showing'}</p>
             <h3 className="sya__detail-h" key={`t-${demo.id}`}>
               {hi ? demo.title.hi : demo.title.en}
             </h3>

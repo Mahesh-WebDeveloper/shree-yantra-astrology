@@ -15,22 +15,22 @@
 
 :root,
 body {
-  --sy-bg: #07070c;
-  --sy-bg-2: #0c0d14;
-  --sy-ink: #f8f6f0;
-  --sy-ink-soft: #cfc6b4;
-  --sy-ink-muted: #8f8878;
+  --sy-bg: #090806;
+  --sy-bg-2: #100e0b;
+  --sy-ink: #f8f2e8;
+  --sy-ink-soft: #d5c8b3;
+  --sy-ink-muted: #a09480;
   --sy-gold-1: #fce8a8;
   --sy-gold-2: #e9b850;
   --sy-gold-3: #b87f1a;
   --sy-line: rgba(233, 184, 80, 0.16);
-  --sy-card: rgba(255, 255, 255, 0.035);
+  --sy-card: rgba(255, 246, 226, 0.035);
   --sy-radius: 20px;
   --sy-maxw: 1200px;
 
   /* derived */
   --sy-line-strong: rgba(233, 184, 80, 0.34);
-  --sy-card-2: rgba(255, 255, 255, 0.06);
+  --sy-card-2: rgba(255, 246, 226, 0.06);
   --sy-btn-ink: #241800;
   --sy-shadow: 0 30px 80px -40px rgba(0, 0, 0, 0.9);
   --sy-glow: rgba(233, 184, 80, 0.5);

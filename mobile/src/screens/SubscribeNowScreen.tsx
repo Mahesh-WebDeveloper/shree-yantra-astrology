@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, Image, TextInput, Dimensions } from 'react-native';
 import { KeyboardAwareScroll, useKeyboardAwareFocus } from '../components/KeyboardAwareScroll';
 import Svg, { Path, Circle, Polyline, Defs, RadialGradient, Stop } from 'react-native-svg';
@@ -10,6 +10,7 @@ import { IMAGES } from '../assets/images';
 import { hPress, hSuccess } from '../lib/haptics';
 import { useScreen, useBranding } from '../context/AppConfigProvider';
 import { useT, useLang } from '../i18n/LanguageProvider';
+import { getPaymentSubscription } from '../lib/api';
 
 /* exact palette from pages/subscribenow-page/styles.css */
 const C = {
@@ -123,6 +124,17 @@ export function SubscribeNowScreen({ navigation, route }: any) {
   const t = useT();
   const { lang } = useLang();
   const hi = lang === 'hi';
+  const [trialEligible, setTrialEligible] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    getPaymentSubscription()
+      .then((result) => {
+        if (mounted) setTrialEligible(result.subscription.trialEligible !== false);
+      })
+      .catch(() => {});
+    return () => { mounted = false; };
+  }, []);
 
   // Birth details (name / DOB / place) are collected AFTER payment (SubscriptionActivated →
   // BirthDetails), so this screen no longer asks for them — it is purely the subscribe CTA.
@@ -174,8 +186,16 @@ export function SubscribeNowScreen({ navigation, route }: any) {
           <CornerBrackets />
           <View style={styles.panelInner} pointerEvents="none" />
           <View style={styles.form}>
-            <Text style={styles.trialHead}>{sub.t('trialHead', hi ? 'सिर्फ ₹1 में अपना नि:शुल्क ट्रायल शुरू करें' : 'Start your free trial at just ₹1')}</Text>
-            <Text style={styles.trialTiny}>{sub.t('trialTiny', hi ? '7 दिनों के लिए' : 'for 7 days')}</Text>
+            <Text style={styles.trialHead}>
+              {trialEligible
+                ? (hi ? '₹1 में 7 दिनों का Premium ट्रायल शुरू करें' : 'Start your 7-day Premium trial for ₹1')
+                : (hi ? '₹499 प्रति माह में Premium फिर शुरू करें' : 'Restart Premium for ₹499 per month')}
+            </Text>
+            <Text style={styles.trialTiny}>
+              {trialEligible
+                ? sub.t('trialTiny', hi ? '7 दिनों के लिए' : 'for 7 days')
+                : (hi ? 'आज पहले महीने का भुगतान' : 'first month payable today')}
+            </Text>
 
             <Pressable onPress={submit} style={({ pressed }) => [styles.ctaWrap, pressed && { transform: [{ scale: 0.985 }], opacity: 0.97 }]}>
               <LinearGradient colors={['#fff1ad', '#f4c34a', '#b67a16']} locations={[0, 0.45, 1]} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.cta}>

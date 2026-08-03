@@ -8,6 +8,7 @@ const path = require('path');
 const routes = require('./routes');
 const env = require('./config/env');
 const { notFound, errorHandler, sanitizeResponses } = require('./middleware/errorHandler');
+const paymentCtrl = require('./controllers/payment.controller');
 
 const app = express();
 
@@ -35,13 +36,27 @@ const defaultCorsOrigins = [
   'https://www.shreeyantra.app',
 ];
 const allowedOrigins = env.corsOrigins.length ? env.corsOrigins : defaultCorsOrigins;
+const NETLIFY_ORIGIN_RE = /^https:\/\/([a-z0-9-]+--)?[a-z0-9-]+\.netlify\.app$/i;
+// Temporary open CORS for marketing / preview deploys (Netlify, etc.).
+// Set CORS_ALLOW_ALL=false later to restore the allow-list below.
+const corsAllowAll = process.env.CORS_ALLOW_ALL !== 'false';
 app.use(cors({
   origin(origin, cb) {
+    if (corsAllowAll) return cb(null, true);
     if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) return cb(null, true);
+    if (NETLIFY_ORIGIN_RE.test(origin)) return cb(null, true);
     return cb(Object.assign(new Error('CORS origin not allowed'), { status: 403 }));
   },
   credentials: true,
 }));            // app/admin frontend yahan se baat karega
+
+// Razorpay signs the exact raw bytes. This endpoint must be mounted before express.json().
+app.post(
+  '/api/payments/razorpay/webhook',
+  rateLimit({ windowMs: 60 * 1000, max: 180, standardHeaders: true, legacyHeaders: false }),
+  express.raw({ type: 'application/json', limit: '256kb' }),
+  paymentCtrl.webhook
+);
 app.use(express.json({ limit: '1mb' }));    // JSON body parse (capped)
 app.use(morgan(env.isProd ? 'combined' : 'dev'));     // request logging
 

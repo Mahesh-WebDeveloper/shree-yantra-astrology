@@ -1,433 +1,378 @@
-import React, { useMemo, useState } from 'react';
-import {
-  View, Text, StyleSheet, Pressable, TextInput, ActivityIndicator,
-  LayoutAnimation, Platform, UIManager,
-} from 'react-native';
-import { KeyboardAwareScroll } from '../components/KeyboardAwareScroll';
-import Svg, { Path, Rect, Circle, Line } from 'react-native-svg';
-import { LinearGradient } from 'expo-linear-gradient';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Circle, Path, Rect } from 'react-native-svg';
+import RazorpayCheckout, { type RazorpayFailure } from 'react-native-razorpay';
 import { useTheme } from '../theme/ThemeProvider';
+import { fonts, radii } from '../theme/tokens';
 import { useLang } from '../i18n/LanguageProvider';
-import { Theme, fonts, radii } from '../theme/tokens';
 import { CosmicBackground } from '../components/CosmicBackground';
 import { TopBar } from '../components/TopBar';
 import { BellIcon } from '../components/icons/NavIcons';
-import { hTap, hSelect, hSuccess, hError } from '../lib/haptics';
-import { setPremium } from '../lib/premiumStore';
+import { hError, hSuccess, hTap } from '../lib/haptics';
+import { getStoredUser, updateStoredUser } from '../lib/auth';
+import {
+  createPaymentSubscription,
+  getPaymentConfig,
+  getPaymentSubscription,
+  verifyPaymentSubscription,
+  type PaymentConfig,
+  type SubscriptionResponse,
+} from '../lib/api';
 import { track } from '../lib/analytics';
 
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
-const easeNext = () => LayoutAnimation.configureNext(LayoutAnimation.create(220, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity));
-
-/* ── UPI apps (Indian) ── */
-const UPI_APPS = [
-  { key: 'gpay', name: 'Google Pay' },
-  { key: 'phonepe', name: 'PhonePe' },
-  { key: 'paytm', name: 'Paytm' },
-  { key: 'bhim', name: 'BHIM' },
-];
-
-/* Brand-accurate UPI app marks (SVG, drawn in each brand's colours). */
-function UpiLogo({ app }: { app: string }) {
-  if (app === 'gpay') {
-    return (
-      <View style={[styles.brandTile, { backgroundColor: '#ffffff' }]}>
-        <Svg width={30} height={30} viewBox="0 0 40 40">
-          {/* Google 4-colour swirl */}
-          <Path d="M20 6 a14 14 0 0 1 14 14" stroke="#EA4335" strokeWidth={5.5} fill="none" strokeLinecap="round" />
-          <Path d="M34 20 a14 14 0 0 1 -14 14" stroke="#FBBC04" strokeWidth={5.5} fill="none" strokeLinecap="round" />
-          <Path d="M20 34 a14 14 0 0 1 -14 -14" stroke="#34A853" strokeWidth={5.5} fill="none" strokeLinecap="round" />
-          <Path d="M6 20 a14 14 0 0 1 14 -14" stroke="#4285F4" strokeWidth={5.5} fill="none" strokeLinecap="round" />
-        </Svg>
-      </View>
-    );
-  }
-  if (app === 'phonepe') {
-    return <View style={[styles.brandTile, { backgroundColor: '#5f259f' }]}><Text style={styles.peText}>Pe</Text></View>;
-  }
-  if (app === 'paytm') {
-    return (
-      <View style={[styles.brandTile, { backgroundColor: '#ffffff' }]}>
-        <Text style={styles.paytmText}><Text style={{ color: '#012970' }}>pay</Text><Text style={{ color: '#00b9f1' }}>tm</Text></Text>
-      </View>
-    );
-  }
-  // BHIM — white tile, navy ₹ with a tricolour accent
-  return (
-    <View style={[styles.brandTile, { backgroundColor: '#ffffff' }]}>
-      <Text style={styles.bhimText}>₹</Text>
-      <View style={styles.bhimBar}>
-        <View style={{ flex: 1, backgroundColor: '#ff9933' }} />
-        <View style={{ flex: 1, backgroundColor: '#ffffff' }} />
-        <View style={{ flex: 1, backgroundColor: '#138808' }} />
-      </View>
-    </View>
-  );
-}
-
-const sw = (c: string, n = 1.7) => ({ width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none' as const, stroke: c, strokeWidth: n, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const });
-
-const UpiIcon = ({ c }: { c: string }) => (
-  <Svg {...sw(c)}><Path d="M5 19 10 5h4l-5 14z" /><Path d="M12 19 17 5h2l-5 14z" /></Svg>
-);
-const CardIcon = ({ c }: { c: string }) => (
-  <Svg {...sw(c)}><Rect x={3} y={5} width={18} height={14} rx={2} /><Path d="M3 10h18M7 15h4" /></Svg>
-);
-const BankIcon = ({ c }: { c: string }) => (
-  <Svg {...sw(c)}><Path d="M3 10l9-6 9 6M5 10v9M19 10v9M9 10v9M15 10v9M3 21h18" /></Svg>
-);
-const QrIcon = ({ c, size = 18 }: { c: string; size?: number }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-    <Rect x={3} y={3} width={7} height={7} rx={1} /><Rect x={14} y={3} width={7} height={7} rx={1} /><Rect x={3} y={14} width={7} height={7} rx={1} />
-    <Path d="M14 14h3v3M21 14v7h-7M17 21v-1" />
+const CheckIcon = ({ color, size = 16 }: { color: string; size?: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.8} strokeLinecap="round" strokeLinejoin="round">
+    <Path d="M20 6 9 17l-5-5" />
   </Svg>
 );
-const Lock = ({ c, size = 14 }: { c: string; size?: number }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-    <Rect x={4} y={11} width={16} height={10} rx={2} /><Path d="M8 11V7a4 4 0 0 1 8 0v4" />
+
+const ShieldIcon = ({ color }: { color: string }) => (
+  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+    <Path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z" />
+    <Path d="m8.5 12 2.2 2.2 4.8-5" />
   </Svg>
 );
-const Check = ({ c, size = 13 }: { c: string; size?: number }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round"><Path d="M20 6 9 17l-5-5" /></Svg>
+
+const MandateIcon = ({ color }: { color: string }) => (
+  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+    <Rect x={3} y={5} width={18} height={14} rx={2} />
+    <Path d="M3 10h18M7 15h4" />
+  </Svg>
 );
 
-/** Faux QR — finder patterns + a deterministic module field (looks like a real UPI QR). */
-function QrCode({ size = 168 }: { size?: number }) {
-  const N = 25;
-  const cell = size / N;
-  const inFinder = (r: number, c: number) =>
-    (r < 7 && c < 7) || (r < 7 && c >= N - 7) || (r >= N - 7 && c < 7);
-  const modules: { x: number; y: number }[] = [];
-  for (let r = 0; r < N; r++) {
-    for (let c = 0; c < N; c++) {
-      if (inFinder(r, c)) continue;
-      if (((r * 7 + c * 3 + r * c) % 5) < 2) modules.push({ x: c * cell, y: r * cell });
-    }
-  }
-  const Finder = ({ r, c }: { r: number; c: number }) => (
-    <>
-      <Rect x={c * cell} y={r * cell} width={cell * 7} height={cell * 7} rx={cell} fill="none" stroke="#0a0a0a" strokeWidth={cell} />
-      <Rect x={(c + 2) * cell} y={(r + 2) * cell} width={cell * 3} height={cell * 3} rx={cell * 0.6} fill="#0a0a0a" />
-    </>
-  );
-  return (
-    <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <Rect x={0} y={0} width={size} height={size} rx={10} fill="#ffffff" />
-      {modules.map((m, i) => <Rect key={i} x={m.x} y={m.y} width={cell} height={cell} fill="#0a0a0a" />)}
-      <Finder r={0} c={0} /><Finder r={0} c={N - 7} /><Finder r={N - 7} c={0} />
-    </Svg>
-  );
+const money = (paise?: number) => `₹${((paise || 0) / 100).toLocaleString('en-IN')}`;
+
+function indiaDate(value?: string | null, hi = false) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat(hi ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
 }
 
-type Method = 'upi' | 'card' | 'bank';
+function contactForCheckout(phone?: string | null) {
+  const digits = String(phone || '').replace(/\D/g, '');
+  if (digits.length === 10) return `+91${digits}`;
+  if (digits.length === 12 && digits.startsWith('91')) return `+${digits}`;
+  return phone || undefined;
+}
 
 export function PaymentScreen({ navigation }: any) {
   const { theme } = useTheme();
   const { lang } = useLang();
   const hi = lang === 'hi';
   const insets = useSafeAreaInsets();
-
-  const [method, setMethod] = useState<Method>('upi');
-  const [upiApp, setUpiApp] = useState<string | null>('gpay');
-  const [upiId, setUpiId] = useState('');
-  const [showQr, setShowQr] = useState(false);
-  const [card, setCard] = useState('');
-  const [exp, setExp] = useState('');
-  const [cvv, setCvv] = useState('');
+  const [config, setConfig] = useState<PaymentConfig | null>(null);
+  const [trialEligible, setTrialEligible] = useState(true);
+  const [consent, setConsent] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [error, setError] = useState('');
 
-  const dim = theme.isDark ? '#b89a5b' : theme.textMuted;
-  const subtle = theme.isDark ? 'rgba(0,0,0,0.5)' : '#ffffff';
+  const trialEnd = useMemo(() => {
+    const d = new Date();
+    if (trialEligible) d.setDate(d.getDate() + (config?.trialDays || 7));
+    else d.setMonth(d.getMonth() + 1);
+    return d;
+  }, [config?.trialDays, trialEligible]);
 
-  const selectMethod = (m: Method) => { if (m === method) return; hSelect(); easeNext(); setMethod(m); };
-
-  // can we accept payment with the current selection?
-  const canPay = useMemo(() => {
-    if (processing) return false;
-    if (method === 'upi') return !!upiApp || /.+@.+/.test(upiId) || showQr;
-    if (method === 'card') return card.replace(/\s/g, '').length >= 12 && /\d\d\/\d\d/.test(exp) && cvv.length >= 3;
-    return true; // bank → demo
-  }, [method, upiApp, upiId, showQr, card, exp, cvv, processing]);
-
-  const pay = () => {
-    if (!canPay) { hError(); return; }
+  const finish = async (response: SubscriptionResponse) => {
+    await updateStoredUser(response.user);
     hSuccess();
+    track('subscribe_success', undefined, { provider: 'razorpay', status: response.subscription.status });
+    navigation.replace('SubscriptionActivated');
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const cfg = await getPaymentConfig();
+        if (!mounted) return;
+        setConfig(cfg);
+        if (!cfg.enabled) setError(hi ? 'भुगतान सेवा अभी उपलब्ध नहीं है। कृपया सहायता टीम से संपर्क करें।' : 'Payments are not available right now. Please contact support.');
+
+        const current = await getPaymentSubscription().catch(() => null);
+        if (mounted && current) {
+          setTrialEligible(current.subscription.trialEligible !== false);
+          if (current.subscription.entitlementActive) await finish(current);
+        }
+      } catch (e: any) {
+        if (mounted) setError(e?.message || (hi ? 'भुगतान की जानकारी लोड नहीं हो सकी।' : 'Payment details could not be loaded.'));
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => { mounted = false; };
+    // The active language is captured for the initial load message.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const recoverStatus = async () => {
+    const current = await getPaymentSubscription();
+    if (current.subscription.entitlementActive) {
+      await finish(current);
+      return true;
+    }
+    return false;
+  };
+
+  const checkPayment = async () => {
+    if (checking || processing) return;
+    setChecking(true);
+    setError('');
+    try {
+      const recovered = await recoverStatus();
+      if (!recovered) setError(hi ? 'अभी सफल भुगतान नहीं मिला। भुगतान पूरा करके दोबारा जाँचें।' : 'No successful payment was found yet. Complete the payment and check again.');
+    } catch (e: any) {
+      setError(e?.message || (hi ? 'भुगतान की स्थिति जाँची नहीं जा सकी।' : 'Payment status could not be checked.'));
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  const startPayment = async () => {
+    if (processing || !config?.enabled) return;
+    if (!consent) {
+      hError();
+      setError(hi ? 'कृपया मासिक स्वतः भुगतान की शर्त पढ़कर सहमति दें।' : 'Please read and accept the monthly auto-payment terms.');
+      return;
+    }
     setProcessing(true);
-    setPremium(true); // placeholder/demo unlock — no real gateway yet
-    track('subscribe_success', undefined, { method });
-    setTimeout(() => navigation.replace ? navigation.replace('SubscriptionActivated') : navigation.navigate('SubscriptionActivated'), 1400);
+    setError('');
+    try {
+      const session = await createPaymentSubscription();
+      if (session.alreadyEntitled) {
+        await recoverStatus();
+        return;
+      }
+      if (!session.keyId || !session.providerSubscriptionId) throw new Error(hi ? 'सुरक्षित भुगतान सत्र नहीं बन सका।' : 'A secure payment session could not be created.');
+
+      const sessionTrialEligible = session.initialPeriodType !== 'paid';
+      if (sessionTrialEligible !== trialEligible) {
+        setTrialEligible(sessionTrialEligible);
+        setConsent(false);
+        throw new Error(hi
+          ? 'आपके खाते के अनुसार भुगतान राशि अपडेट हुई है। कृपया नई राशि देखकर दोबारा सहमति दें।'
+          : 'The amount has been updated for your account. Review it and confirm again.');
+      }
+
+      const user = await getStoredUser();
+      const result = await RazorpayCheckout.open({
+        key: session.keyId,
+        subscription_id: session.providerSubscriptionId,
+        name: 'Shree Yantra Astrology',
+        description: sessionTrialEligible
+          ? (hi ? '7 दिन का Premium ट्रायल, फिर ₹499 प्रति माह' : '7-day Premium trial, then ₹499 per month')
+          : (hi ? 'Premium सदस्यता, ₹499 प्रति माह' : 'Premium membership, ₹499 per month'),
+        currency: session.currency || 'INR',
+        prefill: {
+          name: user?.name && user.name !== 'Friend' ? user.name : undefined,
+          email: user?.email || undefined,
+          contact: contactForCheckout(user?.phone),
+        },
+        notes: { product: 'Shree Yantra Premium Monthly' },
+        theme: { color: '#b88621' },
+        modal: { confirm_close: true, handleback: true, animation: true },
+        timeout: 600,
+      });
+
+      const subscriptionId = result.razorpay_subscription_id || session.providerSubscriptionId;
+      if (!result.razorpay_payment_id || !result.razorpay_signature) {
+        throw new Error(hi ? 'भुगतान की पुष्टि अधूरी है।' : 'Payment confirmation is incomplete.');
+      }
+      try {
+        const verified = await verifyPaymentSubscription({
+          razorpay_payment_id: result.razorpay_payment_id,
+          razorpay_subscription_id: subscriptionId,
+          razorpay_signature: result.razorpay_signature,
+        });
+        await finish(verified);
+      } catch (verifyError) {
+        // Checkout may succeed while the verification response is delayed. The
+        // signed webhook is authoritative, so perform one immediate recovery check.
+        await new Promise((resolve) => setTimeout(resolve, 1400));
+        const recovered = await recoverStatus().catch(() => false);
+        if (!recovered) throw verifyError;
+      }
+    } catch (raw: any) {
+      const failure = raw as RazorpayFailure;
+      const cancelled = failure?.code === 0 || /cancel|dismiss|back/i.test(`${failure?.reason || ''} ${failure?.description || ''}`);
+      if (!cancelled) hError();
+      setError(cancelled
+        ? (hi ? 'भुगतान रद्द कर दिया गया। आप तैयार होने पर दोबारा प्रयास कर सकते हैं।' : 'Payment was cancelled. You can try again when ready.')
+        : (raw?.message || (hi ? 'भुगतान पूरा नहीं हो सका। कोई राशि कटी हो तो “भुगतान जाँचें” दबाएँ।' : 'Payment could not be completed. If money was debited, tap “Check payment”.')));
+      track('subscribe_failed', undefined, { provider: 'razorpay', cancelled });
+    } finally {
+      setProcessing(false);
+    }
   };
 
-  const fmtCard = (t: string) => t.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
-  const fmtExp = (t: string) => {
-    const d = t.replace(/\D/g, '').slice(0, 4);
-    return d.length >= 3 ? `${d.slice(0, 2)}/${d.slice(2)}` : d;
-  };
-
-  /* selectable method header row */
-  const MethodHead = ({ id, title, sub, icon, badge }: { id: Method; title: string; sub: string; icon: React.ReactNode; badge?: string }) => {
-    const on = method === id;
-    return (
-      <Pressable
-        onPress={() => selectMethod(id)}
-        style={({ pressed }) => [
-          styles.mHead,
-          { borderColor: on ? theme.gold2 : theme.cardBorder, backgroundColor: on ? (theme.isDark ? 'rgba(246,210,122,0.10)' : 'rgba(176,115,22,0.07)') : (theme.isDark ? 'rgba(0,0,0,0.72)' : '#fffdf7') },
-          pressed && { transform: [{ scale: 0.995 }] },
-        ]}
-      >
-        <View style={[styles.mIcon, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : '#ffffff' }]}>{icon}</View>
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <View style={styles.mTitleRow}>
-            <Text style={[styles.mTitle, { color: theme.text }]}>{title}</Text>
-            {badge && (
-              <View style={[styles.recPill, { borderColor: 'rgba(74,222,128,0.4)', backgroundColor: 'rgba(74,222,128,0.12)' }]}>
-                <Text style={styles.recText}>{badge}</Text>
-              </View>
-            )}
-          </View>
-          <Text style={[styles.mSub, { color: theme.textMuted }]}>{sub}</Text>
-        </View>
-        <View style={[styles.radio, { borderColor: on ? theme.gold1 : theme.cardBorder }]}>
-          {on && <View style={[styles.radioDot, { backgroundColor: theme.gold1 }]} />}
-        </View>
-      </Pressable>
-    );
-  };
+  const monthlyAmount = money(config?.monthlyAmountPaise || 49900);
+  const upfrontAmount = money(trialEligible
+    ? (config?.trialAmountPaise || 100)
+    : (config?.monthlyAmountPaise || 49900));
+  const panelBg = theme.isDark ? 'rgba(9,8,12,0.88)' : '#ffffff';
 
   return (
-    <View style={[styles.fill, { backgroundColor: theme.bgDeep }]}>
+    <View style={[styles.root, { backgroundColor: theme.bgDeep }]}>
       <CosmicBackground />
-      <TopBar title={hi ? 'भुगतान' : 'Payment'} onBack={() => { hTap(); navigation.goBack(); }} right={<BellIcon color={theme.gold1} size={20} />} onRight={() => navigation.navigate('Notifications')} />
+      <TopBar
+        title={hi ? 'सुरक्षित भुगतान' : 'Secure payment'}
+        onBack={() => { hTap(); navigation.goBack(); }}
+        right={<BellIcon color={theme.gold1} size={20} />}
+        onRight={() => navigation.navigate('Notifications')}
+      />
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 36 }]} showsVerticalScrollIndicator={false}>
+        <View style={styles.headingWrap}>
+          <Text style={[styles.eyebrow, { color: theme.gold1 }]}>{hi ? 'SHREE YANTRA PREMIUM' : 'SHREE YANTRA PREMIUM'}</Text>
+          <Text style={[styles.heading, { color: theme.text }]}>
+            {trialEligible
+              ? (hi ? 'पहले 7 दिन केवल ₹1' : 'First 7 days for just ₹1')
+              : (hi ? '₹499 में Premium जारी रखें' : 'Continue Premium for ₹499')}
+          </Text>
+          <Text style={[styles.subheading, { color: theme.textSoft }]}>
+            {trialEligible
+              ? (hi ? 'इसके बाद ₹499 प्रति माह स्वतः भुगतान होगा। सदस्यता कभी भी रद्द की जा सकती है।' : 'After that, ₹499 is charged automatically every month. Cancel anytime.')
+              : (hi ? 'आज ₹499 का भुगतान होगा। अगला स्वतः भुगतान एक महीने बाद होगा।' : 'Pay ₹499 today. The next automatic payment will be one month later.')}
+          </Text>
+        </View>
 
-      <KeyboardAwareScroll
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: insets.bottom + 110 }}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* ── Order summary ── */}
         <LinearGradient
-          colors={theme.isDark ? ['rgba(20,16,8,0.6)', 'rgba(6,6,8,0.96)'] : ['#fffdf6', '#fff6e6']}
-          start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
-          style={[styles.summary, { borderColor: theme.cardBorder }]}
+          colors={theme.isDark ? ['rgba(33,23,8,0.92)', 'rgba(8,8,12,0.96)'] : ['#fffaf0', '#ffffff']}
+          style={[styles.planCard, { borderColor: theme.cardBorder }]}
         >
-          <View style={styles.sumTopRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.kicker, { color: dim }]}>{hi ? 'आप सदस्यता ले रहे हैं' : 'YOU’RE SUBSCRIBING TO'}</Text>
-              <Text style={[styles.planName, { color: theme.goldText }]}>{hi ? 'Premium ज्योतिष' : 'Premium Astrology'}</Text>
+          <View style={styles.planTop}>
+            <View>
+              <Text style={[styles.planLabel, { color: theme.textMuted }]}>{hi ? 'आज देय राशि' : 'PAYABLE TODAY'}</Text>
+              <Text style={[styles.price, { color: theme.goldText }]}>{upfrontAmount}</Text>
             </View>
-            <View style={[styles.crown, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.12)' : '#ffffff' }]}>
-              <Svg width={22} height={22} viewBox="0 0 24 24" fill={theme.gold1}><Path d="M2 8l4 6 5-7 5 7 4-4-2 12H4z" /></Svg>
-            </View>
-          </View>
-
-          {/* amount rows */}
-          <View style={[styles.amtRows, { borderTopColor: theme.line }]}>
-            <View style={styles.amtRow}>
-              <Text style={[styles.amtK, { color: theme.textSoft }]}>{hi ? '7-दिन Premium ट्रायल' : '7-day premium trial'}</Text>
-              <Text style={[styles.amtV, { color: theme.text }]}>₹1</Text>
+            <View style={[styles.secureBadge, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.1)' : '#fff' }]}>
+              <ShieldIcon color={theme.gold1} />
+              <Text style={[styles.secureBadgeText, { color: theme.text }]}>{hi ? 'सुरक्षित' : 'Secure'}</Text>
             </View>
           </View>
 
-          <View style={[styles.totalRow, { borderTopColor: theme.line }]}>
-            <Text style={[styles.totalK, { color: theme.text }]}>{hi ? 'आज देय' : 'Payable today'}</Text>
-            <Text style={[styles.totalV, { color: theme.goldText }]}>₹1</Text>
+          <View style={[styles.timeline, { borderTopColor: theme.line }]}>
+            <View style={styles.timelineRow}>
+              <View style={[styles.dot, { backgroundColor: theme.gold1 }]} />
+              <View style={styles.timelineCopy}>
+                <Text style={[styles.timelineTitle, { color: theme.text }]}>{hi ? `आज ${upfrontAmount}` : `${upfrontAmount} today`}</Text>
+                <Text style={[styles.timelineText, { color: theme.textSoft }]}>
+                  {trialEligible
+                    ? (hi ? 'ट्रायल और मासिक भुगतान की अनुमति सक्रिय होगी' : 'Activates your trial and monthly payment mandate')
+                    : (hi ? 'पहले महीने की Premium सदस्यता और भुगतान अनुमति सक्रिय होगी' : 'Activates your first paid month and payment mandate')}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.timelineRow}>
+              <View style={[styles.dot, { backgroundColor: '#4ade80' }]} />
+              <View style={styles.timelineCopy}>
+                <Text style={[styles.timelineTitle, { color: theme.text }]}>{hi ? `${indiaDate(trialEnd.toISOString(), true)} से ${monthlyAmount}/माह` : `${monthlyAmount}/month from ${indiaDate(trialEnd.toISOString())}`}</Text>
+                <Text style={[styles.timelineText, { color: theme.textSoft }]}>{hi ? 'हर माह उसी तारीख के आसपास स्वतः भुगतान' : 'Automatic payment around the same date each month'}</Text>
+              </View>
+            </View>
           </View>
         </LinearGradient>
 
-        <Text style={[styles.sectionLbl, { color: dim }]}>{hi ? 'भुगतान का तरीका चुनें' : 'CHOOSE PAYMENT METHOD'}</Text>
-
-        {/* ── UPI ── */}
-        <View style={{ gap: 10 }}>
-          <MethodHead id="upi" title="UPI" sub={hi ? 'GPay, PhonePe, Paytm और अन्य' : 'GPay, PhonePe, Paytm & more'} icon={<UpiIcon c={theme.gold1} />} badge={hi ? 'अनुशंसित' : 'RECOMMENDED'} />
-          {method === 'upi' && (
-            <View style={[styles.body, { borderColor: theme.cardBorder, backgroundColor: subtle }]}>
-              <Text style={[styles.bodyLbl, { color: dim }]}>{hi ? 'अपने UPI ऐप से भुगतान करें' : 'PAY USING YOUR UPI APP'}</Text>
-              <View style={styles.appsRow}>
-                {UPI_APPS.map((a) => {
-                  const on = upiApp === a.key && !showQr;
-                  return (
-                    <Pressable key={a.key} onPress={() => { hSelect(); setShowQr(false); setUpiApp(a.key); }} style={styles.appTile}>
-                      <View style={[styles.appLogoWrap, { borderColor: on ? theme.gold1 : 'transparent' }]}>
-                        <UpiLogo app={a.key} />
-                        {on && <View style={styles.appCheck}><Check c="#1a7a3a" size={10} /></View>}
-                      </View>
-                      <Text style={[styles.appName, { color: on ? theme.goldText : theme.textSoft }]} numberOfLines={1}>{a.name}</Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-
-              <View style={styles.orRow}>
-                <View style={[styles.orLine, { backgroundColor: theme.line }]} />
-                <Text style={[styles.orText, { color: theme.textMuted }]}>{hi ? 'या UPI ID दर्ज करें' : 'or enter UPI ID'}</Text>
-                <View style={[styles.orLine, { backgroundColor: theme.line }]} />
-              </View>
-
-              <View style={[styles.input, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.55)' : '#ffffff' }]}>
-                <UpiIcon c={theme.gold2} />
-                <TextInput
-                  value={upiId}
-                  onChangeText={(t) => { setUpiId(t); if (t) { setUpiApp(null); setShowQr(false); } }}
-                  placeholder="yourname@okaxis"
-                  placeholderTextColor={theme.isDark ? 'rgba(216,203,168,0.42)' : 'rgba(109,91,56,0.5)'}
-                  autoCapitalize="none"
-                  style={[styles.inputText, { color: theme.text }]}
-                />
-                {/.+@.+/.test(upiId) && <Check c="#4ade80" />}
-              </View>
-
-              {/* Scan QR toggle */}
-              <Pressable onPress={() => { hTap(); easeNext(); setShowQr((q) => !q); if (!showQr) setUpiApp(null); }} style={[styles.qrToggle, { borderColor: showQr ? theme.gold2 : theme.cardBorder, backgroundColor: showQr ? (theme.isDark ? 'rgba(246,210,122,0.10)' : 'rgba(176,115,22,0.07)') : 'transparent' }]}>
-                <QrIcon c={theme.gold1} />
-                <Text style={[styles.qrToggleText, { color: theme.goldText }]}>{showQr ? (hi ? 'QR कोड छिपाएँ' : 'Hide QR code') : (hi ? 'किसी भी UPI ऐप से QR स्कैन करें' : 'Scan QR with any UPI app')}</Text>
-              </Pressable>
-
-              {showQr && (
-                <View style={styles.qrWrap}>
-                  <View style={styles.qrCard}><QrCode size={172} /></View>
-                  <Text style={[styles.qrHint, { color: theme.textSoft }]}>{hi ? 'GPay / PhonePe / Paytm खोलें, ' : 'Open GPay / PhonePe / Paytm, tap '}<Text style={{ color: theme.goldText, fontFamily: fonts.interBold }}>{hi ? 'Scan' : 'Scan'}</Text>{hi ? ' पर टैप करें और ' : ' and pay '}<Text style={{ color: theme.goldText, fontFamily: fonts.interBold }}>₹1</Text>{hi ? ' का भुगतान करें' : ''}</Text>
-                </View>
-              )}
-            </View>
-          )}
+        <View style={[styles.methodCard, { borderColor: theme.cardBorder, backgroundColor: panelBg }]}>
+          <View style={[styles.methodIcon, { backgroundColor: theme.isDark ? 'rgba(233,184,80,0.11)' : '#fff8e7' }]}><MandateIcon color={theme.gold1} /></View>
+          <View style={styles.methodCopy}>
+            <Text style={[styles.methodTitle, { color: theme.text }]}>{hi ? 'अपना सुविधाजनक तरीका चुनें' : 'Choose a convenient payment method'}</Text>
+            <Text style={[styles.methodText, { color: theme.textSoft }]}>{hi ? 'Razorpay checkout में उपलब्ध UPI Autopay, कार्ड या बैंक mandate का उपयोग करें।' : 'Use UPI Autopay, card, or bank mandate available in Razorpay Checkout.'}</Text>
+          </View>
         </View>
 
-        {/* ── Cards ── */}
-        <View style={{ gap: 10, marginTop: 10 }}>
-          <MethodHead id="card" title={hi ? 'क्रेडिट / डेबिट कार्ड' : 'Credit / Debit Card'} sub="Visa, Mastercard, RuPay" icon={<CardIcon c={theme.gold1} />} />
-          {method === 'card' && (
-            <View style={[styles.body, { borderColor: theme.cardBorder, backgroundColor: subtle, gap: 10 }]}>
-              <View style={[styles.input, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.55)' : '#ffffff' }]}>
-                <CardIcon c={theme.gold2} />
-                <TextInput value={card} onChangeText={(t) => setCard(fmtCard(t))} placeholder="Card number" placeholderTextColor={theme.isDark ? 'rgba(216,203,168,0.42)' : 'rgba(109,91,56,0.5)'} keyboardType="number-pad" style={[styles.inputText, { color: theme.text }]} />
-              </View>
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                <View style={[styles.input, { flex: 1, borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.55)' : '#ffffff' }]}>
-                  <TextInput value={exp} onChangeText={(t) => setExp(fmtExp(t))} placeholder="MM/YY" placeholderTextColor={theme.isDark ? 'rgba(216,203,168,0.42)' : 'rgba(109,91,56,0.5)'} keyboardType="number-pad" style={[styles.inputText, { color: theme.text, marginLeft: 2 }]} />
-                </View>
-                <View style={[styles.input, { flex: 1, borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.55)' : '#ffffff' }]}>
-                  <TextInput value={cvv} onChangeText={(t) => setCvv(t.replace(/\D/g, '').slice(0, 4))} placeholder="CVV" placeholderTextColor={theme.isDark ? 'rgba(216,203,168,0.42)' : 'rgba(109,91,56,0.5)'} keyboardType="number-pad" secureTextEntry style={[styles.inputText, { color: theme.text, marginLeft: 2 }]} />
-                </View>
-              </View>
-            </View>
-          )}
-        </View>
+        <Pressable
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: consent }}
+          onPress={() => { hTap(); setConsent((value) => !value); setError(''); }}
+          style={[styles.consent, { borderColor: consent ? theme.gold1 : theme.cardBorder, backgroundColor: panelBg }]}
+        >
+          <View style={[styles.checkbox, { borderColor: consent ? theme.gold1 : theme.textMuted, backgroundColor: consent ? theme.gold1 : 'transparent' }]}>
+            {consent && <CheckIcon color={theme.buttonInk} size={14} />}
+          </View>
+          <Text style={[styles.consentText, { color: theme.textSoft }]}>
+            {hi
+              ? (trialEligible
+                ? `मैं सहमत हूँ कि आज ${upfrontAmount} लिया जाएगा। 7 दिन बाद ${monthlyAmount} प्रति माह स्वतः भुगतान होगा, जब तक मैं सदस्यता रद्द नहीं करता/करती।`
+                : `मैं सहमत हूँ कि आज ${upfrontAmount} लिया जाएगा। एक महीने बाद ${monthlyAmount} प्रति माह स्वतः भुगतान होगा, जब तक मैं सदस्यता रद्द नहीं करता/करती।`)
+              : (trialEligible
+                ? `I agree to pay ${upfrontAmount} today. After 7 days, ${monthlyAmount} will be charged automatically every month until I cancel.`
+                : `I agree to pay ${upfrontAmount} today. After one month, ${monthlyAmount} will be charged automatically every month until I cancel.`)}
+          </Text>
+        </Pressable>
 
-        {/* ── Netbanking / Wallets ── */}
-        <View style={{ gap: 10, marginTop: 10 }}>
-          <MethodHead id="bank" title={hi ? 'नेटबैंकिंग और वॉलेट' : 'Netbanking & Wallets'} sub={hi ? 'सभी प्रमुख बैंक · Paytm, Amazon Pay' : 'All major banks · Paytm, Amazon Pay'} icon={<BankIcon c={theme.gold1} />} />
-          {method === 'bank' && (
-            <View style={[styles.body, { borderColor: theme.cardBorder, backgroundColor: subtle }]}>
-              <View style={styles.bankRow}>
-                {['HDFC', 'SBI', 'ICICI', 'Axis', 'Paytm', 'Amazon Pay'].map((b) => (
-                  <View key={b} style={[styles.bankChip, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(0,0,0,0.55)' : '#ffffff' }]}>
-                    <Text style={[styles.bankChipText, { color: theme.text }]}>{b}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
-        </View>
+        <Pressable onPress={() => navigation.navigate('Legal')} style={styles.termsLink}>
+          <Text style={[styles.termsText, { color: theme.goldText }]}>{hi ? 'सदस्यता और रद्द करने की शर्तें पढ़ें' : 'Read subscription and cancellation terms'}</Text>
+        </Pressable>
 
-        {/* trust */}
-        <View style={styles.trust}>
-          <Lock c={theme.gold2} />
-          <Text style={[styles.trustText, { color: theme.textMuted }]}>{hi ? '100% सुरक्षित भुगतान · कभी भी रद्द करें · कोई छिपा शुल्क नहीं' : '100% secure payments · Cancel anytime · No hidden charges'}</Text>
-        </View>
-      </KeyboardAwareScroll>
+        {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
 
-      {/* ── Sticky pay bar ── */}
-      <View style={[styles.payBar, { paddingBottom: insets.bottom + 12, borderTopColor: theme.line, backgroundColor: theme.isDark ? 'rgba(8,7,12,0.98)' : 'rgba(255,253,247,0.99)' }]}>
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.payBarAmt, { color: theme.goldText }]}>₹1</Text>
-          <Text style={[styles.payBarSub, { color: theme.textMuted }]}>{hi ? 'आज कुल देय' : 'Total payable today'}</Text>
-        </View>
-        <Pressable onPress={pay} disabled={!canPay} style={({ pressed }) => [styles.payBtnWrap, { opacity: canPay ? 1 : 0.5 }, pressed && canPay && { transform: [{ scale: 0.98 }] }]}>
-          <LinearGradient colors={theme.buttonGradient} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.payBtn}>
-            {processing ? (
-              <ActivityIndicator color={theme.buttonInk} />
-            ) : (
-              <>
-                <Lock c={theme.buttonInk} size={15} />
-                <Text style={[styles.payText, { color: theme.buttonInk }]}>{hi ? '₹1 सुरक्षित भुगतान करें' : 'PAY ₹1 SECURELY'}</Text>
-              </>
-            )}
+        <Pressable disabled={loading || processing || !config?.enabled} onPress={startPayment} style={({ pressed }) => [styles.payWrap, (pressed || processing) && { opacity: 0.88, transform: [{ scale: 0.99 }] }]}>
+          <LinearGradient colors={theme.buttonGradient} style={styles.payButton}>
+            {loading || processing ? <ActivityIndicator color={theme.buttonInk} /> : <ShieldIcon color={theme.buttonInk} />}
+            <Text style={[styles.payText, { color: theme.buttonInk }]}>
+              {processing
+                ? (hi ? 'Razorpay खोल रहे हैं…' : 'Opening Razorpay…')
+                : trialEligible
+                  ? (hi ? `${upfrontAmount} देकर ट्रायल शुरू करें` : `Pay ${upfrontAmount} and start trial`)
+                  : (hi ? `${upfrontAmount} देकर Premium शुरू करें` : `Pay ${upfrontAmount} and start Premium`)}
+            </Text>
           </LinearGradient>
         </Pressable>
-      </View>
+
+        <Pressable disabled={checking || processing} onPress={checkPayment} style={styles.checkLink}>
+          {checking && <ActivityIndicator size="small" color={theme.gold1} />}
+          <Text style={[styles.checkText, { color: theme.textSoft }]}>{hi ? 'भुगतान हो गया? स्थिति जाँचें' : 'Already paid? Check payment status'}</Text>
+        </Pressable>
+
+        <View style={styles.providerRow}>
+          <ShieldIcon color={theme.textMuted} />
+          <Text style={[styles.providerText, { color: theme.textMuted }]}>{hi ? 'भुगतान Razorpay द्वारा सुरक्षित रूप से संसाधित किया जाता है। ऐप कार्ड, CVV या UPI PIN नहीं रखता।' : 'Payments are processed securely by Razorpay. The app never stores your card, CVV, or UPI PIN.'}</Text>
+        </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1 },
-
-  summary: { borderRadius: 22, borderWidth: 1, padding: 18, overflow: 'hidden' },
-  sumTopRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  kicker: { fontFamily: fonts.interBold, fontSize: 10, letterSpacing: 1.6 },
-  planName: { fontFamily: fonts.playfairBold, fontSize: 21, marginTop: 4 },
-  crown: { width: 46, height: 46, borderRadius: 14, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  amtRows: { borderTopWidth: 1, marginTop: 16, paddingTop: 12, gap: 8 },
-  amtRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  amtK: { fontFamily: fonts.inter, fontSize: 13 },
-  amtV: { fontFamily: fonts.interSemi, fontSize: 13.5 },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, marginTop: 12, paddingTop: 12 },
-  totalK: { fontFamily: fonts.interBold, fontSize: 14 },
-  totalV: { fontFamily: fonts.playfairBold, fontSize: 22 },
-
-  sectionLbl: { fontFamily: fonts.interSemi, fontSize: 11, letterSpacing: 1.6, marginTop: 22, marginBottom: 10, marginLeft: 2 },
-
-  mHead: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16, borderWidth: 1 },
-  mIcon: { width: 40, height: 40, borderRadius: 11, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  mTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  mTitle: { fontFamily: fonts.interSemi, fontSize: 14.5 },
-  mSub: { fontFamily: fonts.inter, fontSize: 11.5, marginTop: 2 },
-  recPill: { borderWidth: 1, borderRadius: radii.pill, paddingHorizontal: 7, paddingVertical: 2 },
-  recText: { fontFamily: fonts.interBold, fontSize: 8, letterSpacing: 0.6, color: '#3aa860' },
-  radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
-  radioDot: { width: 10, height: 10, borderRadius: 5 },
-
-  body: { borderRadius: 16, borderWidth: 1, padding: 14 },
-  bodyLbl: { fontFamily: fonts.interSemi, fontSize: 10, letterSpacing: 1.4, marginBottom: 12 },
-  appsRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
-  appTile: { flex: 1, alignItems: 'center', gap: 7 },
-  appLogoWrap: { width: 58, height: 58, borderRadius: 18, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
-  brandTile: { width: 50, height: 50, borderRadius: 14, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  peText: { fontFamily: fonts.interBold, fontSize: 20, color: '#ffffff' },
-  paytmText: { fontFamily: fonts.interBold, fontSize: 13.5, letterSpacing: -0.3 },
-  bhimText: { fontFamily: fonts.interBold, fontSize: 24, color: '#1c3f94', lineHeight: 28 },
-  bhimBar: { flexDirection: 'row', width: 26, height: 3, marginTop: 1, borderRadius: 2, overflow: 'hidden' },
-  appCheck: { position: 'absolute', top: -4, right: -4, width: 18, height: 18, borderRadius: 9, backgroundColor: '#bff5cf', alignItems: 'center', justifyContent: 'center' },
-  appName: { fontFamily: fonts.inter, fontSize: 10.5 },
-
-  orRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginVertical: 14 },
-  orLine: { flex: 1, height: 1 },
-  orText: { fontFamily: fonts.inter, fontSize: 11 },
-
-  input: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, height: 50, borderRadius: radii.md, borderWidth: 1 },
-  inputText: { flex: 1, fontFamily: fonts.inter, fontSize: 15 },
-
-  qrToggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 12, paddingVertical: 12, borderRadius: radii.md, borderWidth: 1 },
-  qrToggleText: { fontFamily: fonts.interSemi, fontSize: 12.5 },
-  qrWrap: { alignItems: 'center', marginTop: 14 },
-  qrCard: { padding: 12, borderRadius: 16, backgroundColor: '#ffffff', shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 8 },
-  qrHint: { fontFamily: fonts.inter, fontSize: 12, textAlign: 'center', marginTop: 12, lineHeight: 18, paddingHorizontal: 10 },
-
-  bankRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  bankChip: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: radii.pill, borderWidth: 1 },
-  bankChipText: { fontFamily: fonts.interMed, fontSize: 12.5 },
-
-  trust: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 18, paddingHorizontal: 16 },
-  trustText: { fontFamily: fonts.inter, fontSize: 11, textAlign: 'center' },
-
-  payBar: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 18, paddingTop: 12, borderTopWidth: 1 },
-  payBarAmt: { fontFamily: fonts.playfairBold, fontSize: 22 },
-  payBarSub: { fontFamily: fonts.inter, fontSize: 10.5, marginTop: 1 },
-  payBtnWrap: { flex: 1.4, borderRadius: radii.pill, overflow: 'hidden' },
-  payBtn: { height: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, borderRadius: radii.pill },
-  payText: { fontFamily: fonts.cinzel, fontSize: 13, fontWeight: '800', letterSpacing: 1 },
+  root: { flex: 1 },
+  content: { width: '100%', maxWidth: 520, alignSelf: 'center', paddingHorizontal: 16, paddingTop: 22 },
+  headingWrap: { alignItems: 'center', paddingHorizontal: 12, marginBottom: 18 },
+  eyebrow: { fontFamily: fonts.cinzelSemi, fontSize: 10.5, letterSpacing: 1.6, marginBottom: 8 },
+  heading: { fontFamily: fonts.playfairBold, fontSize: 28, lineHeight: 35, textAlign: 'center' },
+  subheading: { fontFamily: fonts.inter, fontSize: 13.5, lineHeight: 20, textAlign: 'center', marginTop: 8 },
+  planCard: { borderWidth: 1, borderRadius: radii.lg, padding: 18, overflow: 'hidden' },
+  planTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  planLabel: { fontFamily: fonts.interSemi, fontSize: 10, letterSpacing: 1.1 },
+  price: { fontFamily: fonts.cinzelSemi, fontSize: 34, marginTop: 4 },
+  secureBadge: { flexDirection: 'row', alignItems: 'center', gap: 7, borderWidth: 1, borderRadius: radii.pill, paddingHorizontal: 11, paddingVertical: 7 },
+  secureBadgeText: { fontFamily: fonts.interSemi, fontSize: 11.5 },
+  timeline: { borderTopWidth: 1, marginTop: 16, paddingTop: 14, gap: 14 },
+  timelineRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 11 },
+  dot: { width: 9, height: 9, borderRadius: 5, marginTop: 5 },
+  timelineCopy: { flex: 1 },
+  timelineTitle: { fontFamily: fonts.interSemi, fontSize: 13.5 },
+  timelineText: { fontFamily: fonts.inter, fontSize: 11.5, lineHeight: 17, marginTop: 2 },
+  methodCard: { flexDirection: 'row', gap: 12, borderWidth: 1, borderRadius: radii.lg, padding: 15, marginTop: 14 },
+  methodIcon: { width: 44, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  methodCopy: { flex: 1 },
+  methodTitle: { fontFamily: fonts.interSemi, fontSize: 13.5 },
+  methodText: { fontFamily: fonts.inter, fontSize: 11.5, lineHeight: 17, marginTop: 4 },
+  consent: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, borderWidth: 1, borderRadius: radii.lg, padding: 14, marginTop: 14 },
+  checkbox: { width: 22, height: 22, borderWidth: 1.5, borderRadius: 6, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
+  consentText: { flex: 1, fontFamily: fonts.inter, fontSize: 12, lineHeight: 18 },
+  termsLink: { alignSelf: 'center', paddingVertical: 10, paddingHorizontal: 10 },
+  termsText: { fontFamily: fonts.interSemi, fontSize: 11.5, textDecorationLine: 'underline' },
+  error: { fontFamily: fonts.interMed, fontSize: 12, lineHeight: 18, color: '#ef6767', textAlign: 'center', marginBottom: 10, paddingHorizontal: 8 },
+  payWrap: { borderRadius: radii.pill, overflow: 'hidden', shadowColor: '#d49b2d', shadowOpacity: 0.32, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 6 },
+  payButton: { minHeight: 54, borderRadius: radii.pill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingHorizontal: 18 },
+  payText: { fontFamily: fonts.interBold, fontSize: 14.5, textAlign: 'center' },
+  checkLink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 15 },
+  checkText: { fontFamily: fonts.interSemi, fontSize: 11.5, textDecorationLine: 'underline' },
+  providerRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', gap: 9, paddingHorizontal: 12, marginTop: 4 },
+  providerText: { flex: 1, maxWidth: 390, fontFamily: fonts.inter, fontSize: 10.5, lineHeight: 16, textAlign: 'left' },
 });

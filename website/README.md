@@ -14,11 +14,19 @@ Open [http://localhost:5173](http://localhost:5173).
 
 ## API
 
-Set `VITE_API_URL` in `.env` (see `.env.example`). Default points to the live server from `PROJECT_HANDOFF.md`:
+Set `VITE_API_URL` in `.env` for **local dev** (see `.env.example`). Default points to the live server from `PROJECT_HANDOFF.md`:
 
 `http://168.144.185.66:4000`
 
-CORS: backend already allows `http://localhost:5173` in default origins.
+**Netlify:** do not set `VITE_API_URL` in Netlify environment variables. Production builds use same-origin `/api/*` requests; root `netlify.toml` proxies them to the backend (avoids mixed-content and CORS).
+
+CORS: backend allows `http://localhost:5173` and `*.netlify.app` in default origins.
+
+## Android download
+
+Set `VITE_APK_DOWNLOAD_URL` to the public HTTPS URL of the current signed APK.
+When it is not configured, the download CTA opens a pre-addressed support email
+instead of sending visitors to a broken or placeholder link.
 
 ## Home page (live data)
 
@@ -39,3 +47,4 @@ Location: browser geolocation when allowed, else **Jaipur** (same fallback as th
 React 19, TypeScript, Tailwind 4, React Query, React Router, Lenis + GSAP ScrollTrigger, Framer Motion, Three.js (hero starfield, lazy-loaded).
 
 Other routes show a “coming soon” placeholder until we build the next screens.
+"# shree-yantra-astro-web" 

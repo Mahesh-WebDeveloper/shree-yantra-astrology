@@ -8,8 +8,25 @@ const Settings = require('./src/models/Settings');
 if (env.isProd) {
   const weakJwt = !process.env.JWT_SECRET || /dev_secret|dev_only_change/i.test(env.jwtSecret) || env.jwtSecret.length < 24;
   if (weakJwt) { console.error('FATAL: set a strong JWT_SECRET (32+ chars) for production.'); process.exit(1); }
-  if (!env.corsOrigins.length) { console.error('FATAL: set CORS_ORIGINS to your real admin/web origin(s) for production.'); process.exit(1); }
-  // CORS with credentials must never allow a wildcard origin
+  if (!env.corsOrigins.length) {
+    console.warn('WARN: CORS_ORIGINS is empty — permissive CORS is ON (set CORS_ALLOW_ALL=false to use allow-list only).');
+  }
+  if (env.payments.enabled) {
+    const missingPaymentConfig = !env.payments.razorpayKeyId
+      || !env.payments.razorpayKeySecret
+      || !env.payments.razorpayPlanId
+      || !env.payments.razorpayWebhookSecret;
+    if (missingPaymentConfig) {
+      console.error('FATAL: Razorpay payments are enabled but required payment environment variables are missing.');
+      process.exit(1);
+    }
+    if (env.payments.razorpayKeyId.startsWith('rzp_test_')) {
+      console.error('FATAL: Test Razorpay keys cannot be used with NODE_ENV=production.');
+      process.exit(1);
+    }
+  } else {
+    console.warn('WARN: PAYMENTS_ENABLED is not true; new paid subscriptions cannot be created.');
+  }
   if (env.corsOrigins.includes('*')) { console.error('FATAL: CORS_ORIGINS must not contain "*" in production (credentials are enabled).'); process.exit(1); }
   // the admin panel exposes all user PII + delete — reject a default/weak admin password
   const ap = process.env.ADMIN_PASSWORD || '';

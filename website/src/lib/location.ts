@@ -1,3 +1,5 @@
+import { getApiBase } from './api'
+
 /** Default panchang location — same fallback as mobile WelcomeScreen */
 export const DEFAULT_PANCHANG = {
   place: 'Jaipur',
@@ -68,6 +70,5 @@ export function angaEndLabel(e: { hm: string; nextDay: boolean } | undefined, hi
 export function mediaUrl(path?: string | null): string | null {
   if (!path) return null
   if (/^https?:\/\//i.test(path)) return path
-  const base = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
-  return base ? `${base}${path}` : path
+  return getApiBase() ? `${getApiBase()}${path}` : path
 }

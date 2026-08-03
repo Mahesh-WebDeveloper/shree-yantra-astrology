@@ -1,4 +1,5 @@
-import { motion } from 'framer-motion'
+import { motion, useInView } from 'framer-motion'
+import { useRef } from 'react'
 
 /* ─────────────────────────────────────────────────────────────
    Drawn marks for the trust section. Everything here is authored
@@ -15,6 +16,9 @@ const PETALS = Array.from({ length: 12 }, (_, i) => i * 30)
  * way a seal is cut: outside in.
  */
 export function TrustSeal({ still }: { still: boolean }) {
+  const ref = useRef<SVGSVGElement>(null)
+  const inView = useInView(ref, { once: true, amount: 0.35, margin: '0px 0px -10% 0px' })
+
   const draw = {
     hidden: { pathLength: 0, opacity: 0 },
     show: (i: number) => ({
@@ -31,14 +35,14 @@ export function TrustSeal({ still }: { still: boolean }) {
     ? { initial: false as const }
     : {
         initial: 'hidden' as const,
-        whileInView: 'show' as const,
-        viewport: { once: true, amount: 0.4 },
+        animate: inView ? ('show' as const) : ('hidden' as const),
         variants: draw,
       }
 
   return (
-    <svg className="syj-seal" viewBox="0 0 120 120" fill="none" aria-hidden>
-      <g stroke="currentColor" strokeWidth="0.9" vectorEffect="non-scaling-stroke">
+    <svg ref={ref} className="syj-seal" viewBox="0 0 120 120" fill="none" aria-hidden>
+      {/* non-scaling-stroke breaks pathLength draw — see HeroMandala */}
+      <g stroke="currentColor" strokeWidth="0.9">
         <motion.circle cx="60" cy="60" r="57.5" custom={0} {...common} />
         <motion.circle cx="60" cy="60" r="50" custom={1} {...common} />
 

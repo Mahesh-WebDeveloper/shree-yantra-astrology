@@ -23,7 +23,9 @@
     "import:mahabharat-audio": "node src/scripts/importMahabharatAudio.js",
     "import:devotional-audio": "node src/scripts/importDevotionalAudio.js",
     "import:hanuman-chalisa": "node src/scripts/importHanumanChalisa.js",
-    "import:upanishads": "node src/scripts/importUpanishads.js"
+    "import:upanishads": "node src/scripts/importUpanishads.js",
+    "setup:razorpay-plan": "node src/scripts/setupRazorpayPlan.js",
+    "test:payments": "node --test src/services/payment.service.test.js"
   },
   "dependencies": {
     "astronomy-engine": "^2.1.19",
@@ -38,7 +40,8 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.5.0",
     "morgan": "^1.10.0",
-    "multer": "^2.2.0"
+    "multer": "^2.2.0",
+    "razorpay": "^2.9.8"
   },
   "devDependencies": {
     "nodemon": "^3.1.4"

@@ -1,102 +1,147 @@
-import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
-import { useT, useLang } from '../i18n/LanguageProvider';
 import { fonts, radii } from '../theme/tokens';
+import { useLang } from '../i18n/LanguageProvider';
 import { Page } from '../components/Page';
 import { Card } from '../components/Card';
 import { useDialog } from '../components/DialogProvider';
-import { hTap } from '../lib/haptics';
-import { setPremium } from '../lib/premiumStore';
+import { cancelPaymentSubscription, getPaymentSubscription, type PaymentSubscriptionStatus } from '../lib/api';
+import { updateStoredUser } from '../lib/auth';
+import { hError, hSuccess, hTap } from '../lib/haptics';
 
-// Deeper "Billing & Account" screen. Reached from Manage Subscription → a low-key link,
-// so it sits 3 screens in. Mostly benign billing info; cancellation is a small, muted link
-// at the very bottom (kept out of the way to reduce accidental churn, per product decision).
-const INFO: { en: [string, string]; hi: [string, string] }[] = [
-  {
-    en: ['Renewal', 'Your Monthly plan renews automatically. Nothing to do to stay premium.'],
-    hi: ['नवीनीकरण', 'आपका मासिक प्लान स्वतः नवीनीकृत होता है। Premium बने रहने के लिए कुछ करने की जरूरत नहीं।'],
-  },
-  {
-    en: ['Payment method', 'UPI · Google Pay. Update it from your UPI app if your bank changes.'],
-    hi: ['भुगतान का तरीका', 'UPI · Google Pay. बैंक बदलने पर इसे अपने UPI ऐप से अपडेट करें।'],
-  },
-  {
-    en: ['Receipts', 'A payment receipt is emailed to you after every renewal.'],
-    hi: ['रसीदें', 'हर नवीनीकरण के बाद भुगतान रसीद आपके ईमेल पर भेजी जाती है।'],
-  },
-  {
-    en: ['Change payment date', 'The billing date follows your first subscription date and cannot be changed.'],
-    hi: ['भुगतान तिथि बदलें', 'बिलिंग तिथि आपकी पहली सदस्यता तिथि पर आधारित होती है और इसे बदला नहीं जा सकता।'],
-  },
-];
+function dateText(value: string | null | undefined, hi: boolean) {
+  if (!value) return hi ? 'उपलब्ध नहीं' : 'Not available';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return hi ? 'उपलब्ध नहीं' : 'Not available';
+  return new Intl.DateTimeFormat(hi ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+}
 
 export function BillingOptionsScreen({ navigation }: any) {
   const { theme } = useTheme();
-  const t = useT();
   const { lang } = useLang();
   const hi = lang === 'hi';
   const dialog = useDialog();
+  const [subscription, setSubscription] = useState<PaymentSubscriptionStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [cancelling, setCancelling] = useState(false);
+  const [error, setError] = useState('');
 
-  const cancel = () => {
+  useEffect(() => {
+    let mounted = true;
+    getPaymentSubscription()
+      .then(async (response) => {
+        if (!mounted) return;
+        setSubscription(response.subscription);
+        await updateStoredUser(response.user);
+      })
+      .catch((e) => mounted && setError(e?.message || (hi ? 'बिलिंग जानकारी लोड नहीं हो सकी।' : 'Billing details could not be loaded.')))
+      .finally(() => mounted && setLoading(false));
+    return () => { mounted = false; };
+  }, [hi]);
+
+  const performCancel = async () => {
+    if (cancelling) return;
+    setCancelling(true);
+    setError('');
+    try {
+      const response = await cancelPaymentSubscription();
+      await updateStoredUser(response.user);
+      setSubscription(response.subscription);
+      hSuccess();
+      if (!response.subscription.entitlementActive) {
+        dialog(
+          hi ? 'सदस्यता रद्द हो गई' : 'Subscription cancelled',
+          hi ? 'भविष्य के स्वतः भुगतान रोक दिए गए हैं। Premium पहुँच अब बंद है।' : 'Future automatic payments have been stopped. Premium access has ended.',
+          [{ text: hi ? 'ठीक है' : 'OK', onPress: () => navigation.reset({ index: 0, routes: [{ name: 'Subscribe' }] }) }],
+        );
+      } else {
+        dialog(
+          hi ? 'रद्द करने का अनुरोध दर्ज हो गया' : 'Cancellation scheduled',
+          hi
+            ? `${dateText(response.subscription.accessUntil, true)} के बाद स्वतः भुगतान और Premium पहुँच बंद हो जाएगी।`
+            : `Automatic payments and Premium access will end after ${dateText(response.subscription.accessUntil, false)}.`,
+          [{ text: hi ? 'ठीक है' : 'OK', onPress: () => navigation.goBack() }],
+        );
+      }
+    } catch (e: any) {
+      hError();
+      setError(e?.message || (hi ? 'सदस्यता रद्द नहीं हो सकी। कृपया दोबारा प्रयास करें।' : 'The subscription could not be cancelled. Please try again.'));
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const requestCancel = () => {
     hTap();
+    const trial = subscription?.status === 'authenticated';
     dialog(
-      hi ? 'अपनी सदस्यता रद्द करें?' : 'Cancel your subscription?',
-      hi
-        ? 'आप सभी premium भविष्यवाणियों, कुंडली विश्लेषण, उपायों और परामर्श तक पहुँच खो देंगे। इसे ऐप से पूर्ववत नहीं किया जा सकता।'
-        : 'You will lose access to all premium predictions, kundli analysis, remedies and consultations. This cannot be undone from the app.',
+      hi ? 'सदस्यता रद्द करें?' : 'Cancel subscription?',
+      trial
+        ? (hi ? 'ट्रायल अभी तुरंत बंद हो जाएगा और आगे ₹499 का स्वतः भुगतान नहीं होगा।' : 'Your trial will end immediately and the future ₹499 automatic payment will be stopped.')
+        : (hi ? `आपकी Premium पहुँच ${dateText(subscription?.accessUntil || subscription?.currentPeriodEnd, true)} तक रहेगी। इसके बाद कोई स्वतः भुगतान नहीं होगा।` : `Premium access will remain available until ${dateText(subscription?.accessUntil || subscription?.currentPeriodEnd, false)}. No automatic payment will be made after that.`),
       [
-        { text: hi ? 'मेरा Premium रखें' : 'KEEP MY PREMIUM', style: 'cancel' },
-        { text: hi ? 'फिर भी रद्द करें' : 'Cancel anyway', style: 'destructive', onPress: () => { setPremium(false); navigation.goBack(); } },
+        { text: hi ? 'सदस्यता जारी रखें' : 'Keep subscription', style: 'cancel' },
+        { text: hi ? 'हाँ, रद्द करें' : 'Yes, cancel', style: 'destructive', onPress: () => { void performCancel(); } },
       ],
     );
   };
 
+  const rows = [
+    [hi ? 'नवीनीकरण' : 'Renewal', hi ? '₹499 प्रति माह स्वतः भुगतान' : '₹499 automatic payment every month'],
+    [hi ? 'अगली भुगतान तिथि' : 'Next payment date', dateText(subscription?.nextChargeAt || subscription?.trialEndsAt, hi)],
+    [hi ? 'भुगतान सुरक्षा' : 'Payment security', hi ? 'Razorpay mandate द्वारा सुरक्षित' : 'Secured through a Razorpay mandate'],
+    [hi ? 'रसीद' : 'Receipt', hi ? 'हर सफल भुगतान के बाद Razorpay द्वारा भेजी जाती है' : 'Sent by Razorpay after each successful payment'],
+  ];
+
   return (
-    <Page title={t('billing.title', 'Billing & Account')} onBack={() => { hTap(); navigation.goBack(); }}>
+    <Page title={hi ? 'बिलिंग और रद्द करना' : 'Billing & Cancellation'} onBack={() => { hTap(); navigation.goBack(); }}>
       <Card>
-        <Text style={[styles.head, { color: theme.goldText }]}>{hi ? 'बिलिंग और खाता' : 'BILLING & ACCOUNT'}</Text>
-        {INFO.map((info, i) => {
-          const [k, v] = hi ? info.hi : info.en;
-          return (
-            <View key={info.en[0]} style={[styles.row, { borderBottomColor: theme.line }, i === INFO.length - 1 && styles.noBorder]}>
-              <Text style={[styles.k, { color: theme.text }]}>{k}</Text>
-              <Text style={[styles.v, { color: theme.textSoft }]}>{v}</Text>
-            </View>
-          );
-        })}
+        <Text style={[styles.head, { color: theme.goldText }]}>{hi ? 'सदस्यता विवरण' : 'SUBSCRIPTION DETAILS'}</Text>
+        {loading ? <ActivityIndicator color={theme.gold1} style={styles.loader} /> : rows.map(([key, value], index) => (
+          <View key={key} style={[styles.row, { borderBottomColor: theme.line }, index === rows.length - 1 && styles.noBorder]}>
+            <Text style={[styles.key, { color: theme.text }]}>{key}</Text>
+            <Text style={[styles.value, { color: theme.textSoft }]}>{value}</Text>
+          </View>
+        ))}
       </Card>
 
-      <Text style={[styles.note, { color: theme.textMuted }]}>
-        {hi
-          ? 'किसी भी बिलिंग प्रश्न के लिए, Help & Support → Email support का उपयोग करें और हमारी टीम एक दिन के भीतर सहायता करेगी।'
-          : 'For any billing question, use Help & Support → Email support and our team will assist within a day.'}
-      </Text>
+      <View style={[styles.notice, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.08)' : '#fff8e8' }]}>
+        <Text style={[styles.noticeTitle, { color: theme.text }]}>{hi ? 'आपके नियंत्रण में' : 'You stay in control'}</Text>
+        <Text style={[styles.noticeText, { color: theme.textSoft }]}>
+          {hi ? 'रद्द करने के बाद नया मासिक भुगतान नहीं होगा। सक्रिय मासिक अवधि का भुगतान वापस नहीं होता, लेकिन उसकी अंतिम तारीख तक Premium पहुँच जारी रहती है।' : 'After cancellation, no new monthly payment will be made. The current paid period is not refunded, but Premium access continues until its end date.'}
+        </Text>
+      </View>
 
-      {/* at the very bottom — an outlined gold button: black fill, gold ring, gold text */}
+      {!!error && <Text style={styles.error}>{error}</Text>}
+
       <Pressable
-        onPress={cancel}
-        style={({ pressed }) => [styles.cancelBtn, pressed && { transform: [{ scale: 0.97 }], opacity: 0.85 }]}
+        disabled={loading || cancelling || !subscription?.entitlementActive || subscription?.cancelAtCycleEnd}
+        onPress={requestCancel}
+        style={({ pressed }) => [styles.cancelButton, { borderColor: theme.gold1 }, (pressed || cancelling) && { opacity: 0.75 }]}
       >
-        <Text style={styles.cancelTxt}>{hi ? 'सदस्यता रद्द करें' : 'Cancel Subscription'}</Text>
+        {cancelling && <ActivityIndicator size="small" color={theme.gold1} />}
+        <Text style={[styles.cancelText, { color: theme.goldText }]}>
+          {subscription?.cancelAtCycleEnd
+            ? (hi ? 'रद्द करने का अनुरोध दर्ज है' : 'Cancellation already scheduled')
+            : (hi ? 'सदस्यता रद्द करें' : 'Cancel subscription')}
+        </Text>
       </Pressable>
     </Page>
   );
 }
 
 const styles = StyleSheet.create({
-  head: { fontFamily: fonts.cinzelSemi, fontSize: 13, letterSpacing: 1.2, marginBottom: 8 },
+  head: { fontFamily: fonts.cinzelSemi, fontSize: 12.5, letterSpacing: 1.1, marginBottom: 7 },
+  loader: { paddingVertical: 24 },
   row: { paddingVertical: 12, borderBottomWidth: 1 },
   noBorder: { borderBottomWidth: 0 },
-  k: { fontFamily: fonts.interSemi, fontSize: 13.5 },
-  v: { fontFamily: fonts.inter, fontSize: 12.5, lineHeight: 18, marginTop: 3 },
-  note: { fontFamily: fonts.inter, fontSize: 11.5, lineHeight: 17, marginTop: 16, paddingHorizontal: 2 },
-  // user-specified look: golden outline ring, black background, golden text
-  cancelBtn: {
-    marginTop: 40, marginBottom: 8, alignSelf: 'center',
-    paddingVertical: 11, paddingHorizontal: 24,
-    borderRadius: radii.pill, borderWidth: 1.2, borderColor: '#e9b850',
-    backgroundColor: '#0a0805',
-  },
-  cancelTxt: { fontFamily: fonts.interSemi, fontSize: 12.5, letterSpacing: 0.5, color: '#e9b850' },
+  key: { fontFamily: fonts.interSemi, fontSize: 13 },
+  value: { fontFamily: fonts.inter, fontSize: 12, lineHeight: 18, marginTop: 4 },
+  notice: { borderWidth: 1, borderRadius: radii.lg, padding: 15, marginTop: 15 },
+  noticeTitle: { fontFamily: fonts.interSemi, fontSize: 13 },
+  noticeText: { fontFamily: fonts.inter, fontSize: 11.8, lineHeight: 18, marginTop: 5 },
+  error: { color: '#ef6767', fontFamily: fonts.inter, fontSize: 12, lineHeight: 18, textAlign: 'center', marginTop: 16 },
+  cancelButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, marginTop: 24, borderWidth: 1.2, borderRadius: radii.pill, paddingVertical: 13, paddingHorizontal: 20 },
+  cancelText: { fontFamily: fonts.interSemi, fontSize: 12.5 },
 });

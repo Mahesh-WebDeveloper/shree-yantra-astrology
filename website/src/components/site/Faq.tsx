@@ -9,77 +9,77 @@ type Item = { id: string; q: { hi: string; en: string }; a: { hi: string; en: st
 const ITEMS: Item[] = [
   {
     id: 'accuracy',
-    q: { hi: 'तारीखें और गणना कितनी सही हैं?', en: 'How right are the dates and calculations?' },
+    q: { hi: 'ऐप की गणनाएँ किस पद्धति पर आधारित हैं?', en: 'Which methods are used for the calculations?' },
     a: {
-      hi: 'त्योहार और व्रत की हर तारीख़ पंचांग से मिलाकर जाँची गई है — 2026, 2027 और 2050 की सभी 767 तारीखें सही निकलीं, और 2028 से 2035 तक भी हर साल अलग से जाँचा गया। तिथि उसी परंपरा से दिखती है जो पंडित जी मानते हैं: सूर्योदय के समय जो तिथि हो, वही उस दिन की तिथि। और हर तिथि, नक्षत्र या योग के साथ यह भी लिखा रहता है कि वह कब तक है।',
-      en: 'Every festival and vrat date has been compared against the panchang — all 767 across 2026, 2027 and 2050 came out right, and 2028 to 2035 was checked separately as well. The tithi follows the same convention a pandit uses: whichever tithi is running at sunrise is the tithi for that day. And every tithi, nakshatra or yoga is shown along with the time it ends.',
+      hi: 'जन्म कुंडली के लिए जन्म तिथि, सटीक समय, स्थान और खगोलीय ग्रह-स्थितियों का उपयोग किया जाता है। पंचांग की गणना में लाहिड़ी (चित्रा पक्ष) अयनांश, उदय तिथि और चुने गए शहर के सूर्योदय-सूर्यास्त को ध्यान में रखा जाता है। अलग ज्योतिष परंपराओं में कुछ नियम भिन्न हो सकते हैं, इसलिए महत्वपूर्ण संस्कार के लिए स्थानीय पंचांग या योग्य ज्योतिषाचार्य से पुष्टि करना उचित है।',
+      en: 'Kundli calculations use the date, exact time and place of birth together with astronomical planetary positions. Panchang calculations consider the Lahiri (Chitra Paksha) ayanamsa, Udaya Tithi and local sunrise and sunset. Some rules vary across Jyotish traditions, so important ceremonies should also be confirmed with a local Panchang or qualified astrologer.',
     },
   },
   {
     id: 'who',
-    q: { hi: 'जवाब कौन देता है?', en: 'Who answers my questions?' },
+    q: { hi: 'ज्योतिषी सुविधा उत्तर कैसे तैयार करती है?', en: 'How does the Jyotishi feature prepare an answer?' },
     a: {
-      hi: 'जवाब आपकी अपनी कुंडली से बनता है। ज्योतिषी आपकी जन्म कुंडली, अभी चल रही दशा, नौ ग्रहों का गोचर और साढ़ेसाती की तारीखें देखकर बताता है — कोई तैयार लेख कॉपी नहीं किया जाता। और जो बात आपकी कुंडली में है ही नहीं, उसके लिए साफ़ मना कर दिया जाता है, चाहे आपने खुद वही क्यों न कहा हो।',
-      en: 'The answer is built from your own chart. The astrologer looks at your birth chart, the period you are running, where the nine planets are moving and the dates of your Sade Sati — nothing is copied from a ready-made article. And if something simply is not in your chart, you are told so plainly, even when you were the one who said it.',
+      hi: 'यह एआई-सहायित सुविधा आपकी सहेजी हुई जन्म जानकारी, कुंडली, दशा और वर्तमान गोचर के आधार पर उत्तर तैयार करती है। इसका उद्देश्य जटिल ज्योतिषीय जानकारी को सरल भाषा में समझाना है। इसे निश्चित भविष्यवाणी या चिकित्सकीय, कानूनी अथवा वित्तीय सलाह न मानें।',
+      en: 'This AI-assisted feature uses your saved birth details, chart, dasha and current transits to prepare a personalised response. It is intended to explain complex astrology clearly and should not be treated as a guaranteed prediction or as medical, legal or financial advice.',
     },
   },
   {
     id: 'privacy',
     q: { hi: 'मेरा जन्म विवरण सुरक्षित है?', en: 'Are my birth details safe?' },
     a: {
-      hi: 'आपकी जन्म तारीख़, समय और जगह सिर्फ़ आपकी कुंडली बनाने और आपके पाठ तैयार करने के काम आती है। यही जानकारी ज्योतिषी के जवाब का आधार भी बनती है। इसे न बेचा जाता है, न विज्ञापन के लिए किसी और को दिया जाता है।',
-      en: 'Your date, time and place of birth are used only to work out your chart and prepare your readings. That same information is what the astrologer’s answers rest on. It is never sold, and never handed to anyone so you can be advertised to.',
+      hi: 'श्री यंत्र आपकी व्यक्तिगत जानकारी नहीं बेचता। ऐप की आवश्यक सुविधाएँ चलाने के लिए सीमित जानकारी संबंधित सेवा-प्रदाताओं के साथ साझा की जा सकती है, जैसे साइन-इन, ज्योतिषीय गणना, स्थान खोज और भुगतान सेवाएँ। विस्तृत जानकारी तथा उपलब्ध नियंत्रण गोपनीयता नीति में दिए गए हैं।',
+      en: 'Shree Yantra does not sell personal information. Limited data may be shared with service providers required for sign-in, astrological calculations, location search and payments. The Privacy Policy explains these uses and the controls available to you.',
     },
   },
   {
     id: 'offline',
     q: { hi: 'क्या यह इंटरनेट के बिना चलेगा?', en: 'Does it work without internet?' },
     a: {
-      hi: 'सीधी बात — ज़्यादातर नहीं। पंचांग, कुंडली, राशिफल और ज्योतिषी के जवाब हर बार उसी वक़्त गिने जाते हैं, इसलिए इनके लिए इंटरनेट चाहिए। आरती, भजन और कथा भी इंटरनेट से ही चलते हैं।',
-      en: 'Plainly — mostly no. The panchang, your chart, the rashifal and the astrologer’s answers are worked out fresh each time, so they need a connection. The aartis, bhajans and kathas stream as well.',
+      hi: 'कुंडली गणना, व्यक्तिगत राशिफल, ज्योतिषी प्रश्नोत्तर और अधिकांश पढ़ने-सुनने वाली सामग्री के लिए इंटरनेट आवश्यक है। पहले से लोड या सहेजी गई सामग्री की उपलब्धता संबंधित सुविधा और डिवाइस पर निर्भर करेगी।',
+      en: 'Internet access is required for Kundli calculations, personalised Rashifal, Jyotishi answers and most reading or listening content. Previously loaded or saved content may remain available depending on the feature and device.',
     },
   },
   {
     id: 'languages',
     q: { hi: 'ऐप किस भाषा में है?', en: 'What language is the app in?' },
     a: {
-      hi: 'पूरा ऐप हिंदी और English दोनों में है — एक बटन दबाइए, भाषा बदल जाती है। शास्त्र संस्कृत में जैसे हैं वैसे ही रहते हैं, और कई ग्रंथों के साथ उनका हिंदी अर्थ भी मिलता है।',
-      en: 'The whole app works in both Hindi and English — one tap switches it. The scriptures stay in their original Sanskrit, and many of them come with the meaning in Hindi alongside.',
+      hi: 'ऐप की प्रमुख सुविधाएँ हिंदी और English दोनों भाषाओं में उपलब्ध हैं। भाषा एक टैप में बदली जा सकती है। संस्कृत मूल पाठ अपनी मूल भाषा में रहता है और जहाँ उपलब्ध हो, उसके साथ सरल हिंदी अर्थ भी दिया जाता है।',
+      en: 'The main app features are available in Hindi and English, and the language can be changed with one tap. Sanskrit source text remains in its original language, with a simple Hindi meaning shown where available.',
     },
   },
   {
     id: 'pricing',
-    q: { hi: 'क्या यह मुफ़्त है?', en: 'Is it free?' },
+    q: { hi: 'सदस्यता कैसे काम करती है?', en: 'How does the subscription work?' },
     a: {
-      hi: 'ऐप डाउनलोड करने और शुरू करने के पैसे नहीं लगते। गहरे विश्लेषण के लिए प्लान हैं, जिनकी कीमत पहले ही साफ़ दिख जाती है — कोई छिपा शुल्क नहीं, और अपने-आप कुछ नहीं कटता।',
-      en: 'Downloading the app and getting started costs nothing. Deeper analysis sits behind plans whose price you can see before you decide — no hidden charges, and nothing is deducted on its own.',
+      hi: 'ऐप डाउनलोड करना निःशुल्क है, लेकिन प्रीमियम सुविधाओं के लिए सक्रिय सदस्यता आवश्यक है। वर्तमान में ₹1 में 7 दिन का ट्रायल उपलब्ध है। ट्रायल के बाद लागू योजना, अवधि और शुल्क भुगतान से पहले ऐप में दिखाए जाते हैं।',
+      en: 'The app is free to download, while premium features require an active subscription. A 7-day trial is currently available for ₹1. The applicable plan, duration and price after the trial are shown before payment.',
     },
   },
   {
     id: 'sources',
     q: { hi: 'ये ग्रंथ कहाँ से लिए गए हैं?', en: 'Where do the scriptures come from?' },
     a: {
-      hi: 'सार्वजनिक रूप से उपलब्ध पारंपरिक संस्करणों से। संस्कृत मूल पाठ जैसा का तैसा रखा गया है। जहाँ सरल हिंदी में कथा या अर्थ जोड़ा गया है, वह मूल पाठ के साथ अलग से दिखता है — उसकी जगह नहीं लेता।',
-      en: 'From traditional editions that are publicly available. The Sanskrit original is kept exactly as it is. Where a simple Hindi katha or meaning has been added, it sits beside the original rather than replacing it.',
+      hi: 'पुस्तकालय की सामग्री सार्वजनिक रूप से उपलब्ध पारंपरिक संस्करणों पर आधारित है। मूल पाठ, अनुवाद, सरल अर्थ और कथा को अलग-अलग पहचान के साथ प्रस्तुत किया जाता है, ताकि पाठक मूल ग्रंथ और उसकी व्याख्या में अंतर समझ सके।',
+      en: 'The library content is based on traditional editions available in the public domain. Source text, translation, simplified meaning and retelling are identified separately so readers can distinguish the original text from its explanation.',
     },
   },
   {
     id: 'partial',
     q: {
-      hi: 'कुछ पुराणों में कम अध्याय क्यों हैं?',
-      en: 'Why do some Puranas have fewer chapters?',
+      hi: 'ग्रंथों का पाठ कैसे प्रस्तुत किया गया है?',
+      en: 'How is scripture content presented?',
     },
     a: {
-      hi: '18 में से 16 पुराण पूरे हैं। भविष्य पुराण और लिङ्ग पुराण अभी अधूरे हैं, क्योंकि इनका पूरा डिजिटल पाठ कहीं मिलता ही नहीं। हमने गिनती बढ़ाकर नहीं दिखाई — ऐप के भीतर भी इन पर "आंशिक" लिखा है। जिस दिन पूरा पाठ मिलेगा, जोड़ दिया जाएगा।',
-      en: '16 of the 18 are complete. The Bhavishya and Linga Puranas are still partial, because no complete digital text of them exists anywhere. We have not padded the counts — inside the app they are labelled partial too. The day a complete text turns up, it goes in.',
+      hi: 'प्रत्येक ग्रंथ को उसकी परंपरागत संरचना के अनुसार अध्याय, कांड, सर्ग, पर्व या सूक्त में व्यवस्थित किया गया है। पढ़ने की प्रगति सहेजी जा सकती है और उपलब्ध स्थानों पर अर्थ तथा ऑडियो भी साथ मिलता है।',
+      en: 'Each text is organised according to its traditional structure as chapters, kandas, sargas, parvas or suktas. Reading progress can be saved, with meanings and audio provided where available.',
     },
   },
   {
     id: 'get',
     q: { hi: 'ऐप कैसे मिलेगा?', en: 'How do I get the app?' },
     a: {
-      hi: 'अभी APK सीधे डाउनलोड कर सकते हैं — बटन नीचे ही है। Play Store पर जल्द आ रहा है।',
-      en: 'For now you can download the APK directly — the button is just below. Play Store is coming soon.',
+      hi: 'Android ऐप डाउनलोड करने के लिए नीचे दिए गए आधिकारिक बटन का उपयोग करें। यदि डाउनलोड लिंक अस्थायी रूप से उपलब्ध न हो तो सहायता के लिए ईमेल विकल्प खुल जाएगा। Play Store पर ऐप उपलब्ध होने के बाद यही पेज अपडेट किया जाएगा।',
+      en: 'Use the official button below to download the Android app. If the download link is temporarily unavailable, the button will open an email request for support. This page will be updated when the app becomes available on Google Play.',
     },
   },
 ]
@@ -97,22 +97,22 @@ export function Faq() {
     <section id="faq" className="syj sy-section syj-faq" aria-labelledby="syj-faq-h" ref={revealRef}>
       <div className="sy-container syj-faq__layout">
         <div className="syj-faq__intro" data-sy-reveal="0">
-          <p className="syj-kicker">{hi ? 'सवाल-जवाब' : 'Questions'}</p>
+          <p className="syj-kicker">{hi ? 'सामान्य प्रश्न' : 'Frequently asked questions'}</p>
           <h2 id="syj-faq-h" className="syj-title">
             {hi ? (
               <>
-                जो अक्सर <em>पूछा जाता है</em>
+                ऐप डाउनलोड करने से पहले <em>ज़रूरी जानकारी</em>
               </>
             ) : (
               <>
-                What people <em>usually ask</em>
+                Everything to know <em>before you download</em>
               </>
             )}
           </h2>
           <p className="syj-sub">
             {hi
-              ? 'सीधे जवाब — जो ऐप नहीं करता, वह भी साफ़-साफ़ लिखा है।'
-              : 'Straight answers — including the things the app does not do.'}
+              ? 'गणना-पद्धति, ज्योतिषी सुविधा, गोपनीयता, भाषा, सदस्यता और ऐप डाउनलोड से जुड़े सामान्य प्रश्नों के उत्तर।'
+              : 'Answers to common questions about calculations, the Jyotishi feature, privacy, languages, subscriptions and downloading the app.'}
           </p>
         </div>
 

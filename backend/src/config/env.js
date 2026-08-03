@@ -9,6 +9,11 @@ const numberEnv = (key, fallback) => {
   return Number.isFinite(n) && n >= 0 ? n : fallback;
 };
 
+const positiveIntEnv = (key, fallback) => {
+  const n = Number(process.env[key]);
+  return Number.isInteger(n) && n > 0 ? n : fallback;
+};
+
 const nodeEnv = process.env.NODE_ENV || 'development';
 const isProd = nodeEnv === 'production';
 
@@ -80,6 +85,20 @@ const env = {
   jwtSecret: process.env.JWT_SECRET || 'dev_secret',
   // Google Sign-In: the WEB OAuth client ID (used as the ID-token audience to verify).
   google: { clientId: process.env.GOOGLE_CLIENT_ID || '' },
+  payments: {
+    enabled: process.env.PAYMENTS_ENABLED === 'true',
+    razorpayKeyId: process.env.RAZORPAY_KEY_ID || '',
+    razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET || '',
+    razorpayPlanId: process.env.RAZORPAY_PLAN_ID || '',
+    // Use a separate random secret configured in Razorpay Dashboard for webhooks.
+    razorpayWebhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || '',
+    currency: 'INR',
+    trialAmountPaise: 100,
+    trialDays: 7,
+    monthlyAmountPaise: 49900,
+    totalBillingCycles: positiveIntEnv('RAZORPAY_TOTAL_BILLING_CYCLES', 1200),
+    checkoutExpiryMinutes: positiveIntEnv('RAZORPAY_CHECKOUT_EXPIRY_MINUTES', 30),
+  },
   admin: {
     email: process.env.ADMIN_EMAIL || '',
     password: process.env.ADMIN_PASSWORD || '',

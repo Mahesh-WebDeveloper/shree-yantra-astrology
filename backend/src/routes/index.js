@@ -42,9 +42,11 @@ const rigvedaCtrl = require('../controllers/rigveda.controller');
 const vedaCtrl = require('../controllers/veda.controller');
 const dailyCtrl = require('../controllers/daily.controller');
 const vastuCtrl = require('../controllers/vastu.controller');
+const paymentCtrl = require('../controllers/payment.controller');
 const requireAuth = require('../middleware/auth');
 const optionalAuth = require('../middleware/optionalAuth');
 const requireAdmin = require('../middleware/admin');
+const requirePremium = require('../middleware/premium');
 const { avatarUpload, contentImageUpload } = require('../middleware/upload');
 
 const adminOnly = [requireAuth, requireAdmin];
@@ -64,11 +66,18 @@ const aiLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Too many requests. Please wait a moment and try again. · बहुत अधिक अनुरोध — कृपया थोड़ी देर बाद प्रयास करें।' },
 });
-const PAID_ROUTES = ['/ai', '/baby-names', '/name-ask', '/match', '/gochar', '/remedies', '/vedic-reading', '/life-timeline', '/transit-forecast', '/name-suggestions', '/brihat-kundli', '/numerology/interpret', '/vastu/ask'];
-// SECURITY: these paid VedAstro/LLM endpoints must not be callable anonymously (billing/cost
-// DoS). requireAuth first, then the per-IP rate limiter as defense-in-depth. The mobile app
-// attaches the Bearer token to every request post-login, so authed users are unaffected.
-router.use(PAID_ROUTES, requireAuth, aiLimiter);
+const PREMIUM_ROUTES = [
+  '/ai', '/baby-names', '/name-ask', '/name-suggestions', '/kundli', '/varga', '/dasha', '/yoga',
+  '/choghadiya', '/sunrise', '/panchang', '/muhurat', '/match', '/gochar', '/remedies', '/vedic-reading',
+  '/life-timeline', '/transit-forecast', '/brihat-kundli', '/numerology', '/horoscope', '/vastu',
+  '/library', '/media', '/gita', '/ramayan', '/ramcharitmanas', '/rigveda', '/veda', '/daily-shloka',
+  '/notifications', '/me/data', '/chat',
+];
+const COSTLY_ROUTES = ['/ai', '/baby-names', '/name-ask', '/match', '/gochar', '/remedies', '/vedic-reading', '/life-timeline', '/transit-forecast', '/name-suggestions', '/brihat-kundli', '/numerology/interpret', '/vastu/ask'];
+// Authentication alone is not an entitlement. All paid data is checked against the
+// server-side subscription record before a controller is reached.
+router.use(PREMIUM_ROUTES, requireAuth, requirePremium);
+router.use(COSTLY_ROUTES, aiLimiter);
 
 router.get('/health', health);
 
@@ -88,6 +97,20 @@ router.post('/auth/google', authCtrl.google);
 router.get('/auth/me', requireAuth, authCtrl.me);
 router.post('/auth/logout', requireAuth, authCtrl.logout);
 router.post('/auth/set-password', requireAuth, authCtrl.setPassword);
+
+// Razorpay subscription checkout. The webhook itself is mounted in app.js before JSON parsing.
+const paymentLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many payment attempts. Please wait before trying again.' },
+});
+router.get('/payments/config', requireAuth, paymentCtrl.config);
+router.post('/payments/subscriptions', requireAuth, paymentLimiter, paymentCtrl.createSubscription);
+router.post('/payments/subscriptions/verify', requireAuth, paymentLimiter, paymentCtrl.verify);
+router.get('/payments/subscription', requireAuth, paymentCtrl.status);
+router.post('/payments/subscription/cancel', requireAuth, paymentLimiter, paymentCtrl.cancel);
 
 // profile (protected)
 router.get('/profile', requireAuth, profileCtrl.getProfile);

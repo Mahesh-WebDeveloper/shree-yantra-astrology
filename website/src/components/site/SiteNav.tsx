@@ -7,10 +7,10 @@ import { scrollToHash, scrollToTop } from './hooks/useSiteMotion'
 type NavItem = { id: string; hi: string; en: string }
 
 const NAV_ITEMS: NavItem[] = [
-  { id: 'features', hi: 'विशेषताएँ', en: 'Features' },
-  { id: 'accuracy', hi: 'सटीकता', en: 'Accuracy' },
-  { id: 'library', hi: 'पुस्तकालय', en: 'Library' },
-  { id: 'faq', hi: 'प्रश्न', en: 'FAQ' },
+  { id: 'features', hi: 'ऐप की विशेषताएँ', en: 'App features' },
+  { id: 'accuracy', hi: 'गणना का आधार', en: 'Methodology' },
+  { id: 'library', hi: 'धार्मिक पुस्तकालय', en: 'Library' },
+  { id: 'faq', hi: 'सामान्य प्रश्न', en: 'FAQ' },
 ]
 
 function SunIcon() {
@@ -38,6 +38,7 @@ export function SiteNav() {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
   const burgerRef = useRef<HTMLButtonElement | null>(null)
+  const progressRef = useRef<HTMLSpanElement | null>(null)
 
   useEffect(() => {
     let raf = 0
@@ -53,6 +54,9 @@ export function SiteNav() {
           if (el && el.getBoundingClientRect().top + window.scrollY <= mark) current = item.id
         }
         setActive(current)
+        const scrollable = document.documentElement.scrollHeight - window.innerHeight
+        const progress = scrollable > 0 ? Math.min(1, Math.max(0, window.scrollY / scrollable)) : 0
+        progressRef.current?.style.setProperty('--sy-scroll-progress', String(progress))
         raf = 0
       })
     }
@@ -69,6 +73,7 @@ export function SiteNav() {
   useEffect(() => {
     if (!menuOpen) return
     const prev = document.body.style.overflow
+    const burger = burgerRef.current
     document.body.style.overflow = 'hidden'
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -100,7 +105,7 @@ export function SiteNav() {
     return () => {
       document.body.style.overflow = prev
       window.removeEventListener('keydown', onKey)
-      burgerRef.current?.focus()
+      burger?.focus()
     }
   }, [menuOpen])
 
@@ -116,6 +121,9 @@ export function SiteNav() {
 
   return (
     <>
+      <a className="sy-skip-link" href="#main-content">
+        {t('मुख्य सामग्री पर जाएँ', 'Skip to main content')}
+      </a>
       <header className={`sy-nav sy-site${solid ? ' sy-nav--solid' : ''}`}>
         <nav className="sy-container sy-nav__bar" aria-label={t('मुख्य नेविगेशन', 'Main navigation')}>
           <a
@@ -187,7 +195,7 @@ export function SiteNav() {
                 go('#download')
               }}
             >
-              {t('ऐप डाउनलोड', 'Get the app')}
+              {t('ऐप डाउनलोड करें', 'Download app')}
             </a>
 
             <button
@@ -205,6 +213,7 @@ export function SiteNav() {
             </button>
           </div>
         </nav>
+        <span ref={progressRef} className="sy-nav__progress" aria-hidden />
       </header>
 
       {menuOpen && (
@@ -257,7 +266,7 @@ export function SiteNav() {
                 go('#download')
               }}
             >
-              {t('ऐप डाउनलोड करें', 'Get the app')}
+              {t('Android ऐप डाउनलोड करें', 'Download the Android app')}
             </a>
             <p className="sy-micro text-center">
               {t('Android के लिए • भारत में बना', 'For Android • Made in India')}

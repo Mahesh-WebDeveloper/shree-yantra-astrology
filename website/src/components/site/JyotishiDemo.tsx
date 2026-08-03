@@ -33,44 +33,44 @@ function Words({ text, animate }: { text: string; animate: boolean }) {
 }
 
 const QUESTION = {
-  hi: 'क्या मुझे कालसर्प दोष और मांगलिक दोष है? किसी ने बताया कि दोनों हैं।',
-  en: 'Do I have Kaal Sarp dosha and Mangal dosha? Someone told me I have both.',
+  hi: 'किसी ने कहा कि मेरी कुंडली में कालसर्प दोष और मंगल दोष दोनों हैं। क्या यह सही है?',
+  en: 'I was told that my chart has both Kaal Sarp dosha and Mangal dosha. Is that correct?',
 }
 
 const ANSWER = {
-  hi: 'आपकी जन्म कुंडली के अनुसार आपको न तो मंगल दोष है और न ही कालसर्प दोष। किसी ने जो बताया है, वह आपकी कुंडली से मेल नहीं खाता — मंगल तीसरे भाव में है, इसलिए मंगल दोष बनता ही नहीं।',
-  en: 'According to your birth chart you have neither Mangal dosha nor Kaal Sarp dosha. What you were told does not match your chart — Mars sits in the third house, so Mangal dosha does not form.',
+  hi: 'इस उदाहरण कुंडली में मंगल तीसरे भाव में स्थित है, इसलिए प्रचलित मंगल दोष नियमों के अनुसार मंगल दोष नहीं बनता। कालसर्प दोष के लिए भी सभी ग्रह राहु-केतु के बीच नहीं हैं। इसलिए इस कुंडली में दोनों दोष नहीं बनते।',
+  en: 'In this example chart, Mars is placed in the third house, so Mangal dosha does not form under the commonly used rules. All planets are also not placed between Rahu and Ketu, so Kaal Sarp dosha does not form either.',
 }
 
 const TIMELINE = [
   {
     id: 'past',
     now: false,
-    when: { hi: 'जो बीत गया', en: 'What has passed' },
-    period: { hi: 'शुक्र की दशा · 2007–2027', en: 'The Venus period · 2007–2027' },
+    when: { hi: 'पिछली अवधि', en: 'Previous period' },
+    period: { hi: 'शुक्र महादशा · उदाहरण', en: 'Venus mahadasha · example' },
     note: {
-      hi: 'इस समय का बड़ा हिस्सा निकल चुका है — जो बना, वह इसी दौर में बना।',
-      en: 'Most of this stretch is already behind you — what took shape, took shape here.',
+      hi: 'पिछली दशा और उसके प्रमुख विषय समयरेखा में देखें।',
+      en: 'Review the previous dasha and its key themes on a timeline.',
     },
   },
   {
     id: 'now',
     now: true,
-    when: { hi: 'अभी क्या चल रहा है', en: 'What is running now' },
-    period: { hi: 'शनि की ढैय्या', en: 'The Shani dhaiya' },
+    when: { hi: 'वर्तमान अवधि', en: 'Current period' },
+    period: { hi: 'शनि की ढैय्या · उदाहरण', en: 'Shani dhaiya · example' },
     note: {
-      hi: 'धीमा लेकिन बनाने वाला समय — जल्दबाज़ी मत कीजिए, नींव मज़बूत कीजिए।',
-      en: 'Slow, but a time that builds — do not rush it, strengthen the foundation.',
+      hi: 'वर्तमान अवधि से जुड़े मुख्य संकेत और ध्यान देने योग्य विषय समझें।',
+      en: 'Understand the main indications and areas of attention for the current period.',
     },
   },
   {
     id: 'ahead',
     now: false,
-    when: { hi: 'आगे क्या आ रहा है', en: 'What comes next' },
-    period: { hi: 'सूर्य की दशा · 2027 से', en: 'The Sun period · from 2027' },
+    when: { hi: 'आने वाली अवधि', en: 'Upcoming period' },
+    period: { hi: 'सूर्य महादशा · उदाहरण', en: 'Sun mahadasha · example' },
     note: {
-      hi: 'नई शुरुआत और पहचान का समय — तैयारी अभी से रखिए।',
-      en: 'A time of fresh starts and recognition — the preparation belongs to now.',
+      hi: 'अगली दशा की शुरुआत और उससे जुड़े सामान्य विषय पहले से जानें।',
+      en: 'See when the next dasha begins and understand its broad themes.',
     },
   },
 ]
@@ -78,24 +78,24 @@ const TIMELINE = [
 /** Plain sentence first; the traditional term sits under it, small. */
 const POINTS: { hi: string; en: string; noteHi?: string; noteEn?: string }[] = [
   {
-    hi: 'कौन-सा समय अभी चल रहा है, और कब बदलेगा — पूरी समयरेखा',
-    en: 'Which period is running now, and when it turns — the full timeline',
+    hi: 'वर्तमान दशा कौन-सी है और अगला परिवर्तन कब होगा',
+    en: 'The current dasha and when the next change begins',
     noteHi: 'विंशोत्तरी महादशा और अंतर्दशा',
     noteEn: 'Vimshottari mahadasha and antardasha',
   },
   {
-    hi: 'नौ ग्रह इस समय कहाँ चल रहे हैं',
-    en: 'Where the nine planets are moving right now',
-    noteHi: 'चालू गोचर',
-    noteEn: 'Live gochar',
+    hi: 'वर्तमान समय में नौ ग्रहों की गोचर स्थिति',
+    en: 'Current transit positions of the nine grahas',
+    noteHi: 'वर्तमान गोचर',
+    noteEn: 'Current transits',
   },
   {
     hi: 'साढ़ेसाती और ढैय्या कब से कब तक — तारीखों के साथ',
     en: 'When Sade Sati and dhaiya begin and end — with the dates',
   },
   {
-    hi: 'जो आपकी कुंडली में नहीं है, उसके लिए साफ़ "नहीं" — हाँ में हाँ नहीं मिलाई जाती',
-    en: 'If it is not in your chart, the answer is a plain no — it will not agree just to please you',
+    hi: 'जहाँ ज्योतिषीय संकेत स्पष्ट न हों, वहाँ उत्तर की सीमाएँ भी बताई जाती हैं',
+    en: 'Where indications are unclear, the response also explains its limitations',
   },
 ]
 
@@ -129,15 +129,15 @@ export function JyotishiDemo() {
     <section className="syj sy-section syj-demo" aria-labelledby="syj-demo-h" ref={revealRef}>
       <div className="sy-container">
         <div className="syj-intro" data-sy-reveal="0">
-          <p className="syj-kicker">{hi ? 'ज्योतिषी से पूछिए' : 'Ask the astrologer'}</p>
+          <p className="syj-kicker">{hi ? 'कुंडली पर आधारित प्रश्नोत्तर' : 'Answers informed by your birth chart'}</p>
           <h2 id="syj-demo-h" className="syj-title">
             {hi ? (
               <>
-                जो कुंडली में नहीं है, <em>वह नहीं कहा जाएगा</em>
+                अपना प्रश्न पूछें और <em>उत्तर का ज्योतिषीय आधार समझें</em>
               </>
             ) : (
               <>
-                If it is not in your chart, <em>you will be told so</em>
+                Ask a question and <em>understand the astrological basis of the answer</em>
               </>
             )}
           </h2>
@@ -152,7 +152,7 @@ export function JyotishiDemo() {
                 </span>
                 <span>
                   <b>{hi ? 'श्री यंत्र ज्योतिषी' : 'Shree Yantra Jyotishi'}</b>
-                  <small>{hi ? 'एक उदाहरण बातचीत' : 'An example conversation'}</small>
+                  <small>{hi ? 'उदाहरण के लिए बातचीत' : 'An illustrative conversation'}</small>
                 </span>
               </div>
 
@@ -199,7 +199,7 @@ export function JyotishiDemo() {
                     transition={{ duration: 0.36 }}
                   >
                     <span className="syj-msg__meta">
-                      {hi ? 'आपका समय' : 'Your timeline'}
+                      {hi ? 'दशा की उदाहरण समयरेखा' : 'Example dasha timeline'}
                     </span>
                     <div className="syj-msg__bubble">
                       <ul className="syj-timeline">
@@ -219,8 +219,8 @@ export function JyotishiDemo() {
               <p className="syj-chat__source">
                 <i aria-hidden />
                 {hi
-                  ? 'यह जवाब आपकी अपनी जन्म कुंडली देखकर बना है'
-                  : 'This answer was worked out from your own birth chart'}
+                  ? 'यह केवल उदाहरण है; वास्तविक उत्तर आपकी अपनी जन्म कुंडली पर निर्भर करेगा।'
+                  : 'This is an example; an actual response depends on the user’s own birth chart.'}
               </p>
             </div>
           </div>
@@ -228,10 +228,10 @@ export function JyotishiDemo() {
           <div className="syj-demo__aside" data-sy-reveal="160">
             <p className="syj-sub" style={{ marginTop: 0 }}>
               {hi
-                ? 'यह जवाब किसी लेख से उठाया हुआ नहीं है। हर बात आपकी अपनी कुंडली देखकर कही जाती है — और अगर कोई बात आपकी कुंडली में है ही नहीं, तो ज्योतिषी विनम्रता से मना कर देता है।'
-                : 'This answer is not lifted from an article. Every line is said after looking at your own chart — and when something simply is not in your chart, the astrologer politely says no.'}
+                ? 'ज्योतिषी सुविधा आपकी सहेजी हुई जन्म जानकारी, कुंडली, दशा और वर्तमान गोचर के आधार पर उत्तर तैयार करती है। इसका उद्देश्य तकनीकी ज्योतिषीय जानकारी को सामान्य भाषा में समझाना है, न कि किसी परिणाम की गारंटी देना।'
+                : 'The Jyotishi feature uses saved birth details, the birth chart, dasha and current transits to prepare a response. It is designed to explain technical astrology clearly, not to guarantee an outcome.'}
             </p>
-            <h3>{hi ? 'हर जवाब किस पर टिका है' : 'What every answer rests on'}</h3>
+            <h3>{hi ? 'उत्तर तैयार करते समय क्या देखा जाता है' : 'What is considered when preparing an answer'}</h3>
             <ul className="syj-demo__points">
               {POINTS.map((point) => (
                 <li key={point.en}>

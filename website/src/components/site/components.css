@@ -706,6 +706,65 @@ body {
   overflow-x: clip;
 }
 
+.sy-skip-link {
+  position: fixed;
+  z-index: 100;
+  top: 10px;
+  left: 12px;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--sy-line-strong);
+  border-radius: 999px;
+  background: var(--sy-bg-2);
+  color: var(--sy-ink);
+  font-size: 0.78rem;
+  font-weight: 750;
+  text-decoration: none;
+  box-shadow: var(--sy-shadow);
+  transform: translateY(-160%);
+  transition: transform 0.2s ease;
+}
+.sy-skip-link:focus {
+  transform: translateY(0);
+}
+
+.sy-nav__progress {
+  --sy-scroll-progress: 0;
+  position: absolute;
+  inset-inline: 0;
+  bottom: -1px;
+  height: 1px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.sy-nav__progress::before {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--sy-gold-3), var(--sy-gold-1), var(--sy-gold-2));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--sy-gold-2) 52%, transparent);
+  transform: scaleX(var(--sy-scroll-progress));
+  transform-origin: left center;
+  transition: transform 0.12s linear;
+}
+
+:where(a, button, input, textarea, select, summary):focus-visible {
+  outline: 2px solid var(--sy-gold-2);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--sy-gold-2) 36%, transparent);
+  color: var(--sy-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sy-skip-link,
+  .sy-nav__progress::before {
+    transition: none;
+  }
+}
+
 /* ── Touch ergonomics ────────────────────────────────────────────────────────
    On coarse pointers every small control grows an invisible ≥44px hit area
    (a pseudo-element, so nothing moves visually), and text links gain a

@@ -13,7 +13,32 @@ function timeoutForPath(path: string, explicit?: number): number {
   return AI_PATH_RE.test(clean) ? AI_TIMEOUT_MS : REQUEST_TIMEOUT_MS
 }
 
-export const API_BASE = (import.meta.env.VITE_API_URL || 'http://168.144.185.66:4000').replace(/\/$/, '')
+/** Production HTTPS hosts proxy /api via Netlify — use same-origin, not raw HTTP IP. */
+export function resolveApiBase(): string {
+  if (typeof window !== 'undefined') {
+    const { protocol, hostname } = window.location
+    // Any HTTPS marketing host must use same-origin /api (Netlify proxy).
+    if (protocol === 'https:' && hostname !== '168.144.185.66') {
+      return ''
+    }
+  }
+  // Production client bundles must not call the raw HTTP VPS (mixed content).
+  if (import.meta.env.PROD) {
+    const envUrl = import.meta.env.VITE_API_URL as string | undefined
+    if (envUrl && /^https:\/\//i.test(envUrl)) {
+      return envUrl.replace(/\/$/, '')
+    }
+    return ''
+  }
+  const envUrl = import.meta.env.VITE_API_URL as string | undefined
+  if (envUrl) return envUrl.replace(/\/$/, '')
+  return 'http://168.144.185.66:4000'
+}
+
+/** Resolved at request time so Netlify cannot bake http://… into the bundle at build. */
+export function getApiBase(): string {
+  return resolveApiBase()
+}
 
 let apiLang: ApiLang = 'en'
 export function setApiLang(l: ApiLang) {
@@ -132,7 +157,7 @@ initAuthFromStorage()
 
 async function get<T>(path: string) {
   return requestJson<T>(() =>
-    fetchT(`${API_BASE}${path}`, { headers: { ...authHeaders() } }),
+    fetchT(`${getApiBase()}${path}`, { headers: { ...authHeaders() } }),
   )
 }
 
@@ -140,7 +165,7 @@ async function post<T>(path: string, body: unknown, timeoutMs?: number) {
   const ms = timeoutForPath(path, timeoutMs)
   return requestJson<T>(() =>
     fetchT(
-      `${API_BASE}${path}`,
+      `${getApiBase()}${path}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
@@ -153,7 +178,7 @@ async function post<T>(path: string, body: unknown, timeoutMs?: number) {
 
 async function patch<T>(path: string, body: unknown = {}) {
   return requestJson<T>(() =>
-    fetchT(`${API_BASE}${path}`, {
+    fetchT(`${getApiBase()}${path}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(body),
@@ -163,7 +188,7 @@ async function patch<T>(path: string, body: unknown = {}) {
 
 async function del<T>(path: string) {
   return requestJson<T>(() =>
-    fetchT(`${API_BASE}${path}`, {
+    fetchT(`${getApiBase()}${path}`, {
       method: 'DELETE',
       headers: { ...authHeaders() },
     }),
@@ -1032,7 +1057,7 @@ export const getNameSuggestions = (input: KundliInput & { gender?: string }) =>
 
 async function getAuth<T>(path: string) {
   return requestJson<T>(() =>
-    fetchT(`${API_BASE}${path}`, { headers: { ...authHeaders() } }),
+    fetchT(`${getApiBase()}${path}`, { headers: { ...authHeaders() } }),
   )
 }
 
@@ -1040,7 +1065,7 @@ async function postAuth<T>(path: string, body: unknown, timeoutMs?: number) {
   const ms = timeoutForPath(path, timeoutMs)
   return requestJson<T>(() =>
     fetchT(
-      `${API_BASE}${path}`,
+      `${getApiBase()}${path}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
@@ -1053,7 +1078,7 @@ async function postAuth<T>(path: string, body: unknown, timeoutMs?: number) {
 
 async function putAuth<T>(path: string, body: unknown) {
   return requestJson<T>(() =>
-    fetchT(`${API_BASE}${path}`, {
+    fetchT(`${getApiBase()}${path}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(body),

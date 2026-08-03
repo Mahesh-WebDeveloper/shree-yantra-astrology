@@ -50,37 +50,37 @@ function buildCells(p: PanchangResponse, hi: boolean): Cell[] {
   const cells: Cell[] = [
     {
       key: hi ? 'तिथि' : 'Tithi',
-      hint: hi ? 'चाँद के हिसाब से आज कौन-सा दिन है' : 'the lunar day',
+      hint: hi ? 'चंद्र मास का वर्तमान दिन' : 'the current lunar day',
       value: [angaLabel(tithi, hi), paksha].filter(Boolean).join(' · ') || '—',
       sub: endsAt(tithi),
     },
     {
       key: hi ? 'नक्षत्र' : 'Nakshatra',
-      hint: hi ? 'चाँद आज किस तारा-समूह में है' : 'the star the moon is in today',
+      hint: hi ? 'आज चंद्रमा जिस नक्षत्र में स्थित है' : 'the nakshatra occupied by the Moon today',
       value: angaLabel(nak, hi) ?? '—',
       sub: nak?.pada ? (hi ? `पाद ${nak.pada}` : `Pada ${nak.pada}`) : endsAt(nak),
     },
     {
       key: hi ? 'योग' : 'Yoga',
-      hint: hi ? 'सूर्य और चंद्र की मिली-जुली स्थिति' : 'sun and moon taken together',
+      hint: hi ? 'सूर्य और चंद्रमा की संयुक्त स्थिति से बनने वाला योग' : 'the yoga formed from the combined positions of the Sun and Moon',
       value: angaLabel(yoga, hi) ?? '—',
       sub: endsAt(yoga),
     },
     {
       key: hi ? 'करण' : 'Karana',
-      hint: hi ? 'तिथि का आधा हिस्सा' : 'half of a tithi',
+      hint: hi ? 'तिथि का आधा भाग' : 'one half of a tithi',
       value: angaLabel(karana, hi) ?? '—',
       sub: endsAt(karana),
     },
     {
       key: hi ? 'सूर्योदय' : 'Sunrise',
-      hint: hi ? 'आपके शहर में सूरज निकलने का समय' : 'when the sun rises in your city',
+      hint: hi ? 'आपके शहर में सूर्योदय का समय' : 'sunrise time in your city',
       value: p.sunrise || '—',
       sub: p.timings?.daylight ? (hi ? p.timings.daylight.hi : p.timings.daylight.text) : undefined,
     },
     {
       key: hi ? 'सूर्यास्त' : 'Sunset',
-      hint: hi ? 'सूरज डूबने का समय' : 'when the sun sets',
+      hint: hi ? 'आपके शहर में सूर्यास्त का समय' : 'sunset time in your city',
       value: p.sunset || '—',
       sub: p.timings?.night ? (hi ? p.timings.night.hi : p.timings.night.text) : undefined,
     },
@@ -89,7 +89,7 @@ function buildCells(p: PanchangResponse, hi: boolean): Cell[] {
   if (p.masa) {
     cells.push({
       key: hi ? 'मास' : 'Masa',
-      hint: hi ? 'हिंदू पंचांग का चालू महीना' : 'the running month of the Hindu calendar',
+      hint: hi ? 'हिंदू पंचांग का वर्तमान मास' : 'the current month in the Hindu calendar',
       value: hi ? p.masa.amanta.hi : p.masa.amanta.en,
       sub: hi ? `अमांत · पूर्णिमांत ${p.masa.purnimanta.hi}` : `Amanta · Purnimanta ${p.masa.purnimanta.en}`,
     })
@@ -98,7 +98,7 @@ function buildCells(p: PanchangResponse, hi: boolean): Cell[] {
   if (p.samvat?.vikram) {
     cells.push({
       key: hi ? 'संवत' : 'Samvat',
-      hint: hi ? 'हिंदू पंचांग का चालू वर्ष' : 'the running year of the Hindu calendar',
+      hint: hi ? 'हिंदू पंचांग का वर्तमान संवत' : 'the current year in the Hindu calendar',
       value: `Vikram ${p.samvat.vikram}`,
       sub: p.samvat.shaka ? `Shaka ${p.samvat.shaka}` : undefined,
     })
@@ -145,23 +145,23 @@ export function LiveProof() {
     >
       <div className="sy-container">
         <div data-sy-reveal="0">
-          <p className="sy-eyebrow">{t('सबसे पहले, सबूत', 'First, the proof')}</p>
+          <p className="sy-eyebrow">{t('आपके शहर का आज का पंचांग', "Today's Panchang for your city")}</p>
           <h2 id="sy-live-title" className="sy-h2 mt-5">
             {t(
-              'आज का पंचांग — अभी, आपके शहर के हिसाब से',
-              "Today's panchang — right now, for your city",
+              'स्थान के अनुसार आज की तिथि और शुभ समय जानें',
+              'Panchang timings calculated for your location',
             )}
           </h2>
           <p className="sy-lead mt-5">
             {t(
-              'नीचे जो दिख रहा है वह पुरानी तस्वीर नहीं है — यह अभी, इसी वक़्त गिना गया है। शहर बदलकर देखिए: तिथि, नक्षत्र और सूर्योदय का समय भी बदल जाएगा, क्योंकि हर शहर का पंचांग अलग होता है।',
-              'What you see below is not an old screenshot — it was worked out just now. Change the city and watch the tithi, nakshatra and sunrise time change with it, because every city has its own panchang.',
+              'अपना शहर चुनें और आज की तिथि, नक्षत्र, योग, करण, सूर्योदय तथा सूर्यास्त का समय देखें। नीचे दिखाई गई जानकारी ऐप की वास्तविक पंचांग गणना से प्राप्त होती है।',
+              'Select your city to view today’s tithi, nakshatra, yoga, karana, sunrise and sunset. The information below comes directly from the app’s live Panchang calculation.',
             )}
           </p>
         </div>
 
         <div className="syj-alm__cities" data-sy-reveal="80">
-          <span className="syj-alm__citylabel">{t('अपना शहर चुनिए', 'Pick your city')}</span>
+          <span className="syj-alm__citylabel">{t('अपना शहर चुनें', 'Select your city')}</span>
 
           {/* Type any place — the panchang is computed for whatever the engine
               can locate, not only for the shortcuts below. */}
@@ -210,11 +210,11 @@ export function LiveProof() {
         <div className="mt-7" data-sy-reveal="140">
           {error ? (
             <div className="sy-card sy-card--pad" role="status">
-              <p className="sy-h3">{t('अभी जुड़ नहीं पाया', 'Could not connect just now')}</p>
+              <p className="sy-h3">{t('पंचांग की जानकारी उपलब्ध नहीं है', 'Panchang information is currently unavailable')}</p>
               <p className="sy-body mt-3">
                 {t(
-                  'हमारा पंचांग इस समय इस ब्राउज़र से नहीं जुड़ पाया। हम यहाँ अंदाज़े से कोई तिथि या समय नहीं भर देते — इसलिए जब तक जुड़ न जाए, यह जगह खाली ही रहेगी।',
-                  'Our panchang could not be reached from this browser right now. We never fill this space with a guessed date or time, so it stays empty until the connection is back.',
+                  'इस समय पंचांग सेवा से संपर्क नहीं हो पा रहा है। अनुमानित जानकारी दिखाने के बजाय हम सही डेटा उपलब्ध होने तक प्रतीक्षा करते हैं। कृपया कुछ समय बाद दोबारा प्रयास करें।',
+                  'The Panchang service cannot be reached at the moment. Rather than display estimated information, we wait for verified data. Please try again shortly.',
                 )}
               </p>
               <button type="button" className="sy-btn-ghost sy-btn-sm mt-5" onClick={refetch}>
@@ -234,7 +234,7 @@ export function LiveProof() {
                   <span className="syj-alm__city">{cityLabel}</span>
                   <span className="syj-alm__live" aria-live="polite">
                     <span className="sy-live-dot" aria-hidden />
-                    {t('अभी बना', 'Live')}
+                    {t('लाइव गणना', 'Live calculation')}
                   </span>
                 </div>
               </header>
@@ -269,11 +269,11 @@ export function LiveProof() {
               )}
 
               <footer className="syj-alm__foot">
-                <b>{t('गणना वही, जो पंडित जी करते हैं।', 'The same maths a pandit uses.')}</b>
+                <b>{t('गणना का स्पष्ट और पारंपरिक आधार', 'A clear, traditional basis for every calculation')}</b>
                 <small>
                   {t(
-                    'लाहिड़ी (चित्रा पक्ष) अयनांश · तिथि सूर्योदय के समय के अनुसार · सभी समय आपके शहर के सूर्योदय से।',
-                    'Lahiri (Chitra Paksha) ayanamsa · tithi taken at sunrise (udaya) · every timing from your own city’s sunrise.',
+                    'लाहिड़ी (चित्रा पक्ष) अयनांश · उदय तिथि परंपरा · चुने गए स्थान के सूर्योदय और सूर्यास्त के अनुसार समय।',
+                    'Lahiri (Chitra Paksha) ayanamsa · Udaya Tithi convention · timings aligned to sunrise and sunset at the selected location.',
                   )}
                 </small>
               </footer>

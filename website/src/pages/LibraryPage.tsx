@@ -3,8 +3,13 @@ import { useQuery } from '@tanstack/react-query'
 import { FeaturePageShell } from '@/components/feature/FeaturePageShell'
 import { ErrorState } from '@/components/ui/ErrorState'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { getLibrary } from '@/lib/api'
+import { getLibrary, getApiBase } from '@/lib/api'
 import { useLang } from '@/i18n/LangProvider'
+
+function mediaUrl(path: string) {
+  if (/^https?:\/\//i.test(path)) return path
+  return getApiBase() ? `${getApiBase()}${path}` : path
+}
 
 export function LibraryPage() {
   const { hi } = useLang()
@@ -70,10 +75,4 @@ export function LibraryPage() {
       </ul>
     </FeaturePageShell>
   )
-}
-
-function mediaUrl(path: string) {
-  if (/^https?:\/\//i.test(path)) return path
-  const base = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
-  return base ? `${base}${path}` : path
 }

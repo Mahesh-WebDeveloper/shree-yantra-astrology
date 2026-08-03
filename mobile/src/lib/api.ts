@@ -127,6 +127,7 @@ async function requestJson<T>(path: string, makeRequest: () => Promise<Response>
         // SESSION_REVOKED = doosre device par login | AUTH_INVALID = account delete/blocked
         // dono me is device ka session mar chuka hai → force logout
         if (res.status === 401 && (code === 'SESSION_REVOKED' || code === 'AUTH_INVALID')) onSessionRevoked?.();
+        if (res.status === 402 && code === 'SUBSCRIPTION_REQUIRED') onSubscriptionRequired?.();
         throw createApiError(message, retryable, res.status);
       }
       return await res.json();
@@ -245,6 +246,8 @@ async function parseErrorBody(res: Response): Promise<{ message: string; code?: 
 // device. Registered once in App.tsx (kept here to avoid an api→auth import cycle).
 let onSessionRevoked: (() => void) | null = null;
 export function setSessionRevokedHandler(fn: (() => void) | null) { onSessionRevoked = fn; }
+let onSubscriptionRequired: (() => void) | null = null;
+export function setSubscriptionRequiredHandler(fn: (() => void) | null) { onSubscriptionRequired = fn; }
 
 async function post<T>(path: string, body: any, method: 'POST' | 'PUT' | 'PATCH' = 'POST', timeoutMs?: number): Promise<T> {
   const endActivity = beginNetworkActivity(activityForPath(path));
@@ -308,6 +311,7 @@ export interface AuthUser {
   interests: string[];
   profile: { dob?: string; tob?: string; tz?: string; place?: string; lat?: number; lng?: number; gender?: string; avatar?: string };
   plan: 'free' | 'premium';
+  subscription?: PaymentSubscriptionStatus | null;
   createdAt?: string;
 }
 export interface AuthResponse { token: string; user: AuthUser; }
@@ -319,6 +323,53 @@ export const registerUser = (input: { name: string; email?: string; phone?: stri
 export const loginUser = (input: { identifier: string; password: string }) =>
   post<AuthResponse>('/api/auth/login', input);
 export const getMe = () => get<{ user: AuthUser }>('/api/auth/me');
+
+// Razorpay subscription. All prices and entitlement decisions come from the server.
+export interface PaymentSubscriptionStatus {
+  provider: 'razorpay';
+  status: 'none' | 'created' | 'authenticated' | 'active' | 'pending' | 'halted' | 'cancelled' | 'completed' | 'expired' | string;
+  entitlementActive: boolean;
+  cancelAtCycleEnd: boolean;
+  trialEligible: boolean;
+  initialPeriodType: 'trial' | 'paid' | null;
+  trialEndsAt: string | null;
+  currentPeriodEnd: string | null;
+  nextChargeAt: string | null;
+  accessUntil: string | null;
+  cancellationRequestedAt?: string | null;
+}
+export interface PaymentConfig {
+  enabled: boolean;
+  provider: 'razorpay';
+  currency: 'INR';
+  trialAmountPaise: number;
+  trialDays: number;
+  monthlyAmountPaise: number;
+}
+export interface PaymentCheckoutSession {
+  alreadyEntitled: boolean;
+  subscription?: PaymentSubscriptionStatus;
+  keyId?: string;
+  providerSubscriptionId?: string;
+  currency?: 'INR';
+  trialAmountPaise?: number;
+  trialDays?: number;
+  monthlyAmountPaise?: number;
+  upfrontAmountPaise?: number;
+  initialPeriodType?: 'trial' | 'paid';
+  startsAt?: string;
+  authorizationExpiresAt?: string;
+}
+export interface SubscriptionResponse { user: AuthUser; subscription: PaymentSubscriptionStatus }
+export const getPaymentConfig = () => get<PaymentConfig>('/api/payments/config');
+export const createPaymentSubscription = () => post<PaymentCheckoutSession>('/api/payments/subscriptions', {});
+export const verifyPaymentSubscription = (input: {
+  razorpay_payment_id: string;
+  razorpay_subscription_id: string;
+  razorpay_signature: string;
+}) => post<SubscriptionResponse>('/api/payments/subscriptions/verify', input);
+export const getPaymentSubscription = () => get<SubscriptionResponse>('/api/payments/subscription');
+export const cancelPaymentSubscription = () => post<SubscriptionResponse>('/api/payments/subscription/cancel', {});
 // user-initiated logout — clears the server-side session too (single-device)
 export const logoutServer = () => post<{ ok: boolean }>('/api/auth/logout', {});
 

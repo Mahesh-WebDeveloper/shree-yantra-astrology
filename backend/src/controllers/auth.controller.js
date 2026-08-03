@@ -1,6 +1,7 @@
 const asyncHandler = require('../middleware/asyncHandler');
 const auth = require('../services/auth.service');
 const Settings = require('../models/Settings');
+const payments = require('../services/payment.service');
 
 // GET /api/auth/config — app ko batata hai kaun se login methods dikhane hain
 exports.config = asyncHandler(async (req, res) => {
@@ -27,6 +28,7 @@ exports.login = asyncHandler(async (req, res) => {
 
 // GET /api/auth/me  (protected)
 exports.me = asyncHandler(async (req, res) => {
+  await payments.refreshUserEntitlement(req.user);
   res.json({ user: req.user.toPublic() });
 });
 

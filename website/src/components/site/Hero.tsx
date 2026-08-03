@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ComponentType } from 'react'
+import { useEffect, useRef, useState, type ComponentType, type PointerEvent as ReactPointerEvent } from 'react'
 import { AnimatePresence, motion, useScroll, useTransform, type Variants } from 'framer-motion'
 import { useLang } from '@/i18n/LangProvider'
 import { scrollToHash, useReducedMotion } from './hooks/useSiteMotion'
@@ -9,6 +9,7 @@ import { ChoghadiyaDemo } from './parts/demos/ChoghadiyaDemo'
 import { KundliDemo } from './parts/demos/KundliDemo'
 import { AskJyotishiDemo } from './parts/demos/AskJyotishiDemo'
 import { RashifalDemo } from './parts/demos/RashifalDemo'
+import { Marquee } from './parts/motionBits'
 import './appinaction.css'
 import './hero.css'
 
@@ -48,8 +49,8 @@ const SCREENS: Screen[] = [
     id: 'panchang',
     label: { hi: 'आज का पंचांग', en: "Today's Panchang" },
     caption: {
-      hi: 'आज की तिथि, नक्षत्र और शुभ-अशुभ समय',
-      en: "Today's tithi, nakshatra and the day's timings",
+      hi: 'अपने शहर के अनुसार आज की तिथि, नक्षत्र और महत्वपूर्ण समय देखें',
+      en: "View today's tithi, nakshatra and key timings for your city",
     },
     bottom: 'home',
     ms: 6200,
@@ -59,8 +60,8 @@ const SCREENS: Screen[] = [
     id: 'choghadiya',
     label: { hi: 'चौघड़िया', en: 'Choghadiya' },
     caption: {
-      hi: 'अभी कौन-सा चौघड़िया चल रहा है, और अगला शुभ समय कब',
-      en: 'Which window is running now, and when the next good one opens',
+      hi: 'वर्तमान चौघड़िया और अगला शुभ समय तुरंत जानें',
+      en: 'Check the current Choghadiya and the next auspicious period',
     },
     bottom: 'choghadiya',
     ms: 6200,
@@ -70,8 +71,8 @@ const SCREENS: Screen[] = [
     id: 'kundli',
     label: { hi: 'जन्म कुंडली', en: 'Janam Kundli' },
     caption: {
-      hi: 'जन्म के समय का आकाश — हर ग्रह अपने भाव में',
-      en: 'The sky at the hour you were born — every planet in its house',
+      hi: 'लग्न, ग्रह, भाव और दशा के माध्यम से अपनी जन्म कुंडली समझें',
+      en: 'Understand your birth chart through lagna, planets, houses and dasha',
     },
     bottom: 'kundli',
     ms: 7000,
@@ -81,8 +82,8 @@ const SCREENS: Screen[] = [
     id: 'ask',
     label: { hi: 'ज्योतिषी से प्रश्न', en: 'Ask the Jyotishi' },
     caption: {
-      hi: 'प्रश्न पूछिए — उत्तर आपकी अपनी कुंडली से बनता है',
-      en: 'Ask a question — the answer is built from your own chart',
+      hi: 'अपनी कुंडली, दशा और गोचर के आधार पर प्रश्नों के उत्तर जानें',
+      en: 'Ask questions informed by your chart, dasha and current transits',
     },
     bottom: 'home',
     ms: 7000,
@@ -92,8 +93,8 @@ const SCREENS: Screen[] = [
     id: 'rashifal',
     label: { hi: 'राशिफल', en: 'Rashifal' },
     caption: {
-      hi: 'दिन का हाल एक नज़र में, हर क्षेत्र के साथ',
-      en: 'The day at a glance, area by area',
+      hi: 'प्रेम, करियर, धन और स्वास्थ्य से जुड़े दैनिक संकेत देखें',
+      en: 'View daily insights for relationships, career, finances and health',
     },
     bottom: 'home',
     ms: 6200,
@@ -102,27 +103,16 @@ const SCREENS: Screen[] = [
 ]
 
 const TRUST: Bi[] = [
-  { hi: 'तारीखें पंचांग से मिलाकर जाँची हुई', en: 'Dates checked against the panchang' },
-  { hi: '18 पुराण · 4 वेद · गीता · रामायण', en: '18 Puranas · 4 Vedas · Gita · Ramayana' },
-  { hi: 'हिंदी और English', en: 'Hindi and English' },
+  { hi: 'जन्म विवरण के अनुसार व्यक्तिगत कुंडली', en: 'A birth chart based on your details' },
+  { hi: 'आपके शहर के अनुसार पंचांग और शुभ समय', en: 'Panchang and timings for your city' },
+  { hi: 'हिंदी और English में सरल जानकारी', en: 'Easy-to-understand Hindi and English' },
 ]
 
-/* ── The headline's turning word ──────────────────────────────
-   One slot of the headline rotates through what the app actually
-   computes. The Hindi slot carries its own possessive because the
-   words disagree in gender (आपका पंचांग / आपकी कुंडली); the comma
-   travels inside the slot so the reserved width ends the line and
-   nothing ever reflows. */
-
-const SWAP_WORDS: Bi[] = [
-  { hi: 'आपका पंचांग,', en: 'panchang,' },
-  { hi: 'आपकी कुंडली,', en: 'kundli,' },
-  { hi: 'आपका मुहूर्त,', en: 'muhurat,' },
-  { hi: 'आपका राशिफल,', en: 'rashifal,' },
-  { hi: 'आपका चौघड़िया,', en: 'choghadiya,' },
+const HEADLINE: Bi[] = [
+  { hi: 'कुंडली समझें।', en: 'Understand your Kundli.' },
+  { hi: 'शुभ समय जानें।', en: 'Find auspicious timings.' },
+  { hi: 'वैदिक मार्गदर्शन लें।', en: 'Get Vedic guidance.' },
 ]
-
-const SWAP_MS = 2800
 
 /* ── Motion ───────────────────────────────────────────────── */
 
@@ -143,56 +133,6 @@ const RISE: Variants = {
   },
 }
 
-/**
- * The rotating headline word. All candidate words are laid out invisibly in
- * the same grid cell, so the slot is always exactly as wide as its widest
- * word — the swap can never reflow the headline. With reduced motion the
- * first word simply stands.
- */
-function WordSwap({ words, active, reduced }: { words: string[]; active: boolean; reduced: boolean }) {
-  const [i, setI] = useState(0)
-  useEffect(() => {
-    if (!active || reduced) return
-    const id = window.setInterval(() => setI((p) => (p + 1) % words.length), SWAP_MS)
-    return () => window.clearInterval(id)
-  }, [active, reduced, words.length])
-
-  const word = words[reduced ? 0 : i % words.length]
-
-  return (
-    <span className="syh__swap">
-      {words.map((w) => (
-        <span key={w} className="syh__swap-size" aria-hidden>
-          {w}
-        </span>
-      ))}
-      {reduced ? (
-        <span className="syh__swap-word">
-          <span className="sy-gold-text">{word}</span>
-        </span>
-      ) : (
-        <AnimatePresence initial={false}>
-          {/* sync mode: the old word is still sliding out of the top of the
-              clip while the new one rises in — the slot is never empty.
-              The gradient lives on an inner span: painting `background-clip:
-              text` on the element the transform composites breaks the clip in
-              Chromium and the gradient floods the whole box. */}
-          <motion.span
-            key={word}
-            className="syh__swap-word"
-            initial={{ y: '1.1em', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '-1.1em', opacity: 0 }}
-            transition={{ duration: 0.55, ease: EASE }}
-          >
-            <span className="sy-gold-text">{word}</span>
-          </motion.span>
-        </AnimatePresence>
-      )}
-    </span>
-  )
-}
-
 /** Deterministic drifting motes — no Math.random, so renders stay stable. */
 const DUST = [
   { left: '9%', top: '74%', dur: 19, delay: 0 },
@@ -206,11 +146,21 @@ const DUST = [
 /* ── Hero ─────────────────────────────────────────────────── */
 
 export function Hero() {
-  const { hi } = useLang()
+  const { hi, lang } = useLang()
   const reduced = useReducedMotion()
   const sectionRef = useRef<HTMLElement>(null)
   const screenRef = useRef<HTMLDivElement>(null)
+  const [compactHero, setCompactHero] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 900px)').matches,
+  )
 
+  useEffect(() => {
+    const query = window.matchMedia('(max-width: 900px)')
+    const sync = () => setCompactHero(query.matches)
+    sync()
+    query.addEventListener('change', sync)
+    return () => query.removeEventListener('change', sync)
+  }, [])
   /* The demo board is authored at 300x630. CSS cannot divide a length by a
      length, so `scale(calc(width / 300))` was invalid and silently dropped —
      the board stayed 300px wide inside a narrower screen and spilled over its
@@ -231,7 +181,6 @@ export function Hero() {
   const [index, setIndex] = useState(0)
   const [token, setToken] = useState(0) // bumped on every change → restarts the screen
   const [hovering, setHovering] = useState(false)
-  const [titleHover, setTitleHover] = useState(false) // pauses the word swap
   const [awake, setAwake] = useState(true)
 
   // Pause when the tab is in the background or the hero has scrolled away.
@@ -254,6 +203,12 @@ export function Hero() {
 
   const play = awake && onScreen && !reduced
   const running = play && !hovering
+  const handleStagePointerEnter = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === 'mouse') setHovering(true)
+  }
+  const handleStagePointerLeave = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === 'mouse') setHovering(false)
+  }
 
   useEffect(() => {
     if (!running) return
@@ -280,20 +235,22 @@ export function Hero() {
     <section className="syh" id="top" ref={sectionRef} aria-labelledby="syh-title">
       <div className="syh__wash" aria-hidden />
 
-      <motion.div
-        className="syh__mandala"
-        aria-hidden
-        style={reduced ? undefined : { y: mandalaY, opacity: mandalaFade }}
-      >
+      {compactHero ? null : (
         <motion.div
-          className="syh__mandala-pos"
-          initial={reduced ? false : { opacity: 0, scale: 0.94 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.6, ease: EASE }}
+          className="syh__mandala"
+          aria-hidden
+          style={reduced ? undefined : { y: mandalaY, opacity: mandalaFade }}
         >
-          <HeroMandala still={!!reduced} />
+          <motion.div
+            className="syh__mandala-pos"
+            initial={reduced ? false : { opacity: 0, scale: 0.94 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.6, ease: EASE }}
+          >
+            <HeroMandala still={!!reduced} />
+          </motion.div>
         </motion.div>
-      </motion.div>
+      )}
 
       <div className="syh__veil" aria-hidden />
       <div className="syh__vignette" aria-hidden />
@@ -325,34 +282,52 @@ export function Hero() {
         >
           <span className="syh__bleed" aria-hidden />
           <motion.p variants={RISE} className="sy-eyebrow syh__eyebrow" lang={hi ? 'hi' : 'en'}>
-            {t('पंडित जी की सटीक गणना', 'The pandit’s own calculations')}
+            <span className="syh__eyebrow-full">
+              {t(
+                'दैनिक जीवन के लिए संपूर्ण वैदिक ज्योतिष ऐप',
+                'A complete Vedic astrology app for everyday life',
+              )}
+            </span>
+            <span className="syh__eyebrow-mobile">
+              {t('हर दिन के लिए वैदिक ज्योतिष', 'Vedic astrology for everyday life')}
+            </span>
           </motion.p>
 
-          <h1
-            id="syh-title"
-            className="syh__title"
-            lang={hi ? 'hi' : 'en'}
-            onPointerEnter={() => setTitleHover(true)}
-            onPointerLeave={() => setTitleHover(false)}
-          >
-            {/* screen readers get the whole sentence once, not a slot machine */}
+          <motion.div className="syh__mobile-cosmos" variants={RISE} aria-hidden>
+            <span className="syh__mobile-cosmos-glow" />
+            <span className="syh__mobile-orbit syh__mobile-orbit--outer">
+              <i />
+              <i />
+              <i />
+            </span>
+            <span className="syh__mobile-orbit syh__mobile-orbit--inner" />
+            <svg viewBox="0 0 120 120" role="presentation">
+              <circle cx="60" cy="60" r="51" />
+              <circle cx="60" cy="60" r="31" />
+              <path d="M60 21 91 78H29Z" />
+              <path d="M60 99 29 42h62Z" />
+              <path d="M60 35 80 72H40Z" />
+              <path d="M60 85 40 48h40Z" />
+              <circle className="syh__mobile-bindu" cx="60" cy="60" r="4.5" />
+            </svg>
+          </motion.div>
+
+          <h1 id="syh-title" className="syh__title" lang={hi ? 'hi' : 'en'}>
             <span className="sr-only">
               {t(
-                'आपका पंचांग, कुंडली, मुहूर्त और राशिफल — बिल्कुल सटीक, अब आपके फ़ोन में',
-                'Your panchang, kundli, muhurat and rashifal — exactly right, now on your phone',
+                'कुंडली समझें। शुभ समय जानें। वैदिक मार्गदर्शन लें।',
+                'Understand your Kundli. Find auspicious timings. Get Vedic guidance.',
               )}
             </span>
             <span aria-hidden>
-              <motion.span className="syh__line" variants={RISE}>
-                {hi ? null : <>Your&nbsp;</>}
-                <WordSwap
-                  words={SWAP_WORDS.map((w) => (hi ? w.hi : w.en))}
-                  active={play && !titleHover}
-                  reduced={!!reduced}
-                />
+              <motion.span className="syh__line syh__line--lead" variants={RISE}>
+                <span className="sy-gold-text">{t(HEADLINE[0].hi, HEADLINE[0].en)}</span>
               </motion.span>
               <motion.span className="syh__line" variants={RISE}>
-                {t('बिल्कुल सटीक — अब आपके फ़ोन में', 'exactly right — now on your phone')}
+                {t(HEADLINE[1].hi, HEADLINE[1].en)}
+              </motion.span>
+              <motion.span className="syh__line" variants={RISE}>
+                {t(HEADLINE[2].hi, HEADLINE[2].en)}
               </motion.span>
             </span>
           </h1>
@@ -361,17 +336,28 @@ export function Hero() {
               copy push the device off the first screen. What is left is still
               a whole sentence — the tail carries the full stop. */}
           <motion.p className="syh__sub" variants={RISE}>
-            {t(
-              'आज की तिथि, शुभ मुहूर्त, अपनी जन्म कुंडली और राशिफल',
-              "Today's tithi, auspicious timings, your own birth chart and horoscope",
-            )}
-            <span className="syh__sub-more">
+            <span className="syh__sub-full">
               {t(
-                ', साथ ही आरती और पुराणों का पूरा संग्रह',
-                ', plus a complete library of aartis and scriptures',
+                'श्री यंत्र में व्यक्तिगत जन्म कुंडली,',
+                'Shree Yantra brings personalised birth charts,',
+              )}
+              <span className="syh__sub-more">
+                {t(
+                  ' शहर के अनुसार पंचांग, शुभ मुहूर्त, राशिफल और ज्योतिषीय जानकारी',
+                  ' location-based Panchang, Muhurat, Rashifal and astrological guidance',
+                )}
+              </span>
+              {t(
+                ' के साथ धार्मिक ग्रंथ, आरती, मंत्र और कथाएँ एक ही ऐप में मिलती हैं।',
+                ' together with scriptures, aarti, mantras and devotional stories in one app.',
               )}
             </span>
-            {t(' — सब कुछ हिंदी और English में, एक ही ऐप में।', ' — all in Hindi and English, in one app.')}
+            <span className="syh__sub-mobile">
+              {t(
+                'व्यक्तिगत कुंडली, पंचांग, शुभ समय और वैदिक मार्गदर्शन — सब एक ही ऐप में।',
+                'Personalised Kundli, Panchang, shubh timings and Vedic guidance — all in one app.',
+              )}
+            </span>
           </motion.p>
 
           <motion.div className="syh__cta" variants={RISE}>
@@ -396,7 +382,12 @@ export function Hero() {
               >
                 <path d="M12 3v12M7 11l5 5 5-5M4 20h16" />
               </svg>
-              {t('ऐप डाउनलोड करें', 'Get the app')}
+              <span className="syh__cta-label-full">
+                {t('Android ऐप डाउनलोड करें', 'Download the Android app')}
+              </span>
+              <span className="syh__cta-label-mobile">
+                {t('ऐप डाउनलोड करें', 'Download app')}
+              </span>
             </a>
             <a
               className="sy-btn-ghost"
@@ -406,31 +397,40 @@ export function Hero() {
                 scrollToHash('#features')
               }}
             >
-              {t('क्या-क्या मिलेगा', "See what's inside")}
+              {t('ऐप की विशेषताएँ देखें', 'Explore the app')}
             </a>
           </motion.div>
 
-          <motion.ul
-            className="syh__trust"
-            variants={RISE}
-            aria-label={t('ऐप के बारे में', 'About the app')}
-          >
-            {TRUST.map((chip) => (
-              <li key={chip.en}>
-                <span className="syh__chip sy-num">{t(chip.hi, chip.en)}</span>
-              </li>
-            ))}
-          </motion.ul>
+          {compactHero ? (
+            <motion.div className="syh__trust-marquee" variants={RISE}>
+              <Marquee
+                key={`hero-trust-${lang}`}
+                items={TRUST.map((chip) => ({ key: chip.en, label: t(chip.hi, chip.en) }))}
+                seconds={34}
+                ariaLabel={t('ऐप के बारे में', 'About the app')}
+              />
+            </motion.div>
+          ) : (
+            <motion.ul
+              className="syh__trust"
+              variants={RISE}
+              aria-label={t('ऐप के बारे में', 'About the app')}
+            >
+              {TRUST.map((chip) => (
+                <li key={chip.en}>
+                  <span className="syh__chip sy-num">{t(chip.hi, chip.en)}</span>
+                </li>
+              ))}
+            </motion.ul>
+          )}
         </motion.div>
 
         {/* ── The app, alive ─────────────────────────────────── */}
         <motion.div
           className="syh__stage"
           style={reduced ? undefined : { y: stageY }}
-          onPointerEnter={() => setHovering(true)}
-          onPointerLeave={() => setHovering(false)}
-          onFocusCapture={() => setHovering(true)}
-          onBlurCapture={() => setHovering(false)}
+          onPointerEnter={handleStagePointerEnter}
+          onPointerLeave={handleStagePointerLeave}
         >
           <motion.div
             className="syh__phonewrap"
@@ -438,6 +438,11 @@ export function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.05, delay: 0.28, ease: EASE }}
           >
+            {compactHero ? (
+              <div className="syh__mobile-mandala" aria-hidden>
+                <HeroMandala still={!!reduced} />
+              </div>
+            ) : null}
             <span className="syh__bloom" aria-hidden />
             <div className={`syh-phone${reduced ? '' : ' is-float'}`}>
               <div className="syh-phone__fit">
@@ -504,10 +509,24 @@ export function Hero() {
           type="button"
           className="syh__cue"
           lang={hi ? 'hi' : 'en'}
-          onClick={() => scrollToHash('#features')}
+          aria-label={t('नीचे आज का पंचांग देखें', "Scroll to today's Panchang")}
+          onClick={() => scrollToHash('#live-proof')}
         >
-          <span>{t('और देखिए', 'Scroll')}</span>
-          <span className="syh__cue-rail" aria-hidden />
+          <span className="syh__cue-label">{t('आगे देखें', 'Scroll')}</span>
+          <span className="syh__cue-icon" aria-hidden>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 5v14M6 13l6 6 6-6" />
+            </svg>
+          </span>
         </button>
       </div>
     </section>

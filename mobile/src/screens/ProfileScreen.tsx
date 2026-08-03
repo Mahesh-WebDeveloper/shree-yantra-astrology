@@ -21,7 +21,6 @@ import { openAppDrawer } from '../navigation/AppDrawerHost';
 import { useDialog } from '../components/DialogProvider';
 import { hTap, hSelect, hSuccess } from '../lib/haptics';
 import { useCurrentUser, updateStoredUser } from '../lib/auth';
-import { usePremium } from '../lib/premiumStore';
 import { uploadAvatar, removeAvatarApi, avatarUrl } from '../lib/api';
 import { useScreen } from '../context/AppConfigProvider';
 import { useLang } from '../i18n/LanguageProvider';
@@ -88,9 +87,8 @@ export function ProfileScreen({ navigation }: any) {
   const pscr = useScreen('profile'); // admin-managed badges/labels
 
   // live user → name / meta / info (warna static demo)
-  const localPrem = usePremium();
   const displayName = user?.name || PROFILE.name;
-  const isPremium = user?.plan === 'premium' || localPrem;
+  const isPremium = user?.plan === 'premium' && user.subscription?.entitlementActive === true;
   const since = monthYear(user?.createdAt);
   const metaText = user
     ? `${isPremium ? 'Premium Member' : 'Member'}${since ? ` · Since ${since}` : ''}`

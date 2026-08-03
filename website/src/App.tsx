@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom
 import { ThemeProvider } from '@/theme/ThemeProvider'
 import { LangProvider } from '@/i18n/LangProvider'
 import { SmoothScroll } from '@/components/layout/SmoothScroll'
+import { ScrollToTopButton } from '@/components/site/ScrollToTopButton'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { HomePage } from '@/pages/HomePage'
 
@@ -29,6 +30,7 @@ export default function App() {
       <LangProvider>
         <BrowserRouter>
           <SmoothScroll>
+            <ScrollToTopButton />
             <Suspense fallback={<RouteFallback />}>
               <Routes>
                 {/* Home carries its own SiteNav — its links are in-page anchors. */}

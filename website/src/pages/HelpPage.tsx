@@ -1,6 +1,5 @@
 ﻿import { Link } from 'react-router-dom'
 import { SiteFooter } from '@/components/layout/SiteFooter'
-import { PLAY_STORE_URL } from '@/data/showcase'
 import { LEGAL_CONTACT } from '@/data/legal'
 import { useLang } from '@/i18n/LangProvider'
 
@@ -8,21 +7,21 @@ const FAQS = [
   {
     en: {
       q: 'Is this website the full app?',
-      a: 'No. This site showcases Shree Yantra. Kundli, panchang, library and personal guidance live in the mobile app on Google Play.',
+      a: 'No. This website introduces Shree Yantra and previews selected app features. Personal Kundli, Panchang, astrological guidance and the spiritual library are available inside the Android app.',
     },
     hi: {
       q: 'क्या यह वेबसाइट पूरा ऐप है?',
-      a: 'नहीं। यह साइट श्री यंत्रा ऐप की झलक है। कुंडली, पंचांग, पुस्तकालय और व्यक्तिगत मार्गदर्शन Google Play पर मोबाइल ऐप में हैं।',
+      a: 'नहीं। यह वेबसाइट श्री यंत्र और उसकी प्रमुख सुविधाओं का परिचय देती है। व्यक्तिगत कुंडली, पंचांग, ज्योतिषीय जानकारी और धार्मिक पुस्तकालय Android ऐप में उपलब्ध हैं।',
     },
   },
   {
     en: {
       q: 'Where do I create my kundli?',
-      a: 'Install the app, add your birth details once, and your kundli plus personalised readings stay with your account.',
+      a: 'Install the app and add your birth details once. Your Kundli and personalised readings will then remain available with your account.',
     },
     hi: {
       q: 'कुंडली कहाँ बनाएँ?',
-      a: 'ऐप इंस्टॉल करें, जन्म विवरण एक बार जोड़ें — कुंडली और व्यक्तिगत रीडिंग आपके खाते के साथ रहती है।',
+      a: 'ऐप इंस्टॉल करने के बाद अपना जन्म विवरण एक बार जोड़ें। आपकी कुंडली और व्यक्तिगत ज्योतिषीय जानकारी आपके खाते में उपलब्ध रहेगी।',
     },
   },
   {
@@ -39,6 +38,10 @@ const FAQS = [
 
 export function HelpPage() {
   const { hi } = useLang()
+  const apkUrl = import.meta.env.VITE_APK_DOWNLOAD_URL?.trim()
+  const downloadHref =
+    apkUrl ||
+    `mailto:${LEGAL_CONTACT}?subject=${encodeURIComponent('Shree Yantra Android download link')}`
 
   return (
     <div className="page-shell showcase-page min-h-screen">
@@ -51,8 +54,8 @@ export function HelpPage() {
         </h1>
         <p className="mt-3 text-[15px] leading-relaxed text-[var(--sy-text-soft)]">
           {hi
-            ? 'श्री यंत्रा एक मोबाइल ऐप है। नीचे सामान्य प्रश्न हैं।'
-            : 'Shree Yantra is a mobile app. Common questions below.'}
+            ? 'श्री यंत्र एक वैदिक ज्योतिष और धार्मिक सामग्री ऐप है। नीचे ऐप तथा डाउनलोड से जुड़े सामान्य प्रश्नों के उत्तर दिए गए हैं।'
+            : 'Shree Yantra is a Vedic astrology and spiritual-content app. Find answers to common app and download questions below.'}
         </p>
 
         <ul className="mt-10 space-y-6">
@@ -69,12 +72,11 @@ export function HelpPage() {
         </ul>
 
         <a
-          href={PLAY_STORE_URL}
-          target="_blank"
-          rel="noreferrer"
+          href={downloadHref}
+          {...(apkUrl ? { download: true } : {})}
           className="sy-btn-primary mt-10 inline-flex rounded-xl px-5 py-3 text-sm font-semibold"
         >
-          {hi ? 'Google Play पर ऐप पाएँ' : 'Get the app on Google Play'}
+          {hi ? 'Android ऐप डाउनलोड करें' : 'Download the Android app'}
         </a>
       </main>
       <SiteFooter />
