@@ -6,6 +6,7 @@ export const queryKeys = {
   stats: ['stats'] as const,
   users: (params: Record<string, unknown>) => ['users', params] as const,
   books: ['books'] as const,
+  libraryOverview: ['library-overview'] as const,
   media: (params: Record<string, unknown>) => ['media', params] as const,
   plans: ['plans'] as const,
   notifications: (params: Record<string, unknown>) => ['notifications', params] as const,
@@ -37,6 +38,14 @@ export function useBooks(params?: { search?: string; published?: string }) {
   return useQuery({
     queryKey: [...queryKeys.books, params ?? {}],
     queryFn: () => endpoints.books(params),
+  })
+}
+
+export function useLibraryOverview() {
+  return useQuery({
+    queryKey: queryKeys.libraryOverview,
+    queryFn: endpoints.libraryOverview,
+    refetchInterval: 30_000,
   })
 }
 

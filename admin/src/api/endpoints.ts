@@ -53,8 +53,12 @@ export const endpoints = {
     return data.url
   },
   async books(params?: { search?: string; published?: string }) {
-    const { data } = await apiClient.get<{ books: Book[] }>('/admin/library', { params })
+    const { data } = await apiClient.get<{ books: Book[]; live?: boolean; source?: string }>('/admin/library', { params })
     return data.books
+  },
+  async libraryOverview() {
+    const { data } = await apiClient.get<LibraryOverviewResponse>('/admin/library/overview')
+    return data
   },
   async saveBook(payload: Partial<Book> & { coverFile?: File }) {
     const body = new FormData()
@@ -303,6 +307,23 @@ export interface ActivityLiveResponse {
   onlineUsers: number
   onlineDevices: number
   events: ActivityLiveEvent[]
+}
+
+export interface LibraryOverviewResponse {
+  live: boolean
+  at: string
+  source: string
+  cmsBooks: { total: number; published: number }
+  scriptures: {
+    gitaChapters: number
+    ramayanSargas: number
+    ramcharitmanasKandas: number
+    rigvedaSuktas: number
+    vedaTextSections: number
+    vedaBreakdown: { veda: string; sections: number }[]
+  }
+  media: { total: number; published: number; byCategory: { category: string; count: number }[] }
+  appUsage: { userDataProfiles: number }
 }
 
 export interface AnalyticsStats {

@@ -153,6 +153,7 @@ router.patch('/admin/users/:id', adminOnly, adminCtrl.updateUser);
 router.delete('/admin/users/:id', adminOnly, adminCtrl.deleteUser);
 router.post('/admin/users/bulk-delete', adminOnly, adminCtrl.bulkDeleteUsers);
 
+router.get('/admin/library/overview', adminOnly, libraryCtrl.adminOverview);
 router.get('/admin/library', adminOnly, libraryCtrl.adminList);
 router.post('/admin/library', adminOnly, contentImageUpload, libraryCtrl.create);
 router.patch('/admin/library/reorder', adminOnly, libraryCtrl.reorder);

@@ -2,6 +2,13 @@ const mongoose = require('mongoose');
 
 const asyncHandler = require('../middleware/asyncHandler');
 const Book = require('../models/Book');
+const GitaChapter = require('../models/GitaChapter');
+const RamayanSarga = require('../models/RamayanSarga');
+const Ramcharitmanas = require('../models/Ramcharitmanas');
+const RigVeda = require('../models/RigVeda');
+const VedaText = require('../models/VedaText');
+const MediaItem = require('../models/MediaItem');
+const UserData = require('../models/UserData');
 const { i18nValue, langFromReq, normalizeTranslations } = require('../utils/localize');
 
 function badRequest(message) {
@@ -131,7 +138,63 @@ exports.adminList = asyncHandler(async (req, res) => {
   if (req.query.published === 'false') filter.published = false;
   if (req.query.search) filter.title = new RegExp(String(req.query.search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
   const books = await Book.find(filter).sort({ order: 1, createdAt: -1 }).lean();
-  res.json({ books });
+  res.json({ books, live: true, source: 'mongodb:books' });
+});
+
+// GET /api/admin/library/overview — live counts from the same DB collections the app reads
+exports.adminOverview = asyncHandler(async (req, res) => {
+  const [
+    cmsBooks,
+    publishedBooks,
+    gitaChapters,
+    ramayanSargas,
+    ramcharitmanasKandas,
+    rigvedaSuktas,
+    vedaTextSections,
+    mediaTotal,
+    mediaPublished,
+    userDataProfiles,
+  ] = await Promise.all([
+    Book.countDocuments(),
+    Book.countDocuments({ published: true }),
+    GitaChapter.countDocuments(),
+    RamayanSarga.countDocuments(),
+    Ramcharitmanas.countDocuments(),
+    RigVeda.countDocuments(),
+    VedaText.countDocuments(),
+    MediaItem.countDocuments(),
+    MediaItem.countDocuments({ published: true }),
+    UserData.countDocuments(),
+  ]);
+
+  const [vedaBreakdown, mediaByCategory] = await Promise.all([
+    VedaText.aggregate([
+      { $group: { _id: '$veda', sections: { $sum: 1 } } },
+      { $sort: { sections: -1 } },
+      { $limit: 24 },
+    ]),
+    MediaItem.aggregate([
+      { $group: { _id: '$category', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+    ]),
+  ]);
+
+  res.json({
+    live: true,
+    at: new Date().toISOString(),
+    source: 'mongodb',
+    cmsBooks: { total: cmsBooks, published: publishedBooks },
+    scriptures: {
+      gitaChapters,
+      ramayanSargas,
+      ramcharitmanasKandas,
+      rigvedaSuktas,
+      vedaTextSections,
+      vedaBreakdown: vedaBreakdown.map((r) => ({ veda: r._id || 'unknown', sections: r.sections })),
+    },
+    media: { total: mediaTotal, published: mediaPublished, byCategory: mediaByCategory.map((r) => ({ category: r._id || 'other', count: r.count })) },
+    appUsage: { userDataProfiles },
+  });
 });
 
 exports.adminGet = asyncHandler(async (req, res) => {

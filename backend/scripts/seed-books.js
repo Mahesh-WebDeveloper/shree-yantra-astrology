@@ -1,4 +1,15 @@
+/**
+ * DEV ONLY — do not run on production to populate the admin Library page.
+ * The app library uses real imported scripture collections (Gita, Ramayan, Veda, Media).
+ * CMS Book documents should only be created via the admin panel when needed.
+ */
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
+
+if (process.env.NODE_ENV === 'production' && process.env.ALLOW_DEV_SEED !== 'true') {
+  console.error('Refusing to seed books on production. Set ALLOW_DEV_SEED=true to override.');
+  process.exit(1);
+}
+
 const mongoose = require('mongoose');
 const Book = require('../src/models/Book');
 
@@ -27,7 +38,7 @@ const BOOKS = [
     console.log(`Books already exist (${count}). Skipping seed.`);
   } else {
     await Book.insertMany(BOOKS);
-    console.log(`Seeded ${BOOKS.length} library books.`);
+    console.log(`Seeded ${BOOKS.length} dev placeholder books.`);
   }
   await mongoose.disconnect();
 })().catch((e) => {

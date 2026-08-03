@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowDown, ArrowUp, Plus, Save, Search, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, BookOpen, Database, Headphones, Plus, Save, Search, Trash2 } from 'lucide-react'
 
 import { apiErrorMessage } from '@/api/client'
 import { endpoints } from '@/api/endpoints'
-import { queryKeys, useBooks } from '@/api/queries'
+import { queryKeys, useBooks, useLibraryOverview } from '@/api/queries'
 import type { Book, BookChapter } from '@/api/types'
 import { assetUrl } from '@/api/assets'
 import { BilingualFields } from '@/components/BilingualFields'
@@ -58,15 +58,18 @@ export default function LibraryPage() {
     [search, publishedFilter],
   )
   const books = useBooks(bookParams)
+  const overview = useLibraryOverview()
   const [draft, setDraft] = useState<DraftBook>(() => normalizeDraft())
   const [deleteTarget, setDeleteTarget] = useState<Book | null>(null)
   const queryClient = useQueryClient()
   const toast = useToast()
 
-  const invalidate = () => void queryClient.invalidateQueries({ queryKey: queryKeys.books })
+  const invalidate = () => {
+    void queryClient.invalidateQueries({ queryKey: queryKeys.books })
+    void queryClient.invalidateQueries({ queryKey: queryKeys.libraryOverview })
+  }
 
   const rows = books.data ?? []
-  const publishedCount = rows.filter((b) => b.published).length
   const chapterCount = (book: Book) => (book.chapters || []).length
 
   const saveMutation = useMutation({
@@ -133,16 +136,62 @@ export default function LibraryPage() {
     <div className="grid gap-6">
       <PageHeader
         title="Library"
-        description="Manage books, chapters, cover images, premium status, and publishing."
+        description="Live content from MongoDB — same database the mobile app reads. Scripture counts are imported real texts; CMS books below are admin-managed extras."
         action={
           <div className="flex flex-wrap items-center gap-2">
-            {books.data ? <Badge tone="accent">{rows.length} books · {publishedCount} published</Badge> : null}
-            <Button type="button" variant="secondary" onClick={() => setDraft(normalizeDraft())}><Plus className="size-4" />New book</Button>
+            {overview.data ? (
+              <Badge tone="success">
+                <Database className="size-3.5" />
+                Live · {overview.data.source}
+              </Badge>
+            ) : null}
+            <Button type="button" variant="secondary" onClick={() => setDraft(normalizeDraft())}><Plus className="size-4" />New CMS book</Button>
           </div>
         }
       />
+
+      {overview.isLoading ? <LoadingRows /> : null}
+      {overview.isError ? <ErrorState message="Could not load live library overview from database." onRetry={() => void overview.refetch()} /> : null}
+      {overview.data ? (
+        <section className="grid gap-4 rounded-lg border border-border bg-card p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-base font-semibold">App library — live from database</h2>
+            <p className="text-xs text-muted-foreground">Updated {new Date(overview.data.at).toLocaleString('en-IN')}</p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {[
+              { label: 'Bhagavad Gita chapters', value: overview.data.scriptures.gitaChapters, icon: BookOpen },
+              { label: 'Ramayan sargas', value: overview.data.scriptures.ramayanSargas, icon: BookOpen },
+              { label: 'Veda / Purana sections', value: overview.data.scriptures.vedaTextSections, icon: BookOpen },
+              { label: 'Rigveda suktas', value: overview.data.scriptures.rigvedaSuktas, icon: BookOpen },
+              { label: 'Ramcharitmanas kandas', value: overview.data.scriptures.ramcharitmanasKandas, icon: BookOpen },
+              { label: 'Audio / media items', value: overview.data.media.published, sub: `${overview.data.media.total} total`, icon: Headphones },
+              { label: 'User saved progress', value: overview.data.appUsage.userDataProfiles, sub: 'bookmarks & reading', icon: Database },
+              { label: 'CMS books (admin)', value: overview.data.cmsBooks.published, sub: `${overview.data.cmsBooks.total} total`, icon: BookOpen },
+            ].map((item) => (
+              <div key={item.label} className="rounded-md border border-border bg-background p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs text-muted-foreground">{item.label}</p>
+                  <item.icon className="size-4 text-primary" />
+                </div>
+                <p className="mt-2 text-2xl font-semibold tabular-nums">{item.value.toLocaleString('en-IN')}</p>
+                {item.sub ? <p className="mt-1 text-xs text-muted-foreground">{item.sub}</p> : null}
+              </div>
+            ))}
+          </div>
+          {overview.data.scriptures.vedaBreakdown.length > 0 ? (
+            <div className="flex flex-wrap gap-2 pt-1">
+              {overview.data.scriptures.vedaBreakdown.slice(0, 12).map((v) => (
+                <Badge key={v.veda}>{v.veda}: {v.sections.toLocaleString('en-IN')} sections</Badge>
+              ))}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_460px]">
         <section className="rounded-lg border border-border bg-card p-3 sm:p-4">
+          <h2 className="mb-3 text-sm font-semibold text-muted-foreground">CMS books (admin-created only — not seed data)</h2>
           <div className="mb-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_160px]">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -157,7 +206,7 @@ export default function LibraryPage() {
           {books.isLoading ? <LoadingRows /> : null}
           {books.isError ? <ErrorState message="Could not load library." onRetry={() => void books.refetch()} /> : null}
           {books.data && rows.length === 0 ? (
-            <EmptyState title={search || publishedFilter ? 'No books match your filters.' : 'No books in the library yet. Click New book to add one.'} />
+            <EmptyState title={search || publishedFilter ? 'No CMS books match your filters.' : 'No admin CMS books yet — app scriptures & media above are the real library data.'} />
           ) : null}
           {books.data && rows.length > 0 ? (
             <div className="grid gap-3">
