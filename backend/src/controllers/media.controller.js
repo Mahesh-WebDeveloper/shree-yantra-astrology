@@ -6,7 +6,7 @@ const MediaItem = require('../models/MediaItem');
 const { i18nArray, i18nValue, langFromReq, normalizeTranslations } = require('../utils/localize');
 
 const CATEGORIES = ['mantra', 'spiritual_music', 'bhajan'];
-const SOURCE_TYPES = ['audio', 'youtube', 'external'];
+const SOURCE_TYPES = ['audio', 'youtube', 'external', 'video'];
 
 function badRequest(message) {
   return Object.assign(new Error(message), { status: 400 });
@@ -56,7 +56,10 @@ function youtubeUrlFromId(id) {
   return id ? `https://www.youtube.com/watch?v=${id}` : '';
 }
 
-function applyPayload(item, body, file) {
+function applyPayload(item, body, files) {
+  const imageFile = files && files.image && files.image[0];
+  const audioFile = files && files.audioFile && files.audioFile[0];
+  const videoFile = files && files.videoFile && files.videoFile[0];
   if (body.title !== undefined) {
     const title = String(body.title || '').trim();
     if (!title) throw badRequest('Title zaroori hai');
@@ -75,13 +78,23 @@ function applyPayload(item, body, file) {
     item.sourceType = body.sourceType;
   }
   if (body.audioUrl !== undefined) item.audioUrl = String(body.audioUrl || '').trim();
+  if (body.videoUrl !== undefined) item.videoUrl = String(body.videoUrl || '').trim();
   if (body.youtubeVideoId !== undefined || body.youtubeUrl !== undefined) {
     const id = youtubeIdFromUrl(body.youtubeVideoId || body.youtubeUrl);
     item.youtubeVideoId = id;
     item.youtubeUrl = id ? youtubeUrlFromId(id) : String(body.youtubeUrl || '').trim();
   }
   if (body.thumbnailImage !== undefined) item.thumbnailImage = String(body.thumbnailImage || '').trim();
-  if (file) item.thumbnailImage = `/uploads/content/${file.filename}`;
+  if (imageFile) item.thumbnailImage = `/uploads/content/${imageFile.filename}`;
+  if (audioFile) {
+    item.audioUrl = `/uploads/audio/admin/${audioFile.filename}`;
+    if (!body.sourceType || body.sourceType === 'youtube') item.sourceType = 'audio';
+  }
+  if (videoFile) {
+    item.videoUrl = `/uploads/video/admin/${videoFile.filename}`;
+    item.sourceType = 'video';
+    if (!item.sourceName) item.sourceName = 'Uploaded video';
+  }
   if (body.durationText !== undefined) item.durationText = String(body.durationText || '').trim();
   if (body.sourceName !== undefined) item.sourceName = String(body.sourceName || '').trim();
   if (body.sourceUrl !== undefined) item.sourceUrl = String(body.sourceUrl || '').trim();
@@ -157,11 +170,12 @@ exports.adminGet = asyncHandler(async (req, res) => {
 
 exports.create = asyncHandler(async (req, res) => {
   const item = new MediaItem();
-  applyPayload(item, req.body, req.files && req.files.image && req.files.image[0]);
+  applyPayload(item, req.body, req.files);
   if (!item.title) throw badRequest('Title zaroori hai');
   if (!item.category) throw badRequest('Category zaroori hai');
   if (item.sourceType === 'youtube' && !item.youtubeVideoId && !item.youtubeUrl) throw badRequest('YouTube video zaroori hai');
-  if (item.sourceType === 'audio' && !item.audioUrl) throw badRequest('Audio URL zaroori hai');
+  if (item.sourceType === 'audio' && !item.audioUrl) throw badRequest('Audio URL ya file zaroori hai');
+  if (item.sourceType === 'video' && !item.videoUrl) throw badRequest('Video URL ya file zaroori hai');
   await item.save();
   res.status(201).json({ mediaItem: item });
 });
@@ -170,7 +184,7 @@ exports.update = asyncHandler(async (req, res) => {
   ensureObjectId(req.params.id);
   const item = await MediaItem.findById(req.params.id);
   if (!item) throw notFound('Media item not found');
-  applyPayload(item, req.body, req.files && req.files.image && req.files.image[0]);
+  applyPayload(item, req.body, req.files);
   await item.save();
   res.json({ mediaItem: item });
 });

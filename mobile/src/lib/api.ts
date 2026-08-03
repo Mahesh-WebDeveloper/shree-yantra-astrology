@@ -948,8 +948,9 @@ export interface MediaItem {
   category: MediaCategory;
   subCategory?: string;
   language?: string;
-  sourceType: 'audio' | 'youtube' | 'external';
+  sourceType: 'audio' | 'youtube' | 'external' | 'video';
   audioUrl?: string;
+  videoUrl?: string;
   youtubeVideoId?: string;
   youtubeUrl?: string;
   thumbnailImage?: string;

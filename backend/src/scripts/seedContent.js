@@ -11,9 +11,45 @@ const FaqItem = require('../models/FaqItem');
 const MediaItem = require('../models/MediaItem');
 
 const PLANS = [
-  { name: 'Free', priceINR: 0, durationDays: 36500, features: ['Daily prediction', 'Basic kundli', 'Choghadiya'], badge: '', isActive: true, order: 0 },
-  { name: 'Monthly Premium', priceINR: 99, durationDays: 30, features: ['Everything in Free', 'Full kundli + dasha', 'AI personalised predictions', 'Ad-free'], badge: 'Popular', isActive: true, order: 1 },
-  { name: 'Yearly Premium', priceINR: 999, durationDays: 365, features: ['Everything in Monthly', '2 months free', 'Priority support', 'Premium library'], badge: 'Best Value', isActive: true, order: 2 },
+  {
+    name: 'Premium Monthly',
+    priceINR: 499,
+    durationDays: 30,
+    badge: 'Monthly',
+    isActive: true,
+    order: 0,
+    features: [
+      'Full kundli, dasha & divisional charts',
+      'AI Jyotishi — unlimited personalised answers',
+      'Premium Divine Library & scriptures',
+      'Kundli milan & advanced predictions',
+      'Ad-free, priority experience',
+    ],
+    translations: {
+      en: {
+        name: 'Premium Monthly',
+        badge: 'Monthly',
+        features: [
+          'Full kundli, dasha & divisional charts',
+          'AI Jyotishi — unlimited personalised answers',
+          'Premium Divine Library & scriptures',
+          'Kundli milan & advanced predictions',
+          'Ad-free, priority experience',
+        ],
+      },
+      hi: {
+        name: 'प्रीमियम मासिक',
+        badge: 'मासिक',
+        features: [
+          'पूर्ण कुंडली, दशा और वर्ग चक्र',
+          'AI ज्योतिषी — असीमित व्यक्तिगत उत्तर',
+          'प्रीमियम दिव्य पुस्तकालय और ग्रंथ',
+          'कुंडली मिलान और उन्नत भविष्यफल',
+          'विज्ञापन-मुक्त, प्राथमिक अनुभव',
+        ],
+      },
+    },
+  },
 ];
 
 const BOOKS = [

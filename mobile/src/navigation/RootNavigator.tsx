@@ -23,6 +23,7 @@ import { SetPasswordScreen } from '../screens/SetPasswordScreen';
 import { PredictionsScreen } from '../screens/PredictionsScreen';
 import { LibraryReaderScreen } from '../screens/LibraryReaderScreen';
 import { ContentBookScreen } from '../screens/ContentBookScreen';
+import { ContentBookChapterScreen } from '../screens/ContentBookChapterScreen';
 import { MediaPlayerScreen } from '../screens/MediaPlayerScreen';
 import { LibraryChapterScreen } from '../screens/LibraryChapterScreen';
 import { GitaScreen } from '../screens/GitaScreen';
@@ -115,6 +116,7 @@ export function RootNavigator() {
       <Stack.Screen name="Predictions" component={PredictionsScreen} />
       <Stack.Screen name="LibraryReader" component={LibraryReaderScreen} />
       <Stack.Screen name="ContentBook" component={ContentBookScreen} />
+      <Stack.Screen name="ContentBookChapter" component={ContentBookChapterScreen} />
       <Stack.Screen name="MediaPlayer" component={MediaPlayerScreen} />
       <Stack.Screen name="LibraryChapter" component={LibraryChapterScreen} />
       <Stack.Screen name="Gita" component={GitaScreen} />

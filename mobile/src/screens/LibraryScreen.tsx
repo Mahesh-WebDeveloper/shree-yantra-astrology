@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Animated, Easing, ActivityIndicator, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Animated, Easing, ActivityIndicator, TextInput, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, {
   Path, Polyline, Circle, Rect, Line, Defs, LinearGradient as SvgGrad, Stop, G,
@@ -25,6 +25,7 @@ import {
   itemById, Track, TrackColor, LibraryItem, FilterKey, LibFilter,
 } from '../data/library';
 import { useLibraryStore, toggleSaved } from '../lib/libraryStore';
+import { cmsToLibraryItem, isCmsBookId, cmsRawId } from '../lib/cmsBooks';
 
 const colorFor = (theme: Theme, c: TrackColor) =>
   c === 'purple' ? theme.purple : c === 'green' ? theme.green : c === 'blue' ? theme.blue : c === 'rose' ? theme.red : theme.gold1;
@@ -300,8 +301,18 @@ const BookCard = React.memo(function BookCard({ item, title, subtitle, theme, hi
         style={[styles.vedaCard, { borderColor: theme.cardBorder, backgroundColor: theme.cardBg }]}
       >
         <LinearGradient colors={[ac + 'cc', '#0c0c18']} start={{ x: 0.2, y: 0.1 }} end={{ x: 0.8, y: 1 }} style={styles.vedaCover}>
-          <Text style={styles.vedaCoverOm}>ॐ</Text>
-          <Text style={styles.vedaCoverName} numberOfLines={2}>{item.hindi}</Text>
+          {item.coverImage ? (
+            <>
+              <Image source={{ uri: avatarUrl(item.coverImage) }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+              <LinearGradient colors={['transparent', 'rgba(0,0,0,0.7)']} style={StyleSheet.absoluteFillObject} />
+              <Text style={styles.vedaCoverName} numberOfLines={2}>{item.hindi}</Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.vedaCoverOm}>ॐ</Text>
+              <Text style={styles.vedaCoverName} numberOfLines={2}>{item.hindi}</Text>
+            </>
+          )}
         </LinearGradient>
         <Text style={[styles.vedaName, { color: theme.isDark ? '#f0e8d0' : theme.text }]} numberOfLines={2}>{title}</Text>
         <Text style={[styles.vedaSub, { color: dim }]}>{subtitle}</Text>
@@ -349,6 +360,8 @@ export function LibraryScreen({ navigation }: any) {
   const { lang } = useLang();
   const hi = lang === 'hi';
 
+  const cmsLibraryItems = useMemo(() => cmsBooks.map(cmsToLibraryItem), [cmsBooks]);
+
   const openMenu = () => openAppDrawer();
   const openReader = useCallback((bookId: string) => {
     hTap();
@@ -366,13 +379,10 @@ export function LibraryScreen({ navigation }: any) {
     if (bookId === 'mahabharat') return navigation.navigate('Veda', { veda: 'mahabharata' });
     // 18 Mahapuranas → same DB-backed VedaScreen flow (chapters → verses + per-verse AI meaning)
     if (bookId.startsWith('puran-')) return navigation.navigate('Veda', { veda: bookId });
+    if (isCmsBookId(bookId)) return navigation.navigate('ContentBook', { id: cmsRawId(bookId) });
     navigation.navigate('LibraryReader', { id: bookId });
   }, [navigation]);
   const handleToggleSave = useCallback((id: string) => { hSelect(); toggleSaved(id); }, []);
-  const openCmsBook = (book: ContentBook) => {
-    hTap();
-    navigation.navigate('ContentBook', { id: book._id });
-  };
   const mediaAsTrack = (media: MediaItem): Track => ({
     id: media._id,
     title: media.title,
@@ -423,11 +433,16 @@ export function LibraryScreen({ navigation }: any) {
   const searching = q.length >= 2;
   const searchBooks = useMemo<LibraryItem[]>(() => {
     if (!searching) return [];
-    return SCRIPTURES.filter((b) =>
+    const staticHits = SCRIPTURES.filter((b) =>
       b.title.toLowerCase().includes(q)
       || (b.hindi || '').replace(/\n/g, '').includes(qRaw)
       || (b.subtitle || '').toLowerCase().includes(q));
-  }, [searching, q, qRaw]);
+    const cmsHits = cmsLibraryItems.filter((b) =>
+      b.title.toLowerCase().includes(q)
+      || (b.hindi || '').replace(/\n/g, '').includes(qRaw)
+      || (b.subtitle || '').toLowerCase().includes(q));
+    return [...staticHits, ...cmsHits];
+  }, [searching, q, qRaw, cmsLibraryItems]);
   const searchMedia = useMemo<MediaItem[]>(() => {
     if (!searching) return [];
     return mediaItems.filter((m) =>
@@ -439,13 +454,14 @@ export function LibraryScreen({ navigation }: any) {
   /* ── continue reading — deepest in-progress book (progress map has no timestamps) ── */
   const contRead = useMemo(() => {
     let best: { book: LibraryItem; chapter: number; percent: number } | null = null;
-    for (const b of SCRIPTURES) {
+    const allBooks = [...SCRIPTURES, ...cmsLibraryItems];
+    for (const b of allBooks) {
       const p = progress[b.id];
       if (!p || !(p.percent > 0) || p.percent >= 100) continue;
       if (!best || p.percent > best.percent) best = { book: b, chapter: p.chapter, percent: p.percent };
     }
     return best;
-  }, [progress]);
+  }, [progress, cmsLibraryItems]);
 
   useEffect(() => {
     let on = true;
@@ -499,6 +515,8 @@ export function LibraryScreen({ navigation }: any) {
     .map((id): SavedEntry | null => {
       const s = itemById(id);
       if (s) return { id, title: s.title, subtitle: s.subtitle || '', glyph: s.glyph, scripture: s.type === 'scripture', playable: !!s.trackId, trackId: s.trackId, open: () => openItem(s) };
+      const cms = cmsLibraryItems.find((x) => x.id === id);
+      if (cms) return { id, title: cms.title, subtitle: cms.subtitle || '', glyph: cms.glyph, scripture: true, playable: false, open: () => openReader(cms.bookId!) };
       const m = mediaItems.find((x) => x._id === id);
       if (m) return {
         id, title: m.title,
@@ -535,7 +553,7 @@ export function LibraryScreen({ navigation }: any) {
         {items.map((item) => {
           const glyph = (item.category as string) === 'meditation' ? 'flute' : (item.category as string) === 'aarti' ? 'om' : item.category === 'bhajan' ? 'star' : item.subCategory === 'flute' ? 'flute' : item.subCategory === 'temple_bells' ? 'bells' : item.category === 'mantra' ? 'om' : 'mix';
           const accent = (item.category as string) === 'meditation' ? theme.green : (item.category as string) === 'aarti' ? theme.red : item.category === 'bhajan' ? theme.red : item.subCategory === 'flute' ? theme.green : theme.goldText;
-          const sourceLabel = [item.sourceName || (item.sourceType === 'youtube' ? 'YouTube' : item.sourceType === 'audio' ? 'Audio' : 'External'), item.durationText, item.licenseName].filter(Boolean).join(' - ');
+          const sourceLabel = [item.sourceName || (item.sourceType === 'youtube' ? 'YouTube' : item.sourceType === 'audio' ? 'Audio' : item.sourceType === 'video' ? 'Video' : 'External'), item.durationText, item.licenseName].filter(Boolean).join(' - ');
           return (
             <Pressable
               key={item._id}
@@ -556,7 +574,7 @@ export function LibraryScreen({ navigation }: any) {
               </View>
               <BookmarkBtn active={saved.includes(item._id)} onPress={() => { hSelect(); toggleSaved(item._id); }} theme={theme} />
               <View style={[styles.playDot, { borderColor: 'rgba(220,180,80,0.4)', backgroundColor: playing(item._id) ? theme.gold1 : (theme.isDark ? 'rgba(0,0,0,0.3)' : 'rgba(176,115,22,0.06)') }]}>
-                {item.sourceType === 'youtube'
+                {item.sourceType === 'youtube' || item.sourceType === 'video'
                   ? <Chevron color={theme.goldText} size={14} />
                   : isCurrent(item._id) && player.loading
                     ? <ActivityIndicator color={theme.goldText} size="small" />
@@ -861,6 +879,16 @@ export function LibraryScreen({ navigation }: any) {
       {/* ── GITA, RAMAYANA & EPICS ── */}
       {(filter === 'all' || filter === 'gita') && <Deferred delay={400}>{renderBookGrid(tr('lib.sec.gita', 'GITA, RAMAYANA & EPICS'), hi ? 'श्रीमद्भगवद्गीता, रामायण, रामचरितमानस व महाभारत।' : 'Bhagavad Gita, Ramayana, Ramcharitmanas & Mahabharata.', booksByCat('gita'))}</Deferred>}
 
+      {filter === 'all' && cmsLibraryItems.length > 0 && (
+        <Deferred delay={450}>
+          {renderBookGrid(
+            tr('lib.sec.books', 'BOOKS & LEARNING'),
+            hi ? 'एडमिन द्वारा प्रकाशित पुस्तकें — तुरंत ऐप में उपलब्ध।' : 'Admin-published books — available instantly in the app.',
+            cmsLibraryItems,
+          )}
+        </Deferred>
+      )}
+
       {/* ── BHAGAVAD GITA AUDIO — Yatharth Geeta playlist. It's AUDIO → lives in Music (NOT
             Scriptures, which is books-only). Also on All. ── */}
       {(filter === 'all' || filter === 'gita' || filter === 'music') && gitaAudio.length > 0 && (
@@ -906,37 +934,6 @@ export function LibraryScreen({ navigation }: any) {
         </Deferred>
       )}
 
-      {filter === 'all' && cmsBooks.length > 0 && (
-        <Deferred delay={500}>
-        <LibCard theme={theme}>
-          <SectionHead label={tr('lib.cmsBooks', 'FROM ADMIN LIBRARY')} theme={theme} count={cmsBooks.length} />
-          <View style={{ gap: 12 }}>
-            {cmsBooks.map((book) => (
-              <Pressable
-                key={book._id}
-                onPress={() => openCmsBook(book)}
-                style={({ pressed }) => [
-                  styles.mantra,
-                  { backgroundColor: theme.cardBg, borderColor: theme.cardBorder },
-                  pressed && { backgroundColor: theme.isDark ? 'rgba(230,194,119,0.06)' : 'rgba(176,115,22,0.06)' },
-                ]}
-              >
-                <LinearGradient colors={theme.isDark ? MANTRA_TILE_DARK : MANTRA_TILE_LIGHT} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={[styles.mantraImg, { borderColor: theme.cardBorder }]}>
-                  <ItemGlyph name="star" color={theme.goldText} />
-                </LinearGradient>
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={[styles.mantraTitle, { color: theme.isDark ? '#fff' : theme.text }]} numberOfLines={1}>{book.title}</Text>
-                  <Text style={[styles.itemSub, { color: theme.textMuted }]} numberOfLines={1}>
-                    {[book.author, book.category, book.language].filter(Boolean).join(' • ') || tr('lib.cmsBookSubtitle', 'Admin published content')}
-                  </Text>
-                </View>
-                <Chevron color={theme.gold2} size={18} />
-              </Pressable>
-            ))}
-          </View>
-        </LibCard>
-        </Deferred>
-      )}
 
       {/* ── SPIRITUAL MUSIC — real admin-published audio only (demo drones removed) ── */}
       {(filter === 'all' || filter === 'music') && mediaMusic.length > 0 && <Deferred delay={550}>{renderMediaSection(tr('lib.dynamicMusic', 'SPIRITUAL MUSIC'), mediaMusic)}</Deferred>}

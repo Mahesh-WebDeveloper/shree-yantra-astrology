@@ -23,11 +23,12 @@ const mediaItemSchema = new mongoose.Schema(
     language: { type: String, default: 'hi', trim: true },
     sourceType: {
       type: String,
-      enum: ['audio', 'youtube', 'external'],
+      enum: ['audio', 'youtube', 'external', 'video'],
       default: 'youtube',
       index: true,
     },
     audioUrl: { type: String, default: '', trim: true },
+    videoUrl: { type: String, default: '', trim: true },
     youtubeVideoId: { type: String, default: '', trim: true, index: true },
     youtubeUrl: { type: String, default: '', trim: true },
     thumbnailImage: { type: String, default: '', trim: true },

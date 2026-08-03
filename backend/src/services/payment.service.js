@@ -5,6 +5,7 @@ const env = require('../config/env');
 const User = require('../models/User');
 const PaymentSubscription = require('../models/PaymentSubscription');
 const PaymentWebhookEvent = require('../models/PaymentWebhookEvent');
+const PaymentTransaction = require('../models/PaymentTransaction');
 
 const ACTIVE_PROVIDER_STATES = new Set(['authenticated', 'active', 'pending', 'completed']);
 const CHECKOUT_SUCCESS_STATES = new Set(['authenticated', 'active']);
@@ -44,6 +45,74 @@ function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function paymentBillingType(payment, subscription) {
+  const amount = Number(payment?.amount) || 0;
+  if (amount <= env.payments.trialAmountPaise) return 'trial';
+  if (subscription?.initialPeriodType === 'trial' && !subscription?.trialConsumedAt) return 'trial';
+  return 'paid';
+}
+
+async function recordPaymentTransaction(payment, context = {}) {
+  if (!payment?.id) return null;
+  const userId = context.userId;
+  if (!userId || !mongoose.isValidObjectId(userId)) return null;
+
+  const amount = Number(payment.amount) || 0;
+  const isTrial = context.isTrial ?? amount <= env.payments.trialAmountPaise;
+  const capturedAt = payment.created_at ? new Date(Number(payment.created_at) * 1000) : new Date();
+  const payload = {
+    user: userId,
+    provider: 'razorpay',
+    providerPaymentId: payment.id,
+    providerSubscriptionId: payment.subscription_id || context.subscriptionId || undefined,
+    providerInvoiceId: payment.invoice_id || undefined,
+    providerOrderId: payment.order_id || undefined,
+    amountPaise: amount,
+    amountRefundedPaise: Number(payment.amount_refunded) || 0,
+    currency: payment.currency || env.payments.currency,
+    status: payment.status || 'created',
+    captured: !!payment.captured,
+    method: payment.method || undefined,
+    bank: payment.bank || undefined,
+    wallet: payment.wallet || undefined,
+    vpa: payment.vpa || undefined,
+    cardLast4: payment.card?.last4 || undefined,
+    cardNetwork: payment.card?.network || undefined,
+    email: payment.email || undefined,
+    contact: payment.contact || undefined,
+    feePaise: Number(payment.fee) || 0,
+    taxPaise: Number(payment.tax) || 0,
+    description: payment.description || undefined,
+    errorCode: payment.error_code || undefined,
+    errorDescription: payment.error_description || undefined,
+    isTrial,
+    billingPeriodType: context.billingPeriodType || (isTrial ? 'trial' : 'paid'),
+    eventType: context.eventType || undefined,
+    capturedAt: payment.status === 'captured' ? capturedAt : undefined,
+    providerCreatedAt: capturedAt,
+  };
+
+  const existing = await PaymentTransaction.findOne({ providerPaymentId: payment.id });
+  if (existing) {
+    Object.assign(existing, payload);
+    await existing.save();
+    return existing;
+  }
+  return PaymentTransaction.create(payload);
+}
+
+async function recordPaymentFromWebhook(payload, subscription, eventType) {
+  const paymentEntity = payload.payload?.payment?.entity;
+  if (!paymentEntity?.id || !subscription?.user) return null;
+  return recordPaymentTransaction(paymentEntity, {
+    userId: subscription.user,
+    subscriptionId: subscription.providerSubscriptionId,
+    eventType,
+    isTrial: Number(paymentEntity.amount) <= env.payments.trialAmountPaise,
+    billingPeriodType: Number(paymentEntity.amount) <= env.payments.trialAmountPaise ? 'trial' : 'paid',
+  });
+}
+
 function requiredUpfrontAmount(subscription) {
   return subscription.initialPeriodType === 'paid'
     ? env.payments.monthlyAmountPaise
@@ -80,6 +149,13 @@ async function recoverCheckoutFromProvider(subscription, paymentIdHint) {
   assertCapturedUpfrontPayment(payment, subscription);
   subscription.checkoutVerifiedAt = subscription.checkoutVerifiedAt || new Date();
   subscription.lastPaymentId = payment.id;
+  await recordPaymentTransaction(payment, {
+    userId: subscription.user,
+    subscriptionId: subscription.providerSubscriptionId,
+    eventType: 'checkout.recover',
+    isTrial: subscription.initialPeriodType !== 'paid',
+    billingPeriodType: paymentBillingType(payment, subscription),
+  });
   if (subscription.initialPeriodType !== 'paid' && !subscription.trialConsumedAt) {
     subscription.trialConsumedAt = new Date();
   }
@@ -443,6 +519,13 @@ async function verifyCheckout(user, input) {
   local.checkoutVerifiedAt = new Date();
   if (local.initialPeriodType !== 'paid' && !local.trialConsumedAt) local.trialConsumedAt = new Date();
   local.lastPaymentId = paymentId;
+  await recordPaymentTransaction(payment, {
+    userId: user._id,
+    subscriptionId: subscriptionId,
+    eventType: 'checkout.verify',
+    isTrial: local.initialPeriodType !== 'paid',
+    billingPeriodType: paymentBillingType(payment, local),
+  });
   await local.save();
   const synced = await syncProviderEntity(entity, user._id);
   const subscription = toClient(synced);
@@ -585,6 +668,7 @@ async function handleWebhook(rawBody, headers) {
         const paymentId = payload.payload?.payment?.entity?.id;
         await recoverCheckoutFromProvider(subscription, paymentId);
       }
+      await recordPaymentFromWebhook(payload, subscription, eventType);
       subscription.lastProviderEventAt = asDate(payload.created_at) || new Date();
       await subscription.save();
       event.status = 'processed';
@@ -626,4 +710,5 @@ module.exports = {
   requiredUpfrontAmount,
   toClient,
   verifyWebhookSignature,
+  recordPaymentTransaction,
 };

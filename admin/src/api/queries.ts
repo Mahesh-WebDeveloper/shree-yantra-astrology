@@ -5,9 +5,12 @@ import { endpoints } from './endpoints'
 export const queryKeys = {
   stats: ['stats'] as const,
   users: (params: Record<string, unknown>) => ['users', params] as const,
+  user: (id: string) => ['user', id] as const,
   books: ['books'] as const,
+  book: (id: string) => ['book', id] as const,
   libraryOverview: ['library-overview'] as const,
   media: (params: Record<string, unknown>) => ['media', params] as const,
+  mediaItem: (id: string) => ['media-item', id] as const,
   plans: ['plans'] as const,
   notifications: (params: Record<string, unknown>) => ['notifications', params] as const,
   appConfig: ['app-config'] as const,
@@ -16,10 +19,17 @@ export const queryKeys = {
   aiCache: (params: Record<string, unknown>) => ['ai-cache', params] as const,
   analytics: ['analytics'] as const,
   screens: ['screens'] as const,
-  activityUsers: (q: string, page: number) => ['activity-users', q, page] as const,
+  activityUsers: (params: Record<string, unknown>) => ['activity-users', params] as const,
   activityUser: (id: string) => ['activity-user', id] as const,
+  activityUserAiChat: (id: string, params: Record<string, unknown>) => ['activity-user-ai-chat', id, params] as const,
+  activityOverview: ['activity-overview'] as const,
+  activityIssues: (params: Record<string, unknown>) => ['activity-issues', params] as const,
   activityLive: ['activity-live'] as const,
   serverMonitor: ['server-monitor'] as const,
+  subscriptionOverview: ['subscription-overview'] as const,
+  subscriptions: (params: Record<string, unknown>) => ['subscriptions', params] as const,
+  subscriptionDetail: (id: string) => ['subscription-detail', id] as const,
+  paymentTransactions: (params: Record<string, unknown>) => ['payment-transactions', params] as const,
 }
 
 export function useStats() {
@@ -34,10 +44,26 @@ export function useUsers(params: Record<string, string | number | undefined>) {
   })
 }
 
+export function useUser(id?: string) {
+  return useQuery({
+    queryKey: queryKeys.user(id || ''),
+    queryFn: () => endpoints.getUser(id!),
+    enabled: !!id,
+  })
+}
+
 export function useBooks(params?: { search?: string; published?: string }) {
   return useQuery({
     queryKey: [...queryKeys.books, params ?? {}],
     queryFn: () => endpoints.books(params),
+  })
+}
+
+export function useBook(id?: string) {
+  return useQuery({
+    queryKey: queryKeys.book(id || ''),
+    queryFn: () => endpoints.getBook(id!),
+    enabled: !!id,
   })
 }
 
@@ -51,6 +77,14 @@ export function useLibraryOverview() {
 
 export function useMedia(params: Record<string, string | undefined>) {
   return useQuery({ queryKey: queryKeys.media(params), queryFn: () => endpoints.media(params) })
+}
+
+export function useMediaItem(id?: string) {
+  return useQuery({
+    queryKey: queryKeys.mediaItem(id || ''),
+    queryFn: () => endpoints.getMediaItem(id!),
+    enabled: !!id,
+  })
 }
 
 export function usePlans() {
@@ -85,10 +119,18 @@ export function useScreens() {
   return useQuery({ queryKey: queryKeys.screens, queryFn: endpoints.screens })
 }
 
-export function useActivityUsers(q: string, page: number) {
+export function useActivityOverview() {
   return useQuery({
-    queryKey: queryKeys.activityUsers(q, page),
-    queryFn: () => endpoints.activityUsers({ q: q || undefined, page, limit: 12 }),
+    queryKey: queryKeys.activityOverview,
+    queryFn: endpoints.activityOverview,
+    refetchInterval: 15_000,
+  })
+}
+
+export function useActivityUsers(params: Record<string, string | number | undefined>) {
+  return useQuery({
+    queryKey: queryKeys.activityUsers(params),
+    queryFn: () => endpoints.activityUsers(params),
     refetchInterval: 10_000,
     placeholderData: keepPreviousData,
   })
@@ -99,6 +141,24 @@ export function useActivityUser(id: string) {
     queryKey: queryKeys.activityUser(id),
     queryFn: () => endpoints.activityUser(id),
     enabled: !!id,
+  })
+}
+
+export function useActivityIssues(params: Record<string, string | number | undefined>) {
+  return useQuery({
+    queryKey: queryKeys.activityIssues(params),
+    queryFn: () => endpoints.activityIssues(params),
+    refetchInterval: 12_000,
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useActivityUserAiChat(id: string, params: Record<string, string | number | undefined>) {
+  return useQuery({
+    queryKey: queryKeys.activityUserAiChat(id, params),
+    queryFn: () => endpoints.activityUserAiChat(id, params as { before?: string; limit?: number; q?: string }),
+    enabled: !!id,
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -117,6 +177,38 @@ export function useServerMonitor() {
     queryFn: endpoints.serverMonitor,
     refetchInterval: 4_000,
     staleTime: 0,
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useSubscriptionOverview() {
+  return useQuery({
+    queryKey: queryKeys.subscriptionOverview,
+    queryFn: endpoints.subscriptionOverview,
+    refetchInterval: 30_000,
+  })
+}
+
+export function useSubscriptions(params: Record<string, string | number | undefined>) {
+  return useQuery({
+    queryKey: queryKeys.subscriptions(params),
+    queryFn: () => endpoints.subscriptions(params),
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useSubscriptionDetail(userId: string) {
+  return useQuery({
+    queryKey: queryKeys.subscriptionDetail(userId),
+    queryFn: () => endpoints.subscriptionDetail(userId),
+    enabled: !!userId,
+  })
+}
+
+export function usePaymentTransactions(params: Record<string, string | number | undefined>) {
+  return useQuery({
+    queryKey: queryKeys.paymentTransactions(params),
+    queryFn: () => endpoints.paymentTransactions(params),
     placeholderData: keepPreviousData,
   })
 }

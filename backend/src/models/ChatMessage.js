@@ -9,6 +9,7 @@ const chatMessageSchema = new mongoose.Schema(
     question: { type: String, required: true },
     // poora AiAstrologerResponse (answer, sections, remedies, basis, followUps…) jaisa ka taisa
     response: { type: mongoose.Schema.Types.Mixed },
+    error: { type: String }, // AI jawab fail — admin tracking ke liye
     lang: { type: String, default: 'en' },
   },
   { timestamps: true }

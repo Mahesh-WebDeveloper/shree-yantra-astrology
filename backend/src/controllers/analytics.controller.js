@@ -2,10 +2,12 @@ const geoip = require('geoip-lite');
 const mongoose = require('mongoose');
 const asyncHandler = require('../middleware/asyncHandler');
 const AnalyticsEvent = require('../models/AnalyticsEvent');
+const ChatMessage = require('../models/ChatMessage');
 const User = require('../models/User');
 const { reverseGeocode } = require('../services/location.service');
 
 const ONLINE_WINDOW_MS = 2 * 60 * 1000; // "online now" = any event in the last 2 minutes
+const ERROR_EVENT_NAMES = ['ai_error', 'api_error', 'load_failed', 'app_error', 'app_crash'];
 
 function clientIp(req) {
   const xf = (req.headers['x-forwarded-for'] || '').split(',')[0].trim();
@@ -130,15 +132,52 @@ exports.stats = asyncHandler(async (req, res) => {
 
 /* ═══════════════ PER-USER ACTIVITY (admin User-Activity dashboard) ═══════════════ */
 
-// GET /api/admin/activity/users?q=&page=&limit=  (admin)
-// Every signed-in user with live rollup: online-now, last seen, last device/location,
-// event + session counts. Sorted by most-recently-active.
+// GET /api/admin/activity/overview  (admin) — KPI strip for User Activity dashboard
+exports.activityOverview = asyncHandler(async (req, res) => {
+  const now = Date.now();
+  const day = new Date(now - 86400000);
+  const week = new Date(now - 7 * 86400000);
+  const onlineCut = new Date(now - ONLINE_WINDOW_MS);
+
+  const [
+    onlineUserIds, onlineDevices, aiAsksToday, aiAsks7d,
+    errorsToday, errors7d, chatTurnsTotal, usersWithErrors7d, usersWithAi,
+  ] = await Promise.all([
+    AnalyticsEvent.distinct('user', { user: { $ne: null }, createdAt: { $gte: onlineCut } }),
+    AnalyticsEvent.distinct('deviceId', { createdAt: { $gte: onlineCut } }),
+    AnalyticsEvent.countDocuments({ name: 'ai_ask', createdAt: { $gte: day } }),
+    AnalyticsEvent.countDocuments({ name: 'ai_ask', createdAt: { $gte: week } }),
+    AnalyticsEvent.countDocuments({ name: { $in: ERROR_EVENT_NAMES }, createdAt: { $gte: day } }),
+    AnalyticsEvent.countDocuments({ name: { $in: ERROR_EVENT_NAMES }, createdAt: { $gte: week } }),
+    ChatMessage.countDocuments({}),
+    AnalyticsEvent.distinct('user', { user: { $ne: null }, name: { $in: ERROR_EVENT_NAMES }, createdAt: { $gte: week } }),
+    ChatMessage.distinct('user'),
+  ]);
+
+  res.json({
+    onlineUsers: onlineUserIds.length,
+    onlineDevices: onlineDevices.length,
+    aiAsksToday,
+    aiAsks7d,
+    errorsToday,
+    errors7d,
+    chatTurnsTotal,
+    usersWithErrors7d: usersWithErrors7d.length,
+    usersWithAiChat: usersWithAi.length,
+  });
+});
+
+// GET /api/admin/activity/users?q=&page=&limit=&sort=&plan=&online=&hasErrors=&hasAi=  (admin)
 exports.activityUsers = asyncHandler(async (req, res) => {
   const page = Math.max(1, Number(req.query.page) || 1);
   const limit = Math.min(50, Math.max(5, Number(req.query.limit) || 20));
   const q = String(req.query.q || '').trim();
+  const sortKey = String(req.query.sort || 'lastSeen');
+  const planFilter = String(req.query.plan || '').trim();
+  const onlineOnly = req.query.online === '1' || req.query.online === 'true';
+  const hasErrors = req.query.hasErrors === '1' || req.query.hasErrors === 'true';
+  const hasAi = req.query.hasAi === '1' || req.query.hasAi === 'true';
 
-  // optional search → resolve matching user ids first
   let userFilter = null;
   if (q) {
     const rx = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
@@ -147,8 +186,19 @@ exports.activityUsers = asyncHandler(async (req, res) => {
     if (!userFilter.length) return res.json({ users: [], total: 0, page, onlineNow: 0 });
   }
 
+  const onlineCut = Date.now() - ONLINE_WINDOW_MS;
   const match = { user: userFilter ? { $in: userFilter } : { $ne: null } };
-  const rows = await AnalyticsEvent.aggregate([
+
+  const sortMap = {
+    lastSeen: { lastSeen: -1 },
+    events: { events: -1 },
+    sessions: { sessions: -1 },
+    errors: { errorEvents: -1, lastSeen: -1 },
+    ai: { aiTurns: -1, lastSeen: -1 },
+  };
+  const sortStage = sortMap[sortKey] || sortMap.lastSeen;
+
+  const pipeline = [
     { $match: match },
     { $sort: { createdAt: -1 } },
     { $group: {
@@ -165,29 +215,55 @@ exports.activityUsers = asyncHandler(async (req, res) => {
       country: { $first: '$country' },
       locSource: { $first: '$locSource' },
       events: { $sum: 1 },
+      errorEvents: { $sum: { $cond: [{ $in: ['$name', ERROR_EVENT_NAMES] }, 1, 0] } },
+      aiEvents: { $sum: { $cond: [{ $eq: ['$name', 'ai_ask'] }, 1, 0] } },
       sessions: { $addToSet: '$sessionId' },
       devices: { $addToSet: '$deviceId' },
     } },
-    { $project: { lastSeen: 1, lastScreen: 1, lastEvent: 1, platform: 1, osVersion: 1, appVersion: 1, deviceBrand: 1, deviceModel: 1, city: 1, country: 1, locSource: 1, events: 1, sessions: { $size: '$sessions' }, devices: { $size: '$devices' } } },
-    { $sort: { lastSeen: -1 } },
+    { $lookup: {
+      from: 'chatmessages',
+      let: { uid: '$_id' },
+      pipeline: [{ $match: { $expr: { $eq: ['$user', '$$uid'] } } }, { $count: 'n' }],
+      as: 'chatMeta',
+    } },
+    { $addFields: {
+      aiTurns: { $ifNull: [{ $arrayElemAt: ['$chatMeta.n', 0] }, 0] },
+      sessions: { $size: '$sessions' },
+      devices: { $size: '$devices' },
+    } },
+    { $project: { chatMeta: 0 } },
+  ];
+
+  if (onlineOnly) pipeline.push({ $match: { lastSeen: { $gte: new Date(onlineCut) } } });
+  if (hasErrors) pipeline.push({ $match: { errorEvents: { $gt: 0 } } });
+  if (hasAi) pipeline.push({ $match: { $or: [{ aiTurns: { $gt: 0 } }, { aiEvents: { $gt: 0 } }] } });
+
+  if (planFilter === 'free' || planFilter === 'premium') {
+    pipeline.push(
+      { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'userDoc' } },
+      { $unwind: { path: '$userDoc', preserveNullAndEmptyArrays: true } },
+      { $match: { 'userDoc.plan': planFilter } },
+    );
+  }
+
+  pipeline.push(
+    { $sort: sortStage },
     { $facet: {
       total: [{ $count: 'n' }],
       page: [{ $skip: (page - 1) * limit }, { $limit: limit }],
     } },
-  ]);
+  );
+
+  const rows = await AnalyticsEvent.aggregate(pipeline);
   const total = (rows[0] && rows[0].total[0] && rows[0].total[0].n) || 0;
   const items = (rows[0] && rows[0].page) || [];
 
-  // hydrate user identity + plan
   const users = await User.find({ _id: { $in: items.map((r) => r._id) } })
     .select('name phone email plan blocked createdAt lastLoginAt profile.avatar').lean();
   const byId = new Map(users.map((u) => [String(u._id), u]));
-  const onlineCut = Date.now() - ONLINE_WINDOW_MS;
 
   const out = items.map((r) => {
     const u = byId.get(String(r._id));
-    // user delete ho chuka hai par uske events abhi bhi hain (orphan ref) → data
-    // fenkte nahi, saaf-saaf "Deleted user" mark karke dikhate hain.
     const gone = !u;
     const uu = u || {};
     return {
@@ -214,6 +290,9 @@ exports.activityUsers = asyncHandler(async (req, res) => {
       events: r.events,
       sessions: r.sessions,
       devices: r.devices,
+      errorEvents: r.errorEvents || 0,
+      aiEvents: r.aiEvents || 0,
+      aiTurns: r.aiTurns || 0,
     };
   });
 
@@ -230,12 +309,12 @@ exports.activityUser = asyncHandler(async (req, res) => {
   const uid = new mongoose.Types.ObjectId(id);
   const before = req.query.before ? new Date(String(req.query.before)) : null;
 
-  const [user, summary, devices, locations, topScreens, perDay, timeline] = await Promise.all([
+  const [user, summary, devices, locations, topScreens, perDay, timeline, aiTurnCount, errorTimeline, recentAi, lastAiTurn] = await Promise.all([
     User.findById(uid).select('name phone email plan blocked createdAt lastLoginAt interests profile.avatar profile.place').lean(),
     AnalyticsEvent.aggregate([
       { $match: { user: uid } },
-      { $group: { _id: null, events: { $sum: 1 }, sessions: { $addToSet: '$sessionId' }, firstSeen: { $min: '$createdAt' }, lastSeen: { $max: '$createdAt' } } },
-      { $project: { _id: 0, events: 1, sessions: { $size: '$sessions' }, firstSeen: 1, lastSeen: 1 } },
+      { $group: { _id: null, events: { $sum: 1 }, sessions: { $addToSet: '$sessionId' }, firstSeen: { $min: '$createdAt' }, lastSeen: { $max: '$createdAt' }, errorEvents: { $sum: { $cond: [{ $in: ['$name', ERROR_EVENT_NAMES] }, 1, 0] } }, aiEvents: { $sum: { $cond: [{ $eq: ['$name', 'ai_ask'] }, 1, 0] } } } },
+      { $project: { _id: 0, events: 1, sessions: { $size: '$sessions' }, firstSeen: 1, lastSeen: 1, errorEvents: 1, aiEvents: 1 } },
     ]),
     AnalyticsEvent.aggregate([
       { $match: { user: uid } },
@@ -264,9 +343,17 @@ exports.activityUser = asyncHandler(async (req, res) => {
     AnalyticsEvent.find({ user: uid, ...(before && !isNaN(before.getTime()) ? { createdAt: { $lt: before } } : {}) })
       .sort({ createdAt: -1 }).limit(60)
       .select('name screen props platform city country deviceBrand deviceModel sessionId createdAt').lean(),
+    ChatMessage.countDocuments({ user: uid }),
+    AnalyticsEvent.find({ user: uid, name: { $in: ERROR_EVENT_NAMES } })
+      .sort({ createdAt: -1 }).limit(40)
+      .select('name screen props platform appVersion createdAt').lean(),
+    ChatMessage.find({ user: uid }).sort({ createdAt: -1 }).limit(5)
+      .select('question response error lang createdAt').lean(),
+    ChatMessage.findOne({ user: uid }).sort({ createdAt: -1 }).select('question createdAt').lean(),
   ]);
 
-  const s = summary[0] || { events: 0, sessions: 0, firstSeen: null, lastSeen: null };
+  const s = summary[0] || { events: 0, sessions: 0, firstSeen: null, lastSeen: null, errorEvents: 0, aiEvents: 0 };
+  const ai = { turns: aiTurnCount || 0, lastAt: lastAiTurn?.createdAt || null, lastQuestion: lastAiTurn?.question || null };
 
   // Account delete ho chuka hai par events abhi bhi hain → 404 mat do (dashboard
   // "Could not load" dikhata tha). Activity dikhao, user ko "Deleted user" mark karo.
@@ -280,9 +367,102 @@ exports.activityUser = asyncHandler(async (req, res) => {
   res.json({
     user: userOut,
     summary: { ...s, online: s.lastSeen ? new Date(s.lastSeen).getTime() > Date.now() - ONLINE_WINDOW_MS : false },
+    ai: { turns: ai.turns || 0, lastAt: ai.lastAt || null, lastQuestion: ai.lastQuestion || null, analyticsAsks: s.aiEvents || 0 },
+    errors: errorTimeline,
+    recentAi: recentAi.map((r) => ({
+      id: String(r._id),
+      question: r.question,
+      response: r.response || null,
+      error: r.error || null,
+      lang: r.lang || 'en',
+      createdAt: r.createdAt,
+    })),
     devices: devices.map((d) => ({ deviceId: d._id, device: [d.deviceBrand, d.deviceModel].filter(Boolean).join(' ') || null, platform: d.platform, osVersion: d.osVersion, appVersion: d.appVersion, lastSeen: d.lastSeen, events: d.events })),
     locations, topScreens, perDay, timeline,
   });
+});
+
+// GET /api/admin/activity/issues?q=&page=&limit=&type=&since=  (admin) — global error/issue feed
+exports.activityIssues = asyncHandler(async (req, res) => {
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const limit = Math.min(80, Math.max(10, Number(req.query.limit) || 30));
+  const q = String(req.query.q || '').trim();
+  const type = String(req.query.type || '').trim();
+  const since = req.query.since ? new Date(String(req.query.since)) : new Date(Date.now() - 7 * 86400000);
+
+  const filter = {
+    name: type && ERROR_EVENT_NAMES.includes(type) ? type : { $in: ERROR_EVENT_NAMES },
+    createdAt: { $gte: isNaN(since.getTime()) ? new Date(Date.now() - 7 * 86400000) : since },
+  };
+
+  if (q) {
+    const rx = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+    const ids = await User.find({ $or: [{ name: rx }, { phone: rx }, { email: rx }] }).select('_id').lean();
+    const userIds = ids.map((u) => u._id);
+    if (!userIds.length) return res.json({ issues: [], total: 0, page });
+    filter.user = { $in: userIds };
+  }
+
+  const [total, issues] = await Promise.all([
+    AnalyticsEvent.countDocuments(filter),
+    AnalyticsEvent.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit)
+      .select('name screen props user platform appVersion city country deviceBrand deviceModel createdAt').lean(),
+  ]);
+
+  const users = await User.find({ _id: { $in: issues.map((e) => e.user).filter(Boolean) } }).select('name plan phone email').lean();
+  const byId = new Map(users.map((u) => [String(u._id), u]));
+
+  res.json({
+    issues: issues.map((e) => {
+      const u = e.user ? byId.get(String(e.user)) : null;
+      return {
+        _id: e._id,
+        name: e.name,
+        screen: e.screen || null,
+        props: e.props || null,
+        platform: e.platform || null,
+        appVersion: e.appVersion || null,
+        city: e.city || null,
+        country: e.country || null,
+        device: [e.deviceBrand, e.deviceModel].filter(Boolean).join(' ') || null,
+        createdAt: e.createdAt,
+        userId: e.user ? String(e.user) : null,
+        userName: u ? u.name : null,
+        userPlan: u ? u.plan : null,
+        userPhone: u ? u.phone : null,
+      };
+    }),
+    total,
+    page,
+  });
+});
+
+// GET /api/admin/activity/user/:id/ai-chat?before=&limit=&q=  (admin) — full AI Q&A history
+exports.activityUserAiChat = asyncHandler(async (req, res) => {
+  const id = req.params.id;
+  if (!mongoose.isValidObjectId(id)) return res.status(400).json({ error: 'Invalid user id' });
+  const uid = new mongoose.Types.ObjectId(id);
+  const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 25));
+  const before = req.query.before ? new Date(String(req.query.before)) : null;
+  const match = { user: uid };
+  if (before && !isNaN(before.getTime())) match.createdAt = { $lt: before };
+  const text = String(req.query.q || '').trim();
+  if (text) {
+    const rx = new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+    match.$or = [{ question: rx }, { 'response.answer': rx }, { error: rx }];
+  }
+
+  const rows = await ChatMessage.find(match).sort({ createdAt: -1 }).limit(limit + 1).lean();
+  const hasMore = rows.length > limit;
+  const turns = (hasMore ? rows.slice(0, limit) : rows).map((r) => ({
+    id: String(r._id),
+    question: r.question,
+    response: r.response || null,
+    error: r.error || null,
+    lang: r.lang || 'en',
+    createdAt: r.createdAt,
+  }));
+  res.json({ turns, hasMore });
 });
 
 // GET /api/admin/activity/live?since=  (admin) — real-time feed for the dashboard.

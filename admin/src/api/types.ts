@@ -24,6 +24,15 @@ export type User = {
   createdAt: string
   updatedAt?: string
   lastLoginAt?: string
+  subscription?: {
+    provider?: string
+    status?: string
+    entitlementActive?: boolean
+    trialEndsAt?: string
+    currentPeriodEnd?: string
+    nextChargeAt?: string
+    accessUntil?: string
+  } | null
 }
 
 export type Pagination = {
@@ -148,7 +157,7 @@ export type FaqItem = {
 }
 
 export type MediaCategory = 'mantra' | 'spiritual_music' | 'bhajan'
-export type MediaSourceType = 'audio' | 'youtube' | 'external'
+export type MediaSourceType = 'audio' | 'youtube' | 'external' | 'video'
 
 export type MediaItem = {
   _id: string
@@ -161,6 +170,7 @@ export type MediaItem = {
   language: string
   sourceType: MediaSourceType
   audioUrl: string
+  videoUrl: string
   youtubeVideoId: string
   youtubeUrl: string
   thumbnailImage: string

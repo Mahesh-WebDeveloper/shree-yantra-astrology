@@ -26,5 +26,9 @@ export function formatDateTime(value?: string | Date | null) {
 }
 
 export function inr(value: number) {
-  return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(value)
+  return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(value)
+}
+
+export function inrFromPaise(paise: number) {
+  return inr(Math.round(Number(paise) || 0) / 100)
 }

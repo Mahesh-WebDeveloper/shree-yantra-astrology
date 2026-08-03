@@ -108,7 +108,9 @@ export function AiAstrologerScreen({ navigation, route }: any) {
       setHistory((h) => h.map((turn) => (turn.id === id ? { id, question: q, response, createdAt: now } : turn)));
       scrollToAnswer();
     } catch (e: any) {
-      setHistory((h) => h.map((turn) => (turn.id === id ? { id, question: q, error: friendlyAiError(e?.message), createdAt: now } : turn)));
+      const errMsg = friendlyAiError(e?.message);
+      track('ai_error', 'AiAstrologer', { q: q.slice(0, 120), error: errMsg.slice(0, 200) });
+      setHistory((h) => h.map((turn) => (turn.id === id ? { id, question: q, error: errMsg, createdAt: now } : turn)));
     } finally {
       setSending(false);
     }

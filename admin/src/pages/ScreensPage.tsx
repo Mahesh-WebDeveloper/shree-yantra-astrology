@@ -1,173 +1,196 @@
 import { useMemo, useState } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Image as ImageIcon, Save, Upload, X } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import {
+  ChevronRight,
+  Image as ImageIcon,
+  Layers,
+  Pencil,
+  Search,
+  Smartphone,
+} from 'lucide-react'
 
-import { apiErrorMessage } from '@/api/client'
-import { endpoints, type ScreenContent } from '@/api/endpoints'
 import { assetUrl } from '@/api/assets'
-import { queryKeys, useScreens } from '@/api/queries'
-import { BilingualFields } from '@/components/BilingualFields'
-import { ErrorState, LoadingPanel } from '@/components/DataState'
+import type { ScreenContent } from '@/api/endpoints'
+import { useAppConfig, useScreens } from '@/api/queries'
+import { enrichScreenClient } from '@/data/screenDefaults'
+import { EmptyState, ErrorState, LoadingPanel } from '@/components/DataState'
 import { PageHeader } from '@/components/PageHeader'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Field, Input } from '@/components/ui/form'
-import { useToast } from '@/components/ui/toast'
+import { Input } from '@/components/ui/form'
+import {
+  countCustomFields,
+  customizationPercent,
+  groupIcon,
+  imageFieldCount,
+  isImageKey,
+  pageIcon,
+  textPreview,
+} from '@/lib/screensPage'
+import { cn } from '@/lib/utils'
 
-const isImageKey = (k: string) => /image|logo|photo|icon|cover|banner/i.test(k)
-const prettyKey = (k: string) =>
-  k.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase()).replace(/\bUrl\b/i, '')
-type ScreenFields = Record<string, string | { en?: string; hi?: string }>
-
-export default function ScreensPage() {
-  const screensQuery = useScreens()
-  const toast = useToast()
-  const queryClient = useQueryClient()
-
-  const [active, setActive] = useState<string>('')
-  const [draftState, setDraftState] = useState<{ page: string; fields: ScreenFields }>({ page: '', fields: {} })
-  const [uploading, setUploading] = useState<string | null>(null)
-
-  const screens = useMemo(() => screensQuery.data ?? [], [screensQuery.data])
-  const activePage = active || screens[0]?.page || ''
-  const current = useMemo(() => screens.find((s) => s.page === activePage), [screens, activePage])
-  const draft = draftState.page === activePage ? draftState.fields : { ...((current && current.fields) || {}) }
-  const setDraft = (next: ScreenFields | ((currentDraft: ScreenFields) => ScreenFields)) => {
-    setDraftState((state) => {
-      const base = state.page === activePage ? state.fields : { ...((current && current.fields) || {}) }
-      return {
-        page: activePage,
-        fields: typeof next === 'function' ? next(base) : next,
-      }
-    })
-  }
-
-  const mutation = useMutation({
-    mutationFn: (payload: { page: string; fields: ScreenFields }) =>
-      endpoints.updateScreen(payload.page, { fields: payload.fields }),
-    onSuccess: () => {
-      toast.success('Page content saved')
-      queryClient.invalidateQueries({ queryKey: queryKeys.screens })
-    },
-    onError: (err) => toast.error(apiErrorMessage(err)),
-  })
-
-  if (screensQuery.isLoading) return <LoadingPanel label="Loading pages" />
-  if (screensQuery.isError) return <ErrorState message="Could not load pages." onRetry={() => void screensQuery.refetch()} />
-
-  const groups = screens.reduce<Record<string, ScreenContent[]>>((acc, s) => {
-    ;(acc[s.group] ||= []).push(s)
-    return acc
-  }, {})
-
-  const onUpload = async (key: string, file: File) => {
-    setUploading(key)
-    try {
-      const url = await endpoints.uploadImage(file)
-      setDraft((d) => ({ ...d, [key]: url }))
-      toast.success('Image uploaded — Save to apply')
-    } catch (err) {
-      toast.error(apiErrorMessage(err))
-    } finally {
-      setUploading(null)
-    }
-  }
+function PageCard({
+  screen,
+  index,
+  onEdit,
+}: {
+  screen: ScreenContent
+  index: number
+  onEdit: () => void
+}) {
+  const Icon = pageIcon(screen.page)
+  const custom = countCustomFields(screen)
+  const pct = customizationPercent(screen)
+  const effective = screen.effective || {}
+  const bannerKey = Object.keys(effective).find(isImageKey)
+  const bannerSrc = bannerKey ? (effective[bannerKey] as string) : ''
+  const firstText = Object.entries(effective).find(([k]) => !isImageKey(k))
+  const snippet = firstText ? textPreview(firstText[1], 'en') : ''
 
   return (
-    <div className="grid gap-6">
+    <article
+      className="activity-stagger group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:-translate-y-1 hover:border-primary/35 hover:shadow-lg"
+      style={{ animationDelay: `${index * 50}ms` }}
+    >
+      <div className="relative h-28 bg-gradient-to-br from-primary/15 via-muted/30 to-accent/10">
+        {bannerSrc ? (
+          <img src={assetUrl(bannerSrc)} alt="" className="size-full object-cover opacity-90 transition-opacity group-hover:opacity-100" />
+        ) : (
+          <div className="grid size-full place-items-center text-muted-foreground/50">
+            <ImageIcon className="size-10" />
+          </div>
+        )}
+        <div className="absolute left-3 top-3 grid size-10 place-items-center rounded-xl bg-card/90 text-primary shadow-sm backdrop-blur-sm">
+          <Icon className="size-5" />
+        </div>
+        {custom > 0 ? (
+          <span className="absolute right-3 top-3 rounded-full bg-success/90 px-2 py-0.5 text-[10px] font-semibold text-success-foreground backdrop-blur-sm">
+            {custom} custom
+          </span>
+        ) : null}
+      </div>
+
+      <div className="flex flex-1 flex-col p-4">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="truncate font-semibold">{screen.label}</h3>
+            <p className="mt-0.5 text-xs text-muted-foreground">{screen.page}</p>
+          </div>
+          <Badge tone={pct > 0 ? 'success' : 'neutral'}>{pct}%</Badge>
+        </div>
+
+        {snippet ? (
+          <p className="mt-3 line-clamp-2 flex-1 text-sm leading-relaxed text-muted-foreground">{snippet}</p>
+        ) : (
+          <p className="mt-3 flex-1 text-sm italic text-muted-foreground">App default content</p>
+        )}
+
+        <div className="mt-4 flex items-center justify-between gap-2 border-t border-border pt-4">
+          <span className="text-xs text-muted-foreground">{Object.keys(effective).length} fields</span>
+          <Button type="button" size="sm" onClick={onEdit}>
+            <Pencil className="size-3.5" /> Edit
+            <ChevronRight className="size-3.5 opacity-60" />
+          </Button>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+export default function ScreensPage() {
+  const navigate = useNavigate()
+  const [search, setSearch] = useState('')
+  const screensQuery = useScreens()
+  const appConfigQuery = useAppConfig()
+
+  const screens = useMemo(
+    () => (screensQuery.data ?? []).map((s) => enrichScreenClient(s, appConfigQuery.data ?? null)),
+    [screensQuery.data, appConfigQuery.data],
+  )
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return screens
+    return screens.filter((s) =>
+      s.label.toLowerCase().includes(q) || s.page.toLowerCase().includes(q) || s.group.toLowerCase().includes(q),
+    )
+  }, [screens, search])
+
+  const groups = useMemo(() => {
+    const map: Record<string, typeof screens> = {}
+    filtered.forEach((s) => {
+      ;(map[s.group] ||= []).push(s)
+    })
+    return map
+  }, [filtered])
+
+  const totalCustom = screens.reduce((sum, s) => sum + countCustomFields(s), 0)
+  const totalImages = screens.reduce((sum, s) => sum + imageFieldCount(s), 0)
+
+  const openEdit = (page: string) => navigate(`/pages/edit/${page}`)
+
+  if (screensQuery.isLoading) return <LoadingPanel label="Loading pages…" />
+  if (screensQuery.isError) return <ErrorState message="Could not load pages." onRetry={() => void screensQuery.refetch()} />
+
+  return (
+    <div className="grid gap-6 pb-10">
       <PageHeader
         title="Pages — Content & Images"
-        description="Edit each app page's content here. The app reflects these changes in real time."
+        description="Tap a page card to open its full editor — customize English & Hindi text, banners and images for the mobile app."
+        action={
+          <span className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
+            <Smartphone className="size-3.5" />
+            {screens.length} screens
+          </span>
+        }
       />
-      <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
-        {/* page list */}
-        <aside className="max-h-72 overflow-y-auto rounded-lg border border-border bg-card p-2 text-card-foreground lg:max-h-none">
-          {Object.entries(groups).map(([group, list]) => (
-            <div key={group} className="mb-2">
-              <p className="px-2 py-1 text-xs uppercase tracking-wide text-muted-foreground">{group}</p>
-              <div className="flex gap-2 overflow-x-auto pb-1 lg:grid lg:overflow-visible lg:pb-0">
-                {list.map((s) => (
-                  <button
-                    key={s.page}
-                    onClick={() => setActive(s.page)}
-                    className={`min-w-max rounded-md px-3 py-2 text-left text-sm lg:block lg:w-full lg:min-w-0 ${
-                      activePage === s.page ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
-                    }`}
-                  >
-                    {s.label || s.page}
-                  </button>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        {[
+          { label: 'App screens', value: screens.length, icon: Layers, tone: 'text-primary' },
+          { label: 'Custom fields', value: totalCustom, icon: Pencil, tone: 'text-accent' },
+          { label: 'Image slots', value: totalImages, icon: ImageIcon, tone: 'text-warning' },
+        ].map((stat, i) => (
+          <div key={stat.label} className="activity-stagger rounded-xl border border-border bg-card p-4 shadow-sm" style={{ animationDelay: `${i * 55}ms` }}>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">{stat.label}</span>
+              <stat.icon className={cn('size-5', stat.tone)} />
+            </div>
+            <p className="mt-2 text-2xl font-semibold">{stat.value.toLocaleString('en-IN')}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="relative max-w-md">
+        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input className="pl-9" placeholder="Search pages…" value={search} onChange={(e) => setSearch(e.target.value)} />
+      </div>
+
+      {filtered.length === 0 ? (
+        <EmptyState title="No pages match your search." />
+      ) : (
+        Object.entries(groups).map(([group, list]) => {
+          const GIcon = groupIcon(group)
+          return (
+            <section key={group} className="grid gap-4">
+              <div className="flex items-center gap-2">
+                <span className="grid size-8 place-items-center rounded-lg bg-primary/10 text-primary">
+                  <GIcon className="size-4" />
+                </span>
+                <div>
+                  <h2 className="text-base font-semibold">{group}</h2>
+                  <p className="text-xs text-muted-foreground">{list.length} page{list.length === 1 ? '' : 's'}</p>
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {list.map((screen, i) => (
+                  <PageCard key={screen.page} screen={screen} index={i} onEdit={() => openEdit(screen.page)} />
                 ))}
               </div>
-            </div>
-          ))}
-        </aside>
-
-        {/* editor */}
-        <section className="rounded-lg border border-border bg-card p-3 text-card-foreground sm:p-5">
-          {!current ? (
-            <p className="text-muted-foreground">Select a page.</p>
-          ) : (
-            <>
-              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <h2 className="text-base font-semibold">{current.label || current.page}</h2>
-                <Button onClick={() => mutation.mutate({ page: current.page, fields: draft })} disabled={mutation.isPending}>
-                  <Save className="mr-2 size-4" />
-                  {mutation.isPending ? 'Saving…' : 'Save changes'}
-                </Button>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                {Object.keys(draft).length === 0 && <p className="text-muted-foreground">No editable fields.</p>}
-                {Object.entries(draft).map(([key, value]) =>
-                  isImageKey(key) ? (
-                    <div key={key} className="md:col-span-2">
-                    <Field label={prettyKey(key)}>
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                        <div className="grid size-16 place-items-center overflow-hidden rounded-md border border-border bg-muted">
-                        {typeof value === 'string' && value ? (
-                            <img src={assetUrl(value)} alt={key} className="size-full object-cover" />
-                          ) : (
-                            <ImageIcon className="size-5 text-muted-foreground" />
-                          )}
-                        </div>
-                        <label className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-md border border-border px-3 text-sm hover:bg-muted sm:h-10">
-                          <Upload className="size-4" />
-                          {uploading === key ? 'Uploading…' : 'Upload image'}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => { const f = e.target.files?.[0]; if (f) void onUpload(key, f) }}
-                          />
-                        </label>
-                        {value ? (
-                          <Button type="button" variant="ghost" size="sm" onClick={() => setDraft((d) => ({ ...d, [key]: '' }))}>
-                            <X className="size-4" />
-                          </Button>
-                        ) : null}
-                      </div>
-                      <Input
-                        className="mt-2"
-                        placeholder="or paste an image URL"
-                        value={typeof value === 'string' ? value : ''}
-                        onChange={(e) => setDraft((d) => ({ ...d, [key]: e.target.value }))}
-                      />
-                    </Field>
-                    </div>
-                  ) : (
-                    <div key={key} className="md:col-span-2">
-                    <BilingualFields
-                      value={typeof value === 'object' && value !== null ? { en: { value: value.en || '' }, hi: { value: value.hi || '' } } : { en: { value: String(value || '') }, hi: { value: '' } }}
-                      fields={[{ key: 'value', label: prettyKey(key), multiline: String(typeof value === 'string' ? value : value?.en || '').length > 60 }]}
-                      onChange={(next) => setDraft((d) => ({ ...d, [key]: { en: next.en.value || '', hi: next.hi.value || '' } }))}
-                    />
-                    </div>
-                  )
-                )}
-              </div>
-            </>
-          )}
-        </section>
-      </div>
+            </section>
+          )
+        })
+      )}
     </div>
   )
 }

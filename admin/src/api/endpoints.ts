@@ -32,6 +32,10 @@ export const endpoints = {
     const { data } = await apiClient.get<UserListResponse>('/admin/users', { params })
     return data
   },
+  async getUser(id: string) {
+    const { data } = await apiClient.get<{ user: User }>(`/admin/users/${id}`)
+    return data.user
+  },
   async updateUser(id: string, payload: Partial<Pick<User, 'name' | 'plan' | 'role' | 'blocked'>>) {
     const { data } = await apiClient.patch<{ user: User }>(`/admin/users/${id}`, payload)
     return data.user
@@ -55,6 +59,10 @@ export const endpoints = {
   async books(params?: { search?: string; published?: string }) {
     const { data } = await apiClient.get<{ books: Book[]; live?: boolean; source?: string }>('/admin/library', { params })
     return data.books
+  },
+  async getBook(id: string) {
+    const { data } = await apiClient.get<{ book: Book }>(`/admin/library/${id}`)
+    return data.book
   },
   async libraryOverview() {
     const { data } = await apiClient.get<LibraryOverviewResponse>('/admin/library/overview')
@@ -84,13 +92,19 @@ export const endpoints = {
     const { data } = await apiClient.get<{ media: MediaItem[] }>('/admin/media', { params })
     return data.media
   },
-  async saveMedia(payload: Partial<MediaItem> & { thumbnailFile?: File }) {
+  async getMediaItem(id: string) {
+    const { data } = await apiClient.get<{ mediaItem: MediaItem }>(`/admin/media/${id}`)
+    return data.mediaItem
+  },
+  async saveMedia(payload: Partial<MediaItem> & { thumbnailFile?: File; audioFile?: File; videoFile?: File }) {
     const body = new FormData()
     Object.entries(payload).forEach(([key, value]) => {
-      if (key === 'thumbnailFile' || key === '_id' || value === undefined) return
+      if (key === 'thumbnailFile' || key === 'audioFile' || key === 'videoFile' || key === '_id' || value === undefined) return
       body.set(key, typeof value === 'object' ? JSON.stringify(value) : String(value))
     })
     if (payload.thumbnailFile) body.set('image', payload.thumbnailFile)
+    if (payload.audioFile) body.set('audioFile', payload.audioFile)
+    if (payload.videoFile) body.set('videoFile', payload.videoFile)
     const url = payload._id ? `/admin/media/${payload._id}` : '/admin/media'
     const method = payload._id ? apiClient.patch : apiClient.post
     const { data } = await method<{ mediaItem: MediaItem }>(url, body)
@@ -183,7 +197,20 @@ export const endpoints = {
     const { data } = await apiClient.get<{ screens: ScreenContent[] }>('/admin/screens')
     return data.screens
   },
-  async activityUsers(params: { q?: string; page?: number; limit?: number }) {
+  async activityOverview() {
+    const { data } = await apiClient.get<ActivityOverview>('/admin/activity/overview')
+    return data
+  },
+  async activityUsers(params: {
+    q?: string
+    page?: number
+    limit?: number
+    sort?: string
+    plan?: string
+    online?: string
+    hasErrors?: string
+    hasAi?: string
+  }) {
     const { data } = await apiClient.get<ActivityUsersResponse>('/admin/activity/users', { params })
     return data
   },
@@ -199,6 +226,14 @@ export const endpoints = {
     })
     return data
   },
+  async activityIssues(params: Record<string, string | number | undefined>) {
+    const { data } = await apiClient.get<ActivityIssuesResponse>('/admin/activity/issues', { params })
+    return data
+  },
+  async activityUserAiChat(id: string, params?: { before?: string; limit?: number; q?: string }) {
+    const { data } = await apiClient.get<ActivityAiChatResponse>(`/admin/activity/user/${id}/ai-chat`, { params })
+    return data
+  },
   async serverMonitor() {
     const { data } = await apiClient.get<import('./serverMonitor.types').ServerMonitorResponse>('/admin/server-monitor')
     return data
@@ -206,6 +241,22 @@ export const endpoints = {
   async updateScreen(page: string, payload: { label?: string; fields?: ScreenContent['fields'] }) {
     const { data } = await apiClient.put<{ screen: ScreenContent }>(`/admin/screens/${page}`, payload)
     return data.screen
+  },
+  async subscriptionOverview() {
+    const { data } = await apiClient.get<SubscriptionOverview>('/admin/subscriptions/overview')
+    return data
+  },
+  async subscriptions(params: Record<string, string | number | undefined>) {
+    const { data } = await apiClient.get<SubscriptionListResponse>('/admin/subscriptions', { params })
+    return data
+  },
+  async subscriptionDetail(userId: string) {
+    const { data } = await apiClient.get<SubscriptionDetailResponse>(`/admin/subscriptions/${userId}`)
+    return data
+  },
+  async paymentTransactions(params: Record<string, string | number | undefined>) {
+    const { data } = await apiClient.get<PaymentTransactionListResponse>('/admin/payments/transactions', { params })
+    return data
   },
 }
 
@@ -215,6 +266,25 @@ export interface ScreenContent {
   group: string
   order: number
   fields: Record<string, string | { en?: string; hi?: string }>
+  defaults?: Record<string, string | { en?: string; hi?: string }>
+  fieldMeta?: Record<string, { hint?: string }>
+  effective?: Record<string, { en?: string; hi?: string } | string>
+  sources?: Record<string, 'default' | 'custom'>
+  appConfigLinks?: Array<{ label: string; path: string }>
+  appConfigPreview?: Record<string, unknown> | null
+  updatedAt?: string
+}
+
+export interface ActivityOverview {
+  onlineUsers: number
+  onlineDevices: number
+  aiAsksToday: number
+  aiAsks7d: number
+  errorsToday: number
+  errors7d: number
+  chatTurnsTotal: number
+  usersWithErrors7d: number
+  usersWithAiChat: number
 }
 
 export interface ActivityUser {
@@ -241,6 +311,9 @@ export interface ActivityUser {
   events: number
   sessions: number
   devices: number
+  errorEvents?: number
+  aiEvents?: number
+  aiTurns?: number
 }
 
 export interface ActivityUsersResponse {
@@ -279,12 +352,52 @@ export interface ActivityUserDetail {
     avatar?: string
     place?: string
   }
-  summary: { events: number; sessions: number; firstSeen?: string; lastSeen?: string; online: boolean }
+  summary: { events: number; sessions: number; firstSeen?: string; lastSeen?: string; online: boolean; errorEvents?: number; aiEvents?: number }
+  ai?: { turns: number; lastAt?: string | null; lastQuestion?: string | null; analyticsAsks?: number }
+  errors?: ActivityTimelineEvent[]
+  recentAi?: ActivityAiTurn[]
   devices: { deviceId: string; device?: string; platform?: string; osVersion?: string; appVersion?: string; lastSeen?: string; events: number }[]
   locations: { city?: string; region?: string; country?: string; locSource?: 'gps' | 'ip' | null; count: number; lastSeen?: string }[]
   topScreens: { screen: string; count: number }[]
   perDay: { date: string; count: number }[]
   timeline: ActivityTimelineEvent[]
+}
+
+export interface ActivityAiTurn {
+  id: string
+  question: string
+  response?: Record<string, unknown> | null
+  error?: string | null
+  lang?: string
+  createdAt: string
+}
+
+export interface ActivityAiChatResponse {
+  turns: ActivityAiTurn[]
+  hasMore: boolean
+}
+
+export interface ActivityIssue {
+  _id: string
+  name: string
+  screen?: string | null
+  props?: Record<string, unknown> | null
+  platform?: string | null
+  appVersion?: string | null
+  city?: string | null
+  country?: string | null
+  device?: string | null
+  createdAt: string
+  userId?: string | null
+  userName?: string | null
+  userPlan?: 'free' | 'premium' | null
+  userPhone?: string | null
+}
+
+export interface ActivityIssuesResponse {
+  issues: ActivityIssue[]
+  total: number
+  page: number
 }
 
 export interface ActivityLiveEvent {
@@ -336,4 +449,110 @@ export interface AnalyticsStats {
   countries: { country: string; count: number }[]
   cities: { city: string; country?: string; count: number }[]
   recent: { _id: string; name: string; screen?: string; platform?: string; city?: string; country?: string; createdAt: string }[]
+}
+
+export interface SubscriptionOverview {
+  at: string
+  pricing: { trialInr: number; trialDays: number; monthlyInr: number; currency: string }
+  subscriptions: {
+    total: number
+    activePremium: number
+    trialActive: number
+    trialStarted: number
+    convertedAfterTrial: number
+    conversionRatePercent: number
+    cancelled: number
+  }
+  revenue: {
+    totalInr: number
+    totalPaise: number
+    trialInr: number
+    recurringInr: number
+    transactionCount: number
+    trialPayments: number
+    recurringPayments: number
+  }
+  paymentMethods: { method: string; count: number; totalInr: number }[]
+  dailyRevenue: { date: string; totalInr: number; count: number }[]
+  topPayers: { user: { id: string; name: string; email?: string; phone?: string } | null; totalInr: number; payments: number }[]
+  recentTransactions: PaymentTransactionRow[]
+  webhooks: Record<string, number>
+  milestones: {
+    firstSubscriber: { user: { id: string; name: string; email?: string } | null; at: string } | null
+    latestSubscriber: { user: { id: string; name: string; email?: string } | null; at: string } | null
+  }
+}
+
+export interface PaymentTransactionRow {
+  id: string
+  userId: string
+  providerPaymentId: string
+  providerSubscriptionId: string
+  providerInvoiceId: string
+  providerOrderId: string
+  amountPaise: number
+  amountInr: number
+  currency: string
+  status: string
+  captured: boolean
+  method: string
+  methodLabel?: string
+  bank: string
+  wallet: string
+  vpa: string
+  cardLast4: string
+  cardNetwork: string
+  email: string
+  contact: string
+  isTrial: boolean
+  billingPeriodType: string
+  eventType: string
+  capturedAt: string
+  createdAt: string
+  user?: { id: string; name: string; email?: string; phone?: string } | null
+}
+
+export interface SubscriptionRow {
+  subscription: {
+    id: string
+    userId: string
+    providerSubscriptionId: string
+    status: string
+    entitlementActive: boolean
+    initialPeriodType: string
+    trialConsumedAt?: string
+    checkoutVerifiedAt?: string
+    startAt?: string
+    currentPeriodEnd?: string
+    nextChargeAt?: string
+    accessUntil?: string
+    cancelAtCycleEnd: boolean
+    paidCount: number
+    lastPaymentId: string
+    createdAt: string
+    updatedAt: string
+  }
+  user: { id: string; name: string; email?: string; phone?: string; plan: string; createdAt?: string } | null
+  totalPaidInr: number
+  paymentCount: number
+  lastPaymentAt?: string | null
+  segment: string
+}
+
+export interface SubscriptionListResponse {
+  subscriptions: SubscriptionRow[]
+  pagination: { page: number; limit: number; total: number; pages: number }
+}
+
+export interface SubscriptionDetailResponse {
+  user: { id: string; name: string; email?: string; phone?: string; plan: string; createdAt?: string }
+  subscription: SubscriptionRow['subscription'] | null
+  summary: { totalPaidInr: number; paymentCount: number; trialPayments: number; recurringPayments: number }
+  transactions: PaymentTransactionRow[]
+  webhooks: { id: string; eventType: string; status: string; error: string; createdAt: string; processedAt?: string }[]
+}
+
+export interface PaymentTransactionListResponse {
+  transactions: PaymentTransactionRow[]
+  pagination: { page: number; limit: number; total: number; pages: number }
 }

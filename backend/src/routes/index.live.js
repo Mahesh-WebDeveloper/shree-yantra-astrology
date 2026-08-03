@@ -33,6 +33,7 @@ const faqCtrl = require('../controllers/faq.controller');
 const analyticsCtrl = require('../controllers/analytics.controller');
 const serverMetricsCtrl = require('../controllers/serverMetrics.controller');
 const screensCtrl = require('../controllers/screens.controller');
+const subscriptionsCtrl = require('../controllers/subscriptions.controller');
 const mediaCtrl = require('../controllers/media.controller');
 const locationCtrl = require('../controllers/location.controller');
 const gitaCtrl = require('../controllers/gita.controller');
@@ -43,7 +44,7 @@ const vedaCtrl = require('../controllers/veda.controller');
 const dailyCtrl = require('../controllers/daily.controller');
 const requireAuth = require('../middleware/auth');
 const requireAdmin = require('../middleware/admin');
-const { avatarUpload, contentImageUpload } = require('../middleware/upload');
+const { avatarUpload, contentImageUpload, contentMediaUpload } = require('../middleware/upload');
 
 const adminOnly = [requireAuth, requireAdmin];
 const adminLoginLimiter = rateLimit({
@@ -162,11 +163,11 @@ router.patch('/admin/library/:id', adminOnly, contentImageUpload, libraryCtrl.up
 router.delete('/admin/library/:id', adminOnly, libraryCtrl.remove);
 
 router.get('/admin/media', adminOnly, mediaCtrl.adminList);
-router.post('/admin/media', adminOnly, contentImageUpload, mediaCtrl.create);
+router.post('/admin/media', adminOnly, contentMediaUpload, mediaCtrl.create);
 router.patch('/admin/media/reorder', adminOnly, mediaCtrl.reorder);
 router.get('/admin/media/youtube/search', adminOnly, mediaCtrl.youtubeSearch);
 router.get('/admin/media/:id', adminOnly, mediaCtrl.adminGet);
-router.patch('/admin/media/:id', adminOnly, contentImageUpload, mediaCtrl.update);
+router.patch('/admin/media/:id', adminOnly, contentMediaUpload, mediaCtrl.update);
 router.delete('/admin/media/:id', adminOnly, mediaCtrl.remove);
 
 router.get('/admin/plans', adminOnly, plansCtrl.adminList);
@@ -197,9 +198,17 @@ router.get('/admin/analytics', adminOnly, analyticsCtrl.stats);
 router.get('/admin/server-monitor', adminOnly, serverMetricsCtrl.get);
 
 // per-user activity tracking (User Activity dashboard — real-time)
+router.get('/admin/activity/overview', adminOnly, analyticsCtrl.activityOverview);
 router.get('/admin/activity/users', adminOnly, analyticsCtrl.activityUsers);
 router.get('/admin/activity/user/:id', adminOnly, analyticsCtrl.activityUser);
+router.get('/admin/activity/user/:id/ai-chat', adminOnly, analyticsCtrl.activityUserAiChat);
+router.get('/admin/activity/issues', adminOnly, analyticsCtrl.activityIssues);
 router.get('/admin/activity/live', adminOnly, analyticsCtrl.activityLive);
+
+router.get('/admin/subscriptions/overview', adminOnly, subscriptionsCtrl.overview);
+router.get('/admin/subscriptions', adminOnly, subscriptionsCtrl.list);
+router.get('/admin/subscriptions/:userId', adminOnly, subscriptionsCtrl.detail);
+router.get('/admin/payments/transactions', adminOnly, subscriptionsCtrl.listTransactions);
 
 router.get('/admin/screens', adminOnly, screensCtrl.adminList);
 router.get('/admin/screens/:page', adminOnly, screensCtrl.adminGet);

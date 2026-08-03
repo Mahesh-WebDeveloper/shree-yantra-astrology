@@ -41,6 +41,7 @@ export interface LibraryItem {
   trackId?: string;        // present → playable
   bookId?: string;         // present → readable (opens reader)
   glyph?: 'sun' | 'target' | 'star' | 'om' | 'bells' | 'flute' | 'rain' | 'mix';
+  coverImage?: string;     // admin CMS cover (shown on BookCard when set)
 }
 
 /* NOTE: the old static demo MANTRAS + MUSIC ("Deep Meditation", "OM CHANTING",

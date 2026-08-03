@@ -9,6 +9,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { fonts, radii } from '../theme/tokens';
 import { hTap } from '../lib/haptics';
 import { useLang } from '../i18n/LanguageProvider';
+import { avatarUrl } from '../lib/api';
 
 function PlayExternalIcon({ color }: { color: string }) {
   return (
@@ -25,20 +26,37 @@ function embedUrl(videoId?: string, youtubeUrl?: string) {
   return id ? `https://www.youtube.com/embed/${id}?autoplay=1&rel=0&modestbranding=1` : '';
 }
 
+function uploadedVideoHtml(src: string) {
+  const safe = src.replace(/"/g, '&quot;');
+  return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{margin:0;padding:0}body{background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh}video{width:100%;max-height:100vh;background:#000}</style></head><body><video controls playsinline autoplay src="${safe}"></video></body></html>`;
+}
+
 export function MediaPlayerScreen({ navigation, route }: any) {
   const { theme } = useTheme();
   const { lang } = useLang();
   const hi = lang === 'hi';
   const media = route.params?.media || {};
-  const url = embedUrl(media.youtubeVideoId, media.youtubeUrl);
-  const externalUrl = media.sourceUrl || media.youtubeUrl || media.audioUrl || '';
+  const youtubeEmbed = embedUrl(media.youtubeVideoId, media.youtubeUrl);
+  const uploadedVideo = media.sourceType === 'video' && media.videoUrl
+    ? (avatarUrl(media.videoUrl) || media.videoUrl)
+    : '';
+  const externalUrl = media.sourceUrl || media.youtubeUrl || media.audioUrl || media.videoUrl || '';
 
   return (
     <Page title={media.title || (hi ? 'मीडिया' : 'Media')} onBack={() => { hTap(); navigation.goBack(); }}>
       <Card padded={false} style={styles.playerCard}>
-        {url ? (
+        {youtubeEmbed ? (
           <WebView
-            source={{ uri: url }}
+            source={{ uri: youtubeEmbed }}
+            allowsFullscreenVideo
+            mediaPlaybackRequiresUserAction={false}
+            javaScriptEnabled
+            domStorageEnabled
+            style={styles.webview}
+          />
+        ) : uploadedVideo ? (
+          <WebView
+            source={{ html: uploadedVideoHtml(uploadedVideo) }}
             allowsFullscreenVideo
             mediaPlaybackRequiresUserAction={false}
             javaScriptEnabled
@@ -48,7 +66,7 @@ export function MediaPlayerScreen({ navigation, route }: any) {
         ) : (
           <View style={[styles.empty, { backgroundColor: theme.cardBg }]}>
             <Text style={[styles.emptyTitle, { color: theme.text }]}>{hi ? 'कोई चलाने योग्य स्रोत नहीं' : 'No playable source'}</Text>
-            <Text style={[styles.emptySub, { color: theme.textMuted }]}>{hi ? 'एडमिन से YouTube URL या ऑडियो URL जोड़ें।' : 'Add a YouTube URL or audio URL from admin.'}</Text>
+            <Text style={[styles.emptySub, { color: theme.textMuted }]}>{hi ? 'एडमिन से YouTube, ऑडियो या वीडियो जोड़ें।' : 'Add a YouTube, audio or video source from admin.'}</Text>
           </View>
         )}
       </Card>
