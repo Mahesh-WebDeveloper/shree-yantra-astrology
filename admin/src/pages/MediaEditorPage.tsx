@@ -235,36 +235,36 @@ export default function MediaEditorPage() {
 
   return (
     <div className="grid min-h-[calc(100svh-4rem)] gap-0">
-      <header className="sticky top-0 z-20 -mx-4 border-b border-border bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <header className="sticky top-0 z-10 -mx-3 border-b border-border bg-background/95 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-6 sm:px-6">
+        <div className="flex flex-col gap-3">
           <div className="flex min-w-0 items-start gap-3">
-            <Button type="button" variant="ghost" size="icon" onClick={handleBack} aria-label="Back to media">
+            <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={handleBack} aria-label="Back to media">
               <ArrowLeft className="size-5" />
             </Button>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="truncate text-lg font-semibold">{isNew ? 'Add new media' : 'Edit media'}</h1>
                 {draft._id ? <Badge tone={draft.published ? 'success' : 'neutral'}>{draft.published ? 'Published' : 'Draft'}</Badge> : null}
                 {dirty ? <Badge tone="warning">Unsaved</Badge> : null}
               </div>
-              <p className="mt-0.5 text-sm text-muted-foreground">Upload local audio/video, YouTube, or external links — bilingual content supported</p>
+              <p className="mt-0.5 text-sm text-muted-foreground">Upload audio/video, YouTube, or links — EN/HI supported</p>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
             {draft._id ? (
-              <Button type="button" variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+              <Button type="button" variant="destructive" size="sm" className="col-span-2 sm:col-auto" onClick={() => setDeleteOpen(true)}>
                 <Trash2 className="size-4" /> Delete
               </Button>
             ) : null}
-            <Button type="button" variant="secondary" disabled={saveMutation.isPending} onClick={() => submit(false)}>
+            <Button type="button" variant="secondary" className="w-full sm:w-auto" disabled={saveMutation.isPending} onClick={() => submit(false)}>
               <Save className="size-4" /> Save draft
             </Button>
-            <Button type="button" disabled={saveMutation.isPending || !validation.ok} onClick={() => submit(true)}>
-              <Sparkles className="size-4" /> {draft.published ? 'Save & publish' : 'Publish to app'}
+            <Button type="button" className="w-full sm:w-auto" disabled={saveMutation.isPending || !validation.ok} onClick={() => submit(true)}>
+              <Sparkles className="size-4" /> {draft.published ? 'Save & publish' : 'Publish'}
             </Button>
           </div>
         </div>
-        <nav className="mt-4 flex gap-1 overflow-x-auto pb-1" aria-label="Editor sections">
+        <nav className="admin-scroll-x mt-3 flex gap-1 pb-0.5" aria-label="Editor sections">
           {(Object.keys(TAB_LABELS) as EditorTab[]).map((key) => (
             <button
               key={key}

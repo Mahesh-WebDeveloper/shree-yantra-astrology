@@ -232,28 +232,28 @@ export default function UsersPage() {
                 onChange={(e) => { setSearch(e.target.value); setPage(1) }}
               />
             </div>
-            <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-              <Select className="h-9 w-auto min-w-[7.25rem] shrink-0" value={planFilter} onChange={(e) => { setPlanFilter(e.target.value as PlanFilter); setPage(1) }} aria-label="Plan">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center lg:justify-end">
+              <Select className="h-9 w-full min-w-0 sm:w-auto sm:min-w-[7.25rem]" value={planFilter} onChange={(e) => { setPlanFilter(e.target.value as PlanFilter); setPage(1) }} aria-label="Plan">
                 <option value="">All plans</option>
                 <option value="free">Free</option>
                 <option value="premium">Premium</option>
               </Select>
-              <Select className="h-9 w-auto min-w-[7.25rem] shrink-0" value={roleFilter} onChange={(e) => { setRoleFilter(e.target.value as RoleFilter); setPage(1) }} aria-label="Role">
+              <Select className="h-9 w-full min-w-0 sm:w-auto sm:min-w-[7.25rem]" value={roleFilter} onChange={(e) => { setRoleFilter(e.target.value as RoleFilter); setPage(1) }} aria-label="Role">
                 <option value="">All roles</option>
                 <option value="user">User</option>
                 <option value="admin">Admin</option>
               </Select>
-              <Select className="h-9 w-auto min-w-[7.25rem] shrink-0" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value as StatusFilter); setPage(1) }} aria-label="Status">
+              <Select className="h-9 w-full min-w-0 sm:w-auto sm:min-w-[7.25rem]" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value as StatusFilter); setPage(1) }} aria-label="Status">
                 <option value="">All status</option>
                 <option value="active">Active</option>
                 <option value="blocked">Blocked</option>
               </Select>
-              <Select className="h-9 w-auto min-w-[4.5rem] shrink-0" value={String(limit)} onChange={(e) => { setLimit(Number(e.target.value)); setPage(1) }} aria-label="Page size">
+              <Select className="h-9 w-full min-w-0 sm:w-auto sm:min-w-[4.5rem]" value={String(limit)} onChange={(e) => { setLimit(Number(e.target.value)); setPage(1) }} aria-label="Page size">
                 <option value="12">12</option>
                 <option value="20">20</option>
                 <option value="50">50</option>
               </Select>
-              <div className="flex h-9 shrink-0 rounded-md border border-border bg-background p-0.5">
+              <div className="col-span-2 flex h-9 w-full shrink-0 justify-end rounded-md border border-border bg-background p-0.5 sm:w-auto">
                 <Button type="button" variant={viewMode === 'cards' ? 'default' : 'ghost'} size="icon" className="size-8" onClick={() => setViewMode('cards')} aria-label="Card view">
                   <LayoutGrid className="size-4" />
                 </Button>
@@ -385,7 +385,38 @@ export default function UsersPage() {
           ) : null}
 
           {rows.length > 0 && viewMode === 'table' ? (
-            <div className="overflow-x-auto rounded-lg border border-border">
+            <>
+              <div className="grid gap-2 md:hidden">
+                {rows.map((user) => {
+                  const id = userId(user)
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => navigate(`/users/${id}`)}
+                      className="flex w-full min-w-0 items-center gap-3 rounded-xl border border-border bg-background p-3 text-left transition hover:border-primary/35"
+                    >
+                      <div className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-primary/15 text-sm font-semibold text-primary">
+                        {avatarFromProfile(user) ? (
+                          <img src={assetUrl(avatarFromProfile(user)!)} alt="" className="size-full object-cover" />
+                        ) : (
+                          userInitials(user.name)
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium">{user.name || 'Unnamed'}</p>
+                        <p className="truncate text-xs text-muted-foreground">{user.email || user.phone || '—'}</p>
+                        <div className="mt-1 flex flex-wrap gap-1.5">
+                          <Badge tone={planTone(user.plan)}>{user.plan}</Badge>
+                          <Badge tone={statusTone(!!user.blocked)}>{user.blocked ? 'Blocked' : 'Active'}</Badge>
+                        </div>
+                      </div>
+                      <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                    </button>
+                  )
+                })}
+              </div>
+              <div className="admin-scroll-x hidden rounded-lg border border-border md:block">
               <table className="w-full min-w-[880px] text-left text-sm">
                 <thead className="bg-muted/40 text-xs text-muted-foreground">
                   <tr>
@@ -462,6 +493,7 @@ export default function UsersPage() {
                 </tbody>
               </table>
             </div>
+            </>
           ) : null}
         </div>
 

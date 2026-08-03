@@ -319,14 +319,14 @@ export default function AppConfigPage() {
         to="/pages"
       />
 
-      <div className="flex flex-wrap gap-2 rounded-xl border border-border bg-muted/20 p-2">
+      <div className="admin-scroll-x flex gap-2 rounded-xl border border-border bg-muted/20 p-2">
         {CONFIG_TABS.map((t) => (
           <button
             key={t.id}
             type="button"
             onClick={() => setTab(t.id)}
             className={cn(
-              'inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all',
+              'inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all',
               tab === t.id ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:bg-card/70',
             )}
           >

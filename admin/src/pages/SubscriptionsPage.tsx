@@ -79,17 +79,17 @@ function DetailDrawer({ userId, onClose }: { userId: string; onClose: () => void
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/50 p-0 sm:p-4" onClick={onClose}>
       <div
-        className="h-full w-full max-w-xl overflow-y-auto bg-card p-5 shadow-2xl sm:rounded-xl"
+        className="flex h-full w-full max-w-xl flex-col overflow-hidden bg-card shadow-2xl sm:rounded-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mb-4 flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-semibold">{d.user.name || 'User'}</h2>
-            <p className="text-sm text-muted-foreground">{d.user.email || d.user.phone || d.user.id}</p>
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border p-4 sm:p-5">
+          <div className="min-w-0">
+            <h2 className="truncate text-lg font-semibold">{d.user.name || 'User'}</h2>
+            <p className="truncate text-sm text-muted-foreground">{d.user.email || d.user.phone || d.user.id}</p>
           </div>
-          <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label="Close"><X className="size-4" /></Button>
+          <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={onClose} aria-label="Close"><X className="size-4" /></Button>
         </div>
-
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-5">
         <div className="mb-4 grid grid-cols-2 gap-3">
           <div className="rounded-lg border border-border bg-background p-3">
             <p className="text-xs text-muted-foreground">Total paid</p>
@@ -119,9 +119,9 @@ function DetailDrawer({ userId, onClose }: { userId: string; onClose: () => void
                 ['Cancel at cycle end', d.subscription.cancelAtCycleEnd ? 'Yes' : 'No'],
                 ['Last payment ID', d.subscription.lastPaymentId || '—'],
               ].map(([k, v]) => (
-                <div key={k} className="grid grid-cols-[140px_1fr] gap-2 border-b border-border/50 pb-2 last:border-0">
+                <div key={k} className="grid gap-1 border-b border-border/50 pb-2 last:border-0 sm:grid-cols-[140px_1fr] sm:gap-2">
                   <dt className="text-muted-foreground">{k}</dt>
-                  <dd className="break-all font-medium">{v}</dd>
+                  <dd className="min-w-0 break-all font-medium">{v}</dd>
                 </div>
               ))}
             </dl>
@@ -161,6 +161,7 @@ function DetailDrawer({ userId, onClose }: { userId: string; onClose: () => void
             </div>
           </section>
         ) : null}
+        </div>
       </div>
     </div>
   )

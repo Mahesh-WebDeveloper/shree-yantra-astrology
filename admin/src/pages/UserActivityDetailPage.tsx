@@ -176,40 +176,38 @@ export default function UserActivityDetailPage() {
   const displayAi = aiLoaded ? aiTurns : (d.recentAi ?? [])
 
   return (
-    <div className="grid gap-6 pb-10">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="grid gap-3">
-          <Link to="/activity" className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-primary hover:underline">
-            <ArrowLeft className="size-4" /> User Activity
-          </Link>
-          <div className="flex items-start gap-4">
-            <Avatar name={d.user.name} avatar={d.user.avatar} className="size-14 text-xl" />
-            <div>
-              <h1 className="flex flex-wrap items-center gap-2 text-2xl font-semibold tracking-tight">
-                {d.user.name || 'Unnamed user'}
-                {d.user.plan === 'premium' ? <Crown className="size-5 text-warning" /> : null}
-              </h1>
-              <p className="mt-1 text-sm text-muted-foreground">{d.user.phone || d.user.email || d.user.id}</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {d.user.deleted ? <Badge tone="danger">deleted account</Badge> : null}
-                <Badge tone={d.user.plan === 'premium' ? 'warning' : 'neutral'}>{d.user.plan}</Badge>
-                {d.summary.online ? <Badge tone="success">online now</Badge> : <Badge>offline · {relativeTime(d.summary.lastSeen)}</Badge>}
-                {(d.summary.errorEvents ?? 0) > 0 ? <Badge tone="danger">{d.summary.errorEvents} errors</Badge> : null}
-                {(d.ai?.turns ?? 0) > 0 ? <Badge tone="accent">{d.ai?.turns} AI turns</Badge> : null}
-              </div>
+    <div className="grid min-w-0 gap-6 pb-10">
+      <div className="flex min-w-0 flex-col gap-4">
+        <Link to="/activity" className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-primary hover:underline">
+          <ArrowLeft className="size-4" /> User Activity
+        </Link>
+        <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+          <Avatar name={d.user.name} avatar={d.user.avatar} className="size-12 text-lg sm:size-14 sm:text-xl" />
+          <div className="min-w-0 flex-1">
+            <h1 className="flex flex-wrap items-center gap-2 text-xl font-semibold tracking-tight sm:text-2xl">
+              <span className="min-w-0 break-words">{d.user.name || 'Unnamed user'}</span>
+              {d.user.plan === 'premium' ? <Crown className="size-5 shrink-0 text-warning" /> : null}
+            </h1>
+            <p className="mt-1 truncate text-sm text-muted-foreground">{d.user.phone || d.user.email || d.user.id}</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {d.user.deleted ? <Badge tone="danger">deleted account</Badge> : null}
+              <Badge tone={d.user.plan === 'premium' ? 'warning' : 'neutral'}>{d.user.plan}</Badge>
+              {d.summary.online ? <Badge tone="success">online now</Badge> : <Badge>offline · {relativeTime(d.summary.lastSeen)}</Badge>}
+              {(d.summary.errorEvents ?? 0) > 0 ? <Badge tone="danger">{d.summary.errorEvents} errors</Badge> : null}
+              {(d.ai?.turns ?? 0) > 0 ? <Badge tone="accent">{d.ai?.turns} AI turns</Badge> : null}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 rounded-xl border border-border bg-muted/20 p-2">
+      <div className="admin-scroll-x flex gap-2 rounded-xl border border-border bg-muted/20 p-2">
         {(Object.keys(TAB_LABELS) as Tab[]).map((key) => (
           <button
             key={key}
             type="button"
             onClick={() => (key === 'ai' ? openAiTab() : setTab(key))}
             className={cn(
-              'rounded-lg px-4 py-2 text-sm font-medium transition-all',
+              'shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition-all sm:px-4',
               tab === key ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:bg-card/60 hover:text-foreground',
             )}
           >

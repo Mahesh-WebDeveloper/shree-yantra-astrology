@@ -30,21 +30,21 @@ import { useAuth } from '@/store/AuthContext'
 import { cn } from '@/lib/utils'
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/server-monitor', label: 'Server Monitor', icon: Server },
-  { to: '/analytics', label: 'Analytics', icon: LineChart },
-  { to: '/activity', label: 'User Activity', icon: Radar },
-  { to: '/users', label: 'Users', icon: Users },
-  { to: '/library', label: 'Library', icon: BookOpen },
-  { to: '/media', label: 'Media', icon: Music },
-  { to: '/plans', label: 'Plans', icon: CreditCard },
-  { to: '/subscriptions', label: 'Subscriptions', icon: IndianRupee },
-  { to: '/notifications', label: 'Notifications', icon: Bell },
-  { to: '/pages', label: 'Pages (Content)', icon: FileText },
-  { to: '/app-config', label: 'App Config', icon: SlidersHorizontal },
-  { to: '/faq', label: 'FAQ', icon: HelpCircle },
-  { to: '/settings', label: 'Settings', icon: Settings },
-  { to: '/ai-cache', label: 'AI Cache', icon: Brain },
+  { to: '/', label: 'Dashboard', shortLabel: 'Home', icon: LayoutDashboard },
+  { to: '/server-monitor', label: 'Server Monitor', shortLabel: 'Monitor', icon: Server },
+  { to: '/analytics', label: 'Analytics', shortLabel: 'Analytics', icon: LineChart },
+  { to: '/activity', label: 'User Activity', shortLabel: 'Activity', icon: Radar },
+  { to: '/users', label: 'Users', shortLabel: 'Users', icon: Users },
+  { to: '/library', label: 'Library', shortLabel: 'Library', icon: BookOpen },
+  { to: '/media', label: 'Media', shortLabel: 'Media', icon: Music },
+  { to: '/plans', label: 'Plans', shortLabel: 'Plans', icon: CreditCard },
+  { to: '/subscriptions', label: 'Subscriptions', shortLabel: 'Subs', icon: IndianRupee },
+  { to: '/notifications', label: 'Notifications', shortLabel: 'Alerts', icon: Bell },
+  { to: '/pages', label: 'Pages (Content)', shortLabel: 'Pages', icon: FileText },
+  { to: '/app-config', label: 'App Config', shortLabel: 'Config', icon: SlidersHorizontal },
+  { to: '/faq', label: 'FAQ', shortLabel: 'FAQ', icon: HelpCircle },
+  { to: '/settings', label: 'Settings', shortLabel: 'Settings', icon: Settings },
+  { to: '/ai-cache', label: 'AI Cache', shortLabel: 'AI Cache', icon: Brain },
 ]
 
 function useTheme() {
@@ -159,10 +159,10 @@ function Sidebar({
 function MobileBottomNav() {
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/96 px-2 pb-[calc(env(safe-area-inset-bottom)+0.35rem)] pt-2 shadow-[0_-10px_30px_rgba(0,0,0,0.12)] backdrop-blur lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/96 px-1.5 pb-[calc(env(safe-area-inset-bottom)+0.35rem)] pt-1.5 shadow-[0_-10px_30px_rgba(0,0,0,0.12)] backdrop-blur lg:hidden"
       aria-label="Mobile admin navigation"
     >
-      <div className="flex gap-1 overflow-x-auto overscroll-x-contain pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex gap-0.5 overflow-x-auto overscroll-x-contain pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {navItems.map((item) => {
           const Icon = item.icon
           return (
@@ -170,15 +170,16 @@ function MobileBottomNav() {
               key={item.to}
               to={item.to}
               end={item.to === '/'}
+              title={item.label}
               className={({ isActive }) =>
                 cn(
-                  'flex min-w-[4.7rem] flex-col items-center justify-center gap-1 rounded-md px-2 py-2 text-[10px] font-medium text-muted-foreground transition',
+                  'flex min-w-[3.85rem] flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 py-1.5 text-[10px] font-medium leading-tight text-muted-foreground transition',
                   isActive ? 'bg-primary text-primary-foreground shadow-sm' : 'hover:bg-muted hover:text-foreground',
                 )
               }
             >
               <Icon className="size-4 shrink-0" />
-              <span className="max-w-full truncate">{item.label.replace(' (Content)', '')}</span>
+              <span className="w-full text-center leading-tight">{item.shortLabel}</span>
             </NavLink>
           )
         })}
@@ -263,7 +264,7 @@ export function AdminLayout() {
             />
           </div>
 
-          <div className="flex min-h-svh flex-1 flex-col overflow-hidden lg:min-h-0 lg:rounded-2xl lg:border lg:border-border lg:bg-background lg:shadow-sm">
+          <div className="flex min-h-svh min-w-0 flex-1 flex-col overflow-x-hidden lg:min-h-0 lg:overflow-hidden lg:rounded-2xl lg:border lg:border-border lg:bg-background lg:shadow-sm">
             <TopBar
               collapsed={collapsed}
               onToggleSidebar={() => setCollapsed((value) => !value)}
@@ -274,7 +275,7 @@ export function AdminLayout() {
               userEmail={user?.email || user?.name}
             />
 
-            <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-5 pb-28 sm:px-6 sm:py-6 lg:overflow-y-auto lg:pb-8">
+            <main className="mx-auto w-full max-w-7xl min-w-0 flex-1 overflow-x-hidden px-3 py-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:px-6 sm:py-6 lg:overflow-y-auto lg:pb-8">
               <Outlet />
             </main>
           </div>

@@ -206,21 +206,21 @@ function IssueRow({ issue, index, onUserClick }: { issue: ActivityIssue; index: 
   )
 }
 
-function UserRow({ user, view, onOpen }: { user: ActivityUser; view: 'cards' | 'table'; onOpen: () => void }) {
+function UserRow({ user, view, onOpen }: { user: ActivityUser; view: 'cards' | 'table' | 'list'; onOpen: () => void }) {
   if (view === 'cards') {
     return (
       <button
         type="button"
         onClick={onOpen}
-        className="activity-card-hover rounded-xl border border-border bg-background p-4 text-left transition-all hover:border-primary/40 active:scale-[0.99]"
+        className="activity-card-hover min-w-0 rounded-xl border border-border bg-background p-3 text-left transition-all hover:border-primary/40 active:scale-[0.99] sm:p-4"
       >
         <div className="flex items-start gap-3">
           <Avatar name={user.name} avatar={user.avatar} />
           <div className="min-w-0 flex-1">
-            <p className="flex flex-wrap items-center gap-1.5 truncate font-semibold">
-              <span className={user.deleted ? 'italic text-muted-foreground' : undefined}>{user.name || 'Unnamed'}</span>
+            <p className="flex flex-wrap items-center gap-1.5 font-semibold">
+              <span className={cn('truncate', user.deleted && 'italic text-muted-foreground')}>{user.name || 'Unnamed'}</span>
               {user.deleted ? <Badge tone="danger">deleted</Badge> : null}
-              {user.plan === 'premium' ? <Crown className="size-3.5 text-warning" /> : null}
+              {user.plan === 'premium' ? <Crown className="size-3.5 shrink-0 text-warning" /> : null}
             </p>
             <p className="truncate text-xs text-muted-foreground">{user.phone || user.email}</p>
           </div>
@@ -231,6 +231,35 @@ function UserRow({ user, view, onOpen }: { user: ActivityUser; view: 'cards' | '
           {(user.errorEvents ?? 0) > 0 ? <Badge tone="danger">{user.errorEvents} errors</Badge> : null}
           {user.lastScreen ? <Badge tone="neutral">{user.lastScreen}</Badge> : null}
           <span className="text-muted-foreground">{user.events} ev · {user.sessions} sess</span>
+        </div>
+      </button>
+    )
+  }
+
+  if (view === 'list') {
+    return (
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex w-full min-w-0 items-center gap-3 rounded-xl border border-border bg-background p-3 text-left transition hover:border-primary/35 hover:bg-muted/40 active:scale-[0.99]"
+      >
+        <Avatar name={user.name} avatar={user.avatar} className="size-10 text-sm" />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <p className="truncate font-medium">{user.name || 'Unnamed'}</p>
+            {user.plan === 'premium' ? <Crown className="size-3.5 shrink-0 text-warning" /> : null}
+          </div>
+          <p className="truncate text-xs text-muted-foreground">{user.phone || user.email || '—'}</p>
+          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+            {(user.aiTurns ?? 0) > 0 ? <span className="text-primary">{user.aiTurns} AI</span> : null}
+            {(user.errorEvents ?? 0) > 0 ? <span className="text-destructive">{user.errorEvents} err</span> : null}
+            {user.lastScreen ? <span className="truncate">{user.lastScreen}</span> : null}
+            <span>{user.events}/{user.sessions}</span>
+          </div>
+        </div>
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <OnlineStatus online={user.online} lastSeen={user.lastSeen} />
+          <ChevronRight className="size-4 text-muted-foreground" />
         </div>
       </button>
     )
@@ -344,7 +373,7 @@ export default function UserActivityPage() {
   ]
 
   return (
-    <div className="grid gap-6 pb-8">
+    <div className="grid min-w-0 gap-6 pb-8">
       <PageHeader
         title="User Activity"
         description="Track live usage, AI questions & replies, errors, load failures — per user with advanced filters and sorting."
@@ -356,21 +385,21 @@ export default function UserActivityPage() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard label="Online now" value={onlineUsers} sub={`${(ov?.onlineDevices ?? live.data?.onlineDevices ?? 0).toLocaleString('en-IN')} devices`} icon={Wifi} tone="text-success" delay={0} />
         <KpiCard label="AI asks today" value={ov?.aiAsksToday ?? 0} sub={`${(ov?.aiAsks7d ?? 0).toLocaleString('en-IN')} this week`} icon={Sparkles} tone="text-primary" delay={60} />
         <KpiCard label="Errors today" value={ov?.errorsToday ?? 0} sub={`${(ov?.errors7d ?? 0).toLocaleString('en-IN')} this week · ${ov?.usersWithErrors7d ?? 0} users`} icon={AlertTriangle} tone="text-destructive" delay={120} />
         <KpiCard label="AI chat stored" value={ov?.chatTurnsTotal ?? 0} sub={`${ov?.usersWithAiChat ?? 0} users with history`} icon={Bot} tone="text-accent" delay={180} />
       </div>
 
-      <div className="flex flex-wrap gap-2 rounded-xl border border-border bg-muted/20 p-2">
+      <div className="admin-scroll-x flex gap-2 rounded-xl border border-border bg-muted/20 p-2">
         {tabs.map((t) => (
           <button
             key={t.id}
             type="button"
             onClick={() => setTab(t.id)}
             className={cn(
-              'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all',
+              'inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all sm:px-4',
               tab === t.id ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:bg-card/70',
             )}
           >
@@ -384,29 +413,29 @@ export default function UserActivityPage() {
       </div>
 
       {tab === 'users' ? (
-        <div className="grid gap-4">
+        <div className="grid min-w-0 gap-4">
           <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative min-w-[12rem] flex-1">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_auto_auto_auto]">
+              <div className="relative min-w-0 sm:col-span-2 lg:col-span-1">
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input className="pl-9" placeholder="Search name, phone, email…" value={input} onChange={(e) => setInput(e.target.value)} />
               </div>
-              <Select className="w-auto min-w-[8rem]" value={sort} onChange={(e) => { setSort(e.target.value as ActivitySort); setPage(1) }}>
+              <Select className="w-full min-w-0" value={sort} onChange={(e) => { setSort(e.target.value as ActivitySort); setPage(1) }}>
                 {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </Select>
-              <Select className="w-auto min-w-[7rem]" value={planFilter} onChange={(e) => { setPlanFilter(e.target.value as PlanFilter); setPage(1) }}>
+              <Select className="w-full min-w-0" value={planFilter} onChange={(e) => { setPlanFilter(e.target.value as PlanFilter); setPage(1) }}>
                 <option value="">All plans</option>
                 <option value="free">Free</option>
                 <option value="premium">Premium</option>
               </Select>
-              <div className="flex gap-1">
+              <div className="flex justify-end gap-1">
                 <Button type="button" variant={viewMode === 'cards' ? 'default' : 'ghost'} size="icon" onClick={() => setViewMode('cards')} aria-label="Card view"><LayoutGrid className="size-4" /></Button>
-                <Button type="button" variant={viewMode === 'table' ? 'default' : 'ghost'} size="icon" onClick={() => setViewMode('table')} aria-label="Table view"><List className="size-4" /></Button>
+                <Button type="button" variant={viewMode === 'table' ? 'default' : 'ghost'} size="icon" onClick={() => setViewMode('table')} aria-label="List view"><List className="size-4" /></Button>
               </div>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
-              <Filter className="size-4 text-muted-foreground" />
-              <span className="text-xs font-medium text-muted-foreground">Quick filters:</span>
+              <Filter className="size-4 shrink-0 text-muted-foreground" />
+              <span className="text-xs font-medium text-muted-foreground">Quick:</span>
               {[
                 { label: 'Online now', active: onlineOnly, toggle: () => { setOnlineOnly((v) => !v); setPage(1) } },
                 { label: 'Has AI chat', active: hasAi, toggle: () => { setHasAi((v) => !v); setPage(1) } },
@@ -427,42 +456,47 @@ export default function UserActivityPage() {
             </div>
           </div>
 
-          <section className="rounded-xl border border-border bg-card p-3 sm:p-4">
+          <section className="min-w-0 rounded-xl border border-border bg-card p-3 sm:p-4">
             {users.isLoading ? <LoadingRows /> : null}
             {users.isError ? <ErrorState message="Could not load users." onRetry={() => void users.refetch()} /> : null}
             {users.data && rows.length === 0 ? <EmptyState title="No users match these filters." /> : null}
 
             {rows.length > 0 && viewMode === 'cards' ? (
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {rows.map((user) => <UserRow key={user.id} user={user} view="cards" onOpen={() => openUser(user.id)} />)}
               </div>
             ) : null}
 
             {rows.length > 0 && viewMode === 'table' ? (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[880px] text-left text-sm">
-                  <thead>
-                    <tr className="text-xs text-muted-foreground">
-                      <th className="border-b border-border px-3 py-2">User</th>
-                      <th className="border-b border-border px-3 py-2">Status</th>
-                      <th className="border-b border-border px-3 py-2">AI chat</th>
-                      <th className="border-b border-border px-3 py-2">Errors</th>
-                      <th className="border-b border-border px-3 py-2">Last screen</th>
-                      <th className="border-b border-border px-3 py-2 text-right">Ev / Sess</th>
-                      <th className="border-b border-border px-3 py-2 w-8" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((user) => <UserRow key={user.id} user={user} view="table" onOpen={() => openUser(user.id)} />)}
-                  </tbody>
-                </table>
-              </div>
+              <>
+                <div className="grid min-w-0 gap-2 md:hidden">
+                  {rows.map((user) => <UserRow key={user.id} user={user} view="list" onOpen={() => openUser(user.id)} />)}
+                </div>
+                <div className="admin-scroll-x hidden md:block">
+                  <table className="w-full min-w-[880px] text-left text-sm">
+                    <thead>
+                      <tr className="text-xs text-muted-foreground">
+                        <th className="border-b border-border px-3 py-2">User</th>
+                        <th className="border-b border-border px-3 py-2">Status</th>
+                        <th className="border-b border-border px-3 py-2">AI chat</th>
+                        <th className="border-b border-border px-3 py-2">Errors</th>
+                        <th className="border-b border-border px-3 py-2">Last screen</th>
+                        <th className="border-b border-border px-3 py-2 text-right">Ev / Sess</th>
+                        <th className="border-b border-border px-3 py-2 w-8" />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((user) => <UserRow key={user.id} user={user} view="table" onOpen={() => openUser(user.id)} />)}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             ) : null}
 
             {users.data ? (
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
+              <div className="mt-4 flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                 <span>Page {page} of {pages} · {totalUsers.toLocaleString('en-IN')} users</span>
-                <div className="flex gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:flex">
                   <Button type="button" variant="secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>
                   <Button type="button" variant="secondary" disabled={page >= pages} onClick={() => setPage((p) => p + 1)}>Next</Button>
                 </div>

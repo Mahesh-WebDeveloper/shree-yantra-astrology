@@ -146,21 +146,21 @@ export default function UserDetailPage() {
   const online = activity?.summary?.online
 
   return (
-    <div className="grid min-h-[calc(100svh-4rem)] gap-0">
-      <header className="sticky top-0 z-20 -mx-4 border-b border-border bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="flex min-w-0 items-start gap-4">
-            <Button type="button" variant="ghost" size="icon" onClick={() => navigate('/users')} aria-label="Back">
+    <div className="grid min-w-0 gap-0">
+      <header className="sticky top-0 z-10 -mx-3 border-b border-border bg-background/95 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-6 sm:px-6">
+        <div className="flex flex-col gap-3">
+          <div className="flex min-w-0 items-start gap-3">
+            <Button type="button" variant="ghost" size="icon" className="mt-0.5 shrink-0" onClick={() => navigate('/users')} aria-label="Back">
               <ArrowLeft className="size-5" />
             </Button>
-            <UserAvatar user={draft} />
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="truncate text-xl font-semibold">{draft.name || 'Unnamed user'}</h1>
+            <UserAvatar user={draft} size="sm" />
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <h1 className="max-w-full truncate text-lg font-semibold sm:text-xl">{draft.name || 'Unnamed user'}</h1>
                 <Badge tone={statusTone(!!draft.blocked)}>{draft.blocked ? 'Blocked' : 'Active'}</Badge>
                 <Badge tone={planTone(draft.plan)}>{draft.plan}</Badge>
                 {draft.role === 'admin' ? <Badge tone={roleTone(draft.role)}>Admin</Badge> : null}
-                {online ? <Badge tone="success">Online now</Badge> : null}
+                {online ? <Badge tone="success">Online</Badge> : null}
                 {dirty ? <Badge tone="warning">Unsaved</Badge> : null}
               </div>
               <p className="mt-1 truncate text-sm text-muted-foreground">{draft.email || draft.phone || userId(draft)}</p>
@@ -169,21 +169,21 @@ export default function UserDetailPage() {
               </p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 pl-0 sm:pl-12">
             {deletable ? (
-              <Button type="button" variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+              <Button type="button" variant="destructive" size="sm" className="flex-1 sm:flex-none" onClick={() => setDeleteOpen(true)}>
                 <Trash2 className="size-4" /> Delete
               </Button>
             ) : null}
             {tab === 'account' && dirty ? (
-              <Button type="button" disabled={updateMutation.isPending} onClick={saveAccount}>
+              <Button type="button" className="flex-1 sm:flex-none" disabled={updateMutation.isPending} onClick={saveAccount}>
                 {updateMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
                 Save changes
               </Button>
             ) : null}
           </div>
         </div>
-        <nav className="mt-4 flex gap-1 overflow-x-auto pb-1">
+        <nav className="admin-scroll-x mt-3 flex gap-1 pb-0.5">
           {(Object.keys(TAB_LABELS) as Tab[]).map((key) => (
             <button
               key={key}
@@ -199,7 +199,7 @@ export default function UserDetailPage() {
         </nav>
       </header>
 
-      <div className="grid gap-6 py-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid min-w-0 gap-6 py-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="grid min-w-0 gap-6">
           {tab === 'overview' ? (
             <>
