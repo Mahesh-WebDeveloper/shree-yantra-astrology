@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowDown, ArrowUp, Plus, Save, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, Plus, Save, Search, Trash2 } from 'lucide-react'
 
 import { apiErrorMessage } from '@/api/client'
 import { endpoints } from '@/api/endpoints'
@@ -51,13 +51,23 @@ function normalizeDraft(book?: Book): DraftBook {
 }
 
 export default function LibraryPage() {
-  const books = useBooks()
+  const [search, setSearch] = useState('')
+  const [publishedFilter, setPublishedFilter] = useState<'' | 'true' | 'false'>('')
+  const bookParams = useMemo(
+    () => ({ search: search || undefined, published: publishedFilter || undefined }),
+    [search, publishedFilter],
+  )
+  const books = useBooks(bookParams)
   const [draft, setDraft] = useState<DraftBook>(() => normalizeDraft())
   const [deleteTarget, setDeleteTarget] = useState<Book | null>(null)
   const queryClient = useQueryClient()
   const toast = useToast()
 
   const invalidate = () => void queryClient.invalidateQueries({ queryKey: queryKeys.books })
+
+  const rows = books.data ?? []
+  const publishedCount = rows.filter((b) => b.published).length
+  const chapterCount = (book: Book) => (book.chapters || []).length
 
   const saveMutation = useMutation({
     mutationFn: endpoints.saveBook,
@@ -111,7 +121,7 @@ export default function LibraryPage() {
 
   const moveBook = (book: Book, direction: -1 | 1) => {
     if (!books.data) return
-    const sorted = [...books.data]
+    const sorted = [...rows]
     const index = sorted.findIndex((item) => item._id === book._id)
     const swap = index + direction
     if (index < 0 || swap < 0 || swap >= sorted.length) return
@@ -124,16 +134,34 @@ export default function LibraryPage() {
       <PageHeader
         title="Library"
         description="Manage books, chapters, cover images, premium status, and publishing."
-        action={<Button type="button" variant="secondary" onClick={() => setDraft(normalizeDraft())}><Plus className="size-4" />New book</Button>}
+        action={
+          <div className="flex flex-wrap items-center gap-2">
+            {books.data ? <Badge tone="accent">{rows.length} books · {publishedCount} published</Badge> : null}
+            <Button type="button" variant="secondary" onClick={() => setDraft(normalizeDraft())}><Plus className="size-4" />New book</Button>
+          </div>
+        }
       />
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_460px]">
         <section className="rounded-lg border border-border bg-card p-3 sm:p-4">
+          <div className="mb-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_160px]">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input className="pl-9" placeholder="Search books by title" value={search} onChange={(e) => setSearch(e.target.value)} />
+            </div>
+            <Select value={publishedFilter} onChange={(e) => setPublishedFilter(e.target.value as '' | 'true' | 'false')} aria-label="Filter by publish status">
+              <option value="">All books</option>
+              <option value="true">Published only</option>
+              <option value="false">Drafts only</option>
+            </Select>
+          </div>
           {books.isLoading ? <LoadingRows /> : null}
           {books.isError ? <ErrorState message="Could not load library." onRetry={() => void books.refetch()} /> : null}
-          {books.data && books.data.length === 0 ? <EmptyState title="No books created yet." /> : null}
-          {books.data && books.data.length > 0 ? (
+          {books.data && rows.length === 0 ? (
+            <EmptyState title={search || publishedFilter ? 'No books match your filters.' : 'No books in the library yet. Click New book to add one.'} />
+          ) : null}
+          {books.data && rows.length > 0 ? (
             <div className="grid gap-3">
-              {books.data.map((book, index) => (
+              {rows.map((book, index) => (
                 <div key={book._id} className="flex flex-col gap-3 rounded-md border border-border bg-background p-3 sm:flex-row sm:items-center">
                   <div className="h-24 w-full shrink-0 overflow-hidden rounded-md bg-muted sm:h-20 sm:w-16">
                     {book.coverImage ? <img src={assetUrl(book.coverImage)} alt="" className="size-full object-cover" /> : null}
@@ -144,14 +172,14 @@ export default function LibraryPage() {
                     <div className="mt-2 flex flex-wrap gap-2">
                       <Badge tone={book.published ? 'success' : 'neutral'}>{book.published ? 'published' : 'draft'}</Badge>
                       {book.isPremium ? <Badge tone="warning">premium</Badge> : null}
-                      <Badge>{book.chapters.length} chapters</Badge>
+                      <Badge>{chapterCount(book)} chapters</Badge>
                     </div>
                   </button>
                   <div className="grid grid-cols-3 gap-2 sm:flex">
                     <Button type="button" variant="secondary" size="icon" disabled={index === 0} onClick={() => moveBook(book, -1)} aria-label="Move up">
                       <ArrowUp className="size-4" />
                     </Button>
-                    <Button type="button" variant="secondary" size="icon" disabled={index === books.data.length - 1} onClick={() => moveBook(book, 1)} aria-label="Move down">
+                    <Button type="button" variant="secondary" size="icon" disabled={index === rows.length - 1} onClick={() => moveBook(book, 1)} aria-label="Move down">
                       <ArrowDown className="size-4" />
                     </Button>
                     <Button type="button" variant="destructive" size="icon" onClick={() => setDeleteTarget(book)} aria-label="Delete book">

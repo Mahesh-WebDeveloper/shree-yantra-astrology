@@ -4,7 +4,7 @@ const TOKEN_KEY = 'shree-yantra-admin-token'
 const USER_KEY = 'shree-yantra-admin-user'
 
 export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:4000/api'),
   timeout: 30000, // generous — VedAstro/AI-backed endpoints can be slow; never spin forever
 })
 

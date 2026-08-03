@@ -33,8 +33,11 @@ export function useUsers(params: Record<string, string | number | undefined>) {
   })
 }
 
-export function useBooks() {
-  return useQuery({ queryKey: queryKeys.books, queryFn: endpoints.books })
+export function useBooks(params?: { search?: string; published?: string }) {
+  return useQuery({
+    queryKey: [...queryKeys.books, params ?? {}],
+    queryFn: () => endpoints.books(params),
+  })
 }
 
 export function useMedia(params: Record<string, string | undefined>) {

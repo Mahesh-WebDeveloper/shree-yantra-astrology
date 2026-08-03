@@ -52,8 +52,8 @@ export const endpoints = {
     const { data } = await apiClient.post<{ url: string }>('/admin/uploads/image', body)
     return data.url
   },
-  async books() {
-    const { data } = await apiClient.get<{ books: Book[] }>('/admin/library')
+  async books(params?: { search?: string; published?: string }) {
+    const { data } = await apiClient.get<{ books: Book[] }>('/admin/library', { params })
     return data.books
   },
   async saveBook(payload: Partial<Book> & { coverFile?: File }) {
