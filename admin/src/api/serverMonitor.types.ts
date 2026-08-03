@@ -2,6 +2,8 @@ export type ServerMonitorHistoryPoint = {
   t: string
   cpuPct: number
   memPct: number
+  onlineUsers: number
+  load1: number
 }
 
 export type ServerMonitorResponse = {
@@ -48,9 +50,34 @@ export type ServerMonitorResponse = {
     usedHuman: string
     freeHuman: string
   } | null
+  swap: {
+    totalBytes: number
+    usedBytes: number
+    freeBytes: number
+    usedPct: number
+    totalHuman: string
+    usedHuman: string
+    freeHuman: string
+  } | null
+  pm2: {
+    name: string
+    status: string
+    restarts: number
+    cpuPct: number
+    memoryBytes: number
+    memoryHuman: string
+    pid: number
+  } | null
   database: {
     status: string
     ok: boolean
+    stats: {
+      collections: number
+      objects: number
+      dataSizeHuman: string
+      storageSizeHuman: string
+      indexSizeHuman: string
+    } | null
   }
   users: {
     onlineUsers: number
@@ -74,4 +101,10 @@ export type ServerMonitorResponse = {
     plainSummaryHi: string
   }
   history: ServerMonitorHistoryPoint[]
+  meta: {
+    live: boolean
+    sampledAt: string
+    historyPoints: number
+    sources: Record<string, string>
+  }
 }

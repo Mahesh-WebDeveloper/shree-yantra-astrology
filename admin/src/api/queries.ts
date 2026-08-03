@@ -100,6 +100,7 @@ export function useServerMonitor() {
     queryKey: queryKeys.serverMonitor,
     queryFn: endpoints.serverMonitor,
     refetchInterval: 4_000,
+    staleTime: 0,
     placeholderData: keepPreviousData,
   })
 }

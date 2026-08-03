@@ -71,6 +71,68 @@ async function sampleDisk() {
   }
 }
 
+async function sampleSwap() {
+  try {
+    if (process.platform !== 'linux') return null;
+    const info = fs.readFileSync('/proc/meminfo', 'utf8');
+    const read = (key) => {
+      const m = info.match(new RegExp(`^${key}:\\s+(\\d+)`, 'm'));
+      return m ? parseInt(m[1], 10) * 1024 : 0;
+    };
+    const total = read('SwapTotal');
+    const free = read('SwapFree');
+    if (!total) return { totalBytes: 0, usedBytes: 0, freeBytes: 0, usedPct: 0 };
+    const used = total - free;
+    return {
+      totalBytes: total,
+      usedBytes: used,
+      freeBytes: free,
+      usedPct: Math.round((used / total) * 100),
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function samplePm2() {
+  try {
+    const { stdout } = await execFileAsync('pm2', ['jlist'], { timeout: 5000 });
+    const list = JSON.parse(stdout);
+    const app = Array.isArray(list)
+      ? list.find((p) => p.name === 'shree-backend') || list[0]
+      : null;
+    if (!app || !app.monit) return null;
+    return {
+      name: app.name,
+      status: app.pm2_env?.status || 'unknown',
+      restarts: app.pm2_env?.restart_time ?? app.pm2_env?.restartTime ?? 0,
+      cpuPct: app.monit.cpu ?? 0,
+      memoryBytes: app.monit.memory ?? 0,
+      memoryHuman: fmtBytes(app.monit.memory ?? 0),
+      pid: app.pid,
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function sampleMongoStats() {
+  try {
+    if (mongoose.connection.readyState !== 1) return null;
+    const db = mongoose.connection.db;
+    const stats = await db.stats();
+    return {
+      collections: stats.collections ?? 0,
+      objects: stats.objects ?? 0,
+      dataSizeHuman: fmtBytes(stats.dataSize ?? 0),
+      storageSizeHuman: fmtBytes(stats.storageSize ?? 0),
+      indexSizeHuman: fmtBytes(stats.indexSize ?? 0),
+    };
+  } catch {
+    return null;
+  }
+}
+
 function fmtBytes(n) {
   if (!Number.isFinite(n) || n <= 0) return '0 B';
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
@@ -161,10 +223,13 @@ function pushHistory(point) {
 }
 
 async function collectServerMetrics() {
-  const [cpuPct, disk, users] = await Promise.all([
+  const [cpuPct, disk, users, swap, pm2, mongoStats] = await Promise.all([
     sampleCpuPercent(),
     sampleDisk(),
     userCounts(),
+    sampleSwap(),
+    samplePm2(),
+    sampleMongoStats(),
   ]);
 
   const totalMem = os.totalmem();
@@ -180,6 +245,8 @@ async function collectServerMetrics() {
     t: new Date().toISOString(),
     cpuPct,
     memPct,
+    onlineUsers: users.onlineUsers,
+    load1: Number((os.loadavg()[0] || 0).toFixed(2)),
   };
   pushHistory(point);
 
@@ -230,10 +297,33 @@ async function collectServerMetrics() {
     database: {
       status: dbState,
       ok: dbState === 'connected',
+      stats: mongoStats,
     },
+    pm2,
+    swap: swap
+      ? {
+          ...swap,
+          totalHuman: fmtBytes(swap.totalBytes),
+          usedHuman: fmtBytes(swap.usedBytes),
+          freeHuman: fmtBytes(swap.freeBytes),
+        }
+      : null,
     users,
     capacity,
     history: [...history],
+    meta: {
+      live: true,
+      sampledAt: new Date().toISOString(),
+      historyPoints: history.length,
+      sources: {
+        cpu: process.platform === 'linux' ? '/proc/stat' : 'os.loadavg',
+        memory: 'os.totalmem / os.freemem',
+        disk: process.platform === 'linux' ? 'df /' : 'unavailable',
+        users: 'mongodb AnalyticsEvent + User',
+        database: 'mongoose connection + db.stats()',
+        process: 'process.memoryUsage() + pm2 jlist',
+      },
+    },
   };
 }
 

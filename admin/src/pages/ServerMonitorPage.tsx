@@ -181,6 +181,7 @@ export default function ServerMonitorPage() {
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{d.capacity.statusHint}</p>
             <p className="mt-3 text-xs text-muted-foreground">
               Last updated {new Date(d.at).toLocaleString('en-IN')} · {d.host.cpus} CPU cores · Node {d.host.nodeVersion}
+              {q.dataUpdatedAt ? ` · refreshed ${new Date(q.dataUpdatedAt).toLocaleTimeString('en-IN')}` : ''}
             </p>
           </div>
           <div className="grid gap-3 rounded-xl border border-border/70 bg-background/70 p-4 backdrop-blur-sm">
@@ -195,7 +196,7 @@ export default function ServerMonitorPage() {
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              Comfortable up to ~{d.capacity.comfortableConcurrent.toLocaleString('en-IN')} at once · max estimate ~
+              Comfortable up to ~{d.capacity.comfortableConcurrent.toLocaleString('en-IN')} at once (estimated) · max estimate ~
               {d.capacity.estimatedMaxConcurrent.toLocaleString('en-IN')}
             </p>
           </div>
@@ -262,15 +263,45 @@ export default function ServerMonitorPage() {
           <p className="mt-2 text-xs text-muted-foreground">Higher lines mean the server is working harder. Spikes during panchang or AI requests are normal.</p>
         </PlainCard>
 
-        <PlainCard title="Can this server handle more users?">
+        <PlainCard title="Users online — live trend (from MongoDB)">
+          {chartData.length < 2 ? (
+            <p className="text-sm text-muted-foreground">
+              Collecting live samples… chart builds as the page polls every 4 seconds ({d.meta.historyPoints} samples so far).
+            </p>
+          ) : (
+            <div className="h-56 sm:h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData} margin={{ left: -10, right: 10, top: 10, bottom: 0 }}>
+                  <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" />
+                  <XAxis dataKey="time" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} minTickGap={24} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
+                  <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
+                  <Line
+                    dataKey="onlineUsers"
+                    name="Users online"
+                    type="monotone"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={3}
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+          <p className="mt-2 text-xs text-muted-foreground">
+            Real count of users with app activity in the last 2 minutes — polled live from your database.
+          </p>
+        </PlainCard>
+
+        <PlainCard title="Capacity estimate (calculated, not dummy)">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-lg border border-border bg-background p-4">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Gauge className="size-4" />
-                Comfortable capacity
+                Comfortable capacity (estimate)
               </div>
               <p className="mt-2 text-3xl font-semibold tabular-nums">{d.capacity.comfortableConcurrent.toLocaleString('en-IN')}</p>
-              <p className="mt-1 text-xs text-muted-foreground">users at the same time, without slowdown</p>
+              <p className="mt-1 text-xs text-muted-foreground">Calculated from current CPU, RAM and server specs</p>
             </div>
             <div className="rounded-lg border border-border bg-background p-4">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -278,26 +309,8 @@ export default function ServerMonitorPage() {
                 Estimated maximum
               </div>
               <p className="mt-2 text-3xl font-semibold tabular-nums">{d.capacity.estimatedMaxConcurrent.toLocaleString('en-IN')}</p>
-              <p className="mt-1 text-xs text-muted-foreground">rough upper limit before upgrade is wise</p>
+              <p className="mt-1 text-xs text-muted-foreground">Rough upper limit before upgrade is wise</p>
             </div>
-          </div>
-          <div className="mt-4 h-56 sm:h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart
-                data={[
-                  { name: 'Now', users: d.users.onlineUsers },
-                  { name: 'Comfort', users: d.capacity.comfortableConcurrent },
-                  { name: 'Max est.', users: d.capacity.estimatedMaxConcurrent },
-                ]}
-                margin={{ left: -10, right: 10, top: 10, bottom: 0 }}
-              >
-                <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
-                <Line dataKey="users" name="Users" type="monotone" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ r: 5 }} />
-              </LineChart>
-            </ResponsiveContainer>
           </div>
         </PlainCard>
       </div>
@@ -323,6 +336,12 @@ export default function ServerMonitorPage() {
               ['App process memory', d.process.rssHuman],
               ['App running since', d.process.uptimeHuman],
               ['Database', d.database.ok ? 'Connected ✓' : d.database.status],
+              ['DB documents', d.database.stats ? `${d.database.stats.objects.toLocaleString('en-IN')} objects` : '—'],
+              ['DB storage', d.database.stats?.storageSizeHuman ?? '—'],
+              ['PM2 process', d.pm2 ? `${d.pm2.name} · ${d.pm2.status} · PID ${d.pm2.pid}` : '—'],
+              ['PM2 memory', d.pm2?.memoryHuman ?? '—'],
+              ['PM2 restarts', d.pm2 ? String(d.pm2.restarts) : '—'],
+              ['Swap used', d.swap ? `${d.swap.usedHuman} / ${d.swap.totalHuman} (${d.swap.usedPct}%)` : 'None'],
               ['CPU cores', String(d.host.cpus)],
               ['Platform', `${d.host.platform} (${d.host.arch})`],
             ].map(([k, v]) => (
@@ -341,6 +360,21 @@ export default function ServerMonitorPage() {
           </div>
         </PlainCard>
       </div>
+
+      <PlainCard title="Live data sources (nothing is dummy or static)">
+        <dl className="grid gap-2 text-sm sm:grid-cols-2">
+          {Object.entries(d.meta.sources).map(([key, source]) => (
+            <div key={key} className="flex items-center justify-between gap-4 rounded-lg border border-border/70 bg-background px-3 py-2">
+              <dt className="capitalize text-muted-foreground">{key}</dt>
+              <dd className="text-right font-mono text-xs">{source}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="mt-3 text-xs text-muted-foreground">
+          Sample #{d.meta.historyPoints} at {new Date(d.meta.sampledAt).toLocaleString('en-IN')} on VPS <strong>{d.host.hostname}</strong>.
+          CPU and memory charts update every 4 seconds from the live server.
+        </p>
+      </PlainCard>
     </div>
   )
 }
