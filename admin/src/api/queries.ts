@@ -26,7 +26,11 @@ export function useStats() {
 }
 
 export function useUsers(params: Record<string, string | number | undefined>) {
-  return useQuery({ queryKey: queryKeys.users(params), queryFn: () => endpoints.users(params) })
+  return useQuery({
+    queryKey: queryKeys.users(params),
+    queryFn: () => endpoints.users(params),
+    placeholderData: keepPreviousData,
+  })
 }
 
 export function useBooks() {

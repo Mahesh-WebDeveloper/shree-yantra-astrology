@@ -39,6 +39,13 @@ export const endpoints = {
   async deleteUser(id: string) {
     await apiClient.delete(`/admin/users/${id}`)
   },
+  async bulkDeleteUsers(ids: string[]) {
+    const { data } = await apiClient.post<{ deleted: number; skipped: { id: string; reason: string }[]; ids: string[] }>(
+      '/admin/users/bulk-delete',
+      { ids },
+    )
+    return data
+  },
   async uploadImage(file: File) {
     const body = new FormData()
     body.set('image', file)

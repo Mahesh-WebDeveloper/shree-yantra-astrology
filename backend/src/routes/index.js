@@ -187,6 +187,7 @@ router.get('/admin/users', adminOnly, adminCtrl.listUsers);
 router.get('/admin/users/:id', adminOnly, adminCtrl.getUser);
 router.patch('/admin/users/:id', adminOnly, adminCtrl.updateUser);
 router.delete('/admin/users/:id', adminOnly, adminCtrl.deleteUser);
+router.post('/admin/users/bulk-delete', adminOnly, adminCtrl.bulkDeleteUsers);
 
 router.get('/admin/library', adminOnly, libraryCtrl.adminList);
 router.post('/admin/library', adminOnly, contentImageUpload, libraryCtrl.create);

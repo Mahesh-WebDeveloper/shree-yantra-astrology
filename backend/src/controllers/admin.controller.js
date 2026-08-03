@@ -142,6 +142,8 @@ exports.listUsers = asyncHandler(async (req, res) => {
   }
   if (['free', 'premium'].includes(req.query.plan)) filter.plan = req.query.plan;
   if (['user', 'admin'].includes(req.query.role)) filter.role = req.query.role;
+  if (req.query.status === 'blocked') filter.blocked = true;
+  if (req.query.status === 'active') filter.blocked = { $ne: true };
 
   const sort = parseSort(req.query.sort, ['createdAt', 'updatedAt', 'name', 'email', 'plan', 'role', 'lastLoginAt']);
   const [items, total] = await Promise.all([
@@ -196,6 +198,53 @@ exports.deleteUser = asyncHandler(async (req, res) => {
   const user = await User.findByIdAndDelete(req.params.id);
   if (!user) throw notFound('User not found');
   res.json({ deleted: true, id: String(user._id) });
+});
+
+exports.bulkDeleteUsers = asyncHandler(async (req, res) => {
+  const ids = Array.isArray(req.body.ids) ? req.body.ids.map(String).filter(Boolean) : [];
+  if (!ids.length) throw badRequest('At least one user id is required');
+
+  const uniqueIds = [...new Set(ids)];
+  const selfId = String(req.user._id);
+  const skipped = [];
+  const deletable = [];
+
+  for (const id of uniqueIds) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      skipped.push({ id, reason: 'invalid_id' });
+      continue;
+    }
+    if (id === selfId) {
+      skipped.push({ id, reason: 'self' });
+      continue;
+    }
+    deletable.push(id);
+  }
+
+  if (!deletable.length) {
+    return res.json({ deleted: 0, skipped, ids: [] });
+  }
+
+  const admins = await User.find({ _id: { $in: deletable }, role: 'admin' }).select('_id').lean();
+  const adminIds = new Set(admins.map((u) => String(u._id)));
+  const toDelete = deletable.filter((id) => {
+    if (adminIds.has(id)) {
+      skipped.push({ id, reason: 'admin' });
+      return false;
+    }
+    return true;
+  });
+
+  if (!toDelete.length) {
+    return res.json({ deleted: 0, skipped, ids: [] });
+  }
+
+  const result = await User.deleteMany({ _id: { $in: toDelete } });
+  res.json({
+    deleted: result.deletedCount || 0,
+    skipped,
+    ids: toDelete,
+  });
 });
 
 exports.uploadImage = asyncHandler(async (req, res) => {
