@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#08090d" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="description" content="Download Shree Yantra, a Hindi-English Vedic astrology app with personalised Kundli, location-based Panchang, Rashifal, Muhurat, Kundli Milan, Vastu, Numerology and a spiritual library." />
+    <meta name="keywords" content="Shree Yantra Astrology, Vedic astrology app India, Kundli app, Janam Kundli, Rashifal app, Panchang app, Muhurat app, Kundli Milan app" />
+    <meta name="robots" content="index, follow" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Shree Yantra — Kundli, Panchang and Vedic Astrology App" />
+    <meta property="og:description" content="Personalised Kundli, location-based Panchang, Rashifal, Muhurat and a spiritual library in one Hindi-English Android app." />
+    <meta property="og:site_name" content="Shree Yantra Astrology" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Shree Yantra — A Modern Vedic Astrology App" />
+    <meta name="twitter:description" content="Create your Kundli, check Panchang for your city and explore Vedic astrology in Hindi and English." />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet" />
+    <script>
+      (function () {
+        var root = document.documentElement;
+        var name = 'dark';
+        try {
+          if (localStorage.getItem('sy.theme.v3') === 'light') name = 'light';
+        } catch (e) {}
+        root.dataset.syTheme = name;
+        root.style.setProperty('--sy-bg', name === 'light' ? '#f3f1ec' : '#0a0b10');
+        root.style.setProperty('--sy-text', name === 'light' ? '#141820' : '#f8f6f0');
+        root.style.colorScheme = name;
+      })();
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "MobileApplication",
+        "name": "Shree Yantra Astrology",
+        "applicationCategory": "LifestyleApplication",
+        "operatingSystem": "Android",
+        "description": "A Hindi-English Vedic astrology mobile app with personalised Kundli, location-based Panchang, Rashifal, Choghadiya, Muhurat, Kundli Milan, Vastu, Numerology and a spiritual library.",
+        "inLanguage": ["en", "hi"],
+        "featureList": [
+          "Janam Kundli and divisional charts",
+          "Rashifal and Panchang",
+          "Choghadiya and Muhurat",
+          "Kundli Milan",
+          "Vastu and Numerology",
+          "Sacred text reading and audio",
+          "AI-assisted explanations using chart, dasha and transit context"
+        ]
+      }
+    </script>
+    <title>Shree Yantra — Modern Vedic Astrology App for Kundli and Panchang</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

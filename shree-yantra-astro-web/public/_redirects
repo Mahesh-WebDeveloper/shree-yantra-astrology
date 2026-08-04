@@ -1,0 +1,4 @@
+# Netlify redirects (copied to dist/ on build — backup if netlify.toml is missed).
+/api/*  http://168.144.185.66:4000/api/:splat  200!
+/uploads/*  http://168.144.185.66:4000/uploads/:splat  200!
+/*  /index.html  200

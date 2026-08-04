@@ -1,0 +1,10 @@
+{
+  "name": "Shree Yantra",
+  "description": "A Hindi-English Vedic astrology app with personalised Kundli, location-based Panchang, Rashifal, Muhurat, Kundli Milan, Vastu, Numerology and a spiritual library.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

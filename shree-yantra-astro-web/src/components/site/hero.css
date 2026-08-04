@@ -1,0 +1,2529 @@
+/* ─────────────────────────────────────────────────────────────
+   Shree Yantra — HERO + nav polish.
+   Owned by Hero.tsx (the 3D canvas it replaced is gone).
+   Imported from Hero.tsx, so it lands *outside* the `components`
+   cascade layer and may safely refine layered defaults.
+
+   Layout contract
+   ───────────────
+   • `--syh-nav` is the single source of truth for the fixed nav
+     height. The nav bar reads it, the hero reserves exactly that
+     much padding-top — so there can be no dead gap under the
+     header and no content hidden behind it.
+   • The hero is a 2-row grid: [content | scroll cue]. The content
+     row is `1fr` and centres its child, so the column is optically
+     centred in whatever height is left over — never pushed by a
+     hard padding value.
+   • Every type/size step is clamped against BOTH vw and vh, so a
+     700px-tall laptop shrinks the composition instead of cropping it.
+   ───────────────────────────────────────────────────────────── */
+
+:root,
+body {
+  --syh-nav: 68px;
+}
+@media (max-width: 479px) {
+  :root,
+  body {
+    --syh-nav: 60px;
+  }
+}
+
+/* ═══ Nav polish ══════════════════════════════════════════════ */
+
+.sy-nav__bar {
+  height: var(--syh-nav);
+  gap: 1.25rem;
+}
+
+/* Transparent at rest; a light sheet of glass once the page moves. */
+.sy-nav--solid {
+  background: color-mix(in srgb, var(--sy-bg) 66%, transparent);
+  backdrop-filter: blur(22px) saturate(1.5);
+  -webkit-backdrop-filter: blur(22px) saturate(1.5);
+  border-bottom-color: transparent;
+  box-shadow:
+    inset 0 -1px 0 0 color-mix(in srgb, var(--sy-gold-2) 16%, transparent),
+    0 18px 40px -36px rgba(0, 0, 0, 0.85);
+}
+
+.sy-nav__brand {
+  gap: 0.65rem;
+  transition: opacity 0.25s ease;
+}
+.sy-nav__brand:hover {
+  opacity: 0.82;
+}
+.sy-nav__word {
+  font-size: 0.795rem;
+  letter-spacing: 0.19em;
+}
+.sy-nav__tag {
+  font-size: 0.53rem;
+  letter-spacing: 0.15em;
+  margin-top: 1px;
+  opacity: 0.85;
+}
+
+.sy-nav__link {
+  padding: 0.5rem 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  color: var(--sy-ink-muted);
+}
+.sy-nav__link:hover {
+  color: var(--sy-ink);
+}
+.sy-nav__link::after {
+  bottom: 0;
+  height: 1.5px;
+  border-radius: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--sy-gold-2),
+    color-mix(in srgb, var(--sy-gold-2) 15%, transparent)
+  );
+}
+.sy-nav__link[aria-current='true'] {
+  color: var(--sy-gold-ink);
+}
+.sy-nav__link[aria-current='true']::after {
+  transform: scaleX(1);
+}
+
+.sy-nav__icon {
+  height: 34px;
+  min-width: 34px;
+  border-color: color-mix(in srgb, var(--sy-ink) 12%, transparent);
+  background: color-mix(in srgb, var(--sy-ink) 4%, transparent);
+  transition:
+    border-color 0.25s ease,
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+.sy-nav__icon:hover {
+  background: color-mix(in srgb, var(--sy-gold-2) 12%, transparent);
+  border-color: color-mix(in srgb, var(--sy-gold-2) 45%, transparent);
+}
+.sy-nav__icon--on {
+  color: var(--sy-btn-ink);
+  border-color: transparent;
+  background-image: linear-gradient(
+    140deg,
+    var(--sy-gold-1),
+    var(--sy-gold-2) 58%,
+    var(--sy-gold-3)
+  );
+}
+.sy-nav__icon--on:hover {
+  border-color: transparent;
+  background: linear-gradient(140deg, var(--sy-gold-1), var(--sy-gold-2) 58%, var(--sy-gold-3));
+}
+.sy-nav .sy-btn-sm {
+  padding: 0.6rem 1.05rem;
+  font-size: 0.8rem;
+}
+
+/* Very narrow phones: the brand lockup must give way, never overlap the
+   controls (it cannot shrink on its own — the wordmark is nowrap). */
+@media (max-width: 400px) {
+  .sy-nav__bar {
+    gap: 0.4rem;
+  }
+  .sy-nav__brand {
+    min-width: 0;
+    overflow: hidden;
+  }
+  .sy-nav__word {
+    font-size: 0.66rem;
+    letter-spacing: 0.08em;
+  }
+  .sy-nav__icon {
+    height: 32px;
+    min-width: 32px;
+    padding-inline: 0.36rem;
+  }
+}
+
+/* ═══ Hero shell ══════════════════════════════════════════════ */
+
+.syh {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  /* minmax(0,…), not a bare 1fr: `1fr` is minmax(auto,1fr), and that auto
+     minimum lets a tall child (the phone, which is deliberately taller than
+     the fold) push the row — and the hero — past one screen. */
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: 100vh; /* fallback */
+  min-height: 100svh;
+  padding-top: var(--syh-nav);
+  overflow: clip;
+  background: var(--sy-bg);
+}
+
+/* ── Backdrop: aurora wash + vignette + bottom fade ───────── */
+
+.syh__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      92% 62% at 50% -12%,
+      color-mix(in srgb, var(--sy-gold-3) 26%, transparent),
+      transparent 64%
+    ),
+    radial-gradient(58% 52% at 84% 14%, rgba(96, 78, 200, 0.16), transparent 66%),
+    radial-gradient(64% 58% at 8% 88%, rgba(120, 70, 20, 0.18), transparent 62%),
+    var(--sy-bg);
+}
+/* Film grain lives *under* the yantra: an overlay-blended grain on top of
+   the glowing core desaturates it to grey. */
+.syh__bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.4;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.28'/%3E%3C/svg%3E");
+}
+[data-theme='light'] .syh__bg::after,
+[data-sy-theme='light'] .syh__bg::after {
+  opacity: 0.22;
+}
+[data-theme='light'] .syh__bg,
+[data-sy-theme='light'] .syh__bg {
+  background:
+    radial-gradient(92% 62% at 50% -12%, rgba(233, 184, 80, 0.34), transparent 62%),
+    radial-gradient(58% 52% at 84% 12%, rgba(126, 112, 214, 0.13), transparent 64%),
+    radial-gradient(64% 58% at 6% 92%, rgba(214, 168, 88, 0.22), transparent 62%),
+    var(--sy-bg);
+}
+
+/* Two very slow blurred blobs — the "aurora" breath. */
+.syh__aurora {
+  position: absolute;
+  inset: -10%;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.syh__aurora i {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.5;
+  animation: syh-drift 26s ease-in-out infinite alternate;
+}
+.syh__aurora i:nth-child(1) {
+  left: 42%;
+  top: -8%;
+  width: 46vw;
+  height: 46vw;
+  max-width: 720px;
+  max-height: 720px;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--sy-gold-2) 22%, transparent),
+    transparent 68%
+  );
+}
+.syh__aurora i:nth-child(2) {
+  left: -6%;
+  bottom: -14%;
+  width: 40vw;
+  height: 40vw;
+  max-width: 620px;
+  max-height: 620px;
+  background: radial-gradient(circle, rgba(110, 88, 220, 0.16), transparent 66%);
+  animation-duration: 34s;
+  animation-direction: alternate-reverse;
+}
+[data-theme='light'] .syh__aurora i,
+[data-sy-theme='light'] .syh__aurora i {
+  opacity: 0.42;
+}
+@keyframes syh-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(-4%, 5%, 0) scale(1.12);
+  }
+}
+
+.syh__vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(
+    124% 96% at 50% 44%,
+    transparent 48%,
+    color-mix(in srgb, var(--sy-bg) 62%, transparent) 100%
+  );
+}
+
+/* Legibility scrim: sits *behind* copy (grid is z-index 2), softens the mandala
+   under the headline without washing the type itself. */
+.syh__veil {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    93deg,
+    color-mix(in srgb, var(--sy-bg) 58%, transparent) 0%,
+    color-mix(in srgb, var(--sy-bg) 34%, transparent) 30%,
+    color-mix(in srgb, var(--sy-bg) 10%, transparent) 56%,
+    transparent 78%
+  );
+}
+/* On one column the yantra sits *behind* the copy, so the scrim runs
+   vertically and stays light enough for the linework to read. */
+@media (max-width: 900px) {
+  .syh__veil {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--sy-bg) 18%, transparent) 0%,
+      color-mix(in srgb, var(--sy-bg) 42%, transparent) 36%,
+      color-mix(in srgb, var(--sy-bg) 36%, transparent) 68%,
+      color-mix(in srgb, var(--sy-bg) 14%, transparent) 100%
+    );
+  }
+}
+
+.syh__fade {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 22vh;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, var(--sy-bg) 92%);
+}
+/* One column: the mandala is the only thing down there — keep it lit. */
+@media (max-width: 900px) {
+  .syh__fade {
+    height: 12vh;
+  }
+  .syh__vignette {
+    background: radial-gradient(
+      130% 88% at 50% 46%,
+      transparent 54%,
+      color-mix(in srgb, var(--sy-bg) 74%, transparent) 100%
+    );
+  }
+}
+
+/* ── Drifting dust ────────────────────────────────────────── */
+
+.syh__dust {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+.syh__dust i {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--sy-gold-1);
+  box-shadow: 0 0 10px 2px color-mix(in srgb, var(--sy-gold-2) 55%, transparent);
+  opacity: 0;
+  animation-name: syh-dust;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+[data-theme='light'] .syh__dust i,
+[data-sy-theme='light'] .syh__dust i {
+  background: var(--sy-gold-3);
+  box-shadow: 0 0 8px 1px color-mix(in srgb, var(--sy-gold-3) 35%, transparent);
+}
+@keyframes syh-dust {
+  0% {
+    transform: translate3d(0, 30px, 0) scale(0.55);
+    opacity: 0;
+  }
+  14% {
+    opacity: 0.6;
+  }
+  72% {
+    opacity: 0.34;
+  }
+  100% {
+    transform: translate3d(18px, -150px, 0) scale(1);
+    opacity: 0;
+  }
+}
+
+/* ── The yantra stage ─────────────────────────────────────── */
+
+.syh__stage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+/* Sized so the bhupura is never clipped by the viewport — a cropped
+   square frame reads as a stray line, not as a mandala. */
+.syh__stage-pos {
+  position: absolute;
+  left: 50%;
+  top: 66%;
+  translate: -50% -50%;
+  width: min(122vh, 142vw);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+}
+/* Tablets have the width to show the mandala whole — phones do not,
+   and a big cropped mandala reads better there than a small centred one. */
+@media (min-width: 601px) and (max-width: 900px) {
+  .syh__stage-pos {
+    top: 62%;
+    width: min(78vh, 94vw);
+  }
+}
+@media (min-width: 901px) {
+  .syh__stage-pos {
+    left: 66%;
+    top: 50%;
+    width: min(96vh, 58vw);
+  }
+}
+@media (min-width: 1500px) {
+  .syh__stage-pos {
+    width: min(104vh, 50vw);
+  }
+}
+.syh__stage-pos > * {
+  width: 100%;
+  height: 100%;
+}
+.syh__stage-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0.62;
+}
+[data-theme='light'] .syh__stage-svg,
+[data-sy-theme='light'] .syh__stage-svg {
+  opacity: 0.78;
+}
+
+/* ── Content ──────────────────────────────────────────────── */
+
+.syh__body {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  align-content: center;
+  padding-block: clamp(16px, 3.4vh, 46px);
+}
+/* One column: the copy takes the top half and the mandala rises into the
+   space below it, so neither fights the other for the same pixels. */
+@media (max-width: 900px) {
+  .syh__body {
+    align-content: start;
+    padding-block: clamp(18px, 4.5vh, 54px) 0;
+  }
+}
+.syh__grid {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: clamp(26px, 4vw, 58px);
+  align-items: center;
+}
+@media (min-width: 901px) {
+  .syh__grid {
+    grid-template-columns: minmax(0, 1.06fr) minmax(0, 0.74fr);
+  }
+}
+
+.syh__copy {
+  min-width: 0;
+  max-width: 40rem;
+}
+
+.syh__mobile-cosmos {
+  display: none;
+}
+
+.syh__eyebrow {
+  font-size: clamp(9.5px, 1vw, 11px);
+  letter-spacing: 0.26em;
+}
+.syh__eyebrow:lang(hi) {
+  letter-spacing: 0.13em;
+  font-family: var(--sy-font-deva);
+  font-size: clamp(10px, 1.05vw, 11.5px);
+}
+
+.syh__title {
+  margin-top: clamp(14px, 2.2vh, 22px);
+  font-family: var(--sy-font-display);
+  font-weight: 500;
+  font-size: clamp(2.05rem, min(5.6vw, 8vh), 4.35rem);
+  line-height: 1.26;
+  letter-spacing: -0.022em;
+  color: var(--sy-ink);
+  text-wrap: balance;
+  text-shadow: 0 10px 36px rgba(7, 7, 12, 0.42);
+}
+.syh__title:lang(hi) {
+  font-family: var(--sy-font-deva);
+  font-size: clamp(1.9rem, min(5vw, 7.1vh), 3.85rem);
+  line-height: 1.26;
+  letter-spacing: -0.005em;
+}
+.syh__title > span[aria-hidden] {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.24em;
+}
+.syh__line {
+  display: block;
+  line-height: 1.26;
+  margin: 0;
+}
+.syh__line + .syh__line {
+  margin-top: 0;
+}
+.syh__title-line {
+  display: block;
+}
+/* The gold run needs a hair of head-room or the serif descenders clip. */
+.syh__title .sy-gold-text {
+  padding-inline-end: 0.08em;
+}
+
+.syh__sub {
+  margin-top: clamp(12px, 2.1vh, 22px);
+  max-width: 44ch;
+  font-size: clamp(0.945rem, min(1.12vw, 1.95vh), 1.115rem);
+  line-height: 1.63;
+  color: color-mix(in srgb, var(--sy-ink) 88%, var(--sy-ink-soft));
+  text-wrap: pretty;
+}
+
+.syh__cta {
+  margin-top: clamp(20px, 3.2vh, 36px);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.7rem;
+}
+.syh__cta .sy-btn-gold,
+.syh__cta .sy-btn-ghost {
+  padding: 0.88rem 1.5rem;
+  font-size: 0.9rem;
+}
+
+.syh__trust {
+  margin-top: clamp(18px, 2.8vh, 32px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0;
+  list-style: none;
+}
+.syh__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.44rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--sy-gold-2) 34%, transparent);
+  background: color-mix(in srgb, var(--sy-bg) 48%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: color-mix(in srgb, var(--sy-ink) 78%, var(--sy-ink-soft));
+  font-size: 0.775rem;
+  font-weight: 600;
+  line-height: 1.35;
+  max-width: 100%;
+}
+[data-theme='light'] .syh__chip,
+[data-sy-theme='light'] .syh__chip {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: color-mix(in srgb, var(--sy-gold-3) 26%, transparent);
+}
+.syh__chip::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  flex: none;
+  border-radius: 999px;
+  background: var(--sy-gold-2);
+  box-shadow: 0 0 8px 1px color-mix(in srgb, var(--sy-gold-2) 60%, transparent);
+}
+
+/* ── Device ───────────────────────────────────────────────── */
+
+.syh__device {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+@media (min-width: 901px) {
+  .syh__device {
+    justify-content: flex-end;
+  }
+}
+.syh__phone {
+  position: relative;
+}
+/* Golden bloom behind the glass. */
+.syh__phone::before {
+  content: '';
+  position: absolute;
+  inset: -12% -26%;
+  z-index: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--sy-gold-2) 30%, transparent),
+    transparent 74%
+  );
+  filter: blur(30px);
+}
+[data-theme='light'] .syh__phone::before,
+[data-sy-theme='light'] .syh__phone::before {
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--sy-gold-3) 22%, transparent),
+    transparent 72%
+  );
+}
+.syh__phone > * {
+  position: relative;
+  z-index: 1;
+}
+.syh__phone .sy-phone {
+  width: clamp(196px, min(25vw, 30vh), 288px);
+}
+/* Rim light + a deeper drop so the device sits *in* the scene. */
+.syh__phone .sy-phone__frame {
+  box-shadow:
+    0 2px 0 rgba(255, 255, 255, 0.34) inset,
+    0 46px 90px -32px rgba(0, 0, 0, 0.8),
+    0 0 0 1px color-mix(in srgb, var(--sy-gold-2) 42%, transparent),
+    0 0 60px -14px color-mix(in srgb, var(--sy-gold-2) 55%, transparent);
+}
+[data-theme='light'] .syh__phone .sy-phone__frame,
+[data-sy-theme='light'] .syh__phone .sy-phone__frame {
+  box-shadow:
+    0 2px 0 rgba(255, 255, 255, 0.55) inset,
+    0 36px 70px -30px rgba(70, 48, 8, 0.42),
+    0 0 0 1px color-mix(in srgb, var(--sy-gold-3) 34%, transparent),
+    0 0 48px -18px color-mix(in srgb, var(--sy-gold-3) 40%, transparent);
+}
+/* Screen sheen — the glass catches the same light as the yantra. */
+.syh__phone .sy-phone__screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    linear-gradient(158deg, rgba(255, 255, 255, 0.17) 0%, rgba(255, 255, 255, 0) 34%),
+    radial-gradient(
+      120% 52% at 50% 0%,
+      color-mix(in srgb, var(--sy-gold-1) 20%, transparent),
+      transparent 62%
+    );
+}
+
+@media (max-width: 900px) {
+  .syh__device {
+    display: none;
+  }
+}
+
+/* ── Scroll cue ───────────────────────────────────────────── */
+
+.syh__foot {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  padding-bottom: clamp(10px, 2.2vh, 26px);
+}
+.syh__cue {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.48rem 0.72rem 0.48rem 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--sy-gold-2) 34%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sy-bg) 76%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow:
+    0 6px 22px -10px color-mix(in srgb, var(--sy-gold-2) 32%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 14%, transparent);
+  cursor: pointer;
+  color: var(--sy-ink-muted);
+  font-family: inherit;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  transition:
+    color 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    transform 0.25s ease;
+}
+.syh__cue:lang(hi) {
+  letter-spacing: 0.08em;
+  font-family: var(--sy-font-deva);
+  text-transform: none;
+  font-size: 0.68rem;
+}
+.syh__cue-label {
+  line-height: 1;
+}
+.syh__cue-icon {
+  display: grid;
+  place-items: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  border-radius: 50%;
+  color: var(--sy-gold-ink);
+  background: color-mix(in srgb, var(--sy-gold-2) 16%, transparent);
+  animation: syh-cue-bob 2.2s ease-in-out infinite;
+}
+.syh__cue:hover {
+  color: var(--sy-gold-ink);
+  border-color: color-mix(in srgb, var(--sy-gold-2) 52%, transparent);
+  box-shadow:
+    0 8px 26px -8px color-mix(in srgb, var(--sy-gold-2) 38%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 18%, transparent);
+  transform: translateY(-1px);
+}
+.syh__cue:active {
+  transform: translateY(0);
+}
+@keyframes syh-cue-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(2px);
+  }
+}
+[data-sy-theme='light'] .syh__cue {
+  background: color-mix(in srgb, var(--sy-bg) 88%, transparent);
+  box-shadow:
+    0 6px 20px -10px color-mix(in srgb, var(--sy-gold-3) 28%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 55%, transparent);
+}
+/* Very short windows: the cue is the first thing to go. */
+@media (max-height: 620px) {
+  .syh__foot {
+    display: none;
+  }
+}
+
+/* ── Reduced motion ───────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .syh__aurora i,
+  .syh__dust,
+  .syh__cue-icon {
+    animation: none;
+  }
+  .syh__dust {
+    display: none;
+  }
+}
+
+/* ── The hero phone ──────────────────────────────────────────────────────────
+   These rules were missing entirely, so the demo screens rendered unstyled at
+   full page width and blew the hero to 2045px on a 900px viewport. Geometry
+   mirrors the proven frame in appinaction.css, scaled for the hero and made
+   height-aware so short laptops shrink the device instead of cropping it. */
+.syh__phonewrap {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-width: 0;
+  opacity: 1;
+}
+.syh__mobile-mandala {
+  display: none;
+}
+@media (min-width: 901px) {
+  .syh__phonewrap {
+    align-items: flex-end;
+  }
+}
+.syh__bloom {
+  position: absolute;
+  inset: -12% -18%;
+  z-index: 0;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(233, 184, 80, 0.22), rgba(233, 184, 80, 0) 72%);
+  filter: blur(18px);
+  pointer-events: none;
+}
+[data-sy-theme='light'] .syh__bloom {
+  background: radial-gradient(closest-side, rgba(184, 127, 26, 0.12), transparent 70%);
+  filter: blur(10px);
+}
+.syh-phone {
+  /* device width follows the viewport's HEIGHT too — a 720px laptop gets a
+     smaller phone rather than an overflowing one */
+  --syh-phone-w: clamp(212px, min(19vw, 30vh), 280px);
+  position: relative;
+  z-index: 2;
+  width: var(--syh-phone-w);
+  max-width: 100%;
+  opacity: 1;
+}
+.syh-phone.is-float {
+  animation: syh-float 7s ease-in-out infinite;
+}
+@keyframes syh-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.syh-phone__fit {
+  position: relative;
+}
+.syh-phone__frame {
+  position: relative;
+  display: block;
+  padding: var(--syh-frame-pad);
+  border-radius: var(--syh-frame-r);
+  background: linear-gradient(150deg, rgba(252, 232, 168, 0.9), rgba(184, 127, 26, 0.55) 44%, rgba(38, 28, 8, 0.95));
+  box-shadow:
+    0 2px 0 rgba(255, 255, 255, 0.24) inset,
+    0 46px 96px -40px rgba(0, 0, 0, 0.9),
+    0 0 0 1px rgba(233, 184, 80, 0.24);
+}
+[data-sy-theme='light'] .syh-phone__frame {
+  box-shadow:
+    0 2px 0 rgba(255, 255, 255, 0.5) inset,
+    0 40px 80px -44px rgba(92, 58, 16, 0.55),
+    0 0 0 1px rgba(146, 64, 14, 0.22);
+}
+.syh-phone__notch {
+  position: absolute;
+  top: calc(var(--syh-frame-pad) * 1.9);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 22%;
+  height: 5px;
+  border-radius: 99px;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 3;
+}
+.syh-phone__screen {
+  position: relative;
+  display: block;
+  /* the app screens are authored at 300x630 — keep that ratio at any width */
+  width: 100%;
+  aspect-ratio: 300 / 630;
+  border-radius: var(--syh-screen-r);
+  overflow: hidden;
+  background: #08070b;
+  isolation: isolate;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+[data-sy-theme='light'] .syh-phone__screen {
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.35) inset;
+}
+.syh-phone__slide {
+  position: absolute;
+  inset: 0;
+  /* the demos are laid out for a 300px-wide screen; scale the whole board so
+     a narrower hero phone shows the same composition, never a reflowed one */
+  width: 300px;
+  height: 630px;
+  transform-origin: top left;
+  scale: calc(var(--syh-phone-w) / 300);
+}
+.syh-phone__glass {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(115deg, rgba(255, 255, 255, 0) 42%, rgba(255, 255, 255, 0.07) 50%, rgba(255, 255, 255, 0) 58%);
+  background-size: 260% 100%;
+  animation: syh-sweep 7.5s ease-in-out infinite;
+}
+[data-sy-theme='light'] .syh-phone__glass {
+  opacity: 0.32;
+  background: linear-gradient(115deg, rgba(255, 255, 255, 0) 44%, rgba(255, 255, 255, 0.035) 50%, rgba(255, 255, 255, 0) 56%);
+}
+@keyframes syh-sweep {
+  0%, 62% { background-position: 130% 0; }
+  100% { background-position: -30% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .syh-phone.is-float,
+  .syh-phone__glass {
+    animation: none;
+  }
+}
+
+/* ── The mandala backdrop ────────────────────────────────────────────────────
+   These rules were never written (the redesign stopped mid-file), so the
+   layer sat in the grid flow at its intrinsic 1440px and stretched the hero
+   to 2045px on a 900px viewport — the exact "height adjust nahi ho raha"
+   the redesign set out to fix. It is a backdrop: take it out of flow. */
+.syh__mandala {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  overflow: visible;
+}
+.syh__mandala-pos {
+  /* vmin keeps the bloom square and equally balanced in vh + vw */
+  width: min(76vmin, 760px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  /* separate from framer-motion scale on transform */
+  translate: clamp(8px, 2vw, 32px) clamp(14px, 4vh, 52px);
+  opacity: 0.88;
+  --syh-bloom-1: #fce8a8;
+  --syh-bloom-2: #e9b850;
+  --syh-bloom-3: #a8770f;
+}
+[data-sy-theme='light'] .syh__mandala-pos {
+  opacity: 0.68;
+  --syh-bloom-1: #d9a63a;
+  --syh-bloom-2: #b87f1a;
+  --syh-bloom-3: #7c4a03;
+}
+@media (max-width: 760px) {
+  .syh__mandala-pos {
+    width: min(88vmin, 520px);
+    translate: clamp(4px, 1.5vw, 18px) clamp(12px, 3.5vh, 40px);
+    opacity: 0.62;
+  }
+  [data-sy-theme='light'] .syh__mandala-pos {
+    opacity: 0.52;
+  }
+}
+
+/* ── Headline lines, caption, wash ───────────────────────────────────────────
+   The rest of the redesign's stylesheet was never written — these hooks were
+   in the markup with nothing behind them. */
+.syh__wash {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 80% at 18% 12%, rgba(233, 184, 80, 0.10), transparent 60%),
+    radial-gradient(90% 70% at 86% 82%, rgba(140, 96, 232, 0.06), transparent 62%);
+}
+[data-sy-theme='light'] .syh__wash {
+  background:
+    radial-gradient(120% 80% at 18% 12%, rgba(184, 127, 26, 0.10), transparent 60%),
+    radial-gradient(90% 70% at 86% 82%, rgba(146, 64, 14, 0.05), transparent 62%);
+}
+.syh__line {
+  display: block;
+}
+.syh__caption {
+  margin-top: 0.9rem;
+  text-align: center;
+  font-size: clamp(0.78rem, 1vw, 0.9rem);
+  line-height: 1.45;
+  color: var(--sy-ink-muted, #8f8878);
+  max-width: 32ch;
+  margin-inline: auto;
+  animation: syh-capin 0.5s ease both;
+}
+[data-sy-theme='light'] .syh__caption {
+  color: color-mix(in srgb, var(--sy-ink) 62%, var(--sy-ink-muted));
+}
+@media (min-width: 901px) {
+  .syh__caption {
+    text-align: right;
+    margin-inline: 0;
+  }
+}
+@keyframes syh-capin {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ── The screen tabs — a real tablist, the hero's one interactive control ──── */
+.syh-tabs {
+  display: flex;
+  gap: 0.35rem;
+}
+.syh-tabs--rail {
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 190px;
+}
+.syh-tabs--row {
+  display: none;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+  gap: 0.4rem;
+}
+.syh-tabs--row::-webkit-scrollbar { display: none; }
+
+.syh-tab {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.7rem 0.62rem;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--sy-ink-muted, #8f8878);
+  font: inherit;
+  font-size: 0.84rem;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+}
+.syh-tab:hover { color: var(--sy-ink-soft, #cfc6b4); }
+.syh-tab:focus-visible {
+  outline: 2px solid var(--sy-gold-2, #e9b850);
+  outline-offset: 2px;
+}
+.syh-tab.is-on {
+  color: var(--sy-ink, #f8f6f0);
+  border-color: var(--sy-line, rgba(233, 184, 80, 0.16));
+  background: rgba(233, 184, 80, 0.06);
+}
+[data-sy-theme='light'] .syh-tab.is-on {
+  background: rgba(184, 127, 26, 0.08);
+}
+.syh-tab__n {
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  color: var(--sy-gold-3, #b87f1a);
+  opacity: 0.75;
+}
+.syh-tab.is-on .syh-tab__n {
+  color: var(--sy-gold-2, #e9b850);
+  opacity: 1;
+}
+.syh-tab__label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* the dwell-time progress line under the active tab */
+.syh-tab__track {
+  grid-column: 1 / -1;
+  height: 2px;
+  margin-top: 0.45rem;
+  border-radius: 99px;
+  background: var(--sy-line, rgba(233, 184, 80, 0.16));
+  overflow: hidden;
+}
+.syh-tab__fill {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--sy-gold-1, #fce8a8), var(--sy-gold-3, #b87f1a));
+  animation-name: syh-tabfill;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+}
+@keyframes syh-tabfill {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@media (max-width: 1100px) {
+  .syh-tabs--rail { display: none; }
+  .syh-tabs--row { display: flex; }
+  .syh-tab { padding-bottom: 0.5rem; }
+  .syh-tab__track { margin-top: 0.35rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .syh-tab__fill,
+  .syh__caption { animation: none; }
+}
+
+/* ── The stage (right column): phone + caption ─────────────────────────────── */
+.syh__stage {
+  position: relative;
+  inset: auto;
+  z-index: 2;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  opacity: 1;
+}
+@media (min-width: 901px) {
+  .syh__stage {
+    align-items: flex-end;
+    justify-content: center;
+    justify-self: end;
+    width: 100%;
+  }
+}
+
+/* ── Give the device room ────────────────────────────────────────────────────
+   The right column was sized for the old backdrop-only stage, so once the
+   phone, its caption and the tab rail shared it the device was squeezed to
+   100px. The column now has a floor, the phone never shrinks, and the caption
+   sits under the phone instead of competing with it for the same row. */
+@media (min-width: 901px) {
+  .syh__grid {
+    grid-template-columns: minmax(0, 1.02fr) minmax(300px, 0.98fr);
+    gap: clamp(20px, 3vw, 48px);
+  }
+}
+.syh-tabs--rail {
+  min-width: 168px;
+}
+
+/* ── Final calibration ───────────────────────────────────────────────────────
+   1 · The demo board is authored at 300px; it must be scaled against the
+       SCREEN width (phone minus its frame padding), not the phone width, or
+       the right edge of every screen is clipped. */
+.syh-phone {
+  --syh-screen-w: calc(var(--syh-phone-w) * 0.94);
+  --syh-frame-pad: calc(var(--syh-screen-w) * 0.033);
+  --syh-frame-r: calc(var(--syh-screen-w) * 0.155);
+  --syh-screen-r: calc(var(--syh-screen-w) * 0.125);
+}
+.syh-phone__slide {
+  transform: scale(var(--syh-board-scale, 0.85));
+}
+
+/* 2 · Below ~760px the hero grows with its content — the phone is scaled to
+      fit and shown whole, not cropped at the fold. */
+@media (max-width: 760px) {
+  .syh__caption {
+    display: none;
+  }
+}
+
+/* The scaling wrapper: a plain element framer-motion never writes to, so the
+   300x630 demo board reliably fits the hero's smaller screen. */
+.syh-phone__zoom {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+.syh-phone__board {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 300px;
+  height: 630px;
+  transform-origin: top left;
+  transform: scale(var(--syh-board-scale, 0.85));
+}
+.syh-phone__slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  scale: 1;
+}
+
+/* ══ The flower ══════════════════════════════════════════════════════════════
+   Replaces the old yantra figure: no square frame, no triangles — a
+   rose-window bloom of petals that draws itself and then keeps living. */
+.syh-bloom {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+/* the whole bloom breathes */
+.syh-bloom.is-live {
+  animation: syh-breathe 9s ease-in-out infinite;
+  transform-origin: center;
+}
+@keyframes syh-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.016); }
+}
+/* alternate rings turn against each other — minutes per revolution */
+.syh-bloom.is-live .syh-bloom__ring--0 { animation: syh-spin 240s linear infinite; }
+.syh-bloom.is-live .syh-bloom__ring--1 { animation: syh-spin-r 180s linear infinite; }
+.syh-bloom.is-live .syh-bloom__ring--2 { animation: syh-spin 140s linear infinite; }
+.syh-bloom.is-live .syh-bloom__ring--3 { animation: syh-spin-r 100s linear infinite; }
+.syh-bloom.is-live .syh-bloom__dash { animation: syh-spin 90s linear infinite; }
+@keyframes syh-spin { to { transform: rotate(360deg); } }
+@keyframes syh-spin-r { to { transform: rotate(-360deg); } }
+/* the heart pulses */
+.syh-bloom.is-live .syh-bloom__heart { animation: syh-pulse 6s ease-in-out infinite; }
+.syh-bloom.is-live .syh-bloom__bindu { animation: syh-pulse 3.4s ease-in-out infinite; }
+@keyframes syh-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .syh-bloom.is-live,
+  .syh-bloom.is-live * { animation: none !important; }
+}
+
+/* ── Phone sizing: the device is 80% of the viewport height ──────────────────
+   Asked for directly. Width follows from the board's 300x630 ratio, so the
+   screen keeps its exact proportions and the app UI inside is never squashed.
+   `--syh-screen-w` (used by the zoom wrapper) follows the frame padding. */
+.syh-phone {
+  --syh-phone-h: min(80vh, 640px);
+  --syh-phone-w: calc(var(--syh-phone-h) * 300 / 630);
+  width: var(--syh-phone-w);
+}
+/* the zoom wrapper reads its scale from the screen width — keep them in step */
+.syh-phone__board {
+  transform: scale(var(--syh-board-scale, 0.85));
+}
+/* the tab bar now lives inside the scaled board; it is absolutely positioned
+   against it, so give the board its full 630px height to anchor against */
+/* the demo fills the board, the app's tab bar pins to its foot */
+.syh-phone__board > .syd {
+  position: absolute;
+  inset: 0;
+}
+.syh-phone__board > .sya-tabbar {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 56px;
+}
+@media (max-width: 1280px) {
+  .syh-phone {
+    --syh-phone-h: min(72vh, 560px);
+  }
+}
+
+
+/* ── Bloom motion ────────────────────────────────────────────────────────────
+   Five rings now, plus the point ring and the travelling light. Rotations use
+   user-unit origins (SVG children default to transform-box: view-box), so the
+   rings turn about the flower's own centre, never the page's. */
+.syh-bloom.is-live .syh-bloom__ring--4 { animation: syh-spin 80s linear infinite; }
+.syh-bloom.is-live .syh-bloom__points { animation: syh-spin-r 300s linear infinite; }
+/* the light that circles the flower */
+.syh-bloom.is-live .syh-bloom__sweep { animation: syh-spin 14s linear infinite; }
+.syh-bloom__hi { mix-blend-mode: screen; }
+[data-sy-theme='light'] .syh-bloom__hi { mix-blend-mode: multiply; opacity: 0.5; }
+
+
+/* ── स्वस्तिक चक्र ────────────────────────────────────────────────────────────
+   The wheel turns; the swastika inside it does not. Light mode needs heavier,
+   deeper ink — a gold tuned for black is nearly invisible on cream — so every
+   stroke width is multiplied by `--syh-ink-boost` at once. */
+.syh-bloom.is-live .syh-bloom__ring--0 { animation: syh-spin 150s linear infinite; }
+.syh-bloom.is-live .syh-bloom__points { animation: syh-spin-r 320s linear infinite; }
+.syh-bloom.is-live .syh-bloom__sweep { animation: syh-spin 13s linear infinite; }
+.syh-bloom__swastik { transform-origin: 120px 120px; }
+
+[data-sy-theme='light'] .syh__mandala-pos {
+  --syh-bloom-1: #b8801a;
+  --syh-bloom-2: #8f5f0c;
+  --syh-bloom-3: #5c3a06;
+  --syh-ink-boost: 1.85;
+  opacity: 0.95;
+}
+[data-sy-theme='light'] .syh-bloom__hi { mix-blend-mode: multiply; opacity: 0.35; }
+
+/* ═══ Hero polish pass ════════════════════════════════════════
+   The chakra's new engraving, the headline's turning word, and
+   the opening choreography. */
+
+/* ── Chakra: halo breath + orbiting sparks ───────────────────
+   The halo breathes on an 11s cycle offset from the heart's 6s
+   pulse (negative delay = already mid-breath on arrival), so the
+   figure never "beats" — it swells and settles like a lamp. */
+.syh-bloom.is-live .syh-bloom__halo {
+  animation: syh-halo 11s ease-in-out -2.6s infinite;
+}
+@keyframes syh-halo {
+  0%, 100% { opacity: 0.5; transform: scale(0.988); }
+  50% { opacity: 0.95; transform: scale(1.028); }
+}
+.syh-bloom.is-live .syh-bloom__orbit--a { animation: syh-spin 84s linear infinite; }
+.syh-bloom.is-live .syh-bloom__orbit--b { animation: syh-spin-r 126s linear infinite; }
+.syh-bloom.is-live .syh-bloom__orbit--c { animation: syh-spin 104s linear infinite; }
+
+/* ── The headline's turning word ─────────────────────────────
+   Every candidate word is stacked invisibly in the same grid
+   cell, so the slot's width is the widest word's width and a
+   swap can never reflow the headline. `overflow: clip` turns the
+   slide into a clip-reveal; the padding/margin pair gives the
+   clip box room for ascenders and Devanagari matras without
+   moving the text an inch. */
+.syh__swap {
+  position: relative;
+  display: inline-grid;
+  justify-items: start;
+  white-space: nowrap;
+  /* `overflow: clip` alone lets the composited (transformed) word escape the
+     box in Chromium — clip-path is honoured by the compositor and cannot be
+     escaped. It clips at the border box, so the padding/margin pair below
+     still buys headroom for ascenders and Devanagari matras. */
+  overflow: clip;
+  clip-path: inset(0);
+  padding: 0.18em 0.12em 0.22em 0;
+  margin: -0.18em -0.12em -0.22em 0;
+  vertical-align: baseline;
+}
+.syh__swap-size,
+.syh__swap-word {
+  grid-area: 1 / 1;
+}
+.syh__swap-size {
+  visibility: hidden;
+}
+
+/* Mobile: CSS-only swap — transform/opacity only, no filter shadows. */
+@keyframes syh-swap-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.62em, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+.syh__swap--lite {
+  contain: layout style;
+  filter: none;
+}
+.syh__swap-word--lite {
+  animation: syh-swap-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: transform, opacity;
+}
+.syh__swap--lite .sy-gold-text {
+  filter: none;
+}
+
+/* ── Light-bleed behind the headline on load ────────────────── */
+.syh__copy {
+  position: relative;
+}
+.syh__bleed {
+  position: absolute;
+  left: -16%;
+  top: -14%;
+  width: 118%;
+  height: 72%;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(
+    52% 52% at 38% 42%,
+    color-mix(in srgb, var(--sy-gold-2) 15%, transparent),
+    transparent 72%
+  );
+  filter: blur(36px);
+  animation: syh-bleed 2.4s ease 0.1s both;
+}
+[data-sy-theme='light'] .syh__bleed {
+  background: radial-gradient(
+    52% 52% at 38% 42%,
+    color-mix(in srgb, var(--sy-gold-3) 14%, transparent),
+    transparent 72%
+  );
+}
+@keyframes syh-bleed {
+  from {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ── Chips: hover lift on a gold hairline ───────────────────── */
+.syh__chip {
+  transition:
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.3s ease,
+    box-shadow 0.3s ease,
+    color 0.3s ease;
+}
+.syh__chip:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--sy-gold-2) 62%, transparent);
+  color: var(--sy-ink);
+  box-shadow: 0 8px 22px -12px color-mix(in srgb, var(--sy-gold-2) 55%, transparent);
+}
+[data-sy-theme='light'] .syh__chip:hover {
+  border-color: color-mix(in srgb, var(--sy-gold-3) 55%, transparent);
+  box-shadow: 0 8px 20px -12px color-mix(in srgb, var(--sy-gold-3) 45%, transparent);
+}
+
+/* ── The scroll cue arrives after the headline has landed ───── */
+.syh__cue {
+  animation: syh-capin 0.9s ease 1.5s both;
+}
+
+/* ═══ Phones: a different composition, not a smaller one ══════
+   The desktop hero reads left-to-right — copy, then device, with
+   the wheel between them. Squeezed into one column that stacked
+   badly: the wheel sat directly behind the headline (linework
+   crossing the words, so neither read), and the device was hidden
+   altogether, leaving the first screen with nothing of the app in
+   it. So the phone layout is rebuilt rather than scaled:
+
+      ┌──────────────────────┐
+      │ eyebrow              │  copy sits on a real scrim —
+      │ HEADLINE, turning    │  clean background, nothing behind
+      │ one plain sentence   │  the type
+      │ [ get the app ]      │
+      │ [ what's inside ]    │
+      │ · trust · trust      │
+      │      ╭────────╮      │  the wheel rises from the foot,
+      │   ◜  │ live   │  ◝   │  the device rises out of the fold
+      │  ◜   │ screen │   ◝  │  and dissolves into it
+      └──────┴────────┴──────┘
+
+    The band runs to 900px — everywhere the grid is one column. Left at
+    760 the tablet-portrait sizes kept the old stacked layout and the hero
+    measured 1242px against a 1000px window.
+    ───────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  /* 1 · Both rows size to content — the old 1fr row + overflow:clip squeezed
+         the phone and scroll cue into each other on short screens. */
+  .syh {
+    grid-template-rows: auto auto;
+    min-height: auto;
+    height: auto;
+    overflow-x: clip;
+    overflow-y: visible;
+    padding-bottom: 0;
+    /* Add proper gap after fixed nav/header */
+    padding-top: calc(var(--syh-nav) + clamp(20px, 3.3vh, 33px));
+  }
+  .syh__grid {
+    grid-template-rows: auto auto;
+    align-items: center;
+    align-content: start;
+    gap: clamp(18px, 3.5vh, 32px);
+    height: auto;
+    padding-inline: clamp(16px, 4vw, 24px);
+  }
+  .syh__copy {
+    position: relative;
+    z-index: 3;
+    max-width: 34rem;
+    padding-bottom: clamp(4px, 1vh, 10px);
+    text-align: center;
+  }
+
+  /* 2 · Keep the wheel in the device band only — not behind the buttons. */
+  .syh__mandala {
+    top: auto;
+    bottom: clamp(56px, 11vh, 88px);
+    height: min(68svh, 580px);
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .syh__mandala-pos {
+    width: min(88vmin, 480px);
+    translate: 0 0;
+    opacity: 0.56;
+  }
+  [data-sy-theme='light'] .syh__mandala-pos {
+    opacity: 0.44;
+  }
+
+  /* 3 · …and under the copy there is now an actual scrim. This, not the
+         figure's opacity, is what makes the headline legible on every
+         phone in both themes. */
+  .syh__veil {
+    background: linear-gradient(
+      180deg,
+      var(--sy-bg) 0%,
+      var(--sy-bg) 42%,
+      color-mix(in srgb, var(--sy-bg) 96%, transparent) 54%,
+      color-mix(in srgb, var(--sy-bg) 72%, transparent) 66%,
+      color-mix(in srgb, var(--sy-bg) 28%, transparent) 78%,
+      transparent 88%
+    );
+  }
+  .syh__vignette {
+    background: radial-gradient(
+      120% 70% at 50% 88%,
+      transparent 42%,
+      color-mix(in srgb, var(--sy-bg) 55%, transparent) 100%
+    );
+  }
+
+  /* 4 · Type, tuned for the hand rather than clamped down from the desk. */
+  .syh__eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--sy-glass) 90%, transparent);
+    border: 1px solid color-mix(in srgb, var(--sy-gold-2) 25%, transparent);
+    backdrop-filter: blur(16px) saturate(1.2);
+    -webkit-backdrop-filter: blur(16px) saturate(1.2);
+    box-shadow: 
+      0 8px 24px -16px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 color-mix(in srgb, white 10%, transparent);
+    margin-bottom: clamp(8px, 1.5vh, 14px);
+  }
+  .syh__eyebrow:lang(hi) {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+  }
+  .syh__eyebrow::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--sy-gold-1), var(--sy-gold-3));
+    box-shadow: 0 0 12px 2px color-mix(in srgb, var(--sy-gold-2) 40%, transparent);
+    animation: syh-eyebrow-pulse 3s ease-in-out infinite;
+  }
+  @keyframes syh-eyebrow-pulse {
+    0%, 100% { opacity: 0.8; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.1); }
+  }
+
+  .syh__title {
+    margin-top: clamp(12px, 2vh, 18px);
+    font-size: clamp(2rem, 8.4vw, 3rem);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    text-shadow: none;
+  }
+  .syh__title:lang(hi) {
+    font-size: clamp(1.82rem, 7.6vw, 2.55rem);
+    line-height: 1.26;
+    letter-spacing: -0.01em;
+  }
+  .syh__title > span[aria-hidden] {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.24em;
+  }
+  .syh__line {
+    display: block;
+    line-height: 1.26;
+  }
+  .syh__line + .syh__line {
+    margin-top: 0;
+    max-width: none;
+  }
+  /* No drop-shadow on the swap — it paints a boxy glow behind gradient text. */
+  .syh__swap {
+    filter: none;
+    padding: 0;
+    margin: 0;
+    line-height: inherit;
+    vertical-align: baseline;
+  }
+  .syh__swap-word .sy-gold-text {
+    filter: none;
+  }
+  /* Mobile copy should sit on a clean scrim — no gold bleed behind the type. */
+  .syh__bleed {
+    display: none;
+  }
+
+  .syh__sub {
+    margin-top: clamp(12px, 2vh, 18px);
+    max-width: 36ch;
+    font-size: clamp(0.95rem, 2.8vw, 1.05rem);
+    line-height: 1.65;
+    color: color-mix(in srgb, var(--sy-ink) 85%, var(--sy-ink-soft));
+    margin-inline: auto;
+  }
+  .syh__sub-more {
+    display: inline;
+  }
+
+  /* 5 · Two full-width buttons — a thumb should never have to aim. */
+  .syh__cta {
+    margin-top: clamp(18px, 3vh, 28px);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    max-width: 320px;
+    margin-inline: auto;
+  }
+  .syh__cta .sy-btn-gold,
+  .syh__cta .sy-btn-ghost {
+    width: 100%;
+    justify-content: center;
+    padding: 1rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    border-radius: 16px;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .syh__cta .sy-btn-gold {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--sy-gold-1) 0%, var(--sy-gold-2) 50%, var(--sy-gold-3) 100%);
+    box-shadow: 
+      0 8px 32px -12px color-mix(in srgb, var(--sy-gold-2) 50%, transparent),
+      inset 0 1px 0 color-mix(in srgb, white 20%, transparent);
+    border: 1px solid color-mix(in srgb, var(--sy-gold-2) 30%, transparent);
+  }
+  .syh__cta .sy-btn-gold::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 40%, color-mix(in srgb, white 15%, transparent) 50%, transparent 60%);
+    transform: translateX(-100%);
+    transition: transform 0.5s ease;
+  }
+  .syh__cta .sy-btn-gold:hover::before,
+  .syh__cta .sy-btn-gold:active::before {
+    transform: translateX(100%);
+  }
+  .syh__cta .sy-btn-gold:active {
+    transform: scale(0.98);
+  }
+  .syh__cta .sy-btn-gold svg {
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
+    transition: transform 0.2s ease;
+  }
+  .syh__cta .sy-btn-gold:hover svg {
+    transform: translateY(1px);
+  }
+  .syh__cta .sy-btn-ghost {
+    background: color-mix(in srgb, var(--sy-glass) 80%, transparent);
+    border: 1px solid color-mix(in srgb, var(--sy-gold-2) 35%, transparent);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    color: var(--sy-ink);
+    box-shadow: 
+      0 4px 20px -8px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 color-mix(in srgb, white 8%, transparent);
+  }
+  .syh__cta .sy-btn-ghost:hover {
+    background: color-mix(in srgb, var(--sy-gold-1) 12%, transparent);
+    border-color: color-mix(in srgb, var(--sy-gold-2) 55%, transparent);
+    box-shadow: 
+      0 8px 28px -10px color-mix(in srgb, var(--sy-gold-2) 25%, transparent),
+      inset 0 1px 0 color-mix(in srgb, white 12%, transparent);
+    transform: translateY(-1px);
+  }
+
+  /* 6 · Trust chips — infinite marquee on mobile (desktop stays wrapped pills). */
+  .syh__trust-marquee {
+    position: relative;
+    overflow: hidden;
+    margin-top: clamp(18px, 3.5vh, 28px);
+    margin-bottom: clamp(8px, 1.5vh, 14px);
+    width: calc(100% + 15px);
+    margin-inline: 0 -15px 0 0;
+    padding-block: 0.2rem;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+  }
+  .syh__trust-marquee .syj-marquee__track {
+    display: flex;
+    width: max-content;
+    animation: syh-trust-marq var(--dur, 34s) linear infinite;
+  }
+  .syh__trust-marquee .syj-marquee__item {
+    display: inline-flex;
+    padding-inline-end: 0.65rem;
+    white-space: nowrap;
+  }
+  .syh__trust-marquee .syj-marquee__item b {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.58rem;
+    min-height: 58px;
+    padding: 0.68rem 0.85rem;
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--sy-gold-2) 25%, transparent);
+    background:
+      linear-gradient(135deg, color-mix(in srgb, var(--sy-gold-1) 7%, transparent), transparent 54%),
+      linear-gradient(145deg,
+        color-mix(in srgb, var(--sy-glass) 85%, transparent) 0%,
+        color-mix(in srgb, var(--sy-glass) 55%, transparent) 100%
+      );
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    color: var(--sy-ink);
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 650;
+    font-style: normal;
+    line-height: 1.32;
+    opacity: 1;
+    box-shadow:
+      0 4px 20px -8px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 color-mix(in srgb, white 10%, transparent),
+      inset 0 -1px 0 color-mix(in srgb, var(--sy-gold-2) 8%, transparent);
+  }
+  .syh__trust-marquee .syj-marquee__item b::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--sy-gold-1), var(--sy-gold-3));
+    box-shadow: 0 0 12px 2px color-mix(in srgb, var(--sy-gold-2) 40%, transparent);
+    flex-shrink: 0;
+  }
+  [data-sy-theme='light'] .syh__trust-marquee .syj-marquee__item b {
+    background:
+      linear-gradient(135deg, color-mix(in srgb, var(--sy-gold-1) 7%, transparent), transparent 54%),
+      linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 250, 240, 0.85) 100%);
+    border-color: color-mix(in srgb, var(--sy-gold-3) 25%, transparent);
+    color: #1a1a2e;
+    box-shadow:
+      0 4px 20px -8px rgba(15, 23, 42, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8),
+      inset 0 -1px 0 color-mix(in srgb, var(--sy-gold-3) 10%, transparent);
+  }
+  @keyframes syh-trust-marq {
+    to {
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
+
+  /* Legacy static trust list — desktop only; kept for reference if markup reverts. */
+  .syh__trust {
+    margin-top: clamp(18px, 3.5vh, 28px);
+    margin-bottom: clamp(8px, 1.5vh, 14px);
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    align-items: center;
+    padding-inline: clamp(8px, 2vw, 16px);
+  }
+  .syh__trust li {
+    width: 100%;
+    max-width: 340px;
+  }
+  .syh__chip {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--sy-gold-2) 25%, transparent);
+    background: linear-gradient(145deg, 
+      color-mix(in srgb, var(--sy-glass) 85%, transparent) 0%,
+      color-mix(in srgb, var(--sy-glass) 55%, transparent) 100%
+    );
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    color: var(--sy-ink);
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.4;
+    box-shadow: 
+      0 4px 20px -8px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 color-mix(in srgb, white 10%, transparent),
+      inset 0 -1px 0 color-mix(in srgb, var(--sy-gold-2) 8%, transparent);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  .syh__chip::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--sy-gold-1), var(--sy-gold-3));
+    box-shadow: 0 0 12px 2px color-mix(in srgb, var(--sy-gold-2) 40%, transparent);
+    flex-shrink: 0;
+    animation: syh-trust-pulse 2.5s ease-in-out infinite;
+  }
+  .syh__chip:nth-child(2)::before { animation-delay: 0.3s; }
+  .syh__chip:nth-child(3)::before { animation-delay: 0.6s; }
+  @keyframes syh-trust-pulse {
+    0%, 100% { opacity: 0.85; transform: scale(1); box-shadow: 0 0 12px 2px color-mix(in srgb, var(--sy-gold-2) 40%, transparent); }
+    50% { opacity: 1; transform: scale(1.1); box-shadow: 0 0 18px 4px color-mix(in srgb, var(--sy-gold-2) 55%, transparent); }
+  }
+  .syh__chip::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, 
+      color-mix(in srgb, var(--sy-gold-1) 8%, transparent) 0%,
+      transparent 50%,
+      color-mix(in srgb, var(--sy-gold-3) 4%, transparent) 100%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .syh__chip:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--sy-gold-2) 50%, transparent);
+    box-shadow: 
+      0 12px 32px -12px color-mix(in srgb, var(--sy-gold-2) 35%, transparent),
+      inset 0 1px 0 color-mix(in srgb, white 15%, transparent),
+      inset 0 -1px 0 color-mix(in srgb, var(--sy-gold-2) 12%, transparent);
+  }
+  .syh__chip:hover::after {
+    opacity: 1;
+  }
+  [data-sy-theme='light'] .syh__chip {
+    background: linear-gradient(145deg, 
+      rgba(255, 255, 255, 0.9) 0%,
+      rgba(255, 250, 240, 0.85) 100%
+    );
+    border-color: color-mix(in srgb, var(--sy-gold-3) 25%, transparent);
+    box-shadow: 
+      0 4px 20px -8px rgba(15, 23, 42, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8),
+      inset 0 -1px 0 color-mix(in srgb, var(--sy-gold-3) 10%, transparent);
+    color: #1a1a2e;
+  }
+  [data-sy-theme='light'] .syh__chip:hover {
+    box-shadow: 
+      0 12px 32px -12px color-mix(in srgb, var(--sy-gold-3) 30%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      inset 0 -1px 0 color-mix(in srgb, var(--sy-gold-3) 15%, transparent);
+  }
+
+  /* 7 · Show the full device — spaced clear of copy above and scroll below. */
+  .syh__stage {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    width: 100%;
+    position: relative;
+    z-index: 2;
+    margin-top: clamp(4px, 1vh, 10px);
+    padding-top: clamp(6px, 1.2vh, 12px);
+    padding-bottom: clamp(2px, 0.6vh, 6px);
+    min-height: 0;
+    overflow: visible;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .syh__phonewrap {
+    flex: none;
+    justify-content: flex-start;
+    width: 100%;
+    max-width: 100%;
+    position: relative;
+    z-index: 2;
+  }
+  .syh__mobile-mandala {
+    --syh-bloom-1: #fce8a8;
+    --syh-bloom-2: #e9b850;
+    --syh-bloom-3: #a8770f;
+    position: absolute;
+    z-index: 0;
+    top: 50%;
+    left: 50%;
+    display: grid;
+    width: min(92vmin, 520px);
+    aspect-ratio: 1;
+    place-items: center;
+    overflow: visible;
+    pointer-events: none;
+    opacity: 0.52;
+    transform: translate(-50%, -50%);
+    filter: drop-shadow(0 20px 40px color-mix(in srgb, var(--sy-gold-2) 15%, transparent));
+  }
+  [data-sy-theme='light'] .syh__mobile-mandala {
+    --syh-bloom-1: #b8801a;
+    --syh-bloom-2: #8f5f0c;
+    --syh-bloom-3: #5c3a06;
+    --syh-ink-boost: 1.85;
+    opacity: 0.4;
+  }
+  .syh__bloom {
+    inset: -8% -10%;
+    filter: blur(14px);
+  }
+  .syh-phone {
+    --syh-phone-h: clamp(300px, 48svh, 440px);
+    position: relative;
+    z-index: 3;
+  }
+  .syh-phone.is-float {
+    animation: none;
+  }
+  /* Phone frame glow enhancement */
+  .syh-phone__frame {
+    box-shadow: 
+      0 2px 0 rgba(255, 255, 255, 0.24) inset,
+      0 46px 96px -40px rgba(0, 0, 0, 0.9),
+      0 0 0 1px rgba(233, 184, 80, 0.24),
+      0 0 60px -20px color-mix(in srgb, var(--sy-gold-2) 40%, transparent),
+      inset 0 0 40px -10px color-mix(in srgb, var(--sy-gold-1) 15%, transparent);
+  }
+  [data-sy-theme='light'] .syh-phone__frame {
+    box-shadow: 
+      0 2px 0 rgba(255, 255, 255, 0.5) inset,
+      0 40px 80px -44px rgba(92, 58, 16, 0.55),
+      0 0 0 1px rgba(146, 64, 14, 0.22),
+      0 0 50px -18px color-mix(in srgb, var(--sy-gold-3) 35%, transparent),
+      inset 0 0 30px -8px color-mix(in srgb, var(--sy-gold-1) 12%, transparent);
+  }
+  /* Premium phone screen inner glow — radius tracks the screen, never a fixed px. */
+  .syh-phone__screen::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--sy-gold-1) 20%, transparent) 0%,
+      transparent 40%,
+      color-mix(in srgb, var(--sy-gold-3) 10%, transparent) 100%
+    );
+    opacity: 0.6;
+    pointer-events: none;
+    z-index: 1;
+    animation: syh-screen-glow 4s ease-in-out infinite;
+  }
+  @keyframes syh-screen-glow {
+    0%,
+    100% {
+      opacity: 0.5;
+    }
+    50% {
+      opacity: 0.75;
+    }
+  }
+  /* tablets have both the width and the height for a fuller device */
+  @media (min-width: 601px) {
+    .syh-phone {
+      --syh-phone-h: clamp(340px, 54svh, 520px);
+    }
+    .syh__copy {
+      max-width: 38rem;
+    }
+  }
+  .syh__caption {
+    display: none;
+  }
+  .syh__foot {
+    display: none;
+  }
+}
+
+/* Short phones (a 640px-tall screen): the copy alone was taking three
+   quarters of the fold, leaving the device a 149px sliver and pushing the
+   wheel up into the trust line. The three trust points step out — they are
+   said again, at length, further down the page — and everything breathes. */
+@media (max-width: 900px) and (max-height: 700px) {
+  .syh-phone {
+    --syh-phone-h: clamp(240px, 38svh, 320px);
+  }
+  .syh__mandala {
+    height: min(58svh, 480px);
+    bottom: clamp(48px, 9vh, 72px);
+  }
+  .syh__grid {
+    gap: clamp(22px, 5vh, 36px);
+  }
+  .syh__title {
+    font-size: clamp(1.95rem, 8vw, 2.4rem);
+  }
+  .syh__title:lang(hi) {
+    font-size: clamp(1.8rem, 7.2vw, 2.2rem);
+  }
+  .syh__trust {
+    display: none;
+  }
+  .syh__cta {
+    margin-top: clamp(12px, 2vh, 18px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .syh__bleed,
+  .syh__cue {
+    animation: none;
+  }
+  .syh__swap-word--lite {
+    animation: none;
+    will-change: auto;
+  }
+}
+
+/* Keep the centered mobile mandala clear of the next section during parallax. */
+@media (max-width: 900px) and (max-height: 700px) and (min-aspect-ratio: 4/5) {
+  .syh {
+    padding-bottom: 0;
+  }
+}
+
+/* Phone-only art direction. Tablet and desktop keep the established hero. */
+@media (max-width: 600px) {
+  .syh {
+    isolation: isolate;
+    min-height: auto;
+    padding-top: calc(var(--syh-nav) + 11px);
+    padding-bottom: 0;
+    background:
+      radial-gradient(circle at 86% 18%, rgba(231, 177, 68, 0.11), transparent 27%),
+      radial-gradient(circle at 8% 44%, rgba(116, 82, 203, 0.1), transparent 30%),
+      var(--sy-bg);
+  }
+
+  .syh__wash {
+    opacity: 1;
+    background:
+      linear-gradient(rgba(236, 188, 86, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(236, 188, 86, 0.025) 1px, transparent 1px),
+      radial-gradient(circle at 78% 23%, rgba(242, 199, 104, 0.16), transparent 21%),
+      radial-gradient(circle at 16% 58%, rgba(122, 91, 205, 0.1), transparent 24%);
+    background-size: 28px 28px, 28px 28px, auto, auto;
+    mask-image: linear-gradient(to bottom, black 0%, black 76%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 0%, black 76%, transparent 100%);
+  }
+
+  [data-sy-theme='light'] .syh__wash {
+    background:
+      linear-gradient(rgba(126, 76, 12, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(126, 76, 12, 0.035) 1px, transparent 1px),
+      radial-gradient(circle at 78% 23%, rgba(205, 143, 31, 0.15), transparent 22%),
+      radial-gradient(circle at 16% 58%, rgba(119, 82, 185, 0.07), transparent 26%);
+    background-size: 28px 28px, 28px 28px, auto, auto;
+  }
+
+  .syh__mandala {
+    display: none;
+  }
+
+  .syh__veil {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--sy-bg) 96%, transparent) 0%,
+      color-mix(in srgb, var(--sy-bg) 78%, transparent) 58%,
+      transparent 88%
+    );
+  }
+
+  .syh__vignette {
+    background: radial-gradient(
+      115% 78% at 50% 38%,
+      transparent 42%,
+      color-mix(in srgb, var(--sy-bg) 70%, transparent) 100%
+    );
+  }
+
+  .syh__grid {
+    align-items: start;
+    gap: 18px;
+    padding-inline: 14px;
+  }
+
+  .syh__copy {
+    width: 100%;
+    max-width: none;
+    padding: 16px 15px 15px;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--sy-gold-2) 24%, transparent);
+    border-radius: 30px;
+    background:
+      linear-gradient(145deg, color-mix(in srgb, var(--sy-glass) 76%, transparent), transparent 58%),
+      color-mix(in srgb, var(--sy-bg) 74%, transparent);
+    box-shadow:
+      0 24px 70px -42px rgba(0, 0, 0, 0.96),
+      inset 0 1px 0 color-mix(in srgb, white 9%, transparent),
+      inset 0 -1px 0 color-mix(in srgb, var(--sy-gold-2) 8%, transparent);
+    text-align: left;
+    backdrop-filter: blur(22px) saturate(1.25);
+    -webkit-backdrop-filter: blur(22px) saturate(1.25);
+  }
+
+  .syh__copy::before,
+  .syh__copy::after {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .syh__copy::before {
+    top: 0;
+    right: 22px;
+    width: 76px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--sy-gold-1), transparent);
+    box-shadow: 0 0 16px color-mix(in srgb, var(--sy-gold-2) 62%, transparent);
+  }
+
+  .syh__copy::after {
+    right: -58px;
+    top: 36px;
+    width: 190px;
+    aspect-ratio: 1;
+    border-radius: 999px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--sy-gold-2) 12%, transparent), transparent 66%);
+    filter: blur(8px);
+  }
+
+  [data-sy-theme='light'] .syh__copy {
+    border-color: color-mix(in srgb, var(--sy-gold-3) 20%, transparent);
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.8), rgba(255, 248, 232, 0.42) 58%),
+      color-mix(in srgb, var(--sy-bg) 86%, transparent);
+    box-shadow:
+      0 24px 64px -42px rgba(76, 45, 8, 0.34),
+      inset 0 1px 0 rgba(255, 255, 255, 0.92),
+      inset 0 -1px 0 color-mix(in srgb, var(--sy-gold-3) 9%, transparent);
+  }
+
+  .syh__bleed {
+    left: auto;
+    right: -22%;
+    top: -8%;
+    width: 74%;
+    height: 58%;
+    opacity: 0.72;
+    filter: blur(28px);
+  }
+
+  .syh__eyebrow,
+  .syh__title,
+  .syh__sub,
+  .syh__cta,
+  .syh__trust {
+    position: relative;
+    z-index: 3;
+  }
+
+  .syh__eyebrow {
+    max-width: calc(100% - 54px);
+    margin: 0;
+    padding: 0.42rem 0.7rem 0.42rem 0.55rem;
+    gap: 0.42rem;
+    border-color: color-mix(in srgb, var(--sy-gold-2) 30%, transparent);
+    background: color-mix(in srgb, var(--sy-bg) 52%, transparent);
+    font-size: 8.5px;
+    letter-spacing: 0.18em;
+    line-height: 1.25;
+    text-align: left;
+    box-shadow: inset 0 1px 0 color-mix(in srgb, white 7%, transparent);
+  }
+
+  .syh__eyebrow:lang(hi) {
+    font-size: 9.5px;
+    letter-spacing: 0.09em;
+  }
+
+  .syh__eyebrow::before {
+    width: 6px;
+    height: 6px;
+    animation-duration: 2.4s;
+  }
+}
+
+@media (max-width: 600px) {
+  .syh__mobile-cosmos {
+    position: absolute;
+    z-index: 1;
+    top: 43px;
+    right: -24px;
+    display: grid;
+    width: 166px;
+    aspect-ratio: 1;
+    place-items: center;
+    pointer-events: none;
+    opacity: 0.92;
+    filter: drop-shadow(0 18px 32px rgba(0, 0, 0, 0.38));
+  }
+
+  .syh__mobile-cosmos-glow {
+    position: absolute;
+    inset: 15%;
+    border-radius: 999px;
+    background: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--sy-gold-1) 24%, transparent),
+      color-mix(in srgb, var(--sy-gold-2) 8%, transparent) 48%,
+      transparent 72%
+    );
+    filter: blur(10px);
+    animation: syh-mobile-breathe 4.8s ease-in-out infinite;
+  }
+
+  .syh__mobile-cosmos svg {
+    position: relative;
+    z-index: 2;
+    width: 72%;
+    overflow: visible;
+    fill: none;
+    stroke: color-mix(in srgb, var(--sy-gold-1) 72%, transparent);
+    stroke-width: 0.72;
+    filter: drop-shadow(0 0 8px color-mix(in srgb, var(--sy-gold-2) 28%, transparent));
+  }
+
+  .syh__mobile-cosmos svg circle:first-child {
+    stroke-dasharray: 2 5;
+  }
+
+  .syh__mobile-cosmos .syh__mobile-bindu {
+    fill: var(--sy-gold-1);
+    stroke: color-mix(in srgb, var(--sy-bg) 68%, transparent);
+    stroke-width: 2;
+  }
+
+  .syh__mobile-orbit {
+    position: absolute;
+    z-index: 1;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--sy-gold-2) 20%, transparent);
+  }
+
+  .syh__mobile-orbit--outer {
+    inset: 7%;
+    border-style: dashed;
+    animation: syh-mobile-spin 26s linear infinite;
+  }
+
+  .syh__mobile-orbit--inner {
+    inset: 22%;
+    border-color: color-mix(in srgb, var(--sy-gold-1) 27%, transparent);
+    box-shadow: inset 0 0 18px color-mix(in srgb, var(--sy-gold-2) 8%, transparent);
+    animation: syh-mobile-spin 18s linear infinite reverse;
+  }
+
+  .syh__mobile-orbit--outer i {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--sy-gold-1);
+    box-shadow: 0 0 10px 2px color-mix(in srgb, var(--sy-gold-2) 45%, transparent);
+  }
+
+  .syh__mobile-orbit--outer i:nth-child(1) {
+    left: 13%;
+    top: 12%;
+  }
+
+  .syh__mobile-orbit--outer i:nth-child(2) {
+    right: -1px;
+    top: 52%;
+  }
+
+  .syh__mobile-orbit--outer i:nth-child(3) {
+    left: 28%;
+    bottom: 2%;
+    width: 4px;
+    height: 4px;
+  }
+
+  [data-sy-theme='light'] .syh__mobile-cosmos {
+    opacity: 0.72;
+    filter: drop-shadow(0 16px 26px rgba(112, 67, 8, 0.18));
+  }
+
+  [data-sy-theme='light'] .syh__mobile-cosmos svg {
+    stroke: color-mix(in srgb, var(--sy-gold-3) 70%, transparent);
+  }
+
+  .syh__title {
+    max-width: 100%;
+    margin-top: 22px;
+    padding-right: 18px;
+    font-size: clamp(1.95rem, 9.8vw, 2.55rem);
+    line-height: 1.26;
+    letter-spacing: -0.038em;
+    text-align: left;
+    text-shadow: none;
+  }
+
+  .syh__title:lang(hi) {
+    font-size: clamp(1.78rem, 8.8vw, 2.22rem);
+    line-height: 1.26;
+  }
+
+  .syh__title > span[aria-hidden] {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.24em;
+  }
+  .syh__line {
+    display: block;
+    line-height: 1.26;
+  }
+  .syh__line:first-of-type,
+  .syh__line--lead {
+    padding-right: 22px;
+  }
+
+  .syh__line + .syh__line {
+    margin-top: 0;
+    max-width: none;
+  }
+
+  .syh__swap {
+    filter: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .syh__sub {
+    max-width: 31ch;
+    margin: 14px 0 0;
+    font-size: 0.875rem;
+    line-height: 1.56;
+    text-align: left;
+    color: color-mix(in srgb, var(--sy-ink) 82%, var(--sy-ink-soft));
+  }
+
+  .syh__sub-more {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .syh__cta {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: 8px;
+    width: 100%;
+    max-width: none;
+    margin: 17px 0 0;
+  }
+
+  .syh__cta .sy-btn-gold,
+  .syh__cta .sy-btn-ghost {
+    min-height: 48px;
+    padding: 0.78rem 0.65rem;
+    border-radius: 15px;
+    font-size: 0.78rem;
+    line-height: 1.15;
+    text-align: center;
+  }
+
+  .syh__cta .sy-btn-gold {
+    box-shadow:
+      0 12px 30px -15px color-mix(in srgb, var(--sy-gold-2) 66%, transparent),
+      inset 0 1px 0 color-mix(in srgb, white 24%, transparent);
+  }
+
+  .syh__cta .sy-btn-ghost {
+    border-color: color-mix(in srgb, var(--sy-gold-2) 28%, transparent);
+    background: color-mix(in srgb, var(--sy-bg) 46%, transparent);
+  }
+
+  .syh__trust {
+    display: grid;
+    grid-auto-columns: minmax(148px, 66%);
+    grid-auto-flow: column;
+    align-items: stretch;
+    gap: 8px;
+    width: calc(100% + 15px);
+    margin: 13px -15px 0 0;
+    padding: 0 15px 1px 0;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: inline mandatory;
+    scrollbar-width: none;
+  }
+
+  .syh__trust::-webkit-scrollbar {
+    display: none;
+  }
+
+  .syh__trust li {
+    width: auto;
+    max-width: none;
+    scroll-snap-align: start;
+  }
+
+  .syh__chip {
+    min-height: 58px;
+    height: 100%;
+    padding: 0.68rem 0.72rem;
+    gap: 0.58rem;
+    border-radius: 16px;
+    font-size: 0.72rem;
+    font-weight: 650;
+    line-height: 1.32;
+    background:
+      linear-gradient(135deg, color-mix(in srgb, var(--sy-gold-1) 7%, transparent), transparent 54%),
+      color-mix(in srgb, var(--sy-bg) 48%, transparent);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, white 7%, transparent),
+      0 10px 26px -22px rgba(0, 0, 0, 0.9);
+  }
+
+  .syh__chip::before {
+    width: 7px;
+    height: 7px;
+  }
+
+  .syh__chip::after {
+    display: none;
+  }
+
+  .syh__stage {
+    margin-top: 0;
+    padding-top: 8px;
+  }
+}
+
+@media (max-width: 380px) {
+  .syh__copy {
+    padding-inline: 13px;
+    border-radius: 26px;
+  }
+
+  .syh__mobile-cosmos {
+    right: -34px;
+    width: 154px;
+  }
+
+  .syh__title {
+    padding-right: 8px;
+    font-size: clamp(1.72rem, 9.8vw, 2.08rem);
+  }
+
+  .syh__title:lang(hi) {
+    font-size: clamp(1.62rem, 9.2vw, 1.98rem);
+  }
+
+  .syh__cta .sy-btn-gold,
+  .syh__cta .sy-btn-ghost {
+    font-size: 0.735rem;
+  }
+}
+
+@media (max-width: 600px) and (max-height: 700px) {
+  .syh {
+    padding-bottom: 0;
+  }
+
+  .syh__copy {
+    padding-top: 13px;
+  }
+
+  .syh__mobile-cosmos {
+    top: 37px;
+    width: 150px;
+  }
+
+  .syh__title {
+    margin-top: 17px;
+    font-size: clamp(2rem, 9.8vw, 2.38rem);
+  }
+
+  .syh__sub {
+    margin-top: 11px;
+    font-size: 0.82rem;
+    line-height: 1.48;
+  }
+
+  .syh__cta {
+    margin-top: 13px;
+  }
+
+  .syh__trust {
+    display: grid;
+    margin-top: 10px;
+  }
+}
+
+@media (max-width: 600px) and (prefers-reduced-motion: reduce) {
+  .syh__mobile-cosmos-glow,
+  .syh__mobile-orbit,
+  .syh__eyebrow::before,
+  .syh__chip::before,
+  .syh__trust-marquee .syj-marquee__track {
+    animation: none;
+  }
+}
+
+@keyframes syh-mobile-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@keyframes syh-mobile-breathe {
+  0%,
+  100% {
+    opacity: 0.62;
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+/* Desktop composition: keep the chakra between the copy and the device.
+   The base 76vmin artwork becomes wider than the content gap on laptop-sized
+   screens, so its strokes cross both the heading and body copy. */
+@media (min-width: 901px) {
+  .syh__mandala-pos {
+    width: min(50vmin, 540px);
+    translate: 0 0;
+    opacity: 0.78;
+  }
+
+  [data-sy-theme='light'] .syh__mandala-pos {
+    opacity: 0.74;
+  }
+
+  .syh__copy {
+    max-width: min(100%, 34rem);
+  }
+
+  .syh__title {
+    font-size: clamp(2.2rem, 4.1vw, 3.7rem);
+    line-height: 1.2;
+  }
+
+  .syh__title:lang(hi) {
+    font-size: clamp(2rem, 3.9vw, 3.25rem);
+    line-height: 1.2;
+  }
+
+  .syh__title > span[aria-hidden] {
+    gap: 0.16em;
+  }
+
+  .syh__sub {
+    max-width: 42ch;
+    font-size: clamp(0.94rem, 1.05vw, 1.04rem);
+    line-height: 1.58;
+  }
+}

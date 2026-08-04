@@ -1,0 +1,10 @@
+{
+  "name": "Shree Yantraa Astrology",
+  "short_name": "Shree Yantraa",
+  "description": "Modern Vedic astrology mobile app showcase.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#08090d",
+  "theme_color": "#08090d",
+  "icons": []
+}
