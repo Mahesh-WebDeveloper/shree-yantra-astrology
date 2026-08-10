@@ -24,8 +24,14 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
   }
 
   componentDidCatch(error: Error, info: unknown) {
-    // surfaced in `adb logcat` / EAS device logs
     console.log('[ShreeYantra] startup error:', error, info);
+    try {
+      const { track } = require('../lib/analytics');
+      track('app_crash', 'ErrorBoundary', {
+        message: String(error?.message || error).slice(0, 300),
+        componentStack: String((info as any)?.componentStack || '').slice(0, 500),
+      });
+    } catch (_) { /* analytics must not throw */ }
   }
 
   render() {

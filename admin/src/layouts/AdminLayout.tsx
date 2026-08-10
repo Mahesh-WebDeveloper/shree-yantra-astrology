@@ -17,6 +17,7 @@ import {
   Music,
   Moon,
   Radar,
+  Terminal,
   Settings,
   SlidersHorizontal,
   Sun,
@@ -31,6 +32,7 @@ import { cn } from '@/lib/utils'
 
 const navItems = [
   { to: '/', label: 'Dashboard', shortLabel: 'Home', icon: LayoutDashboard },
+  { to: '/server-logs', label: 'Server Logs', shortLabel: 'Logs', icon: Terminal },
   { to: '/server-monitor', label: 'Server Monitor', shortLabel: 'Monitor', icon: Server },
   { to: '/analytics', label: 'Analytics', shortLabel: 'Analytics', icon: LineChart },
   { to: '/activity', label: 'User Activity', shortLabel: 'Activity', icon: Radar },

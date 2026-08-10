@@ -32,6 +32,7 @@ const appConfigCtrl = require('../controllers/appConfig.controller');
 const faqCtrl = require('../controllers/faq.controller');
 const analyticsCtrl = require('../controllers/analytics.controller');
 const serverMetricsCtrl = require('../controllers/serverMetrics.controller');
+const observabilityCtrl = require('../controllers/observability.controller');
 const userDataCtrl = require('../controllers/userData.controller');
 const screensCtrl = require('../controllers/screens.controller');
 const subscriptionsCtrl = require('../controllers/subscriptions.controller');
@@ -244,6 +245,19 @@ router.get('/admin/activity/issues', adminOnly, analyticsCtrl.activityIssues);
 router.get('/admin/activity/live', adminOnly, analyticsCtrl.activityLive);
 
 router.get('/admin/server-monitor', adminOnly, serverMetricsCtrl.get);
+
+// Observability hub (structured logs, API metrics, error groups, traces)
+router.get('/admin/observability/overview', adminOnly, observabilityCtrl.overview);
+router.get('/admin/observability/errors', adminOnly, observabilityCtrl.listErrors);
+router.get('/admin/observability/errors/:fingerprint', adminOnly, observabilityCtrl.getError);
+router.patch('/admin/observability/errors/:fingerprint', adminOnly, observabilityCtrl.updateError);
+router.get('/admin/observability/api-stats', adminOnly, observabilityCtrl.apiStats);
+router.get('/admin/observability/logs', adminOnly, observabilityCtrl.searchLogs);
+router.post('/admin/observability/logs/bulk-delete', adminOnly, observabilityCtrl.deleteBulkLogs);
+router.delete('/admin/observability/logs', adminOnly, observabilityCtrl.deleteAllLogs);
+router.get('/admin/observability/logs/:id', adminOnly, observabilityCtrl.getLog);
+router.delete('/admin/observability/logs/:id', adminOnly, observabilityCtrl.deleteLog);
+router.get('/admin/observability/trace/:requestId', adminOnly, observabilityCtrl.traceByRequestId);
 
 router.get('/admin/subscriptions/overview', adminOnly, subscriptionsCtrl.overview);
 router.get('/admin/subscriptions', adminOnly, subscriptionsCtrl.list);

@@ -1,5 +1,6 @@
 ﻿import { Link } from 'react-router-dom'
 import { SiteFooter } from '@/components/layout/SiteFooter'
+import { PLAY_STORE_URL } from '@/data/brandShowcase'
 import { LEGAL_CONTACT } from '@/data/legal'
 import { useLang } from '@/i18n/LangProvider'
 
@@ -39,9 +40,6 @@ const FAQS = [
 export function HelpPage() {
   const { hi } = useLang()
   const apkUrl = import.meta.env.VITE_APK_DOWNLOAD_URL?.trim()
-  const downloadHref =
-    apkUrl ||
-    `mailto:${LEGAL_CONTACT}?subject=${encodeURIComponent('Shree Yantra Android download link')}`
 
   return (
     <div className="page-shell showcase-page min-h-screen">
@@ -71,13 +69,28 @@ export function HelpPage() {
           ))}
         </ul>
 
-        <a
-          href={downloadHref}
-          {...(apkUrl ? { download: true } : {})}
-          className="sy-btn-primary mt-10 inline-flex rounded-xl px-5 py-3 text-sm font-semibold"
-        >
-          {hi ? 'Android ऐप डाउनलोड करें' : 'Download the Android app'}
-        </a>
+        <div className="mt-10 flex flex-wrap gap-3">
+          <a
+            href={PLAY_STORE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="sy-btn-primary inline-flex rounded-xl px-5 py-3 text-sm font-semibold"
+          >
+            {hi ? 'Google Play से डाउनलोड करें' : 'Get it on Google Play'}
+          </a>
+          {apkUrl ? (
+            <a
+              href={apkUrl}
+              download
+              className="showcase-tab inline-flex rounded-xl px-5 py-3 text-sm font-semibold"
+            >
+              {hi ? 'APK' : 'APK download'}
+            </a>
+          ) : null}
+          <Link to="/app" className="showcase-tab inline-flex rounded-xl px-5 py-3 text-sm font-semibold">
+            {hi ? 'ऐप विवरण' : 'App details'}
+          </Link>
+        </div>
       </main>
       <SiteFooter />
     </div>

@@ -35,6 +35,8 @@ export function clearStoredAuth() {
 apiClient.interceptors.request.use((config) => {
   const token = getStoredToken()
   if (token) config.headers.Authorization = `Bearer ${token}`
+  config.headers['X-Platform'] = 'admin'
+  config.headers['X-App-Version'] = 'admin-dashboard'
   return config
 })
 

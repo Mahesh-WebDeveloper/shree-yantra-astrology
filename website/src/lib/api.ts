@@ -1,4 +1,5 @@
 import { normalizeActivePanchang } from '@/lib/panchangNormalize'
+import { correlationHeaders } from '@/lib/correlation'
 
 export type ApiLang = 'en' | 'hi'
 
@@ -153,11 +154,15 @@ function authHeaders(): Record<string, string> {
   return authToken ? { Authorization: `Bearer ${authToken}` } : {}
 }
 
+function apiHeaders(extra?: Record<string, string>): Record<string, string> {
+  return { ...correlationHeaders(), ...authHeaders(), ...extra }
+}
+
 initAuthFromStorage()
 
 async function get<T>(path: string) {
   return requestJson<T>(() =>
-    fetchT(`${getApiBase()}${path}`, { headers: { ...authHeaders() } }),
+    fetchT(`${getApiBase()}${path}`, { headers: apiHeaders() }),
   )
 }
 
@@ -168,7 +173,7 @@ async function post<T>(path: string, body: unknown, timeoutMs?: number) {
       `${getApiBase()}${path}`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        headers: { 'Content-Type': 'application/json', ...apiHeaders() },
         body: JSON.stringify(body),
       },
       ms,
@@ -180,7 +185,7 @@ async function patch<T>(path: string, body: unknown = {}) {
   return requestJson<T>(() =>
     fetchT(`${getApiBase()}${path}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      headers: { 'Content-Type': 'application/json', ...apiHeaders() },
       body: JSON.stringify(body),
     }),
   )
@@ -1057,7 +1062,7 @@ export const getNameSuggestions = (input: KundliInput & { gender?: string }) =>
 
 async function getAuth<T>(path: string) {
   return requestJson<T>(() =>
-    fetchT(`${getApiBase()}${path}`, { headers: { ...authHeaders() } }),
+    fetchT(`${getApiBase()}${path}`, { headers: apiHeaders() }),
   )
 }
 
@@ -1068,7 +1073,7 @@ async function postAuth<T>(path: string, body: unknown, timeoutMs?: number) {
       `${getApiBase()}${path}`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        headers: { 'Content-Type': 'application/json', ...apiHeaders() },
         body: JSON.stringify(body),
       },
       ms,
@@ -1080,7 +1085,7 @@ async function putAuth<T>(path: string, body: unknown) {
   return requestJson<T>(() =>
     fetchT(`${getApiBase()}${path}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      headers: { 'Content-Type': 'application/json', ...apiHeaders() },
       body: JSON.stringify(body),
     }),
   )

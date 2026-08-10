@@ -1,3 +1,8 @@
 User-agent: *
 Allow: /
 
+# Account and checkout flows — allow crawl but noindex is set per-page in meta
+Disallow: /sign-in
+Disallow: /onboarding/
+
+Sitemap: https://shreeyantraastrology.com/sitemap.xml

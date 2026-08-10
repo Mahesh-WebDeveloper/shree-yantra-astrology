@@ -1,13 +1,23 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { LEGAL_CONTACT, LEGAL_PRIVACY, LEGAL_TERMS, LEGAL_UPDATED } from '@/data/legal'
 import { SiteFooter } from '@/components/layout/SiteFooter'
 import { useLang } from '@/i18n/LangProvider'
 
+function tabFromPath(pathname: string): 'privacy' | 'terms' {
+  if (pathname === '/terms') return 'terms'
+  return 'privacy'
+}
+
 export function LegalPage() {
   const { hi } = useLang()
-  const [tab, setTab] = useState<'privacy' | 'terms'>('privacy')
+  const { pathname } = useLocation()
+  const [tab, setTab] = useState<'privacy' | 'terms'>(() => tabFromPath(pathname))
   const sections = tab === 'privacy' ? LEGAL_PRIVACY : LEGAL_TERMS
+
+  useEffect(() => {
+    setTab(tabFromPath(pathname))
+  }, [pathname])
 
   return (
     <div className="page-shell showcase-page min-h-screen">

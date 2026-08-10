@@ -7,6 +7,8 @@
  *    Emulator: Android emulator ke liye 10.0.2.2 use karo.
  */
 import { beginNetworkActivity, type NetworkActivityMeta } from './networkActivity';
+import { correlationHeaders, lastRequestIdFromResponse } from './correlation';
+import { track } from './analytics';
 
 // Production: set EXPO_PUBLIC_API_URL (https) in the build env / app.config / EAS secrets.
 // Dev fallback: LAN IP for Expo Go on a phone (localhost won't reach the PC from the device).
@@ -124,6 +126,8 @@ async function requestJson<T>(path: string, makeRequest: () => Promise<Response>
           continue;
         }
         const { message, code } = await parseErrorBody(res);
+        const requestId = lastRequestIdFromResponse(res);
+        track('api_error', path, { status: res.status, code, requestId });
         // SESSION_REVOKED = doosre device par login | AUTH_INVALID = account delete/blocked
         // dono me is device ka session mar chuka hai → force logout
         if (res.status === 401 && (code === 'SESSION_REVOKED' || code === 'AUTH_INVALID')) onSessionRevoked?.();
@@ -161,6 +165,10 @@ export function setAuthToken(t: string | null) { authToken = t; }
 export function getAuthToken() { return authToken; }
 function authHeaders(): Record<string, string> {
   return authToken ? { Authorization: `Bearer ${authToken}` } : {};
+}
+async function requestHeaders(extra?: Record<string, string>): Promise<Record<string, string>> {
+  const corr = await correlationHeaders();
+  return { ...corr, ...authHeaders(), ...extra };
 }
 
 // current app language — LanguageProvider isse sync karta hai; AI calls me jaata hai
@@ -252,9 +260,9 @@ export function setSubscriptionRequiredHandler(fn: (() => void) | null) { onSubs
 async function post<T>(path: string, body: any, method: 'POST' | 'PUT' | 'PATCH' = 'POST', timeoutMs?: number): Promise<T> {
   const endActivity = beginNetworkActivity(activityForPath(path));
   try {
-    return await requestJson<T>(path, () => fetchT(`${API_BASE}${path}`, {
+    return await requestJson<T>(path, async () => fetchT(`${API_BASE}${path}`, {
       method,
-      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      headers: { 'Content-Type': 'application/json', ...(await requestHeaders()) },
       body: JSON.stringify(body),
     }, timeoutForPath(path, timeoutMs)), retryCountForPath(path, method));
   } finally {
@@ -265,7 +273,7 @@ async function post<T>(path: string, body: any, method: 'POST' | 'PUT' | 'PATCH'
 async function get<T>(path: string): Promise<T> {
   const endActivity = beginNetworkActivity(activityForPath(path));
   try {
-    return await requestJson<T>(path, () => fetchT(`${API_BASE}${path}`, { headers: authHeaders() }), retryCountForPath(path, 'GET'));
+    return await requestJson<T>(path, async () => fetchT(`${API_BASE}${path}`, { headers: await requestHeaders() }), retryCountForPath(path, 'GET'));
   } finally {
     endActivity();
   }
@@ -274,7 +282,7 @@ async function get<T>(path: string): Promise<T> {
 async function del<T>(path: string): Promise<T> {
   const endActivity = beginNetworkActivity(activityForPath(path));
   try {
-    return await requestJson<T>(path, () => fetchT(`${API_BASE}${path}`, { method: 'DELETE', headers: authHeaders() }), retryCountForPath(path, 'DELETE'));
+    return await requestJson<T>(path, async () => fetchT(`${API_BASE}${path}`, { method: 'DELETE', headers: await requestHeaders() }), retryCountForPath(path, 'DELETE'));
   } finally {
     endActivity();
   }

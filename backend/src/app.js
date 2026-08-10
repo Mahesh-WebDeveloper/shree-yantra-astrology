@@ -8,6 +8,7 @@ const path = require('path');
 const routes = require('./routes');
 const env = require('./config/env');
 const { notFound, errorHandler, sanitizeResponses } = require('./middleware/errorHandler');
+const requestContext = require('./middleware/requestContext');
 const paymentCtrl = require('./controllers/payment.controller');
 
 const app = express();
@@ -58,6 +59,7 @@ app.post(
   paymentCtrl.webhook
 );
 app.use(express.json({ limit: '1mb' }));    // JSON body parse (capped)
+app.use(requestContext);                   // correlation IDs + API metrics
 app.use(morgan(env.isProd ? 'combined' : 'dev'));     // request logging
 
 // --- uploaded files (profile pics) static serve ---

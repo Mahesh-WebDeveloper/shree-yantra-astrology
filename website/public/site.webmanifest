@@ -1,10 +1,18 @@
 ﻿{
-  "name": "Shree Yantraa Astrology",
-  "short_name": "Shree Yantraa",
-  "description": "Modern Vedic astrology mobile app showcase.",
+  "name": "Shree Yantra Astrology",
+  "short_name": "Shree Yantra",
+  "description": "Modern Vedic astrology app — Kundli, Panchang, Rashifal and spiritual library.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#08090d",
   "theme_color": "#08090d",
-  "icons": []
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
 }

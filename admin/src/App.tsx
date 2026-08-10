@@ -27,6 +27,7 @@ const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'))
 const UserActivityPage = lazy(() => import('@/pages/UserActivityPage'))
 const UserActivityDetailPage = lazy(() => import('@/pages/UserActivityDetailPage'))
 const ServerMonitorPage = lazy(() => import('@/pages/ServerMonitorPage'))
+const ObservabilityPage = lazy(() => import('@/pages/ObservabilityPage'))
 const SubscriptionsPage = lazy(() => import('@/pages/SubscriptionsPage'))
 const ScreensPage = lazy(() => import('@/pages/ScreensPage'))
 const ScreenEditorPage = lazy(() => import('@/pages/ScreenEditorPage'))
@@ -94,6 +95,8 @@ export function App() {
                 <Route path="activity" element={<UserActivityPage />} />
                 <Route path="activity/user/:id" element={<UserActivityDetailPage />} />
                 <Route path="server-monitor" element={<ServerMonitorPage />} />
+                <Route path="server-logs" element={<ObservabilityPage />} />
+                <Route path="observability" element={<Navigate to="/server-logs" replace />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

@@ -1,6 +1,8 @@
 import type { CSSProperties } from 'react'
 import { useRef } from 'react'
 import { motion, useInView, useReducedMotion } from 'framer-motion'
+import { PLAY_STORE_URL } from '@/data/brandShowcase'
+import { trackEvent } from '@/components/seo/GoogleAnalytics'
 import { useLang } from '@/i18n/LangProvider'
 import { useRevealChildren } from './hooks/useSiteMotion'
 import './sections.css'
@@ -79,9 +81,6 @@ export function DownloadCta() {
   const reduce = useReducedMotion()
   const revealRef = useRevealChildren<HTMLElement>()
   const apkUrl = import.meta.env.VITE_APK_DOWNLOAD_URL?.trim()
-  const downloadHref =
-    apkUrl ||
-    `mailto:support@shreeyantra.app?subject=${encodeURIComponent('Shree Yantra Android download link')}`
 
   const chips = [
     { hi: 'जन्म विवरण के अनुसार व्यक्तिगत कुंडली', en: 'A birth chart based on your details' },
@@ -145,16 +144,30 @@ export function DownloadCta() {
         <div className="syj-cta__actions" data-sy-reveal="180">
           <a
             className="sy-btn-gold"
-            href={downloadHref}
-            {...(apkUrl ? { download: true } : {})}
-            data-sy-download="apk"
+            href={PLAY_STORE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-sy-download="play-store"
+            onClick={() => trackEvent('app_download_click', { source: 'home_cta', platform: 'play_store' })}
           >
-            {hi ? 'Android ऐप डाउनलोड करें' : 'Download the Android app'}
+            {hi ? 'Google Play से डाउनलोड करें' : 'Get it on Google Play'}
           </a>
-          <span className="syj-badge">
-            <i aria-hidden />
-            {hi ? 'Play Store पर जल्द उपलब्ध' : 'Coming soon to Google Play'}
-          </span>
+          {apkUrl ? (
+            <a
+              className="syj-badge syj-badge--link"
+              href={apkUrl}
+              download
+              data-sy-download="apk"
+              onClick={() => trackEvent('app_download_click', { source: 'home_cta', platform: 'apk' })}
+            >
+              {hi ? 'या APK डाउनलोड' : 'Or download APK'}
+            </a>
+          ) : (
+            <span className="syj-badge">
+              <i aria-hidden />
+              {hi ? 'Android · Hindi + English' : 'Android · Hindi + English'}
+            </span>
+          )}
         </div>
 
         <ul className="syj-cta__chips" data-sy-reveal="240">

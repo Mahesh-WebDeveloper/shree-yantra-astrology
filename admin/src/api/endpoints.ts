@@ -238,6 +238,56 @@ export const endpoints = {
     const { data } = await apiClient.get<import('./serverMonitor.types').ServerMonitorResponse>('/admin/server-monitor')
     return data
   },
+  async observabilityOverview() {
+    const { data } = await apiClient.get<ObservabilityOverview>('/admin/observability/overview')
+    return data
+  },
+  async observabilityErrors(params?: Record<string, string | number | undefined>) {
+    const { data } = await apiClient.get<ObservabilityErrorsResponse>('/admin/observability/errors', { params })
+    return data
+  },
+  async observabilityError(fingerprint: string) {
+    const { data } = await apiClient.get<{ group: ObservabilityErrorGroup; recentLogs: ObservabilityLogRow[] }>(
+      `/admin/observability/errors/${fingerprint}`,
+    )
+    return data
+  },
+  async updateObservabilityError(fingerprint: string, payload: { status?: string; assigned_to?: string; notes?: string }) {
+    const { data } = await apiClient.patch<{ group: ObservabilityErrorGroup }>(`/admin/observability/errors/${fingerprint}`, payload)
+    return data.group
+  },
+  async observabilityApiStats(params?: { hours?: number }) {
+    const { data } = await apiClient.get<{ endpoints: ObservabilityApiEndpoint[] }>('/admin/observability/api-stats', { params })
+    return data
+  },
+  async observabilityLogs(params?: Record<string, string | number | undefined>) {
+    const { data } = await apiClient.get<ObservabilityLogsResponse>('/admin/observability/logs', { params })
+    return data
+  },
+  async observabilityLog(id: string) {
+    const { data } = await apiClient.get<{ log: ObservabilityLogRow; traceTimeline: ObservabilityLogRow[] }>(
+      `/admin/observability/logs/${id}`,
+    )
+    return data
+  },
+  async deleteObservabilityLog(id: string) {
+    const { data } = await apiClient.delete<{ deleted: boolean; id: string }>(`/admin/observability/logs/${id}`)
+    return data
+  },
+  async deleteAllObservabilityLogs(params?: Record<string, string | number | undefined>) {
+    const { data } = await apiClient.delete<{ deleted: number }>('/admin/observability/logs', { params })
+    return data
+  },
+  async deleteBulkObservabilityLogs(ids: string[]) {
+    const { data } = await apiClient.post<{ deleted: number }>('/admin/observability/logs/bulk-delete', { ids })
+    return data
+  },
+  async observabilityTrace(requestId: string) {
+    const { data } = await apiClient.get<{ requestId: string; metric: unknown; timeline: ObservabilityLogRow[] }>(
+      `/admin/observability/trace/${encodeURIComponent(requestId)}`,
+    )
+    return data
+  },
   async updateScreen(page: string, payload: { label?: string; fields?: ScreenContent['fields'] }) {
     const { data } = await apiClient.put<{ screen: ScreenContent }>(`/admin/screens/${page}`, payload)
     return data.screen
@@ -555,4 +605,88 @@ export interface SubscriptionDetailResponse {
 export interface PaymentTransactionListResponse {
   transactions: PaymentTransactionRow[]
   pagination: { page: number; limit: number; total: number; pages: number }
+}
+
+export interface ObservabilityOverview {
+  requestsLastHour: number
+  errorsLastHour: number
+  slowLastHour: number
+  errorRatePct: number
+  openErrorGroups: number
+  newErrorGroups24h: number
+  host: { cpu?: { usagePct?: number }; memory?: { usagePct?: number }; disk?: { usagePct?: number } } | null
+}
+
+export interface ObservabilityErrorGroup {
+  fingerprint: string
+  title: string
+  error_code?: string
+  error_name?: string
+  route?: string
+  severity: string
+  status: string
+  occurrence_count: number
+  affected_users: number
+  platforms?: string[]
+  app_versions?: string[]
+  first_seen: string
+  last_seen: string
+  last_request_id?: string
+  last_trace_id?: string
+  stack_sample?: string
+  assigned_to?: string
+  notes?: string
+}
+
+export interface ObservabilityErrorsResponse {
+  items: ObservabilityErrorGroup[]
+  total: number
+  page: number
+}
+
+export interface ObservabilityApiEndpoint {
+  method: string
+  route: string
+  requests: number
+  errorPct: number
+  avgMs: number
+  p95Ms: number
+  lastError?: string | null
+}
+
+export interface ObservabilityLogRow {
+  _id: string
+  timestamp: string
+  level: string
+  service?: string
+  environment?: string
+  event_name: string
+  message: string
+  request_id?: string
+  trace_id?: string
+  span_id?: string
+  user_id?: string
+  session_id?: string
+  route?: string
+  method?: string
+  status_code?: number
+  duration_ms?: number
+  app_version?: string
+  platform?: string
+  os_version?: string
+  device_brand?: string
+  device_model?: string
+  error_code?: string
+  error_name?: string
+  stack?: string
+  metadata?: Record<string, unknown>
+  client_source?: 'mobile' | 'website' | 'admin' | 'server' | 'unknown'
+}
+
+export interface ObservabilityLogsResponse {
+  logs: ObservabilityLogRow[]
+  total: number
+  page: number
+  limit?: number
+  pages?: number
 }

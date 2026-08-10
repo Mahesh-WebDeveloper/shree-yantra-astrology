@@ -30,6 +30,13 @@ export const queryKeys = {
   subscriptions: (params: Record<string, unknown>) => ['subscriptions', params] as const,
   subscriptionDetail: (id: string) => ['subscription-detail', id] as const,
   paymentTransactions: (params: Record<string, unknown>) => ['payment-transactions', params] as const,
+  observabilityOverview: ['observability-overview'] as const,
+  observabilityErrors: (params: Record<string, unknown>) => ['observability-errors', params] as const,
+  observabilityError: (fp: string) => ['observability-error', fp] as const,
+  observabilityApiStats: (hours: number) => ['observability-api-stats', hours] as const,
+  observabilityLogs: (params: Record<string, unknown>) => ['observability-logs', params] as const,
+  observabilityLog: (id: string) => ['observability-log', id] as const,
+  observabilityTrace: (id: string) => ['observability-trace', id] as const,
 }
 
 export function useStats() {
@@ -210,5 +217,45 @@ export function usePaymentTransactions(params: Record<string, string | number | 
     queryKey: queryKeys.paymentTransactions(params),
     queryFn: () => endpoints.paymentTransactions(params),
     placeholderData: keepPreviousData,
+  })
+}
+
+export function useObservabilityOverview() {
+  return useQuery({
+    queryKey: queryKeys.observabilityOverview,
+    queryFn: endpoints.observabilityOverview,
+    refetchInterval: 15_000,
+  })
+}
+
+export function useObservabilityErrors(params: Record<string, string | number | undefined>) {
+  return useQuery({
+    queryKey: queryKeys.observabilityErrors(params),
+    queryFn: () => endpoints.observabilityErrors(params),
+    refetchInterval: 20_000,
+  })
+}
+
+export function useObservabilityApiStats(hours = 24) {
+  return useQuery({
+    queryKey: queryKeys.observabilityApiStats(hours),
+    queryFn: () => endpoints.observabilityApiStats({ hours }),
+    refetchInterval: 30_000,
+  })
+}
+
+export function useObservabilityLogs(params: Record<string, string | number | undefined>) {
+  return useQuery({
+    queryKey: queryKeys.observabilityLogs(params),
+    queryFn: () => endpoints.observabilityLogs(params),
+    refetchInterval: 10_000,
+  })
+}
+
+export function useObservabilityLog(id: string | null) {
+  return useQuery({
+    queryKey: queryKeys.observabilityLog(id || ''),
+    queryFn: () => endpoints.observabilityLog(id!),
+    enabled: !!id,
   })
 }

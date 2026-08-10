@@ -28,10 +28,14 @@ const COLUMNS: Col[] = [
   {
     head: { hi: 'कंपनी', en: 'Company' },
     links: [
+      { label: { hi: 'ऐप', en: 'App' }, to: '/app' },
+      { label: { hi: 'श्री यंत्र गाइड', en: 'Shree Yantra guide' }, to: '/shree-yantra' },
+      { label: { hi: 'हमारे बारे में', en: 'About' }, to: '/about' },
       { label: { hi: 'सहायता केंद्र', en: 'Help centre' }, to: '/help' },
       { label: { hi: 'सामान्य प्रश्न', en: 'FAQ' }, hash: '#faq' },
       { label: { hi: 'गोपनीयता नीति', en: 'Privacy policy' }, to: '/privacy' },
       { label: { hi: 'सेवा की शर्तें', en: 'Terms of service' }, to: '/terms' },
+      { label: { hi: 'अस्वीकरण', en: 'Disclaimer' }, to: '/disclaimer' },
     ],
   },
 ]

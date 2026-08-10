@@ -87,11 +87,26 @@ function sanitizeResponses(req, res, next) {
 function errorHandler(err, req, res, next) {
   const status = err.status || err.statusCode || 500;
   const raw = String(err.message || '');
+  try {
+    const { recordError } = require('../services/observability.service');
+    recordError(err, {
+      requestId: req.requestId,
+      traceId: req.traceId,
+      route: req.route?.path ? `${req.baseUrl || ''}${req.route.path}` : req.path,
+      method: req.method,
+      userId: req.user?._id,
+      platform: req.headers['x-platform'],
+      appVersion: req.headers['x-app-version'],
+      statusCode: status,
+    }).catch(() => {});
+  } catch (_) { /* fail-safe */ }
+  if (err.code) res.locals.errorCode = err.code;
   console.error('💥', status, raw); // full detail stays in server logs only
   const f = friendly(raw, status, reqLang(req));
   res.status(status >= 400 && status < 600 ? status : 500).json({
     error: f.msg,
     retriable: f.retriable,
+    requestId: req.requestId,
     ...(err.code ? { code: err.code } : {}),
   });
 }
