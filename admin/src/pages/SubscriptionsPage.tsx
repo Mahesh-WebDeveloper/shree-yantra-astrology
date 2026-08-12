@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowDownAZ, ArrowUpZA, Calendar, CreditCard, Crown, IndianRupee,
   RefreshCw, Search, TrendingUp, Users, Wallet, X, Zap,
@@ -9,15 +10,19 @@ import {
 } from 'recharts'
 
 import type { PaymentTransactionRow, SubscriptionRow } from '@/api/endpoints'
+import { apiErrorMessage } from '@/api/client'
+import { endpoints } from '@/api/endpoints'
 import {
   usePaymentTransactions, useSubscriptionDetail, useSubscriptionOverview, useSubscriptions,
 } from '@/api/queries'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { ErrorState, LoadingPanel, LoadingRows } from '@/components/DataState'
 import { PageHeader } from '@/components/PageHeader'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Field, Input, Select } from '@/components/ui/form'
-import { formatDateTime, inr } from '@/lib/utils'
+import { useToast } from '@/components/ui/toast'
+import { formatDateTime, inr, cn } from '@/lib/utils'
 
 const PIE_COLORS = ['#0ea5e9', '#8b5cf6', '#f59e0b', '#10b981', '#ef4444', '#6366f1', '#ec4899']
 
@@ -66,6 +71,30 @@ function statusBadge(status: string) {
 
 function DetailDrawer({ userId, onClose }: { userId: string; onClose: () => void }) {
   const q = useSubscriptionDetail(userId)
+  const queryClient = useQueryClient()
+  const toast = useToast()
+  const [confirmCancel, setConfirmCancel] = useState(false)
+
+  const syncMutation = useMutation({
+    mutationFn: () => endpoints.adminSyncSubscription(userId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['subscription-detail', userId] })
+      void queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
+      toast.success('Synced from Razorpay')
+    },
+    onError: (error) => toast.error(apiErrorMessage(error)),
+  })
+
+  const cancelMutation = useMutation({
+    mutationFn: () => endpoints.adminCancelSubscription(userId),
+    onSuccess: () => {
+      setConfirmCancel(false)
+      void queryClient.invalidateQueries({ queryKey: ['subscription-detail', userId] })
+      void queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
+      toast.success('Subscription cancellation requested')
+    },
+    onError: (error) => toast.error(apiErrorMessage(error)),
+  })
   if (q.isLoading) return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/50 p-0 sm:p-4">
       <div className="h-full w-full max-w-xl overflow-y-auto bg-card p-6 shadow-2xl sm:rounded-xl">
@@ -88,6 +117,16 @@ function DetailDrawer({ userId, onClose }: { userId: string; onClose: () => void
             <p className="truncate text-sm text-muted-foreground">{d.user.email || d.user.phone || d.user.id}</p>
           </div>
           <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={onClose} aria-label="Close"><X className="size-4" /></Button>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2 border-b border-border px-4 pb-3">
+          <Button type="button" size="sm" variant="secondary" disabled={syncMutation.isPending} onClick={() => syncMutation.mutate()}>
+            <RefreshCw className={cn('mr-1 size-3.5', syncMutation.isPending && 'animate-spin')} /> Sync Razorpay
+          </Button>
+          {d.subscription && !['cancelled', 'expired', 'completed'].includes(d.subscription.status) ? (
+            <Button type="button" size="sm" variant="destructive" disabled={cancelMutation.isPending} onClick={() => setConfirmCancel(true)}>
+              Cancel subscription
+            </Button>
+          ) : null}
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-5">
         <div className="mb-4 grid grid-cols-2 gap-3">
@@ -163,6 +202,14 @@ function DetailDrawer({ userId, onClose }: { userId: string; onClose: () => void
         ) : null}
         </div>
       </div>
+      <ConfirmDialog
+        open={confirmCancel}
+        title="Cancel subscription"
+        description="This will cancel the user's Razorpay subscription. Paid access may continue until the current period ends."
+        confirmLabel="Cancel subscription"
+        onCancel={() => setConfirmCancel(false)}
+        onConfirm={() => cancelMutation.mutate()}
+      />
     </div>
   )
 }

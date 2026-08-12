@@ -12,6 +12,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const env = require('../config/env');
+const otpAuth = require('./otpAuth.service');
 
 const TOKEN_TTL = '30d'; // mobile app — lamba session theek hai
 
@@ -37,9 +38,10 @@ const normPhone = (p) => {
 };
 
 class AuthError extends Error {
-  constructor(message, status = 400) {
+  constructor(message, status = 400, code) {
     super(message);
     this.status = status;
+    if (code) this.code = code;
   }
 }
 
@@ -137,77 +139,49 @@ async function setPassword(user, { email, password }) {
   return user;
 }
 
-// ── MOBILE + OTP (sabse simple — non-educated users ke liye) ─────────
-// DEV MODE: OTP generate hota hai, console me log + response me 'devCode'
-// (taaki bina SMS cost ke client ko demo dikha saken). PRODUCTION me:
-//   1) sendOtp() me MSG91 / Twilio / WhatsApp Business API plug karo
-//   2) response se devCode HATAO (security)
-//   3) Settings.authMethods.otp = true (dashboard se)
-const OTP_STORE = new Map(); // phone -> { code, expires, attempts }
-const OTP_TTL_MS = 5 * 60 * 1000; // 5 min
-const gen6 = () => String(Math.floor(100000 + Math.random() * 900000));
-
-// abhi sirf dev log. Yahan real provider lagega (MSG91/Twilio/WhatsApp).
-async function sendOtp(phone, code) {
-  if (!env.isProd) console.log(`[OTP] ${phone} → ${code} (dev mode — no real SMS sent)`);
-  // TODO(prod): await msg91.send(phone, `Your Shree Yantra OTP is ${code}`);
-  return true;
+// ── MOBILE + OTP ─────────────────────────────────────────────────────
+// MSG91 verification and anti-abuse state remain server-side. The existing product
+// intentionally uses one OTP flow for both login and registration; new users finish
+// their required details in the existing onboarding screens.
+function phoneAliases(phone) {
+  const digits = phone.slice(3);
+  return [phone, `91${digits}`, digits, `0${digits}`];
 }
 
-const OTP_RESEND_MS = 30 * 1000;      // min gap between OTPs to a number
-const OTP_HOURLY_CAP = 5;              // max OTPs per number per hour
-async function requestOtp({ phone }) {
-  phone = normPhone(phone);
-  if (!phone || phone.replace(/\D/g, '').length < 10) throw new AuthError('Please enter a valid mobile number.');
-  // SECURITY: per-phone throttle — stops SMS-bomb / SMS-cost abuse (the per-IP limiter alone
-  // is defeated by rotating IPs). Cooldown between sends + an hourly cap per number.
-  const prev = OTP_STORE.get(phone);
-  const now = Date.now();
-  let carry = { windowStart: now, sentInWindow: 1 };
-  if (prev) {
-    if (prev.lastSent && now - prev.lastSent < OTP_RESEND_MS) {
-      throw new AuthError('Please wait a few seconds before requesting another OTP.', 429);
-    }
-    const inWindow = prev.windowStart && now - prev.windowStart < 3600 * 1000;
-    const sentInWindow = inWindow ? (prev.sentInWindow || 0) : 0;
-    if (sentInWindow >= OTP_HOURLY_CAP) {
-      throw new AuthError('Too many OTP requests for this number. Please try again later.', 429);
-    }
-    carry = { windowStart: inWindow ? prev.windowStart : now, sentInWindow: sentInWindow + 1 };
-  }
-  const code = gen6();
-  OTP_STORE.set(phone, { code, expires: now + OTP_TTL_MS, attempts: 0, lastSent: now, ...carry });
-  await sendOtp(phone, code);
-  // SECURITY: never return the OTP to the client in production
-  return env.isProd ? { sent: true, phone } : { sent: true, phone, devCode: code };
+async function requestOtp({ phone, ip }) {
+  return otpAuth.sendOtp({ phone, ip });
 }
 
-async function verifyOtp({ phone, code, name }) {
-  phone = normPhone(phone);
-  const rec = OTP_STORE.get(phone);
-  if (!rec) throw new AuthError('Pehle OTP request karein', 400);
-  if (Date.now() > rec.expires) { OTP_STORE.delete(phone); throw new AuthError('OTP expire ho gaya — naya mangwayein', 400); }
-  if (rec.attempts >= 5) { OTP_STORE.delete(phone); throw new AuthError('Bahut zyada galat tries — naya OTP mangwayein', 429); }
-  if (String(code) !== rec.code) { rec.attempts += 1; throw new AuthError('Galat OTP', 401); }
-  OTP_STORE.delete(phone);
+async function resendOtp({ phone, requestId, ip }) {
+  return otpAuth.resendOtp({ phone, clientRequestId: requestId, ip });
+}
 
-  // find-or-create — ek hi flow login + register dono ke liye
-  let user = await User.findOne({ phone });
+async function verifyOtp({ phone, code, otp, requestId, name }) {
+  phone = await otpAuth.verifyOtp({ phone, otp: otp || code, clientRequestId: requestId });
+  return completeOtpLogin(phone, name);
+}
+
+async function completeOtpLogin(phone, name, UserModel = User) {
+  // Match old representations too, then migrate the account to canonical +91 format.
+  let user = await UserModel.findOne({ phone: { $in: phoneAliases(phone) } });
   let isNew = false;
   const sid = newSessionId(); // fresh session → any other device gets logged out
   if (!user) {
     isNew = true;
-    user = await User.create({
+    user = await UserModel.create({
       name: (name && name.trim()) || 'Friend', // asli naam onboarding me set hoga
       phone,
       providers: ['otp'],
       phoneVerified: true,
+      phoneVerifiedAt: new Date(),
       activeSessionId: sid,
       lastLoginAt: new Date(),
     });
   } else {
+    user.phone = phone;
     if (!user.providers.includes('otp')) user.providers.push('otp');
     user.phoneVerified = true;
+    user.phoneVerifiedAt = new Date();
     user.activeSessionId = sid;
     user.lastLoginAt = new Date();
     await user.save();
@@ -275,10 +249,13 @@ module.exports = {
   registerWithPassword,
   loginWithPassword,
   requestOtp,
+  resendOtp,
   verifyOtp,
   loginWithGoogle,
   setPassword,
   logout,
   getUserById,
   AuthError,
+  completeOtpLogin,
+  phoneAliases,
 };

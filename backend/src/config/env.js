@@ -83,6 +83,26 @@ const env = {
     photonUrl: process.env.PHOTON_URL || 'https://photon.komoot.io/api',
   },
   jwtSecret: process.env.JWT_SECRET || 'dev_secret',
+  msg91: {
+    authkey: process.env.MSG91_AUTHKEY || '',
+    // MSG91 OTP dashboard template ID; this is not the telecom DLT template ID.
+    otpTemplateId: process.env.MSG91_OTP_TEMPLATE_ID || process.env.MSG91_TEMPLATE_ID || '',
+    dltTemplateId: process.env.MSG91_DLT_TEMPLATE_ID || '',
+    senderId: process.env.MSG91_SENDER_ID || '',
+    peId: process.env.MSG91_PE_ID || '',
+    hashSecret: process.env.OTP_HASH_SECRET || '',
+    expirySeconds: positiveIntEnv('MSG91_OTP_EXPIRY_SECONDS', 300),
+    resendCooldownSeconds: positiveIntEnv('OTP_RESEND_COOLDOWN_SECONDS', 45),
+    maxSendAttempts: positiveIntEnv('OTP_MAX_SEND_ATTEMPTS', 3),
+    maxIpSendAttempts: positiveIntEnv('OTP_MAX_IP_SEND_ATTEMPTS', 10),
+    maxIpVerifyAttempts: positiveIntEnv('OTP_MAX_IP_VERIFY_ATTEMPTS', 30),
+    maxVerifyAttempts: positiveIntEnv('OTP_MAX_VERIFY_ATTEMPTS', 5),
+    maxResendAttempts: positiveIntEnv('OTP_MAX_RESEND_ATTEMPTS', 2),
+    sendWindowMs: positiveIntEnv('OTP_SEND_WINDOW_SECONDS', 15 * 60) * 1000,
+    verifyWindowMs: positiveIntEnv('OTP_VERIFY_WINDOW_SECONDS', 15 * 60) * 1000,
+    timeoutMs: positiveIntEnv('MSG91_TIMEOUT_MS', 8000),
+    requestTimeoutMs: positiveIntEnv('MSG91_REQUEST_LOCK_MS', 15000),
+  },
   // Google Sign-In: the WEB OAuth client ID (used as the ID-token audience to verify).
   google: { clientId: process.env.GOOGLE_CLIENT_ID || '' },
   payments: {

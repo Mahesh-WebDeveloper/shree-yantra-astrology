@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput, Keyboard, Platform } from 'react-native';
 import { KeyboardAwareScroll } from '../components/KeyboardAwareScroll';
 import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,7 +12,7 @@ import { TextField } from '../components/TextField';
 import { OmGlyph } from '../components/icons/OmGlyph';
 import { hPress, hError, hSuccess, hTap } from '../lib/haptics';
 import { useDialog } from '../components/DialogProvider';
-import { requestOtp, verifyOtp, googleLogin } from '../lib/api';
+import { requestOtp, resendOtp, verifyOtp, googleLogin } from '../lib/api';
 import { saveAuth } from '../lib/auth';
 import { registerForPush } from '../lib/notifications';
 import { track } from '../lib/analytics';
@@ -49,9 +49,10 @@ export function PhoneAuthScreen({ navigation }: any) {
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
-  const [devCode, setDevCode] = useState<string | null>(null);
+  const [requestId, setRequestId] = useState<string | null>(null);
   const [secs, setSecs] = useState(0); // resend countdown
   const otpRef = useRef<TextInput>(null);
+  const verifyingRef = useRef(false);
 
   useEffect(() => {
     if (secs <= 0) return;
@@ -67,27 +68,28 @@ export function PhoneAuthScreen({ navigation }: any) {
     if (busy) return;
     setBusy(true);
     try {
-      const r = await requestOtp('+91' + digits.slice(-10));
-      setDevCode(r.devCode || null);
+      const r = await requestOtp('+91' + digits.slice(-10), lang);
+      setRequestId(r.requestId);
       setCode('');
       setStep('otp');
-      setSecs(30);
+      setSecs(r.cooldownSeconds);
       hSuccess();
       setTimeout(() => otpRef.current?.focus(), 350);
     } catch (e: any) {
       hError();
-      dialog('Could not send OTP', e?.message || 'Please try again.');
+      dialog(lang === 'hi' ? 'ओटीपी नहीं भेजा जा सका' : 'Could not send OTP', e?.message || (lang === 'hi' ? 'कृपया पुनः प्रयास करें।' : 'Please try again.'));
     } finally {
       setBusy(false);
     }
   };
 
   const verify = async (full: string) => {
-    if (busy) return;
+    if (busy || verifyingRef.current || !requestId) return;
+    verifyingRef.current = true;
     Keyboard.dismiss();
     setBusy(true);
     try {
-      const r = await verifyOtp({ phone: '+91' + digits.slice(-10), code: full });
+      const r = await verifyOtp({ phone: '+91' + digits.slice(-10), otp: full, requestId, lang });
       await saveAuth(r.token, r.user);
       registerForPush(); // register device for push (prompts permission)
       track(r.isNew ? 'register' : 'login', undefined, { method: 'otp' });
@@ -98,7 +100,28 @@ export function PhoneAuthScreen({ navigation }: any) {
     } catch (e: any) {
       hError();
       setCode('');
-      dialog('Verification failed', e?.message || 'Incorrect OTP — please try again.');
+      dialog(lang === 'hi' ? 'सत्यापन नहीं हो सका' : 'Verification failed', e?.message || (lang === 'hi' ? 'ओटीपी जाँचकर पुनः प्रयास करें।' : 'Check the OTP and try again.'));
+      setTimeout(() => otpRef.current?.focus(), 250);
+    } finally {
+      verifyingRef.current = false;
+      setBusy(false);
+    }
+  };
+
+  const resend = async () => {
+    if (busy || secs > 0 || !requestId) return;
+    hPress();
+    setBusy(true);
+    try {
+      const r = await resendOtp('+91' + digits.slice(-10), requestId, lang);
+      setRequestId(r.requestId);
+      setCode('');
+      setSecs(r.cooldownSeconds);
+      hSuccess();
+      setTimeout(() => otpRef.current?.focus(), 250);
+    } catch (e: any) {
+      hError();
+      dialog(lang === 'hi' ? 'ओटीपी दोबारा नहीं भेजा जा सका' : 'Could not resend OTP', e?.message || (lang === 'hi' ? 'कृपया पुनः प्रयास करें।' : 'Please try again.'));
     } finally {
       setBusy(false);
     }
@@ -155,7 +178,7 @@ export function PhoneAuthScreen({ navigation }: any) {
         {/* back — only on the OTP step (phone step is the stack root, so back would be a no-op) */}
         {step === 'otp' && (
           <Pressable
-            onPress={() => { hTap(); setStep('phone'); }}
+            onPress={() => { hTap(); setStep('phone'); setRequestId(null); setCode(''); }}
             style={[styles.back, { borderColor: 'rgba(201,150,46,0.4)', backgroundColor: theme.isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,250,240,0.7)' }]}
             hitSlop={6}
           >
@@ -226,16 +249,13 @@ export function PhoneAuthScreen({ navigation }: any) {
               onChangeText={onOtpChange}
               keyboardType="number-pad"
               maxLength={OTP_LEN}
+              textContentType="oneTimeCode"
+              autoComplete={Platform.OS === 'android' ? 'sms-otp' : 'one-time-code'}
+              importantForAutofill="yes"
               autoFocus
               style={styles.hiddenInput}
               caretHidden
             />
-
-            {devCode && (
-              <Pressable onPress={() => onOtpChange(devCode)} style={[styles.devHint, { borderColor: theme.cardBorder, backgroundColor: theme.isDark ? 'rgba(233,184,80,0.10)' : 'rgba(176,115,22,0.06)' }]}>
-                <Text style={[styles.devHintText, { color: theme.gold2 }]}>DEMO MODE · tap to auto-fill OTP: {devCode}</Text>
-              </Pressable>
-            )}
 
             <Pressable onPress={() => verify(code)} disabled={busy || code.length < OTP_LEN} style={({ pressed }) => [styles.btnShadow, (busy || code.length < OTP_LEN) && { opacity: 0.55 }, pressed && styles.pressed]}>
               <LinearGradient colors={['#fce8a8', '#e9b850', '#b87f1a']} locations={[0, 0.45, 1]} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.primaryBtn}>
@@ -243,7 +263,7 @@ export function PhoneAuthScreen({ navigation }: any) {
               </LinearGradient>
             </Pressable>
 
-            <Pressable onPress={() => secs === 0 && sendOtp()} disabled={secs > 0} hitSlop={8} style={styles.resend}>
+            <Pressable onPress={resend} disabled={secs > 0 || busy} hitSlop={8} style={styles.resend}>
               <Text style={[styles.resendText, { color: secs > 0 ? theme.textMuted : gold }]}>
                 {secs > 0 ? `${t('auth.resendIn', 'Resend OTP in')} ${secs}s` : t('auth.resendOtp', 'Resend OTP')}
               </Text>
@@ -301,9 +321,6 @@ const styles = StyleSheet.create({
   otpBoxActive: { shadowColor: '#e9b850', shadowOpacity: 0.4, shadowRadius: 8, shadowOffset: { width: 0, height: 0 }, elevation: 4 },
   otpDigit: { fontFamily: fonts.interBold, fontSize: 22 },
   hiddenInput: { position: 'absolute', opacity: 0, height: 1, width: 1 },
-
-  devHint: { alignSelf: 'center', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, borderWidth: 1 },
-  devHintText: { fontFamily: fonts.interSemi, fontSize: 11.5, letterSpacing: 0.3 },
 
   resend: { alignSelf: 'center', paddingVertical: 6 },
   resendText: { fontFamily: fonts.interMed, fontSize: 13 },

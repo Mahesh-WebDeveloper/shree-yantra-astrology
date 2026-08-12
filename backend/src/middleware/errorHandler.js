@@ -51,9 +51,70 @@ const FRIENDLY = {
   },
 };
 
+const OTP_FRIENDLY = {
+  OTP_INVALID_MOBILE: {
+    en: 'Enter a valid 10-digit Indian mobile number.',
+    hi: 'कृपया 10 अंकों का सही भारतीय मोबाइल नंबर दर्ज करें।',
+  },
+  OTP_RATE_LIMIT: {
+    en: 'Too many OTP requests. Please try again later.',
+    hi: 'बहुत अधिक ओटीपी अनुरोध किए गए हैं। कृपया कुछ समय बाद पुनः प्रयास करें।',
+  },
+  OTP_COOLDOWN: {
+    en: 'Please wait before requesting another OTP.',
+    hi: 'नया ओटीपी मंगाने से पहले कृपया कुछ समय प्रतीक्षा करें।',
+  },
+  OTP_REQUEST_IN_PROGRESS: {
+    en: 'An OTP request is already in progress. Please wait.',
+    hi: 'ओटीपी भेजने की प्रक्रिया जारी है। कृपया प्रतीक्षा करें।',
+  },
+  OTP_REQUEST_INVALID: {
+    en: 'This verification request is no longer valid. Request a new OTP.',
+    hi: 'यह सत्यापन अनुरोध अब मान्य नहीं है। कृपया नया ओटीपी मंगाएँ।',
+  },
+  OTP_EXPIRED: {
+    en: 'The OTP has expired. Request a new OTP.',
+    hi: 'ओटीपी की समय-सीमा समाप्त हो गई है। कृपया नया ओटीपी मंगाएँ।',
+  },
+  OTP_INVALID: {
+    en: 'The OTP is incorrect. Please check it and try again.',
+    hi: 'ओटीपी सही नहीं है। कृपया जाँचकर पुनः प्रयास करें।',
+  },
+  OTP_ATTEMPTS_EXCEEDED: {
+    en: 'Too many incorrect attempts. Request a new OTP.',
+    hi: 'बहुत अधिक गलत प्रयास हुए हैं। कृपया नया ओटीपी मंगाएँ।',
+  },
+  OTP_RESEND_LIMIT: {
+    en: 'The resend limit has been reached. Please try again later.',
+    hi: 'ओटीपी दोबारा भेजने की सीमा पूरी हो गई है। कृपया कुछ समय बाद प्रयास करें।',
+  },
+  OTP_PROVIDER_TIMEOUT: {
+    en: 'OTP delivery timed out. Please try again.',
+    hi: 'ओटीपी सेवा ने समय पर उत्तर नहीं दिया। कृपया पुनः प्रयास करें।',
+  },
+  OTP_PROVIDER_UNAVAILABLE: {
+    en: 'OTP service is temporarily unavailable. Please try again shortly.',
+    hi: 'ओटीपी सेवा अस्थायी रूप से उपलब्ध नहीं है। कृपया थोड़ी देर बाद प्रयास करें।',
+  },
+  OTP_PROVIDER_REJECTED: {
+    en: 'OTP could not be sent or verified. Please try again.',
+    hi: 'ओटीपी भेजा या सत्यापित नहीं हो सका। कृपया पुनः प्रयास करें।',
+  },
+  OTP_PROVIDER_CONFIG: {
+    en: 'Mobile verification is temporarily unavailable.',
+    hi: 'मोबाइल सत्यापन सेवा अस्थायी रूप से उपलब्ध नहीं है।',
+  },
+};
+
 // Map any raw error message + status → professional bilingual message + retriable flag.
-function friendly(raw, status, lang) {
+function friendly(raw, status, lang, code) {
   raw = String(raw || '');
+  if (code && OTP_FRIENDLY[code]) {
+    return {
+      msg: OTP_FRIENDLY[code][lang],
+      retriable: ['OTP_RATE_LIMIT', 'OTP_COOLDOWN', 'OTP_REQUEST_IN_PROGRESS', 'OTP_PROVIDER_TIMEOUT', 'OTP_PROVIDER_UNAVAILABLE'].includes(code),
+    };
+  }
   if (/place nahi mila|birth place|could not find that birth/i.test(raw)) return { msg: FRIENDLY.place[lang], retriable: false };
   if (/too many/i.test(raw)) return { msg: FRIENDLY.rateLimit[lang], retriable: true };
   if (status === 429 || status === 503 || status === 502 || /busy|overload|quota|gemini|places api|generativelanguage/i.test(raw)) return { msg: FRIENDLY.busy[lang], retriable: true };
@@ -73,7 +134,7 @@ function sanitizeResponses(req, res, next) {
       if (body && typeof body === 'object' && typeof body.error === 'string') {
         const status = res.statusCode || 200;
         if (status >= 400) {
-          const f = friendly(body.error, status, reqLang(req));
+          const f = friendly(body.error, status, reqLang(req), body.code);
           body = { ...body, error: f.msg, retriable: body.retriable != null ? body.retriable : f.retriable };
         }
       }
@@ -102,12 +163,13 @@ function errorHandler(err, req, res, next) {
   } catch (_) { /* fail-safe */ }
   if (err.code) res.locals.errorCode = err.code;
   console.error('💥', status, raw); // full detail stays in server logs only
-  const f = friendly(raw, status, reqLang(req));
+  const f = friendly(raw, status, reqLang(req), err.code);
   res.status(status >= 400 && status < 600 ? status : 500).json({
     error: f.msg,
     retriable: f.retriable,
     requestId: req.requestId,
     ...(err.code ? { code: err.code } : {}),
+    ...(err.retryAfterSeconds ? { retryAfterSeconds: err.retryAfterSeconds } : {}),
   });
 }
 

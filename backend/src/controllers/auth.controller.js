@@ -39,16 +39,22 @@ exports.logout = asyncHandler(async (req, res) => {
   res.json({ ok: true });
 });
 
-// POST /api/auth/request-otp  { phone }
+// POST /api/auth/send-otp (legacy alias: request-otp) { phone }
 exports.requestOtp = asyncHandler(async (req, res) => {
   const { phone } = req.body;
-  res.json(await auth.requestOtp({ phone }));
+  res.json(await auth.requestOtp({ phone, ip: req.ip }));
 });
 
-// POST /api/auth/verify-otp  { phone, code, name? }
+// POST /api/auth/resend-otp { phone, requestId }
+exports.resendOtp = asyncHandler(async (req, res) => {
+  const { phone, requestId } = req.body;
+  res.json(await auth.resendOtp({ phone, requestId, ip: req.ip }));
+});
+
+// POST /api/auth/verify-otp  { phone, otp|code, requestId, name? }
 exports.verifyOtp = asyncHandler(async (req, res) => {
-  const { phone, code, name } = req.body;
-  const { user, token, isNew, profileComplete } = await auth.verifyOtp({ phone, code, name });
+  const { phone, otp, code, requestId, name } = req.body;
+  const { user, token, isNew, profileComplete } = await auth.verifyOtp({ phone, otp, code, requestId, name });
   res.json({ token, user: user.toPublic(), isNew, profileComplete });
 });
 

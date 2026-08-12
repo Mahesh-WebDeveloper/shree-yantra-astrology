@@ -62,6 +62,21 @@ const adminLoginLimiter = rateLimit({
   message: { error: 'Too many login attempts. Please try again after a few minutes. · बहुत अधिक प्रयास — कृपया कुछ मिनट बाद पुनः प्रयास करें।' },
 });
 
+const otpSendLimiter = rateLimit({
+  windowMs: env.msg91.sendWindowMs,
+  max: env.msg91.maxIpSendAttempts,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many OTP requests. Please try again later.', code: 'OTP_RATE_LIMIT' },
+});
+const otpVerifyLimiter = rateLimit({
+  windowMs: env.msg91.verifyWindowMs,
+  max: env.msg91.maxIpVerifyAttempts,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many verification attempts. Please try again later.', code: 'OTP_RATE_LIMIT' },
+});
+
 // stricter limiter for the paid AI / astrology generation endpoints (cost-abuse / billing-DoS guard)
 const aiLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -98,8 +113,10 @@ router.patch('/settings/ai-provider', adminOnly, updateAiProvider);
 router.get('/auth/config', authCtrl.config);
 router.post('/auth/register', authCtrl.register);
 router.post('/auth/login', authCtrl.login);
-router.post('/auth/request-otp', authCtrl.requestOtp);
-router.post('/auth/verify-otp', authCtrl.verifyOtp);
+router.post('/auth/send-otp', otpSendLimiter, authCtrl.requestOtp);
+router.post('/auth/request-otp', otpSendLimiter, authCtrl.requestOtp); // backward-compatible app versions
+router.post('/auth/resend-otp', otpSendLimiter, authCtrl.resendOtp);
+router.post('/auth/verify-otp', otpVerifyLimiter, authCtrl.verifyOtp);
 router.post('/auth/google', authCtrl.google);
 router.get('/auth/me', requireAuth, authCtrl.me);
 router.post('/auth/logout', requireAuth, authCtrl.logout);
@@ -234,6 +251,8 @@ router.delete('/admin/faq/:id', adminOnly, faqCtrl.remove);
 
 router.get('/admin/ai-cache', adminOnly, adminCtrl.listAiCache);
 router.delete('/admin/ai-cache/:id', adminOnly, adminCtrl.deleteAiCache);
+router.post('/admin/ai-cache/bulk-delete', adminOnly, adminCtrl.bulkDeleteAiCache);
+router.get('/admin/ai-ops', adminOnly, adminCtrl.aiOps);
 
 router.get('/admin/analytics', adminOnly, analyticsCtrl.stats);
 // per-user activity tracking (User Activity dashboard — real-time)
@@ -261,6 +280,8 @@ router.get('/admin/observability/trace/:requestId', adminOnly, observabilityCtrl
 
 router.get('/admin/subscriptions/overview', adminOnly, subscriptionsCtrl.overview);
 router.get('/admin/subscriptions', adminOnly, subscriptionsCtrl.list);
+router.post('/admin/subscriptions/:userId/sync', adminOnly, subscriptionsCtrl.adminSync);
+router.post('/admin/subscriptions/:userId/cancel', adminOnly, subscriptionsCtrl.adminCancel);
 router.get('/admin/subscriptions/:userId', adminOnly, subscriptionsCtrl.detail);
 router.get('/admin/payments/transactions', adminOnly, subscriptionsCtrl.listTransactions);
 

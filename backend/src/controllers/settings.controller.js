@@ -1,6 +1,7 @@
 // Dashboard isi se VedAstro tier dekhta + toggle karta hai.
 const Settings = require('../models/Settings');
 const env = require('../config/env');
+const { getOpsStatus } = require('../services/ai.service');
 const asyncHandler = require('../middleware/asyncHandler');
 
 // GET /api/settings — current tier + kya key set hai
@@ -13,10 +14,16 @@ exports.getSettings = asyncHandler(async (req, res) => {
       vedastroKeySet: !!env.vedastro.apiKey,
       geminiKeySet: !!env.ai.geminiKey,
       claudeKeySet: !!env.anthropicKey,
+      groqKeySet: !!env.ai.groqKey,
+      openrouterKeySet: env.ai.openrouterKeys.length > 0,
     },
+    paymentsEnabled: env.payments.enabled,
+    paymentsConfigured: !!(env.payments.razorpayKeyId && env.payments.razorpayKeySecret && env.payments.razorpayPlanId),
+    msg91Configured: !!env.msg91.authkey,
     ayanamsa: env.vedastro.ayanamsa,
     authMethods: s.authMethods,
     aiProvider: s.aiProvider || env.ai.provider || 'gemini',
+    aiOps: getOpsStatus(),
     updatedAt: s.updatedAt,
   });
 });

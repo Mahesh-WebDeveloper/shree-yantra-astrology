@@ -259,3 +259,11 @@ export function useObservabilityLog(id: string | null) {
     enabled: !!id,
   })
 }
+
+export function useObservabilityError(fingerprint: string | null) {
+  return useQuery({
+    queryKey: queryKeys.observabilityError(fingerprint || ''),
+    queryFn: () => endpoints.observabilityError(fingerprint!),
+    enabled: !!fingerprint,
+  })
+}

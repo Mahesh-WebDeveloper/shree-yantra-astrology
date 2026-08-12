@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Headphones, Music, Pencil, PlayCircle, Plus, Search, Trash2, Video } from 'lucide-react'
+import { ArrowDown, ArrowUp, Headphones, Music, Pencil, PlayCircle, Plus, Search, Trash2, Video } from 'lucide-react'
 
 import { apiErrorMessage } from '@/api/client'
 import { endpoints } from '@/api/endpoints'
@@ -53,6 +53,26 @@ export default function MediaPage() {
     },
     onError: (error) => toast.error(apiErrorMessage(error)),
   })
+
+  const reorderMutation = useMutation({
+    mutationFn: endpoints.reorderMedia,
+    onSuccess: () => {
+      invalidate()
+      toast.success('Order updated')
+    },
+    onError: (error) => toast.error(apiErrorMessage(error)),
+  })
+
+  const canReorder = !search && publishedFilter === '' && !!category
+
+  const moveMedia = (item: MediaItem, direction: -1 | 1) => {
+    const sorted = [...rows]
+    const index = sorted.findIndex((row) => row._id === item._id)
+    const swap = index + direction
+    if (index < 0 || swap < 0 || swap >= sorted.length) return
+    ;[sorted[index], sorted[swap]] = [sorted[swap], sorted[index]]
+    reorderMutation.mutate(sorted.map((row, order) => ({ id: row._id, order })))
+  }
 
   const rows = media.data ?? []
   const counts = useMemo(() => {
@@ -151,7 +171,7 @@ export default function MediaPage() {
 
         {rows.length > 0 ? (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {rows.map((item) => {
+            {rows.map((item, index) => {
               const Icon = sourceIcon(item.sourceType)
               return (
                 <div key={item._id} className="group flex flex-col overflow-hidden rounded-xl border border-border bg-background transition hover:border-primary/40 hover:shadow-sm">
@@ -180,6 +200,16 @@ export default function MediaPage() {
                     </div>
                   </button>
                   <div className="flex gap-1 border-t border-border p-2">
+                    {canReorder ? (
+                      <>
+                        <Button type="button" variant="ghost" size="icon" className="size-8" disabled={index === 0 || reorderMutation.isPending} onClick={() => moveMedia(item, -1)} aria-label="Move up">
+                          <ArrowUp className="size-3.5" />
+                        </Button>
+                        <Button type="button" variant="ghost" size="icon" className="size-8" disabled={index === rows.length - 1 || reorderMutation.isPending} onClick={() => moveMedia(item, 1)} aria-label="Move down">
+                          <ArrowDown className="size-3.5" />
+                        </Button>
+                      </>
+                    ) : null}
                     <Button type="button" variant="secondary" size="sm" className="flex-1" onClick={() => navigate(`/media/edit/${item._id}`)}>
                       <Pencil className="size-3.5" /> Edit
                     </Button>

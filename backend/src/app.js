@@ -38,9 +38,9 @@ const defaultCorsOrigins = [
 ];
 const allowedOrigins = env.corsOrigins.length ? env.corsOrigins : defaultCorsOrigins;
 const NETLIFY_ORIGIN_RE = /^https:\/\/([a-z0-9-]+--)?[a-z0-9-]+\.netlify\.app$/i;
-// Temporary open CORS for marketing / preview deploys (Netlify, etc.).
-// Set CORS_ALLOW_ALL=false later to restore the allow-list below.
-const corsAllowAll = process.env.CORS_ALLOW_ALL !== 'false';
+// Open CORS must be explicitly opted into for local previews. Production defaults
+// to the configured allow-list instead of silently accepting every website origin.
+const corsAllowAll = process.env.CORS_ALLOW_ALL === 'true';
 app.use(cors({
   origin(origin, cb) {
     if (corsAllowAll) return cb(null, true);

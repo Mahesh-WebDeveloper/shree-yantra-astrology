@@ -5,6 +5,11 @@ const User = require('../models/User');
 const PaymentSubscription = require('../models/PaymentSubscription');
 const PaymentTransaction = require('../models/PaymentTransaction');
 const PaymentWebhookEvent = require('../models/PaymentWebhookEvent');
+const payments = require('../services/payment.service');
+
+function notFound(message) {
+  return Object.assign(new Error(message), { status: 404 });
+}
 
 function paiseToInr(paise) {
   return Math.round(Number(paise) || 0) / 100;
@@ -446,5 +451,27 @@ exports.listTransactions = asyncHandler(async (req, res) => {
       methodLabel: paymentMethodLabel(t),
     })),
     pagination: { page, limit, total, pages: Math.ceil(total / limit) || 1 },
+  });
+});
+
+// POST /api/admin/subscriptions/:userId/sync — pull latest Razorpay state
+exports.adminSync = asyncHandler(async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.userId)) throw notFound('User not found');
+  const user = await User.findById(req.params.userId);
+  if (!user) throw notFound('User not found');
+  const subscription = await payments.getStatus(user, { sync: true });
+  const freshUser = await User.findById(user._id);
+  res.json({ user: formatUser(freshUser), subscription });
+});
+
+// POST /api/admin/subscriptions/:userId/cancel — admin-initiated cancel
+exports.adminCancel = asyncHandler(async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.userId)) throw notFound('User not found');
+  const user = await User.findById(req.params.userId);
+  if (!user) throw notFound('User not found');
+  const result = await payments.cancelSubscription(user);
+  res.json({
+    user: formatUser(result.user),
+    subscription: result.subscription,
   });
 });

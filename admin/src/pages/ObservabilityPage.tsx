@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -10,10 +10,12 @@ import {
   Globe,
   LayoutDashboard,
   Monitor,
+  Save,
   Search,
   Smartphone,
   Terminal,
   Trash2,
+  X,
 } from 'lucide-react'
 
 import { apiErrorMessage } from '@/api/client'
@@ -22,6 +24,7 @@ import type { ObservabilityErrorGroup, ObservabilityLogRow } from '@/api/endpoin
 import {
   queryKeys,
   useObservabilityApiStats,
+  useObservabilityError,
   useObservabilityErrors,
   useObservabilityLogs,
   useObservabilityOverview,
@@ -262,6 +265,119 @@ function LogEntry({
   )
 }
 
+const ERROR_STATUSES = ['open', 'acknowledged', 'investigating', 'resolved'] as const
+
+function ErrorDetailDrawer({ fingerprint, onClose }: { fingerprint: string; onClose: () => void }) {
+  const detail = useObservabilityError(fingerprint)
+  const queryClient = useQueryClient()
+  const toast = useToast()
+  const group = detail.data?.group
+  const [status, setStatus] = useState('')
+  const [assignedTo, setAssignedTo] = useState('')
+  const [notes, setNotes] = useState('')
+
+  useEffect(() => {
+    if (group) {
+      setStatus(group.status || 'open')
+      setAssignedTo(group.assigned_to || '')
+      setNotes(group.notes || '')
+    }
+  }, [group?.fingerprint, group?.status, group?.assigned_to, group?.notes])
+
+  const saveMutation = useMutation({
+    mutationFn: () => endpoints.updateObservabilityError(fingerprint, {
+      status: status || undefined,
+      assigned_to: assignedTo,
+      notes,
+    }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['observability-errors'] })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.observabilityError(fingerprint) })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.observabilityOverview })
+      toast.success('Incident updated')
+    },
+    onError: (error) => toast.error(apiErrorMessage(error)),
+  })
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/50 p-0 sm:p-4" onClick={onClose}>
+      <div
+        className="flex h-full w-full max-w-xl flex-col overflow-hidden bg-card shadow-2xl sm:rounded-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border p-4">
+          <div className="min-w-0">
+            <h2 className="font-semibold leading-snug">{group?.title || 'Error group'}</h2>
+            <p className="mt-1 font-mono text-xs text-muted-foreground">{fingerprint.slice(0, 16)}…</p>
+          </div>
+          <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label="Close"><X className="size-4" /></Button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto p-4">
+          {detail.isLoading ? <LoadingPanel label="Loading error details…" /> : null}
+          {detail.isError ? <ErrorState message="Could not load error details." onRetry={() => detail.refetch()} /> : null}
+          {group ? (
+            <div className="space-y-4">
+              <div className="grid gap-2 sm:grid-cols-2">
+                <DetailField label="Route" value={group.route} />
+                <DetailField label="Severity" value={group.severity} />
+                <DetailField label="Occurrences" value={group.occurrence_count} />
+                <DetailField label="Affected users" value={group.affected_users} />
+                <DetailField label="First seen" value={formatDateTime(group.first_seen)} />
+                <DetailField label="Last seen" value={formatDateTime(group.last_seen)} />
+              </div>
+              {group.stack_sample ? (
+                <div>
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Stack sample</p>
+                  <pre className="mt-1 max-h-40 overflow-auto rounded-md border border-border bg-muted/30 p-2 text-[10px] leading-relaxed">{group.stack_sample}</pre>
+                </div>
+              ) : null}
+              <div className="grid gap-3 rounded-lg border border-border p-3">
+                <h3 className="text-sm font-semibold">Incident workflow</h3>
+                <div className="grid gap-2">
+                  <label className="text-xs font-medium text-muted-foreground">Status</label>
+                  <select className="h-9 rounded-md border border-border bg-background px-2 text-sm" value={status} onChange={(e) => setStatus(e.target.value)}>
+                    {ERROR_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div className="grid gap-2">
+                  <label className="text-xs font-medium text-muted-foreground">Assignee</label>
+                  <input className="h-9 rounded-md border border-border bg-background px-2 text-sm" value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)} placeholder="Admin name or email" />
+                </div>
+                <div className="grid gap-2">
+                  <label className="text-xs font-medium text-muted-foreground">Notes</label>
+                  <textarea className="min-h-24 rounded-md border border-border bg-background px-2 py-2 text-sm" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Investigation notes, root cause, fix deployed…" />
+                </div>
+                <Button type="button" disabled={saveMutation.isPending} onClick={() => saveMutation.mutate()}>
+                  <Save className="mr-1 size-4" /> {saveMutation.isPending ? 'Saving…' : 'Save incident'}
+                </Button>
+              </div>
+              {group.last_request_id ? (
+                <Button type="button" variant="secondary" size="sm" onClick={() => copyText(group.last_request_id!)}>
+                  <Copy className="mr-1 size-3" /> Copy last request ID
+                </Button>
+              ) : null}
+              {detail.data?.recentLogs?.length ? (
+                <div>
+                  <h3 className="mb-2 text-sm font-semibold">Recent logs ({detail.data.recentLogs.length})</h3>
+                  <ul className="max-h-48 space-y-1 overflow-y-auto rounded-md border border-border p-2 text-xs">
+                    {detail.data.recentLogs.map((log) => (
+                      <li key={log._id} className="border-b border-border/50 pb-1 last:border-0">
+                        <span className="text-muted-foreground">{formatDateTime(log.timestamp)}</span>
+                        <span className="mx-1">·</span>
+                        <span>{log.message?.slice(0, 120)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ObservabilityPage() {
   const [tab, setTab] = useState<Tab>('overview')
   const [logQ, setLogQ] = useState('')
@@ -277,6 +393,8 @@ export default function ObservabilityPage() {
   const [logPage, setLogPage] = useState(1)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null)
+  const [selectedErrorFp, setSelectedErrorFp] = useState<string | null>(null)
+  const [errorStatusFilter, setErrorStatusFilter] = useState('')
 
   const logParams = useMemo(
     () => ({
@@ -295,7 +413,7 @@ export default function ObservabilityPage() {
     [logQ, sourceFilter, levelFilter, routeFilter, eventFilter, methodFilter, errorsOnly, sortBy, sortOrder, logPage],
   )
   const overview = useObservabilityOverview()
-  const errors = useObservabilityErrors({ page: 1, limit: 25 })
+  const errors = useObservabilityErrors({ page: 1, limit: 25, status: errorStatusFilter || undefined })
   const apiStats = useObservabilityApiStats(24)
   const logs = useObservabilityLogs(logParams)
   const queryClient = useQueryClient()
@@ -427,10 +545,19 @@ export default function ObservabilityPage() {
 
       {tab === 'errors' ? (
         <section className="rounded-xl border border-border bg-card shadow-sm">
-          <div className="border-b border-border px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
             <h2 className="flex items-center gap-2 font-semibold">
-              <AlertTriangle className="size-4 text-destructive" /> Grouped backend errors
+              <AlertTriangle className="size-4 text-destructive" /> Error Center
             </h2>
+            <select
+              className="h-8 rounded-md border border-border bg-background px-2 text-xs"
+              value={errorStatusFilter}
+              onChange={(e) => setErrorStatusFilter(e.target.value)}
+              aria-label="Filter by status"
+            >
+              <option value="">All statuses</option>
+              {ERROR_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
           </div>
           {errors.isLoading ? (
             <LoadingPanel label="Loading errors…" />
@@ -439,7 +566,12 @@ export default function ObservabilityPage() {
           ) : (
             <div className="divide-y divide-border">
               {(errors.data?.items || []).map((g: ObservabilityErrorGroup) => (
-                <div key={g.fingerprint} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <button
+                  key={g.fingerprint}
+                  type="button"
+                  className="flex w-full flex-col gap-2 px-4 py-3 text-left transition hover:bg-muted/30 sm:flex-row sm:items-center sm:justify-between"
+                  onClick={() => setSelectedErrorFp(g.fingerprint)}
+                >
                   <div>
                     <p className="font-medium">{g.title}</p>
                     <p className="text-xs text-muted-foreground">
@@ -447,19 +579,18 @@ export default function ObservabilityPage() {
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Last seen {new Date(g.last_seen).toLocaleString()} · {g.status}
+                      {g.assigned_to ? ` · ${g.assigned_to}` : ''}
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge tone={g.severity === 'high' || g.severity === 'critical' ? 'danger' : 'neutral'}>
                       {g.severity}
                     </Badge>
-                    {g.last_request_id ? (
-                      <Button size="sm" variant="secondary" onClick={() => copyText(g.last_request_id!)}>
-                        <Copy className="mr-1 size-3" /> Request ID
-                      </Button>
-                    ) : null}
+                    <Badge tone={g.status === 'resolved' ? 'success' : g.status === 'investigating' ? 'warning' : 'neutral'}>
+                      {g.status}
+                    </Badge>
                   </div>
-                </div>
+                </button>
               ))}
               {!errors.data?.items?.length ? <p className="p-6 text-sm text-muted-foreground">No grouped errors yet.</p> : null}
             </div>
@@ -716,6 +847,10 @@ export default function ObservabilityPage() {
         Mobile/web client errors continue to flow through <Link className="underline" to="/activity">User Activity → Issues</Link>.
         Backend 5xx groups appear here after the structured logging middleware is active.
       </p>
+
+      {selectedErrorFp ? (
+        <ErrorDetailDrawer fingerprint={selectedErrorFp} onClose={() => setSelectedErrorFp(null)} />
+      ) : null}
     </div>
   )
 }

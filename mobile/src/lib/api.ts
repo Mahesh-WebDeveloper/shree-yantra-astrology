@@ -61,10 +61,11 @@ function activityForPath(path: string): NetworkActivityMeta | null {
   return { key: 'generic', titleEn: 'Loading Data', titleHi: 'डेटा लोड हो रहा है', detailEn: 'Please wait while the app prepares this screen.', detailHi: 'स्क्रीन तैयार हो रही है, कृपया प्रतीक्षा करें।' };
 }
 
-function createApiError(message: string, retryable = false, status?: number): Error {
-  const err = new Error(message) as Error & { retryable?: boolean; status?: number };
+function createApiError(message: string, retryable = false, status?: number, code?: string): Error {
+  const err = new Error(message) as Error & { retryable?: boolean; status?: number; code?: string };
   err.retryable = retryable;
   if (status != null) err.status = status;
+  if (code) err.code = code;
   return err;
 }
 
@@ -132,7 +133,7 @@ async function requestJson<T>(path: string, makeRequest: () => Promise<Response>
         // dono me is device ka session mar chuka hai → force logout
         if (res.status === 401 && (code === 'SESSION_REVOKED' || code === 'AUTH_INVALID')) onSessionRevoked?.();
         if (res.status === 402 && code === 'SUBSCRIPTION_REQUIRED') onSubscriptionRequired?.();
-        throw createApiError(message, retryable, res.status);
+        throw createApiError(message, retryable, res.status, code);
       }
       return await res.json();
     } catch (e: any) {
@@ -382,10 +383,20 @@ export const cancelPaymentSubscription = () => post<SubscriptionResponse>('/api/
 export const logoutServer = () => post<{ ok: boolean }>('/api/auth/logout', {});
 
 // ── mobile + OTP (sabse simple login/register) ──
-export interface OtpRequestResponse { sent: boolean; phone: string; devCode?: string }
+export interface OtpRequestResponse {
+  success: boolean;
+  sent: boolean;
+  message: string;
+  requestId: string;
+  cooldownSeconds: number;
+  expiresInSeconds?: number;
+}
 export interface VerifyOtpResponse { token: string; user: AuthUser; isNew: boolean; profileComplete: boolean }
-export const requestOtp = (phone: string) => post<OtpRequestResponse>('/api/auth/request-otp', { phone });
-export const verifyOtp = (input: { phone: string; code: string; name?: string }) =>
+export const requestOtp = (phone: string, lang: 'en' | 'hi') =>
+  post<OtpRequestResponse>('/api/auth/send-otp', { phone, lang });
+export const resendOtp = (phone: string, requestId: string, lang: 'en' | 'hi') =>
+  post<OtpRequestResponse>('/api/auth/resend-otp', { phone, requestId, lang });
+export const verifyOtp = (input: { phone: string; otp: string; requestId: string; name?: string; lang: 'en' | 'hi' }) =>
   post<VerifyOtpResponse>('/api/auth/verify-otp', input);
 // Google Sign-In — send the Google ID token, backend verifies + returns our JWT (same shape as OTP)
 export const googleLogin = (idToken: string) =>

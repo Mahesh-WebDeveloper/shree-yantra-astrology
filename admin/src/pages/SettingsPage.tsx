@@ -91,11 +91,43 @@ export default function SettingsPage() {
               <KeyStatus label="Astrology API key" set={data.keyStatus.vedastroKeySet} />
               <KeyStatus label="Gemini key" set={data.keyStatus.geminiKeySet} />
               <KeyStatus label="Claude key" set={data.keyStatus.claudeKeySet} />
+              <KeyStatus label="Groq fallback key" set={!!data.keyStatus.groqKeySet} />
+              <KeyStatus label="OpenRouter fallback keys" set={!!data.keyStatus.openrouterKeySet} />
             </div>
+            {data.aiOps ? (
+              <div className="rounded-md border border-border bg-muted/20 p-3 text-sm">
+                <p className="font-medium">AI fallback status</p>
+                <p className="mt-1 text-xs text-muted-foreground">Prompt version <span className="font-mono">{data.aiOps.promptVersion}</span> · {data.aiOps.cooldowns.length} model(s) in cooldown</p>
+                {data.aiOps.cooldowns.length > 0 ? (
+                  <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                    {data.aiOps.cooldowns.slice(0, 5).map((c) => (
+                      <li key={c.id}>{c.id} — retry in {c.cooldownSec}s</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-2 text-xs text-success">All fallback models available</p>
+                )}
+              </div>
+            ) : null}
           </div>
         </section>
 
         <section className="rounded-lg border border-border bg-card p-4">
+          <h2 className="text-base font-semibold">Payments & SMS</h2>
+          <div className="mt-4 grid gap-3">
+            <div className="flex items-center justify-between rounded-md border border-border p-3">
+              <div>
+                <p className="text-sm font-medium">Payments gate</p>
+                <p className="text-xs text-muted-foreground">Env: PAYMENTS_ENABLED=true on server</p>
+              </div>
+              <Badge tone={data.paymentsEnabled ? 'success' : 'neutral'}>{data.paymentsEnabled ? 'enabled' : 'disabled'}</Badge>
+            </div>
+            <KeyStatus label="Razorpay configured" set={!!data.paymentsConfigured} />
+            <KeyStatus label="MSG91 OTP configured" set={!!data.msg91Configured} />
+          </div>
+        </section>
+
+        <section className="rounded-lg border border-border bg-card p-4 xl:col-span-2">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold">Authentication methods</h2>
             <Badge tone="accent">Mobile config</Badge>

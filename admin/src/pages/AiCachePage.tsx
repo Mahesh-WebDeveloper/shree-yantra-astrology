@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Search, Trash2 } from 'lucide-react'
 
 import { apiErrorMessage } from '@/api/client'
@@ -20,25 +20,87 @@ export default function AiCachePage() {
   const [search, setSearch] = useState('')
   const [type, setType] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<AiCacheItem | null>(null)
+  const [bulkTarget, setBulkTarget] = useState<'type' | 'all' | null>(null)
   const params = useMemo(() => ({ page, limit: 12, search: search || undefined, type: type || undefined }), [page, search, type])
   const cache = useAiCache(params)
+  const ops = useQuery({ queryKey: ['ai-ops'], queryFn: endpoints.aiOps, staleTime: 30_000 })
   const queryClient = useQueryClient()
   const toast = useToast()
+
+  const invalidate = () => {
+    void queryClient.invalidateQueries({ queryKey: ['ai-cache'] })
+    void queryClient.invalidateQueries({ queryKey: ['ai-ops'] })
+    void queryClient.invalidateQueries({ queryKey: queryKeys.stats })
+  }
 
   const deleteMutation = useMutation({
     mutationFn: endpoints.deleteAiCache,
     onSuccess: () => {
       setDeleteTarget(null)
-      void queryClient.invalidateQueries({ queryKey: queryKeys.aiCache(params) })
-      void queryClient.invalidateQueries({ queryKey: queryKeys.stats })
+      invalidate()
       toast.success('Cache item cleared')
+    },
+    onError: (error) => toast.error(apiErrorMessage(error)),
+  })
+
+  const bulkMutation = useMutation({
+    mutationFn: endpoints.bulkDeleteAiCache,
+    onSuccess: (data) => {
+      setBulkTarget(null)
+      invalidate()
+      toast.success(`Cleared ${data.deleted} cache entries`)
     },
     onError: (error) => toast.error(apiErrorMessage(error)),
   })
 
   return (
     <div className="grid min-w-0 gap-6">
-      <PageHeader title="AI Cache" description="Review cached AI responses and clear entries when regeneration is needed." />
+      <PageHeader
+        title="AI Cache"
+        description="Review cached AI responses. Bulk clear forces fresh generation on next app request."
+        action={
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="secondary" size="sm" disabled={!type || bulkMutation.isPending} onClick={() => setBulkTarget('type')}>
+              Clear type
+            </Button>
+            <Button type="button" variant="destructive" size="sm" disabled={bulkMutation.isPending} onClick={() => setBulkTarget('all')}>
+              Clear all cache
+            </Button>
+          </div>
+        }
+      />
+
+      {ops.data ? (
+        <section className="grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div>
+            <p className="text-xs text-muted-foreground">Prompt version</p>
+            <p className="mt-1 text-lg font-semibold font-mono">{ops.data.promptVersion}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Primary provider</p>
+            <p className="mt-1 text-lg font-semibold capitalize">{ops.data.primaryProvider}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Cached entries</p>
+            <p className="mt-1 text-lg font-semibold">{ops.data.cacheCount.toLocaleString('en-IN')}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Models in cooldown</p>
+            <p className="mt-1 text-lg font-semibold">{ops.data.cooldowns.length}</p>
+          </div>
+          {ops.data.cooldowns.length > 0 ? (
+            <div className="sm:col-span-2 lg:col-span-4">
+              <p className="mb-2 text-xs font-medium text-muted-foreground">Fallback circuit breaker (live)</p>
+              <div className="flex flex-wrap gap-2">
+                {ops.data.cooldowns.slice(0, 8).map((c) => (
+                  <Badge key={c.id} tone="warning">{c.id} · {c.cooldownSec}s</Badge>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
       <section className="min-w-0 rounded-xl border border-border bg-card p-3 sm:p-4">
         <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_160px]">
           <div className="relative min-w-0">
@@ -63,9 +125,12 @@ export default function AiCachePage() {
             aria-label="AI cache type"
           >
             <option value="">All types</option>
-            <option value="daily">Daily</option>
-            <option value="insights">Insights</option>
-            <option value="choghadiya">Choghadiya</option>
+            {(ops.data?.cacheByType || []).map((row) => (
+              <option key={row.type} value={row.type}>{row.type} ({row.count})</option>
+            ))}
+            <option value="daily">daily</option>
+            <option value="insights">insights</option>
+            <option value="choghadiya">choghadiya</option>
           </Select>
         </div>
 
@@ -126,6 +191,24 @@ export default function AiCachePage() {
         confirmLabel="Clear"
         onCancel={() => setDeleteTarget(null)}
         onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget._id)}
+      />
+
+      <ConfirmDialog
+        open={bulkTarget === 'all'}
+        title="Clear entire AI cache"
+        description="Delete ALL cached AI responses? The next requests will regenerate content (may increase API usage)."
+        confirmLabel="Clear all"
+        onCancel={() => setBulkTarget(null)}
+        onConfirm={() => bulkMutation.mutate({ all: true })}
+      />
+
+      <ConfirmDialog
+        open={bulkTarget === 'type'}
+        title={`Clear ${type || 'type'} cache`}
+        description={`Delete all cache entries of type "${type}"?`}
+        confirmLabel="Clear type"
+        onCancel={() => setBulkTarget(null)}
+        onConfirm={() => type && bulkMutation.mutate({ type })}
       />
     </div>
   )

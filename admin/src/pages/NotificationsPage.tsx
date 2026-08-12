@@ -6,6 +6,7 @@ import {
   Clock,
   Filter,
   Loader2,
+  Pencil,
   Search,
   Send,
   Trash2,
@@ -73,12 +74,14 @@ function NotificationCard({
   index,
   onSend,
   onDelete,
+  onEdit,
   sending,
 }: {
   notification: NotificationItem
   index: number
   onSend: () => void
   onDelete: () => void
+  onEdit: () => void
   sending: boolean
 }) {
   const meta = typeMeta(notification.type)
@@ -116,10 +119,15 @@ function NotificationCard({
         </div>
         <div className="flex shrink-0 gap-2 sm:flex-col">
           {!notification.sentAt ? (
-            <Button type="button" variant="secondary" size="sm" disabled={sending} onClick={onSend}>
-              {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-              Send now
-            </Button>
+            <>
+              <Button type="button" variant="secondary" size="sm" onClick={onEdit}>
+                <Pencil className="size-4" /> Edit
+              </Button>
+              <Button type="button" variant="secondary" size="sm" disabled={sending} onClick={onSend}>
+                {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+                Send now
+              </Button>
+            </>
           ) : null}
           <Button type="button" variant="ghost" size="icon" onClick={onDelete} aria-label="Delete">
             <Trash2 className="size-4 text-destructive" />
@@ -140,6 +148,7 @@ export default function NotificationsPage() {
   const [draft, setDraft] = useState<DraftNotification>({ ...emptyNotification })
   const [deleteTarget, setDeleteTarget] = useState<NotificationItem | null>(null)
   const [sendingId, setSendingId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
 
   const params = useMemo(
     () => ({
@@ -193,6 +202,17 @@ export default function NotificationsPage() {
     },
   })
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: Partial<NotificationItem> }) => endpoints.updateNotification(id, payload),
+    onSuccess: () => {
+      setEditingId(null)
+      setDraft({ ...emptyNotification })
+      invalidate()
+      toast.success('Draft updated')
+    },
+    onError: (error) => toast.error(apiErrorMessage(error)),
+  })
+
   const deleteMutation = useMutation({
     mutationFn: endpoints.deleteNotification,
     onSuccess: () => {
@@ -216,12 +236,31 @@ export default function NotificationsPage() {
       toast.error('English title and body are required')
       return
     }
-    createMutation.mutate({
+    const payload = {
       ...draft,
       title,
       body,
       translations: draft.translations,
       scheduledAt: draft.sendNow ? undefined : draft.scheduledAt,
+    }
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, payload })
+      return
+    }
+    createMutation.mutate(payload)
+  }
+
+  const startEdit = (notification: NotificationItem) => {
+    setEditingId(notification._id)
+    setDraft({
+      type: notification.type,
+      audience: notification.audience,
+      targetUserId: notification.targetUserId,
+      title: notification.title,
+      body: notification.body,
+      translations: notification.translations || { en: { title: notification.title, body: notification.body }, hi: { title: '', body: '' } },
+      sendNow: false,
+      scheduledAt: notification.scheduledAt ? notification.scheduledAt.slice(0, 16) : '',
     })
   }
 
@@ -259,13 +298,20 @@ export default function NotificationsPage() {
           <form className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5" onSubmit={handleSubmit}>
             <div className="mb-4 flex items-center justify-between gap-3 border-b border-border pb-4">
               <div>
-                <h2 className="text-base font-semibold">Compose</h2>
-                <p className="text-xs text-muted-foreground">English + Hindi · sends push when enabled</p>
+                <h2 className="text-base font-semibold">{editingId ? 'Edit draft' : 'Compose'}</h2>
+                <p className="text-xs text-muted-foreground">{editingId ? 'Update unsent notification' : 'English + Hindi · sends push when enabled'}</p>
               </div>
-              <Button type="submit" disabled={createMutation.isPending}>
-                {createMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-                {draft.sendNow ? 'Send' : 'Save'}
-              </Button>
+              <div className="flex gap-2">
+                {editingId ? (
+                  <Button type="button" variant="secondary" onClick={() => { setEditingId(null); setDraft({ ...emptyNotification }) }}>
+                    Cancel
+                  </Button>
+                ) : null}
+                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                  {(createMutation.isPending || updateMutation.isPending) ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+                  {editingId ? 'Update' : draft.sendNow ? 'Send' : 'Save'}
+                </Button>
+              </div>
             </div>
 
             <div className="grid gap-4">
@@ -428,6 +474,7 @@ export default function NotificationsPage() {
                   sendMutation.mutate(notification._id)
                 }}
                 onDelete={() => setDeleteTarget(notification)}
+                onEdit={() => startEdit(notification)}
               />
             ))}
           </div>

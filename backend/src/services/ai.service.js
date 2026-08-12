@@ -1973,6 +1973,28 @@ STRICT JSON लौटाओ: {"answer":"..."}`;
   return { answer: out.answer || '' };
 }
 
+function getOpsStatus() {
+  const cooldowns = [];
+  for (const [id, until] of _cooldownUntil.entries()) {
+    if (Date.now() < until) {
+      cooldowns.push({ id, cooldownSec: Math.ceil((until - Date.now()) / 1000) });
+    }
+  }
+  cooldowns.sort((a, b) => b.cooldownSec - a.cooldownSec);
+  return {
+    promptVersion: PROMPT_VERSION,
+    primaryProvider: env.ai.provider,
+    fallbackKeys: {
+      gemini: env.ai.geminiKeys.length,
+      groq: env.ai.groqKey ? 1 : 0,
+      openrouter: env.ai.openrouterKeys.length,
+      ofox: env.ai.ofoxKey ? 1 : 0,
+      claude: env.anthropicKey ? 1 : 0,
+    },
+    cooldowns: cooldowns.slice(0, 25),
+  };
+}
+
 module.exports = {
   generateDailyPrediction, generatePeriodPrediction, generateTraditionalReading, generateDashaPhala, generateNames, generateNameSuggestions, generateBabyNames, answerNameQuestion, generateTransitForecast, askAstrologer, generateInsights, generateChoghadiyaMessage, generateMuhuratPick, generateSignRashifal, generateNumerologyReading,
   generateRcmExplanation, generateGitaExplanation, generateRamayanExplanation, generateRigvedaExplanation,
@@ -1980,4 +2002,6 @@ module.exports = {
   generateRemediesExplanation, generateOccasionGuide, answerOccasionQuestion, generateSimpleExplain,
   buildFullAstroContext,
   callAI,
+  getOpsStatus,
+  PROMPT_VERSION,
 };

@@ -113,6 +113,10 @@ export const endpoints = {
   async deleteMedia(id: string) {
     await apiClient.delete(`/admin/media/${id}`)
   },
+  async reorderMedia(items: Array<{ id: string; order: number }>) {
+    const { data } = await apiClient.patch<{ updated: boolean }>('/admin/media/reorder', { items })
+    return data
+  },
   async youtubeSearch(params: { q: string; category: MediaCategory; limit?: number }) {
     const { data } = await apiClient.get<{ results: YouTubeResult[] }>('/admin/media/youtube/search', { params })
     return data.results
@@ -188,6 +192,14 @@ export const endpoints = {
   },
   async deleteAiCache(id: string) {
     await apiClient.delete(`/admin/ai-cache/${id}`)
+  },
+  async bulkDeleteAiCache(payload: { all?: boolean; type?: string; search?: string }) {
+    const { data } = await apiClient.post<{ deleted: number }>('/admin/ai-cache/bulk-delete', payload)
+    return data
+  },
+  async aiOps() {
+    const { data } = await apiClient.get<AiOpsStatus>('/admin/ai-ops')
+    return data
   },
   async analytics() {
     const { data } = await apiClient.get<AnalyticsStats>('/admin/analytics')
@@ -306,6 +318,14 @@ export const endpoints = {
   },
   async paymentTransactions(params: Record<string, string | number | undefined>) {
     const { data } = await apiClient.get<PaymentTransactionListResponse>('/admin/payments/transactions', { params })
+    return data
+  },
+  async adminSyncSubscription(userId: string) {
+    const { data } = await apiClient.post<{ user: User; subscription: SubscriptionRow | null }>(`/admin/subscriptions/${userId}/sync`)
+    return data
+  },
+  async adminCancelSubscription(userId: string) {
+    const { data } = await apiClient.post<{ user: User; subscription: SubscriptionRow | null }>(`/admin/subscriptions/${userId}/cancel`)
     return data
   },
 }
@@ -689,4 +709,13 @@ export interface ObservabilityLogsResponse {
   page: number
   limit?: number
   pages?: number
+}
+
+export interface AiOpsStatus {
+  promptVersion: string
+  primaryProvider: string
+  fallbackKeys: { gemini: number; groq: number; openrouter: number; ofox: number; claude: number }
+  cooldowns: Array<{ id: string; cooldownSec: number }>
+  cacheCount: number
+  cacheByType: Array<{ type: string; count: number }>
 }

@@ -1,0 +1,1 @@
+import{m as e}from"./endpoints-Ce_5M1UW.js";var t=e(`circle`,[[`circle`,{cx:`12`,cy:`12`,r:`10`,key:`1mglay`}]]);export{t};

@@ -3,7 +3,7 @@ import { GoldButton } from '@/components/ui/GoldButton'
 import { SyField, SyInput } from '@/components/feature/BirthDetailsForm'
 import { GradientText } from '@/components/ui/GradientText'
 import { ShreeYantraLogo } from '@/components/brand/ShreeYantraLogo'
-import { requestOtp, verifyOtp, type AuthUser } from '@/lib/api'
+import { requestOtp, resendOtp, verifyOtp, type AuthUser } from '@/lib/api'
 import { saveAuth } from '@/lib/authSession'
 import { useLang } from '@/i18n/LangProvider'
 
@@ -29,9 +29,10 @@ export function MobileAuthScreen({
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [devCode, setDevCode] = useState<string | null>(null)
+  const [requestId, setRequestId] = useState<string | null>(null)
   const [secs, setSecs] = useState(0)
   const otpRef = useRef<HTMLInputElement>(null)
+  const verifyingRef = useRef(false)
 
   const digits = phone.replace(/\D/g, '')
 
@@ -50,11 +51,11 @@ export function MobileAuthScreen({
     if (busy) return
     setBusy(true)
     try {
-      const r = await requestOtp(phoneE164(digits))
-      setDevCode(r.devCode || null)
+      const r = await requestOtp(phoneE164(digits), hi ? 'hi' : 'en')
+      setRequestId(r.requestId)
       setCode('')
       setStep('otp')
-      setSecs(30)
+      setSecs(r.cooldownSeconds)
       setTimeout(() => otpRef.current?.focus(), 200)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : hi ? 'OTP नहीं भेजा जा सका।' : 'Could not send OTP.')
@@ -64,20 +65,41 @@ export function MobileAuthScreen({
   }
 
   const verify = async (full: string) => {
-    if (busy || full.length < OTP_LEN) return
+    if (busy || verifyingRef.current || full.length < OTP_LEN || !requestId) return
+    verifyingRef.current = true
     setError(null)
     setBusy(true)
     try {
       const r = await verifyOtp({
         phone: phoneE164(digits),
-        code: full,
+        otp: full,
+        requestId,
         name: defaultName?.trim() || undefined,
+        lang: hi ? 'hi' : 'en',
       })
       saveAuth(r.token, r.user)
       onVerified(r)
     } catch (e: unknown) {
       setCode('')
       setError(e instanceof Error ? e.message : hi ? 'गलत OTP — पुनः प्रयास करें।' : 'Incorrect OTP — try again.')
+    } finally {
+      verifyingRef.current = false
+      setBusy(false)
+    }
+  }
+
+  const resend = async () => {
+    if (busy || secs > 0 || !requestId) return
+    setError(null)
+    setBusy(true)
+    try {
+      const r = await resendOtp(phoneE164(digits), requestId, hi ? 'hi' : 'en')
+      setRequestId(r.requestId)
+      setCode('')
+      setSecs(r.cooldownSeconds)
+      setTimeout(() => otpRef.current?.focus(), 200)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : hi ? 'ओटीपी दोबारा नहीं भेजा जा सका।' : 'Could not resend OTP.')
     } finally {
       setBusy(false)
     }
@@ -158,6 +180,7 @@ export function MobileAuthScreen({
             onClick={() => {
               setStep('phone')
               setCode('')
+              setRequestId(null)
               setError(null)
             }}
           >
@@ -186,12 +209,6 @@ export function MobileAuthScreen({
             aria-label="OTP"
           />
 
-          {devCode ? (
-            <button type="button" className="auth-dev-hint" onClick={() => onOtpChange(devCode)}>
-              DEMO · {hi ? 'OTP भरें' : 'Auto-fill'}: {devCode}
-            </button>
-          ) : null}
-
           <GoldButton type="button" className="w-full" disabled={busy || code.length < OTP_LEN} onClick={() => void verify(code)}>
             {busy ? (hi ? 'सत्यापित…' : 'Verifying…') : hi ? 'सत्यापित करें और आगे बढ़ें' : 'Verify & continue'}
           </GoldButton>
@@ -200,7 +217,7 @@ export function MobileAuthScreen({
             type="button"
             disabled={secs > 0 || busy}
             className={`mx-auto block text-sm font-semibold ${secs > 0 ? 'text-[var(--sy-text-muted)]' : 'text-[var(--sy-accent)] hover:underline'}`}
-            onClick={() => secs === 0 && void sendOtp()}
+            onClick={() => void resend()}
           >
             {secs > 0 ? `${hi ? 'OTP दोबारा' : 'Resend in'} ${secs}s` : hi ? 'OTP दोबारा भेजें' : 'Resend OTP'}
           </button>

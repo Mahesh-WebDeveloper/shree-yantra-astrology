@@ -1103,7 +1103,14 @@ export interface AuthUser {
 export const loginUser = (input: { identifier: string; password: string }) =>
   post<{ token: string; user: AuthUser }>('/api/auth/login', input)
 
-export interface OtpRequestResponse { sent: boolean; phone: string; devCode?: string }
+export interface OtpRequestResponse {
+  success: boolean
+  sent: boolean
+  message: string
+  requestId: string
+  cooldownSeconds: number
+  expiresInSeconds?: number
+}
 export interface VerifyOtpResponse {
   token: string
   user: AuthUser
@@ -1112,9 +1119,13 @@ export interface VerifyOtpResponse {
 }
 
 /** Same as mobile — +91XXXXXXXXXX */
-export const requestOtp = (phone: string) => post<OtpRequestResponse>('/api/auth/request-otp', { phone })
+export const requestOtp = (phone: string, lang: 'en' | 'hi') =>
+  post<OtpRequestResponse>('/api/auth/send-otp', { phone, lang })
 
-export const verifyOtp = (input: { phone: string; code: string; name?: string }) =>
+export const resendOtp = (phone: string, requestId: string, lang: 'en' | 'hi') =>
+  post<OtpRequestResponse>('/api/auth/resend-otp', { phone, requestId, lang })
+
+export const verifyOtp = (input: { phone: string; otp: string; requestId: string; name?: string; lang: 'en' | 'hi' }) =>
   post<VerifyOtpResponse>('/api/auth/verify-otp', input)
 
 export const logoutServer = () => postAuth<{ ok: boolean }>('/api/auth/logout', {})

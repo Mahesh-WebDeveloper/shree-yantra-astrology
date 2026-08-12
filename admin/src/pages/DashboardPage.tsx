@@ -1,25 +1,29 @@
-import { Activity, BookOpen, Brain, Crown, UserPlus, Users } from 'lucide-react'
+import { Activity, AlertTriangle, BookOpen, Brain, Crown, IndianRupee, Server, UserPlus, Users } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 import { ErrorState, LoadingPanel } from '@/components/DataState'
 import { PageHeader } from '@/components/PageHeader'
 import { Badge } from '@/components/ui/badge'
-import { useStats } from '@/api/queries'
+import { useObservabilityOverview, useStats, useSubscriptionOverview } from '@/api/queries'
+import { inr } from '@/lib/utils'
 
-function StatCard({ label, value, icon: Icon, tone }: { label: string; value: number; icon: typeof Users; tone: string }) {
+function StatCard({ label, value, icon: Icon, tone }: { label: string; value: number | string; icon: typeof Users; tone: string }) {
   return (
     <div className="rounded-lg border border-border bg-card p-3 text-card-foreground shadow-sm sm:p-4">
       <div className="flex items-center justify-between gap-3">
         <span className="text-sm text-muted-foreground">{label}</span>
         <Icon className={tone} />
       </div>
-      <p className="mt-3 text-2xl font-semibold sm:text-3xl">{value.toLocaleString('en-IN')}</p>
+      <p className="mt-3 text-2xl font-semibold sm:text-3xl">{typeof value === 'number' ? value.toLocaleString('en-IN') : value}</p>
     </div>
   )
 }
 
 export default function DashboardPage() {
   const stats = useStats()
+  const subs = useSubscriptionOverview()
+  const obs = useObservabilityOverview()
 
   if (stats.isLoading) return <LoadingPanel label="Loading dashboard" />
   if (stats.isError) return <ErrorState message="Could not load dashboard stats." onRetry={() => void stats.refetch()} />
@@ -32,12 +36,46 @@ export default function DashboardPage() {
 
   return (
     <div className="grid gap-6">
-      <PageHeader title="Dashboard" description="Live operational metrics from MongoDB." />
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <PageHeader title="Dashboard" description="Unified ops view — users, revenue, server health, and errors." />
+
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Total users" value={stats.data.totalUsers} icon={Users} tone="size-5 text-primary" />
-        <StatCard label="New users 7 days" value={stats.data.newUsersLast7Days} icon={UserPlus} tone="size-5 text-accent" />
-        <StatCard label="Premium users" value={stats.data.premiumUsers} icon={Crown} tone="size-5 text-warning" />
+        <StatCard label="New users 7d" value={stats.data.newUsersLast7Days} icon={UserPlus} tone="size-5 text-accent" />
+        <StatCard
+          label="Revenue (total)"
+          value={subs.data ? inr(subs.data.revenue.totalInr) : '—'}
+          icon={IndianRupee}
+          tone="size-5 text-success"
+        />
+        <StatCard
+          label="Active premium"
+          value={subs.data?.subscriptions.activePremium ?? 0}
+          icon={Crown}
+          tone="size-5 text-warning"
+        />
+      </section>
+
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          label="5xx errors (1h)"
+          value={obs.data?.errorsLastHour ?? 0}
+          icon={AlertTriangle}
+          tone="size-5 text-destructive"
+        />
+        <StatCard
+          label="Open error groups"
+          value={obs.data?.openErrorGroups ?? 0}
+          icon={Activity}
+          tone="size-5 text-warning"
+        />
         <StatCard label="AI cache items" value={stats.data.aiCacheCount} icon={Brain} tone="size-5 text-success" />
+        <StatCard label="Kundli cache" value={stats.data.cachedKundliCount} icon={BookOpen} tone="size-5 text-primary" />
+      </section>
+
+      <div className="flex flex-wrap gap-2">
+        <Link to="/subscriptions" className="inline-flex h-8 items-center rounded-md border border-border bg-card px-3 text-xs font-medium hover:bg-muted">Subscriptions</Link>
+        <Link to="/server-logs" className="inline-flex h-8 items-center rounded-md border border-border bg-card px-3 text-xs font-medium hover:bg-muted">Server Logs</Link>
+        <Link to="/server-monitor" className="inline-flex h-8 items-center rounded-md border border-border bg-card px-3 text-xs font-medium hover:bg-muted"><Server className="mr-1 size-3 inline" />Server Monitor</Link>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">

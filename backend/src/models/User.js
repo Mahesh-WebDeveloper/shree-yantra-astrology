@@ -61,6 +61,7 @@ const userSchema = new mongoose.Schema(
     // verification flags (OTP flow ready)
     emailVerified: { type: Boolean, default: false },
     phoneVerified: { type: Boolean, default: false },
+    phoneVerifiedAt: Date,
 
     // personalisation
     interests: { type: [String], default: [] }, // love|career|wealth|health
@@ -99,6 +100,7 @@ userSchema.methods.toPublic = function () {
     providers: this.providers,
     emailVerified: this.emailVerified,
     phoneVerified: this.phoneVerified,
+    phoneVerifiedAt: this.phoneVerifiedAt || null,
     interests: this.interests,
     profile: this.profile || {},
     plan: this.plan,

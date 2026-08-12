@@ -200,6 +200,17 @@ export type Settings = {
     vedastroKeySet: boolean
     geminiKeySet: boolean
     claudeKeySet: boolean
+    groqKeySet?: boolean
+    openrouterKeySet?: boolean
+  }
+  paymentsEnabled?: boolean
+  paymentsConfigured?: boolean
+  msg91Configured?: boolean
+  aiOps?: {
+    promptVersion: string
+    primaryProvider: string
+    fallbackKeys: { gemini: number; groq: number; openrouter: number; ofox: number; claude: number }
+    cooldowns: Array<{ id: string; cooldownSec: number }>
   }
   ayanamsa: string
   authMethods: {

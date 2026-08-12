@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 
 const asyncHandler = require('../middleware/asyncHandler');
 const auth = require('../services/auth.service');
+const { purgeUserData } = require('../services/userPurge.service');
+const { getOpsStatus } = require('../services/ai.service');
 const AiCache = require('../models/AiCache');
 const Kundli = require('../models/Kundli');
 const User = require('../models/User');
@@ -195,9 +197,11 @@ exports.updateUser = asyncHandler(async (req, res) => {
 exports.deleteUser = asyncHandler(async (req, res) => {
   ensureObjectId(req.params.id);
   if (String(req.params.id) === String(req.user._id)) throw badRequest('Apna account delete nahi kar sakte');
-  const user = await User.findByIdAndDelete(req.params.id);
+  const user = await User.findById(req.params.id);
   if (!user) throw notFound('User not found');
-  res.json({ deleted: true, id: String(user._id) });
+  const purged = await purgeUserData(user._id);
+  await User.findByIdAndDelete(user._id);
+  res.json({ deleted: true, id: String(user._id), purged });
 });
 
 exports.bulkDeleteUsers = asyncHandler(async (req, res) => {
@@ -239,11 +243,16 @@ exports.bulkDeleteUsers = asyncHandler(async (req, res) => {
     return res.json({ deleted: 0, skipped, ids: [] });
   }
 
+  const purgeResults = await Promise.all(toDelete.map((id) => purgeUserData(id)));
   const result = await User.deleteMany({ _id: { $in: toDelete } });
   res.json({
     deleted: result.deletedCount || 0,
     skipped,
     ids: toDelete,
+    purged: purgeResults.reduce((acc, row) => {
+      Object.entries(row).forEach(([k, v]) => { acc[k] = (acc[k] || 0) + v; });
+      return acc;
+    }, {}),
   });
 });
 
@@ -270,4 +279,27 @@ exports.deleteAiCache = asyncHandler(async (req, res) => {
   const deleted = await AiCache.findByIdAndDelete(req.params.id);
   if (!deleted) throw notFound('AI cache item not found');
   res.json({ deleted: true, id: String(deleted._id) });
+});
+
+exports.bulkDeleteAiCache = asyncHandler(async (req, res) => {
+  const filter = {};
+  if (req.body.type) filter.type = String(req.body.type);
+  if (req.body.search) filter.cacheKey = new RegExp(escapeRegex(req.body.search), 'i');
+  if (!req.body.all && !req.body.type && !req.body.search) {
+    throw badRequest('Specify type, search, or all=true');
+  }
+  const result = await AiCache.deleteMany(filter);
+  res.json({ deleted: result.deletedCount || 0 });
+});
+
+exports.aiOps = asyncHandler(async (_req, res) => {
+  const [cacheCount, cacheByType] = await Promise.all([
+    AiCache.countDocuments(),
+    AiCache.aggregate([{ $group: { _id: '$type', count: { $sum: 1 } } }, { $sort: { count: -1 } }]),
+  ]);
+  res.json({
+    ...getOpsStatus(),
+    cacheCount,
+    cacheByType: cacheByType.map((r) => ({ type: r._id || 'unknown', count: r.count })),
+  });
 });
