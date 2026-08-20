@@ -41,20 +41,31 @@ exports.logout = asyncHandler(async (req, res) => {
 
 // POST /api/auth/send-otp (legacy alias: request-otp) { phone }
 exports.requestOtp = asyncHandler(async (req, res) => {
-  const { phone } = req.body;
+  const phone = req.body.mobile || req.body.phone;
   res.json(await auth.requestOtp({ phone, ip: req.ip }));
 });
 
 // POST /api/auth/resend-otp { phone, requestId }
 exports.resendOtp = asyncHandler(async (req, res) => {
-  const { phone, requestId } = req.body;
+  const phone = req.body.mobile || req.body.phone;
+  const { requestId } = req.body;
   res.json(await auth.resendOtp({ phone, requestId, ip: req.ip }));
 });
 
 // POST /api/auth/verify-otp  { phone, otp|code, requestId, name? }
 exports.verifyOtp = asyncHandler(async (req, res) => {
-  const { phone, otp, code, requestId, name } = req.body;
+  const phone = req.body.mobile || req.body.phone;
+  const { otp, code, requestId, name } = req.body;
   const { user, token, isNew, profileComplete } = await auth.verifyOtp({ phone, otp, code, requestId, name });
+  res.json({ token, user: user.toPublic(), isNew, profileComplete });
+});
+
+// POST /api/auth/msg91-widget/verify { mobile, accessToken, name? }
+// The mobile SDK token is never trusted directly. MSG91 validates it server-side
+// before the existing application JWT/session is created.
+exports.verifyMsg91Widget = asyncHandler(async (req, res) => {
+  const { mobile, accessToken, name } = req.body;
+  const { user, token, isNew, profileComplete } = await auth.verifyWidgetOtp({ mobile, accessToken, name });
   res.json({ token, user: user.toPublic(), isNew, profileComplete });
 });
 

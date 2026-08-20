@@ -104,6 +104,26 @@ const OTP_FRIENDLY = {
     en: 'Mobile verification is temporarily unavailable.',
     hi: 'मोबाइल सत्यापन सेवा अस्थायी रूप से उपलब्ध नहीं है।',
   },
+  OTP_PROVIDER_TEMPLATE_INVALID: {
+    en: 'Mobile verification is temporarily unavailable. Please contact support.',
+    hi: 'मोबाइल सत्यापन सेवा अस्थायी रूप से उपलब्ध नहीं है। कृपया सहायता से संपर्क करें।',
+  },
+  OTP_PROVIDER_BALANCE: {
+    en: 'Mobile verification is temporarily unavailable. Please contact support.',
+    hi: 'मोबाइल सत्यापन सेवा अस्थायी रूप से उपलब्ध नहीं है। कृपया सहायता से संपर्क करें।',
+  },
+  OTP_WIDGET_TOKEN_INVALID: {
+    en: 'This mobile verification session is invalid. Please request a new OTP.',
+    hi: 'यह मोबाइल सत्यापन सत्र मान्य नहीं है। कृपया नया ओटीपी मंगाएँ।',
+  },
+  OTP_WIDGET_TOKEN_USED: {
+    en: 'This mobile verification session has already been used. Please request a new OTP.',
+    hi: 'इस मोबाइल सत्यापन सत्र का पहले ही उपयोग हो चुका है। कृपया नया ओटीपी मंगाएँ।',
+  },
+  OTP_WIDGET_PHONE_MISMATCH: {
+    en: 'The verified mobile number does not match. Please start again.',
+    hi: 'सत्यापित मोबाइल नंबर मेल नहीं खाता। कृपया प्रक्रिया फिर से शुरू करें।',
+  },
 };
 
 // Map any raw error message + status → professional bilingual message + retriable flag.

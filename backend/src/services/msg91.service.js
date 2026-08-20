@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const env = require('../config/env');
 
 const MSG91_BASE = 'https://control.msg91.com/api/v5/otp';
+const MSG91_WIDGET_VERIFY_URL = 'https://control.msg91.com/api/v5/widget/verifyAccessToken';
 
 class Msg91Error extends Error {
   constructor(code, message, status = 503, retryable = false) {
@@ -19,6 +20,27 @@ function providerMessage(data) {
   return String(data?.message || '').trim().toLowerCase();
 }
 
+function sendRejection(data) {
+  const message = providerMessage(data);
+  if (/template.*(?:missing|invalid)|invalid.*template/.test(message)) {
+    return new Msg91Error(
+      'OTP_PROVIDER_TEMPLATE_INVALID',
+      'Mobile verification is temporarily unavailable.',
+      503,
+      false
+    );
+  }
+  if (/balance|credit|insufficient/.test(message)) {
+    return new Msg91Error(
+      'OTP_PROVIDER_BALANCE',
+      'Mobile verification is temporarily unavailable.',
+      503,
+      false
+    );
+  }
+  return new Msg91Error('OTP_PROVIDER_REJECTED', 'OTP could not be sent. Please try again.', 503, false);
+}
+
 function assertConfigured(config) {
   if (!config.authkey || !config.otpTemplateId) {
     throw new Msg91Error(
@@ -28,6 +50,53 @@ function assertConfigured(config) {
       false
     );
   }
+}
+
+function assertAuthkeyConfigured(config) {
+  if (!config.authkey) {
+    throw new Msg91Error(
+      'OTP_PROVIDER_CONFIG',
+      'Mobile verification is temporarily unavailable.',
+      503,
+      false
+    );
+  }
+}
+
+function decodeWidgetToken(accessToken) {
+  try {
+    const parts = accessToken.split('.');
+    if (parts.length !== 3) return {};
+    return JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+  } catch (_) {
+    return {};
+  }
+}
+
+function widgetIdentifier(data, accessToken) {
+  const tokenData = decodeWidgetToken(accessToken);
+  const candidates = [
+    data?.data?.identifier,
+    data?.data?.mobile,
+    data?.data?.phone,
+    data?.data?.number,
+    data?.identifier,
+    data?.mobile,
+    data?.phone,
+    data?.number,
+    // Official verifyAccessToken success schema returns the verified identifier
+    // in the top-level message field: { type: 'success', message: '91...' }.
+    data?.message,
+    tokenData?.identifier,
+    tokenData?.mobile,
+    tokenData?.phone,
+    tokenData?.number,
+    tokenData?.sub,
+  ];
+  return candidates.find((value) => {
+    if (typeof value !== 'string' && typeof value !== 'number') return false;
+    return /^\+?\d{10,15}$/.test(String(value).replace(/[\s()-]/g, ''));
+  });
 }
 
 async function fetchJson(fetchImpl, url, options, timeoutMs) {
@@ -79,7 +148,7 @@ function createMsg91Client(config = env.msg91, fetchImpl = global.fetch) {
       body: JSON.stringify({ number: otp }),
     }, config.timeoutMs);
     if (data?.type !== 'success') {
-      throw new Msg91Error('OTP_PROVIDER_REJECTED', 'OTP could not be sent. Please try again.', 503, false);
+      throw sendRejection(data);
     }
     return { providerRequestId: String(data.request_id || '') || undefined };
   }
@@ -122,7 +191,53 @@ function createMsg91Client(config = env.msg91, fetchImpl = global.fetch) {
     throw new Msg91Error('OTP_PROVIDER_REJECTED', 'OTP could not be resent. Please try again.', 503, false);
   }
 
-  return { sendOtp, verifyOtp, resendOtp };
+  async function verifyWidgetAccessToken(accessToken) {
+    assertAuthkeyConfigured(config);
+    if (typeof accessToken !== 'string' || accessToken.length < 20 || accessToken.length > 4096) {
+      throw new Msg91Error('OTP_WIDGET_TOKEN_INVALID', 'The verification session is invalid.', 401, false);
+    }
+    const data = await fetchJson(fetchImpl, MSG91_WIDGET_VERIFY_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({ authkey: config.authkey, 'access-token': accessToken }),
+    }, config.timeoutMs);
+
+    const success = data?.type === 'success' || data?.status === 'success' || data?.success === true;
+    if (!success) {
+      const message = providerMessage(data);
+      if (/auth\s*key|authentication|unauthori[sz]ed/.test(message)) {
+        throw new Msg91Error(
+          'OTP_PROVIDER_CONFIG',
+          'Mobile verification is temporarily unavailable.',
+          503,
+          false
+        );
+      }
+      const expired = message.includes('expired');
+      throw new Msg91Error(
+        expired ? 'OTP_EXPIRED' : 'OTP_WIDGET_TOKEN_INVALID',
+        expired ? 'The verification session has expired.' : 'The verification session is invalid.',
+        401,
+        false
+      );
+    }
+
+    const identifier = widgetIdentifier(data, accessToken);
+    if (identifier == null || String(identifier).trim() === '') {
+      throw new Msg91Error(
+        'OTP_PROVIDER_REJECTED',
+        'The verified mobile number was not returned by the provider.',
+        503,
+        false
+      );
+    }
+    return { identifier: String(identifier) };
+  }
+
+  return { sendOtp, verifyOtp, resendOtp, verifyWidgetAccessToken };
 }
 
-module.exports = { createMsg91Client, Msg91Error, MSG91_BASE };
+module.exports = { createMsg91Client, Msg91Error, MSG91_BASE, MSG91_WIDGET_VERIFY_URL };

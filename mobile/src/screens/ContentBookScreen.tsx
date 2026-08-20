@@ -60,7 +60,7 @@ export function ContentBookScreen({ navigation, route }: any) {
   const percent = prog?.percent ?? 0;
   const lastChapter = prog?.chapter ?? -1;
   const tint = coverColor('gold');
-  const coverUri = book?.coverImage ? avatarUrl(book.coverImage) : undefined;
+  const coverUri = book?.coverImage ? (avatarUrl(book.coverImage) || undefined) : undefined;
   const chapters = book?.chapters || [];
 
   useEffect(() => {

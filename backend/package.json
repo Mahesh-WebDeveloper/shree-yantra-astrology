@@ -26,7 +26,7 @@
     "import:upanishads": "node src/scripts/importUpanishads.js",
     "setup:razorpay-plan": "node src/scripts/setupRazorpayPlan.js",
     "test:payments": "node --test src/services/payment.service.test.js",
-    "test:otp": "node --test --test-concurrency=1 src/services/msg91.service.test.js src/services/otpAuth.service.test.js src/services/auth.otp.test.js src/services/otp.security.test.js"
+    "test:otp": "node --test --test-concurrency=1 src/services/msg91.service.test.js src/services/otpAuth.service.test.js src/services/otpWidgetAuth.service.test.js src/services/auth.otp.test.js src/services/otp.security.test.js"
   },
   "dependencies": {
     "astronomy-engine": "^2.1.19",

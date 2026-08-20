@@ -86,7 +86,9 @@ const env = {
   msg91: {
     authkey: process.env.MSG91_AUTHKEY || '',
     // MSG91 OTP dashboard template ID; this is not the telecom DLT template ID.
-    otpTemplateId: process.env.MSG91_OTP_TEMPLATE_ID || process.env.MSG91_TEMPLATE_ID || '',
+    // Deliberately do not fall back to MSG91_TEMPLATE_ID: that legacy variable in
+    // this project contains an SMS-template ID, which MSG91's OTP API rejects.
+    otpTemplateId: process.env.MSG91_OTP_TEMPLATE_ID || '',
     dltTemplateId: process.env.MSG91_DLT_TEMPLATE_ID || '',
     senderId: process.env.MSG91_SENDER_ID || '',
     peId: process.env.MSG91_PE_ID || '',
@@ -100,7 +102,7 @@ const env = {
     maxResendAttempts: positiveIntEnv('OTP_MAX_RESEND_ATTEMPTS', 2),
     sendWindowMs: positiveIntEnv('OTP_SEND_WINDOW_SECONDS', 15 * 60) * 1000,
     verifyWindowMs: positiveIntEnv('OTP_VERIFY_WINDOW_SECONDS', 15 * 60) * 1000,
-    timeoutMs: positiveIntEnv('MSG91_TIMEOUT_MS', 8000),
+    timeoutMs: positiveIntEnv('MSG91_TIMEOUT_MS', 20000),
     requestTimeoutMs: positiveIntEnv('MSG91_REQUEST_LOCK_MS', 15000),
   },
   // Google Sign-In: the WEB OAuth client ID (used as the ID-token audience to verify).

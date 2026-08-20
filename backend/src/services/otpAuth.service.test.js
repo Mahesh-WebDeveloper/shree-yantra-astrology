@@ -44,6 +44,7 @@ test('successful send stores no plaintext phone or OTP and returns no OTP', asyn
       create: async (value) => { storedChallenge = value; return value; },
     }),
     patch(global, { fetch: async () => ({ ok: true, status: 200, json: async () => ({ type: 'success', request_id: 'provider-id' }) }) }),
+    patch(env.msg91, { authkey: 'test-authkey', otpTemplateId: 'test-template' }),
   ];
   try {
     const result = await otpAuth.sendOtp({ phone: '+919876543210', ip: '203.0.113.10' });
@@ -148,6 +149,7 @@ test('successful MSG91 verification consumes the request once', async () => {
       updateOne: async () => ({}),
     }),
     patch(global, { fetch: async () => ({ ok: true, status: 200, json: async () => ({ type: 'success', message: 'OTP verified success' }) }) }),
+    patch(env.msg91, { authkey: 'test-authkey', otpTemplateId: 'test-template' }),
   ];
   try {
     const phone = await otpAuth.verifyOtp({

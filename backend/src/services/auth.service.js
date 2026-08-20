@@ -13,6 +13,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const env = require('../config/env');
 const otpAuth = require('./otpAuth.service');
+const otpWidgetAuth = require('./otpWidgetAuth.service');
 
 const TOKEN_TTL = '30d'; // mobile app — lamba session theek hai
 
@@ -161,6 +162,11 @@ async function verifyOtp({ phone, code, otp, requestId, name }) {
   return completeOtpLogin(phone, name);
 }
 
+async function verifyWidgetOtp({ mobile, accessToken, name }) {
+  const phone = await otpWidgetAuth.verifyWidgetAccess({ mobile, accessToken });
+  return completeOtpLogin(phone, name);
+}
+
 async function completeOtpLogin(phone, name, UserModel = User) {
   // Match old representations too, then migrate the account to canonical +91 format.
   let user = await UserModel.findOne({ phone: { $in: phoneAliases(phone) } });
@@ -251,6 +257,7 @@ module.exports = {
   requestOtp,
   resendOtp,
   verifyOtp,
+  verifyWidgetOtp,
   loginWithGoogle,
   setPassword,
   logout,

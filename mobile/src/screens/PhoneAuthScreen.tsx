@@ -12,7 +12,12 @@ import { TextField } from '../components/TextField';
 import { OmGlyph } from '../components/icons/OmGlyph';
 import { hPress, hError, hSuccess, hTap } from '../lib/haptics';
 import { useDialog } from '../components/DialogProvider';
-import { requestOtp, resendOtp, verifyOtp, googleLogin } from '../lib/api';
+import { verifyMsg91WidgetSession, googleLogin } from '../lib/api';
+import {
+  initializeMsg91Widget,
+  sendMsg91WidgetOtp,
+  verifyMsg91WidgetOtp,
+} from '../lib/msg91Widget';
 import { saveAuth } from '../lib/auth';
 import { registerForPush } from '../lib/notifications';
 import { track } from '../lib/analytics';
@@ -36,8 +41,6 @@ const GoogleG = () => (
   </Svg>
 );
 
-const OTP_LEN = 6;
-
 export function PhoneAuthScreen({ navigation }: any) {
   const { theme } = useTheme();
   const dialog = useDialog();
@@ -50,9 +53,16 @@ export function PhoneAuthScreen({ navigation }: any) {
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [requestId, setRequestId] = useState<string | null>(null);
-  const [secs, setSecs] = useState(0); // resend countdown
+  const [otpLength, setOtpLength] = useState(4);
+  const [secs, setSecs] = useState(0); // OTP validity countdown
+  const phoneRef = useRef<TextInput>(null);
   const otpRef = useRef<TextInput>(null);
   const verifyingRef = useRef(false);
+  const phoneHintAttemptedRef = useRef(false);
+  const otpLengthRef = useRef(4);
+  const phoneDigitsRef = useRef('');
+  const smsSubscriptionRef = useRef<{ remove: () => void } | null>(null);
+  const expiryRef = useRef(5 * 60);
 
   useEffect(() => {
     if (secs <= 0) return;
@@ -60,24 +70,119 @@ export function PhoneAuthScreen({ navigation }: any) {
     return () => clearTimeout(t);
   }, [secs]);
 
+  useEffect(() => {
+    initializeMsg91Widget()
+      .then((config) => {
+        setOtpLength(config.otpLength);
+        otpLengthRef.current = config.otpLength;
+        expiryRef.current = config.expirySeconds;
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => () => {
+    smsSubscriptionRef.current?.remove();
+    smsSubscriptionRef.current = null;
+    if (Platform.OS === 'android') {
+      try {
+        require('@pushpendersingh/react-native-otp-verify').removeSmsListener();
+      } catch (_) {}
+    }
+  }, []);
+
   const digits = phone.replace(/\D/g, '');
 
-  const sendOtp = async () => {
+  const startOtpAutofill = async () => {
+    if (Platform.OS !== 'android') return;
+    try {
+      const sms = require('@pushpendersingh/react-native-otp-verify');
+      smsSubscriptionRef.current?.remove();
+      smsSubscriptionRef.current = sms.addSmsListener((event: { status?: string; message?: string | null }) => {
+        if (event?.status !== 'success' || !event.message) return;
+        const receivedCode = sms.extractOtp(event.message, otpLengthRef.current);
+        if (receivedCode) {
+          smsSubscriptionRef.current?.remove();
+          smsSubscriptionRef.current = null;
+          setCode(receivedCode);
+        }
+      });
+      // This package method starts Android SMS User Consent before the OTP is sent.
+      await sms.requestPhoneNumber();
+    } catch (_) {
+      // Keyboard OTP suggestions and manual entry remain available.
+    }
+  };
+
+  const suggestPhoneNumber = async () => {
+    if (Platform.OS !== 'android' || phoneHintAttemptedRef.current || phoneDigitsRef.current.length > 0) return;
+    phoneHintAttemptedRef.current = true;
+    let autoSending = false;
+    try {
+      const phoneHint = require('expo-phone-number-hint');
+      if (!(await phoneHint.isAvailableAsync())) return;
+      const result = await phoneHint.showPhoneNumberHintAsync();
+      if (result?.canceled) return;
+      const selected = String(result?.hint?.e164 || result?.hint?.number || '').replace(/\D/g, '');
+      if (selected.length >= 10) {
+        const selectedIndianNumber = selected.slice(-10);
+        autoSending = true;
+        phoneDigitsRef.current = selectedIndianNumber;
+        setPhone(selectedIndianNumber);
+        setTimeout(() => sendOtp(selectedIndianNumber), 0);
+      }
+    } catch (_) {
+      // SIM hints are optional; manual entry remains available on unsupported devices.
+    } finally {
+      if (!autoSending) setTimeout(() => phoneRef.current?.focus(), 150);
+    }
+  };
+
+  const formatCountdown = (totalSeconds: number) => {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${String(seconds).padStart(2, '0')}`;
+  };
+
+  const finishOtpLogin = async (accessToken: string, verifiedDigits?: string) => {
+    const loginDigits = (verifiedDigits || phoneDigitsRef.current || digits).slice(-10);
+    const r = await verifyMsg91WidgetSession({
+      mobile: '+91' + loginDigits,
+      accessToken,
+      lang,
+    });
+    await saveAuth(r.token, r.user);
+    registerForPush();
+    track(r.isNew ? 'register' : 'login', undefined, { method: 'otp' });
+    hSuccess();
+    navigation.replace(r.isNew ? 'Subscribe' : (r.profileComplete ? 'Main' : 'BirthDetails'));
+  };
+
+  const sendOtp = async (phoneDigits?: string) => {
     hPress();
-    if (digits.length < 10) { hError(); dialog(lang === 'hi' ? 'मोबाइल नंबर' : 'Mobile Number', lang === 'hi' ? 'कृपया 10-अंकीय मोबाइल नंबर दर्ज करें।' : 'Please enter a 10-digit mobile number.'); return; }
+    const requestedDigits = String(phoneDigits || digits).replace(/\D/g, '').slice(-10);
+    if (requestedDigits.length !== 10) { hError(); dialog(lang === 'hi' ? 'मोबाइल नंबर' : 'Mobile Number', lang === 'hi' ? 'कृपया 10-अंकीय मोबाइल नंबर दर्ज करें।' : 'Please enter a 10-digit mobile number.'); return; }
     if (busy) return;
+    phoneDigitsRef.current = requestedDigits;
     setBusy(true);
     try {
-      const r = await requestOtp('+91' + digits.slice(-10), lang);
+      await startOtpAutofill();
+      const r = await sendMsg91WidgetOtp('91' + requestedDigits);
+      if (r.accessToken) {
+        await finishOtpLogin(r.accessToken, requestedDigits);
+        return;
+      }
       setRequestId(r.requestId);
       setCode('');
       setStep('otp');
-      setSecs(r.cooldownSeconds);
+      setSecs(expiryRef.current);
       hSuccess();
       setTimeout(() => otpRef.current?.focus(), 350);
     } catch (e: any) {
       hError();
-      dialog(lang === 'hi' ? 'ओटीपी नहीं भेजा जा सका' : 'Could not send OTP', e?.message || (lang === 'hi' ? 'कृपया पुनः प्रयास करें।' : 'Please try again.'));
+      dialog(
+        lang === 'hi' ? 'ओटीपी नहीं भेजा जा सका' : 'Could not send OTP',
+        lang === 'hi' ? 'मोबाइल सत्यापन सेवा उपलब्ध नहीं है। कृपया कुछ समय बाद पुनः प्रयास करें।' : (e?.message || 'Please try again.')
+      );
     } finally {
       setBusy(false);
     }
@@ -85,22 +190,34 @@ export function PhoneAuthScreen({ navigation }: any) {
 
   const verify = async (full: string) => {
     if (busy || verifyingRef.current || !requestId) return;
+    if (secs <= 0) {
+      hError();
+      dialog(
+        lang === 'hi' ? 'ओटीपी की समय-सीमा समाप्त' : 'OTP expired',
+        lang === 'hi' ? 'नया ओटीपी मँगाकर फिर प्रयास करें।' : 'Request a new OTP and try again.'
+      );
+      return;
+    }
     verifyingRef.current = true;
     Keyboard.dismiss();
     setBusy(true);
     try {
-      const r = await verifyOtp({ phone: '+91' + digits.slice(-10), otp: full, requestId, lang });
-      await saveAuth(r.token, r.user);
-      registerForPush(); // register device for push (prompts permission)
-      track(r.isNew ? 'register' : 'login', undefined, { method: 'otp' });
-      hSuccess();
-      // NEW registration → language → subscription → birth-details onboarding.
-      // Existing user: profile adhura (DOB nahi) → birth-details, warna seedha app.
-      navigation.replace(r.isNew ? 'Subscribe' : (r.profileComplete ? 'Main' : 'BirthDetails'));
+      const accessToken = await verifyMsg91WidgetOtp(requestId, full);
+      await finishOtpLogin(accessToken);
     } catch (e: any) {
       hError();
       setCode('');
-      dialog(lang === 'hi' ? 'सत्यापन नहीं हो सका' : 'Verification failed', e?.message || (lang === 'hi' ? 'ओटीपी जाँचकर पुनः प्रयास करें।' : 'Check the OTP and try again.'));
+      const messageHi = e?.code === 'OTP_EXPIRED'
+        ? 'ओटीपी की समय-सीमा समाप्त हो गई है। नया ओटीपी मँगाएँ।'
+        : e?.code === 'OTP_INVALID'
+          ? 'ओटीपी सही नहीं है। जाँचकर फिर प्रयास करें।'
+          : e?.code === 'OTP_PROVIDER_TIMEOUT'
+            ? 'सत्यापन सेवा ने समय पर उत्तर नहीं दिया। आपका ओटीपी अभी समाप्त नहीं हुआ है; फिर प्रयास करें।'
+            : 'सत्यापन पूरा नहीं हो सका। कृपया फिर प्रयास करें।';
+      dialog(
+        lang === 'hi' ? 'सत्यापन पूरा नहीं हुआ' : 'Verification failed',
+        lang === 'hi' ? messageHi : (e?.message || 'Check the OTP and try again.')
+      );
       setTimeout(() => otpRef.current?.focus(), 250);
     } finally {
       verifyingRef.current = false;
@@ -108,30 +225,49 @@ export function PhoneAuthScreen({ navigation }: any) {
     }
   };
 
+  useEffect(() => {
+    const timer = setTimeout(() => suggestPhoneNumber(), 550);
+    return () => clearTimeout(timer);
+  }, []);
+
   const resend = async () => {
     if (busy || secs > 0 || !requestId) return;
     hPress();
     setBusy(true);
     try {
-      const r = await resendOtp('+91' + digits.slice(-10), requestId, lang);
-      setRequestId(r.requestId);
+      // MSG91 cannot retry an expired reqId, so start a fresh OTP request.
+      await startOtpAutofill();
+      const next = await sendMsg91WidgetOtp('91' + digits.slice(-10));
+      if (next.accessToken) {
+        await finishOtpLogin(next.accessToken);
+        return;
+      }
+      setRequestId(next.requestId);
       setCode('');
-      setSecs(r.cooldownSeconds);
+      setSecs(expiryRef.current);
       hSuccess();
       setTimeout(() => otpRef.current?.focus(), 250);
     } catch (e: any) {
       hError();
-      dialog(lang === 'hi' ? 'ओटीपी दोबारा नहीं भेजा जा सका' : 'Could not resend OTP', e?.message || (lang === 'hi' ? 'कृपया पुनः प्रयास करें।' : 'Please try again.'));
+      dialog(
+        lang === 'hi' ? 'ओटीपी दोबारा नहीं भेजा जा सका' : 'Could not resend OTP',
+        lang === 'hi' ? 'ओटीपी दोबारा नहीं भेजा जा सका। कृपया कुछ समय बाद पुनः प्रयास करें।' : (e?.message || 'Please try again.')
+      );
     } finally {
       setBusy(false);
     }
   };
 
   const onOtpChange = (t: string) => {
-    const clean = t.replace(/\D/g, '').slice(0, OTP_LEN);
+    const clean = t.replace(/\D/g, '').slice(0, otpLength);
     setCode(clean);
-    if (clean.length === OTP_LEN) verify(clean);
   };
+
+  useEffect(() => {
+    if (code.length !== otpLength || !requestId || secs <= 0 || busy || verifyingRef.current) return;
+    const timer = setTimeout(() => verify(code), 0);
+    return () => clearTimeout(timer);
+  }, [code, otpLength, requestId, secs, busy]);
 
   // Google one-tap sign-in. The native module isn't in Expo Go → lazy-require + guard,
   // so testing in Expo Go shows a friendly note instead of crashing. Works in the built APK.
@@ -206,11 +342,20 @@ export function PhoneAuthScreen({ navigation }: any) {
               icon={<PhoneIcon color={theme.gold2} />}
               label={t('auth.mobileNumber', 'Mobile Number')}
               value={phone}
-              onChangeText={setPhone}
+              onChangeText={(value) => {
+                const nextPhone = value.replace(/\D/g, '').slice(0, 10);
+                phoneDigitsRef.current = nextPhone;
+                setPhone(nextPhone);
+              }}
               placeholder="98XXXXXXXX"
               keyboardType="phone-pad"
+              autoComplete="tel-national"
+              textContentType="telephoneNumber"
+              importantForAutofill="yes"
+              inputRef={phoneRef}
+              maxLength={10}
             />
-            <Pressable onPress={sendOtp} disabled={busy} style={({ pressed }) => [styles.btnShadow, pressed && styles.pressed]}>
+            <Pressable onPress={() => sendOtp()} disabled={busy} style={({ pressed }) => [styles.btnShadow, pressed && styles.pressed]}>
               <LinearGradient colors={['#fce8a8', '#e9b850', '#b87f1a']} locations={[0, 0.45, 1]} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.primaryBtn}>
                 <Text style={styles.primaryText}>{busy ? t('auth.sending', 'SENDING…') : t('auth.sendOtp', 'SEND OTP')}</Text>
               </LinearGradient>
@@ -221,9 +366,9 @@ export function PhoneAuthScreen({ navigation }: any) {
           </View>
         ) : (
           <View style={{ gap: 18, marginTop: 8 }}>
-            {/* 6-box OTP — ek hidden input poori value capture karta hai */}
+            {/* A full-size transparent input remains visible to Android Autofill. */}
             <Pressable onPress={() => otpRef.current?.focus()} style={styles.otpRow}>
-              {Array.from({ length: OTP_LEN }).map((_, i) => {
+              {Array.from({ length: otpLength }).map((_, i) => {
                 const filled = i < code.length;
                 const active = i === code.length;
                 return (
@@ -242,22 +387,22 @@ export function PhoneAuthScreen({ navigation }: any) {
                   </View>
                 );
               })}
+              <TextInput
+                ref={otpRef}
+                value={code}
+                onChangeText={onOtpChange}
+                keyboardType="number-pad"
+                maxLength={otpLength}
+                textContentType="oneTimeCode"
+                autoComplete={Platform.OS === 'android' ? 'sms-otp' : 'one-time-code'}
+                importantForAutofill="yes"
+                autoFocus
+                style={styles.otpCaptureInput}
+                caretHidden
+              />
             </Pressable>
-            <TextInput
-              ref={otpRef}
-              value={code}
-              onChangeText={onOtpChange}
-              keyboardType="number-pad"
-              maxLength={OTP_LEN}
-              textContentType="oneTimeCode"
-              autoComplete={Platform.OS === 'android' ? 'sms-otp' : 'one-time-code'}
-              importantForAutofill="yes"
-              autoFocus
-              style={styles.hiddenInput}
-              caretHidden
-            />
 
-            <Pressable onPress={() => verify(code)} disabled={busy || code.length < OTP_LEN} style={({ pressed }) => [styles.btnShadow, (busy || code.length < OTP_LEN) && { opacity: 0.55 }, pressed && styles.pressed]}>
+            <Pressable onPress={() => verify(code)} disabled={busy || code.length < otpLength} style={({ pressed }) => [styles.btnShadow, (busy || code.length < otpLength) && { opacity: 0.55 }, pressed && styles.pressed]}>
               <LinearGradient colors={['#fce8a8', '#e9b850', '#b87f1a']} locations={[0, 0.45, 1]} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.primaryBtn}>
                 <Text style={styles.primaryText}>{busy ? t('auth.verifying', 'VERIFYING…') : t('auth.verifyContinue', 'VERIFY & CONTINUE')}</Text>
               </LinearGradient>
@@ -265,7 +410,9 @@ export function PhoneAuthScreen({ navigation }: any) {
 
             <Pressable onPress={resend} disabled={secs > 0 || busy} hitSlop={8} style={styles.resend}>
               <Text style={[styles.resendText, { color: secs > 0 ? theme.textMuted : gold }]}>
-                {secs > 0 ? `${t('auth.resendIn', 'Resend OTP in')} ${secs}s` : t('auth.resendOtp', 'Resend OTP')}
+                {secs > 0
+                  ? `${lang === 'hi' ? 'नया ओटीपी' : 'New OTP'} ${formatCountdown(secs)}`
+                  : (lang === 'hi' ? 'नया ओटीपी मँगाएँ' : 'Request new OTP')}
               </Text>
             </Pressable>
           </View>
@@ -320,7 +467,10 @@ const styles = StyleSheet.create({
   otpBox: { width: 46, height: 56, borderRadius: 12, borderWidth: 1.4, alignItems: 'center', justifyContent: 'center' },
   otpBoxActive: { shadowColor: '#e9b850', shadowOpacity: 0.4, shadowRadius: 8, shadowOffset: { width: 0, height: 0 }, elevation: 4 },
   otpDigit: { fontFamily: fonts.interBold, fontSize: 22 },
-  hiddenInput: { position: 'absolute', opacity: 0, height: 1, width: 1 },
+  otpCaptureInput: {
+    position: 'absolute', left: 0, right: 0, top: 0, height: 56,
+    zIndex: 2, opacity: 0.02, color: 'transparent', backgroundColor: 'transparent', fontSize: 22,
+  },
 
   resend: { alignSelf: 'center', paddingVertical: 6 },
   resendText: { fontFamily: fonts.interMed, fontSize: 13 },

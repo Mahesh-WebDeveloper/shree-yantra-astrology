@@ -17,6 +17,9 @@ set "ROOT=%~dp0"
 set "SOURCE=%ROOT%mobile"
 set "BUILD=C:\m"
 set "OUTPUT_DIR=A:\android-build"
+set "LATEST_APK=%OUTPUT_DIR%\shree-yantra-latest.apk"
+set "PREVIOUS_APK=%OUTPUT_DIR%\shree-yantra-previous.apk"
+set "FAIL_MARKER=%OUTPUT_DIR%\SHREE_YANTRA_BUILD_FAILED.txt"
 set "JAVA_HOME=A:\android-build\jdk17\jdk-17.0.19+10"
 set "ANDROID_HOME=A:\android-build\android-sdk"
 set "NODE_ENV=production"
@@ -97,6 +100,21 @@ if errorlevel 1 (
   goto :fail
 )
 
+rem Keep required native permissions in the stable C:\m Android project current.
+set "SOURCE_MANIFEST=%SOURCE%\android\app\src\main\AndroidManifest.xml"
+set "BUILD_MANIFEST=%BUILD%\android\app\src\main\AndroidManifest.xml"
+if exist "!SOURCE_MANIFEST!" copy /Y "!SOURCE_MANIFEST!" "!BUILD_MANIFEST!" >nul
+if not exist "!BUILD_MANIFEST!" (
+  echo [ERROR] Stable AndroidManifest.xml is missing: !BUILD_MANIFEST!
+  goto :fail
+)
+findstr /C:"android.permission.ACCESS_NETWORK_STATE" "!BUILD_MANIFEST!" >nul
+if errorlevel 1 (
+  echo [ERROR] ACCESS_NETWORK_STATE is missing from !BUILD_MANIFEST!.
+  echo         Regenerate or update the stable Android native project.
+  goto :fail
+)
+
 if "%INSTALL_DEPS%"=="1" (
   echo [3/7] Installing exact dependencies from package-lock.json...
   pushd "%BUILD%"
@@ -126,12 +144,29 @@ if "%SYNC_ONLY%"=="1" (
   exit /b 0
 )
 
+rem Never leave an older APK named "latest" after a failed full build. Keep one
+rem clearly labelled fallback and publish "latest" only after complete success.
+if exist "!LATEST_APK!" move /Y "!LATEST_APK!" "!PREVIOUS_APK!" >nul
+if exist "!FAIL_MARKER!" del /Q "!FAIL_MARKER!" >nul 2>&1
+
 echo [5/7] Verifying Java 17...
 java -version
 if errorlevel 1 (
   echo [ERROR] Java failed to start from %JAVA_HOME%.
   goto :fail
 )
+
+for /f %%I in ('powershell.exe -NoProfile -Command "[math]::Floor((Get-PSDrive -Name C).Free / 1GB)"') do set "FREE_C_GB=%%I"
+if not defined FREE_C_GB (
+  echo [ERROR] Could not check free space on C:.
+  goto :fail
+)
+if !FREE_C_GB! LSS 4 (
+  echo [ERROR] C: has only !FREE_C_GB! GB free. At least 4 GB is required.
+  echo         Free disk space and run this builder again.
+  goto :fail
+)
+echo       C: free space: !FREE_C_GB! GB
 
 echo [6/7] Building the release APK with Gradle...
 pushd "%BUILD%\android"
@@ -153,13 +188,13 @@ if not exist "%GRADLE_APK%" (
 
 for /f %%I in ('powershell.exe -NoProfile -Command "Get-Date -Format yyyyMMdd-HHmmss"') do set "STAMP=%%I"
 set "DATED_APK=%OUTPUT_DIR%\shree-yantra-latest-!STAMP!.apk"
-set "LATEST_APK=%OUTPUT_DIR%\shree-yantra-latest.apk"
 
 echo [7/7] Copying and verifying the final APK...
 copy /Y "%GRADLE_APK%" "!DATED_APK!" >nul
 if errorlevel 1 goto :copy_failed
 copy /Y "%GRADLE_APK%" "!LATEST_APK!" >nul
 if errorlevel 1 goto :copy_failed
+if exist "!FAIL_MARKER!" del /Q "!FAIL_MARKER!" >nul 2>&1
 
 echo.
 echo SHA-256:
@@ -223,6 +258,7 @@ if not exist "%~1\." (
 exit /b 0
 
 :fail
+>"!FAIL_MARKER!" echo BUILD FAILED at %DATE% %TIME%. shree-yantra-latest.apk was not published. Read the console error and rebuild.
 echo.
 echo ============================================================
 echo   BUILD FAILED - no new APK was published

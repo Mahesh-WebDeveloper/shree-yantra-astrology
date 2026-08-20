@@ -2,7 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { createMsg91Client, Msg91Error } = require('./msg91.service');
+const { createMsg91Client, Msg91Error, MSG91_WIDGET_VERIFY_URL } = require('./msg91.service');
 
 const config = {
   authkey: 'test-authkey',
@@ -46,6 +46,18 @@ test('MSG91 send failures are sanitized', async () => {
   });
 });
 
+test('invalid MSG91 OTP template is reported as configuration failure', async () => {
+  const client = createMsg91Client(config, async () => response({
+    type: 'error',
+    message: 'Template ID Missing or Invalid Template',
+  }));
+  await assert.rejects(() => client.sendOtp('+919876543210'), (error) => {
+    assert.equal(error.code, 'OTP_PROVIDER_TEMPLATE_INVALID');
+    assert.doesNotMatch(error.message, /template id/i);
+    return true;
+  });
+});
+
 test('correct OTP is accepted by MSG91 verification', async () => {
   const client = createMsg91Client(config, async () => response({ type: 'success', message: 'OTP verified success' }));
   assert.equal(await client.verifyOtp('+919876543210', '482913'), true);
@@ -81,4 +93,48 @@ test('MSG91 timeout becomes a retryable sanitized error', async () => {
     assert.equal(error.retryable, true);
     return true;
   });
+});
+
+test('widget access-token is verified server-side without exposing the Authkey in the URL', async () => {
+  let captured;
+  const client = createMsg91Client(config, async (url, options) => {
+    captured = { url, options };
+    return response({ type: 'success', data: { identifier: '919876543210' } });
+  });
+  const token = 'header.payload.signature-for-widget-test';
+  const result = await client.verifyWidgetAccessToken(token);
+  const body = JSON.parse(captured.options.body);
+
+  assert.equal(captured.url, MSG91_WIDGET_VERIFY_URL);
+  assert.equal(captured.options.method, 'POST');
+  assert.equal(body.authkey, config.authkey);
+  assert.equal(body['access-token'], token);
+  assert.equal(new URL(captured.url).searchParams.has('authkey'), false);
+  assert.equal(result.identifier, '919876543210');
+});
+
+test('widget access-token accepts the official MSG91 message identifier schema', async () => {
+  const client = createMsg91Client(config, async () => response({
+    type: 'success',
+    message: '919876543210',
+  }));
+
+  const result = await client.verifyWidgetAccessToken('a-valid-widget-access-token');
+  assert.equal(result.identifier, '919876543210');
+});
+
+test('invalid widget access-token response is rejected with a safe error', async () => {
+  const client = createMsg91Client(config, async () => response({ type: 'error', message: 'provider internal token detail' }));
+  await assert.rejects(
+    () => client.verifyWidgetAccessToken('header.payload.signature-for-widget-test'),
+    (error) => error.code === 'OTP_WIDGET_TOKEN_INVALID' && !/provider internal/i.test(error.message)
+  );
+});
+
+test('widget Authkey rejection is mapped to provider configuration without leaking details', async () => {
+  const client = createMsg91Client(config, async () => response({ type: 'error', message: 'Authkey is invalid' }));
+  await assert.rejects(
+    () => client.verifyWidgetAccessToken('header.payload.signature-for-widget-test'),
+    (error) => error.code === 'OTP_PROVIDER_CONFIG' && !/authkey/i.test(error.message)
+  );
 });

@@ -303,7 +303,7 @@ const BookCard = React.memo(function BookCard({ item, title, subtitle, theme, hi
         <LinearGradient colors={[ac + 'cc', '#0c0c18']} start={{ x: 0.2, y: 0.1 }} end={{ x: 0.8, y: 1 }} style={styles.vedaCover}>
           {item.coverImage ? (
             <>
-              <Image source={{ uri: avatarUrl(item.coverImage) }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+              <Image source={{ uri: avatarUrl(item.coverImage) || undefined }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
               <LinearGradient colors={['transparent', 'rgba(0,0,0,0.7)']} style={StyleSheet.absoluteFillObject} />
               <Text style={styles.vedaCoverName} numberOfLines={2}>{item.hindi}</Text>
             </>

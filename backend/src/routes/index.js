@@ -117,6 +117,7 @@ router.post('/auth/send-otp', otpSendLimiter, authCtrl.requestOtp);
 router.post('/auth/request-otp', otpSendLimiter, authCtrl.requestOtp); // backward-compatible app versions
 router.post('/auth/resend-otp', otpSendLimiter, authCtrl.resendOtp);
 router.post('/auth/verify-otp', otpVerifyLimiter, authCtrl.verifyOtp);
+router.post('/auth/msg91-widget/verify', otpVerifyLimiter, authCtrl.verifyMsg91Widget);
 router.post('/auth/google', authCtrl.google);
 router.get('/auth/me', requireAuth, authCtrl.me);
 router.post('/auth/logout', requireAuth, authCtrl.logout);

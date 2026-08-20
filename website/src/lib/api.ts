@@ -1120,12 +1120,12 @@ export interface VerifyOtpResponse {
 
 /** Same as mobile — +91XXXXXXXXXX */
 export const requestOtp = (phone: string, lang: 'en' | 'hi') =>
-  post<OtpRequestResponse>('/api/auth/send-otp', { phone, lang })
+  post<OtpRequestResponse>('/api/auth/send-otp', { mobile: phone, lang })
 
 export const resendOtp = (phone: string, requestId: string, lang: 'en' | 'hi') =>
-  post<OtpRequestResponse>('/api/auth/resend-otp', { phone, requestId, lang })
+  post<OtpRequestResponse>('/api/auth/resend-otp', { mobile: phone, requestId, lang })
 
-export const verifyOtp = (input: { phone: string; otp: string; requestId: string; name?: string; lang: 'en' | 'hi' }) =>
+export const verifyOtp = (input: { mobile: string; otp: string; requestId: string; name?: string; lang: 'en' | 'hi' }) =>
   post<VerifyOtpResponse>('/api/auth/verify-otp', input)
 
 export const logoutServer = () => postAuth<{ ok: boolean }>('/api/auth/logout', {})

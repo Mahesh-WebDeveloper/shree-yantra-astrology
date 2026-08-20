@@ -12,7 +12,7 @@ import { track } from './analytics';
 
 // Production: set EXPO_PUBLIC_API_URL (https) in the build env / app.config / EAS secrets.
 // Dev fallback: LAN IP for Expo Go on a phone (localhost won't reach the PC from the device).
-const DEV_API = 'http://192.168.0.234:4000';
+const DEV_API = 'http://192.168.0.235:4000';
 export const API_BASE = (process.env.EXPO_PUBLIC_API_URL || (__DEV__ ? DEV_API : '')).replace(/\/$/, '');
 
 // every network call gets a hard timeout so a hung backend never spins a loader forever
@@ -393,11 +393,13 @@ export interface OtpRequestResponse {
 }
 export interface VerifyOtpResponse { token: string; user: AuthUser; isNew: boolean; profileComplete: boolean }
 export const requestOtp = (phone: string, lang: 'en' | 'hi') =>
-  post<OtpRequestResponse>('/api/auth/send-otp', { phone, lang });
+  post<OtpRequestResponse>('/api/auth/send-otp', { mobile: phone, lang });
 export const resendOtp = (phone: string, requestId: string, lang: 'en' | 'hi') =>
-  post<OtpRequestResponse>('/api/auth/resend-otp', { phone, requestId, lang });
-export const verifyOtp = (input: { phone: string; otp: string; requestId: string; name?: string; lang: 'en' | 'hi' }) =>
+  post<OtpRequestResponse>('/api/auth/resend-otp', { mobile: phone, requestId, lang });
+export const verifyOtp = (input: { mobile: string; otp: string; requestId: string; name?: string; lang: 'en' | 'hi' }) =>
   post<VerifyOtpResponse>('/api/auth/verify-otp', input);
+export const verifyMsg91WidgetSession = (input: { mobile: string; accessToken: string; name?: string; lang: 'en' | 'hi' }) =>
+  post<VerifyOtpResponse>('/api/auth/msg91-widget/verify', input);
 // Google Sign-In — send the Google ID token, backend verifies + returns our JWT (same shape as OTP)
 export const googleLogin = (idToken: string) =>
   post<VerifyOtpResponse>('/api/auth/google', { idToken });

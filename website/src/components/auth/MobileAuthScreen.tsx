@@ -71,7 +71,7 @@ export function MobileAuthScreen({
     setBusy(true)
     try {
       const r = await verifyOtp({
-        phone: phoneE164(digits),
+        mobile: phoneE164(digits),
         otp: full,
         requestId,
         name: defaultName?.trim() || undefined,

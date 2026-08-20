@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, StyleSheet, KeyboardTypeOptions, Pressable } from 'react-native';
+import { View, Text, TextInput, StyleSheet, KeyboardTypeOptions, Pressable, TextInputProps } from 'react-native';
 import Svg, { Path, Line } from 'react-native-svg';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts, radii } from '../theme/tokens';
@@ -15,6 +15,11 @@ interface Props {
   keyboardType?: KeyboardTypeOptions;
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   autoComplete?: any;
+  textContentType?: TextInputProps['textContentType'];
+  importantForAutofill?: TextInputProps['importantForAutofill'];
+  onFocus?: TextInputProps['onFocus'];
+  inputRef?: React.MutableRefObject<TextInput | null>;
+  maxLength?: number;
   error?: string | null;
   editable?: boolean;   // false → read-only (locked); shows a lock and can't be edited
 }
@@ -22,7 +27,9 @@ interface Props {
 /** Themed input field — RN port of the web `.sy-field` (icon · label · input). */
 export function TextField({
   icon, label, value, onChangeText, placeholder, secureTextEntry,
-  keyboardType, autoCapitalize = 'none', autoComplete, error, editable = true,
+  keyboardType, autoCapitalize = 'none', autoComplete, textContentType,
+  importantForAutofill, onFocus, inputRef: externalInputRef, maxLength,
+  error, editable = true,
 }: Props) {
   const { theme } = useTheme();
   const [focused, setFocused] = useState(false);
@@ -59,7 +66,10 @@ export function TextField({
           </Text>
           <View style={styles.inputRow}>
             <TextInput
-              ref={inputRef}
+              ref={(node) => {
+                inputRef.current = node;
+                if (externalInputRef) externalInputRef.current = node;
+              }}
               value={value}
               onChangeText={onChangeText}
               editable={editable}
@@ -69,7 +79,10 @@ export function TextField({
               keyboardType={keyboardType}
               autoCapitalize={autoCapitalize}
               autoComplete={autoComplete}
-              onFocus={() => { setFocused(true); liftAboveKeyboard(); }}
+              textContentType={textContentType}
+              importantForAutofill={importantForAutofill}
+              maxLength={maxLength}
+              onFocus={(event) => { setFocused(true); liftAboveKeyboard(); onFocus?.(event); }}
               onBlur={() => setFocused(false)}
               style={[styles.input, { color: theme.text }]}
             />
